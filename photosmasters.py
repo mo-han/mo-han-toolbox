@@ -18,7 +18,7 @@ DB_FILE = 'db.json'
 INFO_FILE = 'info.txt'
 
 __program__ = 'photosmasters'
-__description__ = 'Crawler of photosmasters.com'
+__description__ = 'Album photos downloader for photosmasters.com'
 _logger = logging.getLogger('photosmasters')
 
 
