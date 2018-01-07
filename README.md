@@ -1,7 +1,29 @@
 # TOC
-[toc]
+[TOC]
 
-# mykits
-Self-used stuff (tools, utilities, etc) for public sharing
+# Downloaders
 
-## dota2_waiter.py
+## Image Scrapers
+
+### photosmasters.py
+
+Download all images under a album from photosmasters.com
+
+**Python3 only (for now)**
+
+*Single executable file, just download and use it.*
+
+```bash
+usage: photosmasters.py [-h] [-v] dir url
+
+Album photos downloader for photosmasters.com
+
+positional arguments:
+  dir            download directory
+  url            album URL of photosmasters.com
+
+optional arguments:
+  -h, --help     show this help message and exit
+  -v, --verbose
+```
+
