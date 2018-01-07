@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from re import sub
 from urllib.parse import urlparse, parse_qsl
