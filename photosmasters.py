@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-from re import sub
 from urllib.parse import urlparse, parse_qsl
 from time import sleep
 from threading import Thread
+import re
 import logging
 import sys
 import os
@@ -13,7 +13,7 @@ import json
 from requests import get, head
 from bs4 import BeautifulSoup
 
-from lib_misc import win32_ctrl_c, ExitCode, LOG_FMT, LOG_FMT_MESSAGE_ONLY
+from lib_misc import win32_ctrl_c, ExitCode, rectify_path_char, LOG_FMT, LOG_FMT_MESSAGE_ONLY
 
 DB_FILE = 'db.json'
 INFO_FILE = 'info.txt'
@@ -53,7 +53,7 @@ def save_db(file: str):
 
 def save_info(file: str):
     with open(file, 'w') as f:
-        f.write(stat['at'])
+        f.write('{}\n{}\n{}\n{}'.format(stat['at'], stat['ti'], db['name'], db['url']))
     _logger.info('Save info to {}'.format(file))
 
 
@@ -77,10 +77,10 @@ def content_length(respond):
 
 def image_from_photo(pid: str, purl: str, pdb: dict):
     global server
-    photo_soup, _ = soup(purl)
     if pdb:
         img_url = pdb['url']
     else:
+        photo_soup, _ = soup(purl)
         img = photo_soup.img
         img_url = server + '/' + img['src']
         img_ext = os.path.splitext(img_url)[-1]
@@ -96,13 +96,13 @@ def download(pid: str, purl: str, name: str):
     dl_dir = stat['dd']
     pdb = db.get(pid)
     image_from_photo(pid, purl, pdb)
+    pdb = db[pid]
+    pdb['name'] = name = rectify_path_char(name)
+    url = pdb['url']
+    file = os.path.join(dl_dir, '{} - {}{}'.format(name, pid, pdb['ext']))
+    _logger.debug('{} <-> {}'.format(pdb, file))
     while True:
         try:
-            pdb = db[pid]
-            pdb['name'] = name
-            file = os.path.join(dl_dir, '{} - {}{}'.format(name, pid, pdb['ext']))
-            _logger.debug('{} <-> {}'.format(pdb, file))
-            url = pdb['url']
             if os.path.exists(file):
                 local_size = os.stat(file).st_size
                 pdb_remote_size = pdb['size']
@@ -125,16 +125,16 @@ def download(pid: str, purl: str, name: str):
                 break
             else:
                 _logger.warning('Fail: {}'.format(url))
-        except Exception as e:
-            _logger.error(repr(e))
+        except Exception:
+            raise
 
 
 def url_split(url: str):
-    server = sub(r'^(.*://.*?)/.*', r'\1', url)
-    path = sub(r'^.*://.*?(/.*$)', r'\1', url)
-    if path == server:
+    host = re.sub(r'^(.*://.*?)/.*', r'\1', url)
+    path = re.sub(r'^.*://.*?(/.*$)', r'\1', url)
+    if path == host:
         path = ''
-    return server, path
+    return host, path
 
 
 def get_query_dict(url: str):
@@ -147,7 +147,7 @@ def display_stat():
 
 
 def main(url: str = None):
-    # win32_ctrl_c()
+    win32_ctrl_c()
     args = parse_args()
     # Get verbose level from args
     if args.verbose:
@@ -166,11 +166,26 @@ def main(url: str = None):
         album_url = url
     else:
         album_url = args.url
+        if re.search(r'photosmasters\.com/thumbnails\.php\?album=', album_url):
+            album_url = re.sub(r'(^.*?album=\d*).*$', r'\1', album_url)
+        else:
+            _logger.warning('NOT A PHOTOSMASTERS.COM URL!')
+            sys.exit()
+        db['url'] = album_url
     global server
     server, _ = url_split(album_url)
+    # Parse album page
+    album_soup, _ = soup(album_url)
+    if album_soup('div', class_='cpg_message_warning'):
+        _logger.warning('ALBUM NOT EXISTS!')
+        sys.exit()
+    album_title = album_soup.title.contents[0]
+    album_title_eng = re.sub(r'^.* \((.*)\) - photosmasters\.com', r'\1', album_title)
+    db['name'] = album_title_eng
+    _logger.info(album_title)
     # Get album directory to store downloaded photos
     album_id = get_query_dict(album_url)['album']
-    album_dir = os.path.join(args.dir, 'photosmasters', album_id)
+    album_dir = os.path.join(args.dir, 'photosmasters', '{} {}'.format(album_id, album_title_eng))
     if not os.path.exists(album_dir):
         os.makedirs(album_dir)
     _logger.info('{} -->> {}'.format(album_url, album_dir))
@@ -178,10 +193,6 @@ def main(url: str = None):
     info_file = os.path.join(album_dir, INFO_FILE)
     db_file = os.path.join(album_dir, DB_FILE)
     restore_db(db_file)
-    # Parse album page
-    album_soup, _ = soup(album_url)
-    album_title = album_soup.title.contents[0]
-    _logger.info(album_title)
     totals = album_soup('td', class_='tableh1')[0].contents[0]
     _, total_images, _, _, total_pages = totals.split()
     global stat

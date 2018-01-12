@@ -13,7 +13,7 @@ Download all images under a album from photosmasters.com
 
 *Single executable file, just download and use it.*
 
-```bash
+```
 usage: photosmasters.py [-h] [-v] dir url
 
 Album photos downloader for photosmasters.com

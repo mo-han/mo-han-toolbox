@@ -16,6 +16,23 @@ def win32_ctrl_c():
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # %ERRORLEVEL% = '-1073741510'
 
 
+def rectify_path_char(s: str):
+    char_map = {
+        '\\': '＼',
+        '/': '／',
+        ':': '：',
+        '*': '＊',
+        '?': '？',
+        '"': '＂',
+        '<': '＜',
+        '>': '＞',
+        '|': '￨',
+    }
+    for k, v in char_map.items():
+        s = s.replace(k, v)
+    return s
+
+
 class ExitCode:
     # http://www.febooti.com/products/automation-workshop/online-help/events/run-dos-cmd-command/exit-codes/
     # http://tldp.org/LDP/abs/html/exitcodes.html
