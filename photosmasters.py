@@ -180,12 +180,14 @@ def main(url: str = None):
         _logger.warning('ALBUM NOT EXISTS!')
         sys.exit()
     album_title = album_soup.title.contents[0]
-    album_title_eng = re.sub(r'^.* \((.*)\) - photosmasters\.com', r'\1', album_title)
-    db['name'] = album_title_eng
+    album_name = re.sub(r'^(.*) - photosmasters\.com', r'\1', album_title)
+    album_name = re.sub(r'^.* \((.*)\)', r'\1', album_name)
+    album_name = album_name.strip()
+    db['name'] = album_name
     _logger.info(album_title)
     # Get album directory to store downloaded photos
     album_id = get_query_dict(album_url)['album']
-    album_dir = os.path.join(args.dir, 'photosmasters', '{} {}'.format(album_id, album_title_eng))
+    album_dir = os.path.join(args.dir, 'photosmasters', '{} {}'.format(album_id, album_name))
     if not os.path.exists(album_dir):
         os.makedirs(album_dir)
     _logger.info('{} -->> {}'.format(album_url, album_dir))

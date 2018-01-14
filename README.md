@@ -33,6 +33,10 @@ optional arguments:
 
 # etc
 
-## nginx
+## etc/nginx
 
 Some templates for Nginx configurations.
+
+## etc/vimrc
+
+My `.vimrc`.
