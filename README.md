@@ -2,7 +2,7 @@
 typora-copy-images-to: _media
 ---
 
-# TOC
+# Table of Contents
 [TOC]
 
 # Downloaders
