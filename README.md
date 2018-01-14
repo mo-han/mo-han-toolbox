@@ -1,3 +1,7 @@
+---
+typora-copy-images-to: _media
+---
+
 # TOC
 [TOC]
 
@@ -13,7 +17,7 @@ Download all images under a album from photosmasters.com
 
 *Single executable file, just download and use it.*
 
-```bash
+```
 usage: photosmasters.py [-h] [-v] dir url
 
 Album photos downloader for photosmasters.com
@@ -27,3 +31,8 @@ optional arguments:
   -v, --verbose
 ```
 
+# etc
+
+## nginx
+
+Some templates for Nginx configurations.
