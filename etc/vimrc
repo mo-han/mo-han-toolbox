@@ -1,0 +1,44 @@
+set nocompatible " shut down vi-compat
+
+"> vim-plug
+"> curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+"> https://github.com/junegunn/vim-plug#usage
+"call plug#begin()
+"Plug 'scrooloose/nerdcommenter'
+"Plug 'ervandew/supertab'
+"Plug 'chr4/nginx.vim'
+"Plug 'vim-airline/vim-airline'
+"Plug 'vim-airline/vim-airline-themes'
+"call plug#end()
+
+syntax on
+filetype plugin indent on
+
+" line number
+noremap <F3> :set invnumber<CR>
+inoremap <F3> <C-O>:set invnumber<CR>
+
+" set cursorline
+:hi CursorLine term=inverse cterm=inverse gui=inverse
+:nnoremap <Leader>h :set cursorline!<CR>
+set ruler
+set showmode " Show mode in INSERT, REPLACE, VISUAL
+
+" Toggle paste
+"" Invert "paste" when pressing F2 in NORMAL, and then show the "paste" value
+nnoremap <F2> :set invpaste paste?<CR>
+"" Toggle "paste" when pressing F2 in INSERT
+set pastetoggle=<F2>
+"" Tab Settings
+set tabstop=2
+set expandtab " Ctrl+V,Tab;Ctrl+Q,Tab
+set softtabstop=2
+set shiftwidth=2
+set autoindent
+set smartindent
+set smarttab " shiftwidth at beginning, tabstop & softtabstop elsewhere
+"" Searching
+set ignorecase
+set smartcase
+set incsearch " Incremetal Searching
+set hlsearch " Highlight
