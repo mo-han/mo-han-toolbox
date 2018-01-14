@@ -1,4 +1,8 @@
-# TOC
+---
+typora-copy-images-to: _media
+---
+
+# Table of Contents
 [TOC]
 
 # Downloaders
@@ -27,3 +31,8 @@ optional arguments:
   -v, --verbose
 ```
 
+# etc
+
+## nginx
+
+Some templates for Nginx configurations.
