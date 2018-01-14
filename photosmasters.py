@@ -187,7 +187,7 @@ def main(url: str = None):
     _logger.info(album_title)
     # Get album directory to store downloaded photos
     album_id = get_query_dict(album_url)['album']
-    album_dir = os.path.join(args.dir, 'photosmasters', '{} {}'.format(album_id, album_name))
+    album_dir = os.path.join(args.dir, 'photosmasters', album_name)
     if not os.path.exists(album_dir):
         os.makedirs(album_dir)
     _logger.info('{} -->> {}'.format(album_url, album_dir))
