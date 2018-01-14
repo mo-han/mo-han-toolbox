@@ -97,9 +97,11 @@ def download(pid: str, purl: str, name: str):
     pdb = db.get(pid)
     image_from_photo(pid, purl, pdb)
     pdb = db[pid]
-    pdb['name'] = name = rectify_path_char(name)
+    if len(name.encode()) > 240:
+        name = name[:50].rstrip() + ' ... ' + name[-25:].lstrip()
+    pdb['name'] = rectify_path_char(name)
     url = pdb['url']
-    file = os.path.join(dl_dir, '{} - {}{}'.format(name, pid, pdb['ext']))
+    file = os.path.join(dl_dir, '{} - {}{}'.format(pdb['name'], pid, pdb['ext']))
     _logger.debug('{} <-> {}'.format(pdb, file))
     while True:
         try:
