@@ -11,6 +11,20 @@ LOG_FMT = LOG_FMT_SHORT_LEVEL_TIME_NAME
 LOG_DTF = LOG_DATETIME_SEC
 
 
+def safe_print(s):
+    s = str(s)
+    try:
+        print(s)
+    except UnicodeEncodeError:
+        for c in s:
+            try:
+                print(c, sep='', end='')
+            except UnicodeEncodeError:
+                pass
+            finally:
+                print()
+
+
 def win32_ctrl_c():
     if sys.platform == 'win32':
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # %ERRORLEVEL% = '-1073741510'
