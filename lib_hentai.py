@@ -6,13 +6,14 @@ import logging
 import re as regex
 import json
 import zipfile
-import platform
+from multiprocessing.dummy import Pool
+# import platform
 
 from lib_misc import rectify_path_char
-if platform.system() == 'Linux':
-    from multiprocessing import Pool
-else:
-    from multiprocessing.dummy import Pool
+# if platform.system() == 'Linux':
+#     from multiprocessing import Pool
+# else:
+#     from multiprocessing.dummy import Pool
 
 
 def get_soup(uri: str, parser: str = 'lxml', retry: int = 3):
