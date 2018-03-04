@@ -30,20 +30,24 @@ def win32_ctrl_c():
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # %ERRORLEVEL% = '-1073741510'
 
 
-def rectify_path_char(s: str):
+def rectify_path_char(s: str, replace: bool = True):
     char_map = {
-        '\\': '＼',
-        '/': '／',
-        ':': '：',
-        '*': '＊',
-        '?': '？',
-        '"': '＂',
-        '<': '＜',
-        '>': '＞',
+        '\\': '⧹',
+        '/': '⁄',
         '|': '￨',
+        ':': '˸',
+        '*': '∗',
+        '?': '？',
+        '"': '″',
+        '<': '﹤',
+        '>': '﹥',
     }
-    for k, v in char_map.items():
-        s = s.replace(k, v)
+    if replace:
+        for k, v in char_map.items():
+            s = s.replace(k, v)
+    else:
+        for k in char_map:
+            s = s.replace(k, ' ')
     return s
 
 
