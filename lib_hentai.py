@@ -2,11 +2,18 @@
 
 from bs4 import BeautifulSoup
 import requests
-from multiprocessing.dummy import Pool
 import logging
 import re as regex
 import json
 import zipfile
+from multiprocessing.dummy import Pool
+# import platform
+
+from lib_misc import rectify_path_char
+# if platform.system() == 'Linux':
+#     from multiprocessing import Pool
+# else:
+#     from multiprocessing.dummy import Pool
 
 
 def get_soup(uri: str, parser: str = 'lxml', retry: int = 3):
@@ -25,16 +32,19 @@ def get_soup(uri: str, parser: str = 'lxml', retry: int = 3):
             retry -= 1
 
 
+class HentaiException(Exception):
+    pass
+
+
+class HentaiDownloadError(HentaiException):
+    pass
+
+
 class HentaiCafeKit:
     def __init__(self, max_dl: int = 5):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.max_dl = max_dl
         self.dl_pool = self.get_pool(max_dl)
-        self.__alert = None
-
-    @property
-    def alert(self):
-        return self.__alert
 
     def parse(self, uri: str) -> list:
         logger = self.logger
@@ -143,23 +153,21 @@ class HentaiCafeKit:
                 logger.warning('[{}] {} {} {}'.format(code, name, reason, uri))
             retry -= 1
         else:
-            self.__alert = True
             logger.warning('Max retries reached for {} {}'.format(name, uri))
+            raise HentaiDownloadError
+
+    def download_page_wrap_tuple_args(self, pages: tuple):
+        uri, name = pages
+        return self.download_page(uri, name)
+
+    def download_pages_gen(self, pages: list):
+        yield from self.dl_pool.imap(self.download_page_wrap_tuple_args, pages)
 
     def download_chapter_gen(self, chapter_uri: str):
         """download_chapter_gen(chapter_uri) -> generator -> yield: (image: bytes, name: str, size: int)"""
-
-        def wrap_download_page(args: tuple):
-            uri, name = args
-            return self.download_page(uri, name)
-
-        def gen():
-            self.logger.debug(chapter_uri)
-            yield from self.dl_pool.imap(wrap_download_page, pages)
-
         pages = self.get_pages(chapter_uri)
         if pages:
-            return gen()
+            return self.download_pages_gen(pages)
         else:
             return None
 
@@ -170,11 +178,11 @@ class HentaiCafeKit:
         for ch_uri, ch_title in chapters:
             logger.debug((ch_uri, ch_title))
             logger.info('{} ({})'.format(ch_title, ch_uri))
-            chapter_downloader = self.download_chapter_gen(ch_uri)
-            if chapter_downloader:
-                with zipfile.ZipFile('{}.cbz'.format(ch_title), 'w') as cbz:
+            chapter_dl = self.download_chapter_gen(ch_uri)
+            if chapter_dl:
+                with zipfile.ZipFile('{}.cbz'.format(rectify_path_char(ch_title)), 'w') as cbz:
                     logger.debug(cbz)
-                    for image, name, size in chapter_downloader:
+                    for image, name, size in chapter_dl:
                         logger.info('{}: {} ({})'.format(ch_title, name, size))
                         cbz.writestr(name, image)
                     cbz.close()
