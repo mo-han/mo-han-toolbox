@@ -142,6 +142,14 @@ def get_soup(uri: str, parser: str = 'lxml', retry: int = 3):
             retry -= 1
 
 
+class HentaiException(Exception):
+    pass
+
+
+class HentaiDownloadError(HentaiException):
+    pass
+
+
 class HentaiCafeKit:
     def __init__(self, max_dl: int = 5):
         self.logger = logging.getLogger(self.__class__.__name__)
