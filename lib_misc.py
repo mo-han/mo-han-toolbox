@@ -41,13 +41,16 @@ def rectify_path_char(s: str, replace: bool = True):
         '"': '″',
         '<': '﹤',
         '>': '﹥',
+        '\t': '',
+        '\r': '',
+        '\n': '',
     }
     if replace:
         for k, v in char_map.items():
             s = s.replace(k, v)
     else:
         for k in char_map:
-            s = s.replace(k, ' ')
+            s = s.replace(k, '')
     return s
 
 
