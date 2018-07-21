@@ -80,8 +80,11 @@ class NHentaiKit:
         info = soup.find('div', id='info')
         h1 = info.h1.text
         self.logger.info(h1)
-        h2 = info.h2.text
-        self.logger.info(h2)
+        try:
+            h2 = info.h2.text
+            self.logger.info(h2)
+        except Exception as e:
+            self.logger.warning(str(e))
         # src_id = soup.find('div', id='cover').img['data-src'].rsplit('/', 2)[-2]
         # gallery_path = url.split('://')[0] + '://i.nhentai.net/galleries/' + src_id
         # page_num = int(soup.find('div', id='info')('div')[-3].text.split(' pages')[0])
@@ -140,6 +143,14 @@ def get_soup(uri: str, parser: str = 'lxml', retry: int = 3):
             return False
         finally:
             retry -= 1
+
+
+class HentaiException(Exception):
+    pass
+
+
+class HentaiDownloadError(HentaiException):
+    pass
 
 
 class HentaiCafeKit:

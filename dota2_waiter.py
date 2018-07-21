@@ -16,3 +16,4 @@ if __name__ == '__main__':
     print('素材文件夹路径', realpath(feed))
     g = Dota2Controller(feed)
     g.auto_waiter((5, 20))
+    

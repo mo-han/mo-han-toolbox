@@ -15,6 +15,6 @@ logging.basicConfig(
 
 
 if __name__ == '__main__':
-    hc = HentaiCafeKit(10)
+    hc = HentaiCafeKit(2)
     uri = sys.argv[1]
     hc.save_entry_to_cbz(uri)
