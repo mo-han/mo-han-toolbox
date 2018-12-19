@@ -1,0 +1,11 @@
+set $dest $http_destination;
+if (-d $request_filename) {
+    rewrite ^(.*[^/])$ $1/;
+    set $dest $dest/;
+}
+if ($request_method ~ (MOVE|COPY)) {
+    more_set_input_headers 'Destination: $dest';
+}
+if ($request_method ~ MKCOL) {
+    rewrite ^(.*[^/])$ $1/ break;
+}

@@ -1,0 +1,6 @@
+client_max_body_size  0;
+#proxy_read_timeout  300;  # answer from server, 5 min
+#proxy_send_timeout  300;  # chunks to server, 5 min
+dav_methods  PUT DELETE MKCOL COPY MOVE;
+dav_ext_methods  PROPFIND OPTIONS;
+create_full_put_path  on;
