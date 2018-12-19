@@ -2,7 +2,7 @@
 setlocal
 call u_var.bat
 call .ve35-win32\Scripts\activate.bat
-set "bin=%~dp0hentai_cafe.py"
+set "bin=%~dp0hentai_cafe_wrap.bat"
 title hentai_cafe.bat %u_dl%
 
 if "%*"=="" (
@@ -16,6 +16,7 @@ goto :eof
 set /p url="> "
 if "%url%"=="q" goto :eof
 pushd %u_dl%
-start /min "%url%" cmd /c "%bin% %url% || pause"
+rem start /min "%url%" cmd /c "%bin% %url% || pause"
+start /min "%url%" %bin% %url%
 popd
 goto :loop

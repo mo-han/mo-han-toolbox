@@ -274,7 +274,8 @@ class HentaiCafeKit:
         return self.download_page(uri, name)
 
     def download_pages_gen(self, pages: list):
-        yield from self.dl_pool.imap(self.download_page_wrap_tuple_args, pages)
+        # yield from self.dl_pool.imap(self.download_page_wrap_tuple_args, pages)
+        yield from self.dl_pool.imap_unordered(self.download_page_wrap_tuple_args, pages)
 
     def download_chapter_gen(self, chapter_uri: str):
         """download_chapter_gen(chapter_uri) -> generator -> yield: (image: bytes, name: str, size: int)"""
