@@ -80,9 +80,9 @@ class SolusVMClientToolkit:
     def __init__(self, svr: SolusVMClientAPI):
         self.svr = svr
 
-    def ensure_online(self):
+    def reboot_if_offline(self):
         if not self.svr.online:
-            self.svr.boot()
+            self.svr.reboot()
 
     def ping(self):
         if os.name == 'nt':
@@ -100,7 +100,7 @@ class SolusVMClientToolkit:
         while True:
             if by_ping:
                 if self.ping():
-                    self.ensure_online()
+                    self.reboot_if_offline()
             else:
-                self.ensure_online()
+                self.reboot_if_offline()
             sleep(nap)
