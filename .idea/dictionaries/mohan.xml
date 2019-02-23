@@ -8,13 +8,16 @@
       <w>dropdown</w>
       <w>filepath</w>
       <w>filesize</w>
+      <w>fmpeg</w>
       <w>fullsize</w>
       <w>gallerythumb</w>
       <w>hentai</w>
       <w>imagefile</w>
       <w>jijidown</w>
+      <w>loglevel</w>
       <w>lowendspirit</w>
       <w>lxml</w>
+      <w>mpeg</w>
       <w>nhentai</w>
       <w>photosmasters</w>
       <w>pyautogui</w>

@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""Some FFmpeg commands"""
 
 import os
-import glob
 
 
-def images_to_video(images_folder: str, output_video: str == None):
+def images_to_video(images_folder: str, output_video: str = None):
     pass
 
 
-def concat_videos(*args) -> None:
+def concat_videos(*args):
     """concat_videos(part1, part2, part3, ... , output)"""
     input_list = args[:-1]
     output_path = args[-1]

@@ -3,7 +3,7 @@
 
 import sys
 
-from lib_ffmpeg_wrap import concat_videos
+from lib_ffmpeg_cmd import concat_videos
 
 args = sys.argv[1:]
 if args:

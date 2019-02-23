@@ -2,6 +2,7 @@
 
 import sys
 import signal
+import os
 
 LOG_FMT_MESSAGE_ONLY = '%(message)s'
 LOG_FMT_SHORT_LEVEL_SHORT_TIME_NAME = '[%(levelname).1s %(asctime).19s] [%(name)s] %(message)s'
