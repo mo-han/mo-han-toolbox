@@ -82,7 +82,8 @@ class SolusVMClientToolkit:
 
     def reboot_if_offline(self):
         if not self.svr.online:
-            self.svr.reboot()
+            self.svr.shutdown()
+            self.svr.boot()
 
     def ping(self):
         if os.name == 'nt':
