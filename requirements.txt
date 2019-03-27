@@ -3,4 +3,4 @@ requests
 lxml
 bs4
 pywinauto
-pyautogui
+pyautogui==0.9.39

@@ -1,0 +1,4 @@
+pyinstaller
+cython
+pip-chill
+pip-autoremove
