@@ -85,19 +85,19 @@ class SolusVMClientToolkit:
             self.svr.shutdown()
             self.svr.boot()
 
-    def ping(self):
+    def ping(self, count=3):
         if os.name == 'nt':
-            cmd = 'ping -n 1 {}'
+            cmd = 'ping -n {} {}'
         else:
-            cmd = 'ping -c 1 {}'
-        cmd = cmd.format(self.svr.ip)
+            cmd = 'ping -c {} {}'
+        cmd = cmd.format(count, self.svr.ip)
         ec = os.system(cmd)
         if ec:
             return False
         else:
             return True
 
-    def keep_online(self, nap: float = 60, by_ping: bool = True):
+    def keep_online(self, nap: float = 300, by_ping: bool = True):
         while True:
             if by_ping:
                 if self.ping():
