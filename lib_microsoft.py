@@ -10,21 +10,21 @@ class MicrosoftOfficeWordCOM:
     # reference code from https://blog.csdn.net/baidu_39416074/article/details/80926443
     """Microsoft Office Word COM Wrap."""
 
-    def __init__(self, filepath=None, seen=False):
+    def __init__(self, filepath=None, visible=False):
         # self._word = win32com.client.Dispatch('Word.Application')  # 此处使用的是Dispatch，原文中使用的DispatchEx会报错
         self._word = win32com.client.DispatchEx('Word.Application')
-        self._word.Visible = seen  # 后台运行，不显示
-        self._word.DisplayAlerts = seen  # 不警告
+        self._word.Visible = visible  # 后台运行，不显示
+        self._word.DisplayAlerts = visible  # 不警告
         if filepath:
-            self.filepath = filepath
-            if os.path.exists(self.filepath):
+            self._filepath = filepath
+            if os.path.exists(self._filepath):
                 self._doc = self._word.Documents.Open(filepath)
             else:
                 self._doc = self._word.Documents.Add()  # 创建新的文档
                 self._doc.SaveAs(filepath)
         else:
             self._doc = self._word.Documents.Add()
-            self.filepath = ''
+            self._filepath = ''
 
     @property
     def app(self):
@@ -33,6 +33,10 @@ class MicrosoftOfficeWordCOM:
     @property
     def doc(self):
         return self._doc
+
+    @property
+    def filepath(self):
+        return self._filepath
 
     def insert_at_top(self, text):
         rng = self._doc.Range()
@@ -62,6 +66,7 @@ class MicrosoftOfficeWordCOM:
 
     def open(self, filepath):
         self._doc = self._word.Documents.Open(filepath)
+        self._filepath = filepath
 
     def save(self):
         self._doc.Save()
@@ -72,6 +77,7 @@ class MicrosoftOfficeWordCOM:
     def close(self, save=True):
         if save: self.save()
         self._word.Documents.Close()
+        self._filepath = ''
 
     def quit(self, save=True):
         try:
