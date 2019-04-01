@@ -20,6 +20,7 @@
       <option name="ignoredIdentifiers">
         <list>
           <option value="pywinauto.win32functions" />
+          <option value="pywintypes.com_error" />
         </list>
       </option>
     </inspection_tool>
