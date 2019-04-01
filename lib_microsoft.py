@@ -16,15 +16,15 @@ class MicrosoftOfficeWordCOM:
         self._word.Visible = seen  # 后台运行，不显示
         self._word.DisplayAlerts = seen  # 不警告
         if filepath:
-            self.filename = filepath
-            if os.path.exists(self.filename):
+            self.filepath = filepath
+            if os.path.exists(self.filepath):
                 self._doc = self._word.Documents.Open(filepath)
             else:
                 self._doc = self._word.Documents.Add()  # 创建新的文档
                 self._doc.SaveAs(filepath)
         else:
             self._doc = self._word.Documents.Add()
-            self.filename = ''
+            self.filepath = ''
 
     @property
     def app(self):
