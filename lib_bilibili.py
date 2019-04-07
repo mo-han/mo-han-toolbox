@@ -6,9 +6,8 @@ import re
 import shutil
 from glob import glob
 
-from lib_ffmpeg_cmd import concat_videos
-from lib_misc import safe_print, validated_path
-from lib_webapi import get_headless_browser
+from lib_ffmpeg import concat_videos
+from lib_misc import safe_print, validated_path, get_headless_browser
 
 
 class BilibiliError(RuntimeError):

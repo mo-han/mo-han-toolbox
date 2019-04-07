@@ -5,15 +5,6 @@ import lowendspirit
 import hurry.filesize
 from time import sleep
 import os
-import splinter
-
-USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'
-
-
-def get_headless_browser(browser_type='phantomjs', user_agent=USER_AGENT_FIREFOX_WIN10) -> splinter.Browser:
-    b=splinter.Browser(browser_type, user_agent=user_agent)
-    b.driver.set_window_size(800, 600)
-    return b
 
 
 class SolusVMClientAPI(lowendspirit.Solus_Enduser_API):

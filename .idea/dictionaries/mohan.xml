@@ -3,7 +3,10 @@
     <words>
       <w>alpharacks</w>
       <w>appcache</w>
+      <w>autoremove</w>
+      <w>cloudapi</w>
       <w>coverpage</w>
+      <w>cython</w>
       <w>danmaku</w>
       <w>dirname</w>
       <w>dota</w>
@@ -16,6 +19,7 @@
       <w>hentai</w>
       <w>imagefile</w>
       <w>jijidown</w>
+      <w>localapi</w>
       <w>loglevel</w>
       <w>lowendspirit</w>
       <w>lxml</w>
@@ -23,6 +27,7 @@
       <w>nhentai</w>
       <w>phantomjs</w>
       <w>photosmasters</w>
+      <w>ptpython</w>
       <w>pyautogui</w>
       <w>pywinauto</w>
       <w>solus</w>
