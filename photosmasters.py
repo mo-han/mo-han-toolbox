@@ -13,7 +13,7 @@ import json
 from requests import get, head
 from bs4 import BeautifulSoup
 
-from lib_misc import win32_ctrl_c, ExitCode, rectify_path_char, LOG_FMT, LOG_FMT_MESSAGE_ONLY
+from lib_misc import win32_ctrl_c, ExitCode, rectify_basename, LOG_FMT, LOG_FMT_MESSAGE_ONLY
 
 DB_FILE = 'db.json'
 INFO_FILE = 'info.txt'
@@ -99,7 +99,7 @@ def download(pid: str, purl: str, name: str):
     pdb = db[pid]
     if len(name.encode()) > 240:
         name = name[:50].rstrip() + ' ... ' + name[-25:].lstrip()
-    pdb['name'] = rectify_path_char(name)
+    pdb['name'] = rectify_basename(name)
     url = pdb['url']
     file = os.path.join(dl_dir, '{} - {}{}'.format(pdb['name'], pid, pdb['ext']))
     _logger.debug('{} <-> {}'.format(pdb, file))

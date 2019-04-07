@@ -16,10 +16,12 @@
       <w>fmpeg</w>
       <w>fullsize</w>
       <w>gallerythumb</w>
+      <w>ghostdriver</w>
       <w>hentai</w>
       <w>imagefile</w>
       <w>jijidown</w>
       <w>localapi</w>
+      <w>locallib</w>
       <w>loglevel</w>
       <w>lowendspirit</w>
       <w>lxml</w>
@@ -38,6 +40,8 @@
       <w>vmstat</w>
       <w>vpscp</w>
       <w>vupload</w>
+      <w>webdriver</w>
+      <w>winbin</w>
     </words>
   </dictionary>
 </component>

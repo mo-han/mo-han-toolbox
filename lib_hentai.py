@@ -11,7 +11,7 @@ from time import sleep
 from multiprocessing.dummy import Pool
 # import platform
 
-from lib_misc import rectify_path_char
+from lib_misc import rectify_basename
 
 
 _requests_session = requests.Session()
@@ -112,7 +112,7 @@ class NHentaiKit:
         if dl_dir:
             self.logger.info('Download to dir: {}'.format(dl_dir))
         title, all_pic_url_list = gallery_src
-        cbz_name = rectify_path_char(title) + '.cbz'
+        cbz_name = rectify_basename(title) + '.cbz'
         self.logger.info('Save to file: {}'.format(cbz_name))
         cbz_path = os.path.join(dl_dir, cbz_name)
         err_log_path = cbz_path + '.error.log'
@@ -294,7 +294,7 @@ class HentaiCafeKit:
             logger.info('{} ({})'.format(ch_title, ch_uri))
             chapter_dl = self.download_chapter_gen(ch_uri)
             if chapter_dl:
-                with zipfile.ZipFile('{}.cbz'.format(rectify_path_char(ch_title)), 'w') as cbz:
+                with zipfile.ZipFile('{}.cbz'.format(rectify_basename(ch_title)), 'w') as cbz:
                     logger.debug(cbz)
                     for image, name, size in chapter_dl:
                         logger.info('{}: {} ({})'.format(ch_title, name, size))

@@ -7,7 +7,7 @@ import shutil
 from glob import glob
 
 from lib_ffmpeg import concat_videos
-from lib_misc import safe_print, validated_path, get_headless_browser
+from lib_misc import safe_print, safe_basename, get_headless_browser
 
 
 class BilibiliError(RuntimeError):
@@ -85,7 +85,7 @@ class AppOfflineCacheFolder:
                 self.handle_bangumi()
 
     def handle_vupload(self):
-        title = validated_path(self.entry['title'])
+        title = safe_basename(self.entry['title'])
         blv_list = glob(os.path.join(self.folder, self.part, self.entry['type_tag'], '*.blv'))
         try:
             uploader = self.get_uploader()
@@ -93,7 +93,7 @@ class AppOfflineCacheFolder:
             uploader = 'na'
         output = os.path.join(self.work_dir, '{} [av{}][{}]'.format(title, self.id, uploader))
         if len(self.part_list) >= 2:
-            part_title = validated_path(self.entry['page_data']['part'])
+            part_title = safe_basename(self.entry['page_data']['part'])
             output += '{}-{}.mp4'.format(self.part, part_title)
         else:
             output += '.mp4'
@@ -102,9 +102,9 @@ class AppOfflineCacheFolder:
         shutil.copy2(os.path.join(self.folder, self.part, 'danmaku.xml'), output[:-3] + 'xml')
 
     def handle_bangumi(self):
-        title = validated_path(self.entry['title'])
+        title = safe_basename(self.entry['title'])
         blv_list = glob(os.path.join(self.folder, self.part, self.entry['type_tag'], '*.blv'))
-        part_title = validated_path(self.entry['ep']['index_title'])
+        part_title = safe_basename(self.entry['ep']['index_title'])
         av_id = self.entry['ep']['av_id']
         ep_num = self.entry['ep']['index']
         output_dir = os.path.join(self.work_dir, '{} [av{}][{}]'.format(title, av_id, self.id))
