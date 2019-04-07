@@ -3,10 +3,10 @@
 
 import sys
 
-from lib_ffmpeg_cmd import concat_videos
+from lib_ffmpeg_cmd import _concat_videos_deprecated
 
 args = sys.argv[1:]
 if args:
-    concat_videos(*args)
+    _concat_videos_deprecated(*args)
 else:
     print('{} input1 input2 ... output'.format(sys.argv[1]))

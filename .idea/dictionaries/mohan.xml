@@ -2,7 +2,9 @@
   <dictionary name="mohan">
     <words>
       <w>alpharacks</w>
+      <w>appcache</w>
       <w>coverpage</w>
+      <w>danmaku</w>
       <w>dirname</w>
       <w>dota</w>
       <w>dropdown</w>
@@ -19,6 +21,7 @@
       <w>lxml</w>
       <w>mpeg</w>
       <w>nhentai</w>
+      <w>phantomjs</w>
       <w>photosmasters</w>
       <w>pyautogui</w>
       <w>pywinauto</w>
@@ -29,6 +32,7 @@
       <w>virmach</w>
       <w>vmstat</w>
       <w>vpscp</w>
+      <w>vupload</w>
     </words>
   </dictionary>
 </component>

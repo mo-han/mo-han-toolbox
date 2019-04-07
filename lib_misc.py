@@ -11,6 +11,15 @@ LOG_DATETIME_SEC = '%Y-%m-%d %H:%M:%s'
 LOG_FMT = LOG_FMT_SHORT_LEVEL_TIME_NAME
 LOG_DTF = LOG_DATETIME_SEC
 
+ILLEGAL_CHARS = ['\\', '/', ':', '*', '"', '<', '>', '|', '?']
+
+
+def validated_path(s: str):
+    p = s
+    for i in ILLEGAL_CHARS:
+        p = p.replace(i, ' ')
+    return p
+
 
 def safe_print(s):
     s = str(s)
@@ -19,11 +28,11 @@ def safe_print(s):
     except UnicodeEncodeError:
         for c in s:
             try:
-                print(c, sep='', end='')
+                print(c, end='')
             except UnicodeEncodeError:
                 pass
-            finally:
-                print()
+        else:
+            print()
 
 
 def win32_ctrl_c():
