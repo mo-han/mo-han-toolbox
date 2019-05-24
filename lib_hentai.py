@@ -209,6 +209,7 @@ class HentaiCafeKit:
                         chapter_title,
                     )
                 )
+                chapter_title = chapter_title.replace('&amp;', '&')
                 result_l.append((chapter_uri, chapter_title))
             return result_l
         else:  # single chapter
