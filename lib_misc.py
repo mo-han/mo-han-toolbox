@@ -59,7 +59,7 @@ def win32_ctrl_c():
 def rectify_basename(s: str, replace: bool = True):
     char_map = {
         '\\': '⧹',
-        '/': '⁄',
+        '/': '／',
         '|': '￨',
         ':': '˸',
         '*': '∗',
