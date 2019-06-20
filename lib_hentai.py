@@ -64,7 +64,7 @@ def http_get(url: str, head_only: bool = False, max_retries: int = 3, retry_inte
 
 
 class NHentaiKit:
-    def __init__(self, max_dl: int = 10):
+    def __init__(self, max_dl: int = 3):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.__max_dl = max_dl
         self.logger.info('{} downloading threads.'.format(self.__max_dl))
