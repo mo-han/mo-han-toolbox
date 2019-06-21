@@ -154,7 +154,7 @@ class HentaiDownloadError(HentaiException):
 
 
 class HentaiCafeKit:
-    def __init__(self, max_dl: int = 5):
+    def __init__(self, max_dl: int = 3):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.max_dl = max_dl
         self.dl_pool = self.get_pool(max_dl)
