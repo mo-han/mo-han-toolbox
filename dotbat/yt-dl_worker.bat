@@ -6,14 +6,13 @@
 setlocal
 title "%url%"
 
-set /a retry=0
-set retry_max=3
+set split=5
 
 if %url:~0,1%==[ ( if %url:~-1%==] ( set url=https://www.youtube.com/watch?v=%url:~1,-1% ))
 set base_args_uploader=-o "%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s" --yes-playlist "%url%"
 rem set base_args_iwara=-o "%%(title)s [%%(id)s][%%(uploader)s][%%(creator)s][%%(uploader_id)s].%%(ext)s" --yes-playlist "%url%"
 set base_args_iwara=-o "%%(title)s [%%(id)s].%%(ext)s" --yes-playlist "%url%"
-set arial2_args=--external-downloader aria2c --external-downloader-args "-x8 -s8 -k 1M"
+set arial2_args=--youtube-skip-dash-manifest --external-downloader aria2c --external-downloader-args "-x%split% -s%split% -k 1M"
 set arial2_proxy_args=--proxy=%proxy% %arial2_args%
 rem set arial2_proxy_args=--proxy=%proxy% %arial2_args% --external-downloader-args "--all-proxy=%proxy% -x10 -s10"
 
@@ -54,14 +53,24 @@ goto :download
 :download
 echo %args%
 youtube-dl.exe %args%
-:: Success or failure? 
+rem echo %errorlevel%
+rem pause
+set /a pause=(%random%*60/32768)+60
 if errorlevel 1 (
-  set /a retry+=1
-  if %retry% lss %retry_max% goto :download
-  set /p "_fin=Try again or [q]uit ? "
-  if not defined _fin goto :download
-  if not "%_fin%"=="q" goto :download
-  if "%_fin%"=="q" goto :end
+rem   set /a retry+=1
+rem   if %retry% lss %retry_max% goto :download
+rem   set /p "_fin=Try again or [q]uit ? "
+rem   if not defined _fin (
+rem     set /a retry=0
+rem     goto :download
+rem   )
+rem   if not "%_fin%"=="q" (
+rem     set /a retry=0
+rem     goto :download
+rem   )
+rem   if "%_fin%"=="q" goto :end
+  timeout %pause%
+  goto :download
 ) else (
   echo --------------------------------
   echo DOWNLOAD SUCCESS
@@ -76,9 +85,18 @@ echo --------------------------------
 goto :prompt
 
 :end
+rem pause
 exit
 
 :: Changelog
+:: [0.4.2] - 2019-09-29
+:: * retry interval range changed from 30s~60s to 60s~120s.
+:: [0.4.1] - 2019-09-23
+:: * when failed downloading, wait a random time between 30~60 sec before retrying.
+:: [0.4.0] - 2019-09-10
+:: * when encouting error, wait for 60s then retry, rather than pause and prompt.
+:: [0.3.4] - 2019-09-01
+:: + --youtube-skip-dash-manifest
 :: [0.3.3] - 2019-07-28
 :: + youtube video id inside "[]" being detected and auto-completed.
 :: [0.3.2] - 2019-07-20
