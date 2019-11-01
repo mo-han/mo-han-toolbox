@@ -6,13 +6,14 @@
 setlocal
 title "%url%"
 
-set split=5
+set split=10
+set pause_range=5
 
 if %url:~0,1%==[ ( if %url:~-1%==] ( set url=https://www.youtube.com/watch?v=%url:~1,-1% ))
-set base_args_uploader=-o "%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s" --yes-playlist "%url%"
+set base_args_uploader=--youtube-skip-dash-manifest -o "%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s" --yes-playlist "%url%"
 rem set base_args_iwara=-o "%%(title)s [%%(id)s][%%(uploader)s][%%(creator)s][%%(uploader_id)s].%%(ext)s" --yes-playlist "%url%"
 set base_args_iwara=-o "%%(title)s [%%(id)s].%%(ext)s" --yes-playlist "%url%"
-set arial2_args=--youtube-skip-dash-manifest --external-downloader aria2c --external-downloader-args "-x%split% -s%split% -k 1M"
+set arial2_args=--external-downloader aria2c --external-downloader-args "-x%split% -s%split% -k 1M"
 set arial2_proxy_args=--proxy=%proxy% %arial2_args%
 rem set arial2_proxy_args=--proxy=%proxy% %arial2_args% --external-downloader-args "--all-proxy=%proxy% -x10 -s10"
 
@@ -29,6 +30,8 @@ if %errorlevel%==0 set args=%arial2_args% %base_args_uploader%
 rem Append `--no-check-certificate` for YouTube. Have no idea but it works. And since it's just video data downloaded, there should be no security/privacy issue.
 rem echo "%url%" | findstr "youtube youtu.be" > nul
 rem if %errorlevel%==0 set args=--no-check-certificate %args%
+
+call yt-dl.custom.bat
 echo %args%
 echo --------------------------------
 
@@ -55,7 +58,7 @@ echo %args%
 youtube-dl.exe %args%
 rem echo %errorlevel%
 rem pause
-set /a pause=(%random%*60/32768)+60
+set /a pause=(%random%*%pause_range%/32768)+%pause_range%
 if errorlevel 1 (
 rem   set /a retry+=1
 rem   if %retry% lss %retry_max% goto :download
@@ -89,6 +92,8 @@ rem pause
 exit
 
 :: Changelog
+:: [0.5.0] - 2019-11-01
+:: + call a new script `yt-dl.custom.bat` after per-site-adjustment procedure.
 :: [0.4.2] - 2019-09-29
 :: * retry interval range changed from 30s~60s to 60s~120s.
 :: [0.4.1] - 2019-09-23
