@@ -79,7 +79,7 @@ class BilibiliAppCacheEntry:
                     open(os.path.join(self.folder, part, 'entry.json'), encoding='utf8'))
             except FileNotFoundError:
                 # os.remove(os.path.join(self.folder, part))
-                print('    NO META FOUND')
+                print('    NO JSON META FOUND')
                 continue
             if 'page_data' in meta:
                 self.extract_vupload()
@@ -106,6 +106,8 @@ class BilibiliAppCacheEntry:
         elif '0.blv' in stream_list:
             blv_list = [s for s in stream_list if s[-4:] == '.blv']
             concat_videos(blv_list, output)
+        else:
+            print('    NO MEDIA STREAM FOUND')
         shutil.copy2(os.path.join(self.folder, self._current_part, 'danmaku.xml'), output[:-3] + 'xml')
 
     def extract_bangumi(self):
