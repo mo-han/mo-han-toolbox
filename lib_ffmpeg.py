@@ -38,7 +38,7 @@ def concat_videos(input_list: list, output_path: str):
 
 
 def merge_m4s(m4s_list: list, output_path: str):
-    cmd = 'ffmpeg '
+    cmd = 'ffmpeg -n -hide_banner -loglevel warning '
     for m in m4s_list:
         cmd += '-i "{}" '.format(m)
     cmd += '-codec copy "{}"'.format(output_path)
