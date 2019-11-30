@@ -89,6 +89,7 @@ class BilibiliAppCacheEntry:
     def extract_vupload(self):
         title = safe_basename(self._current_meta['title'])
         stream_list = glob(os.path.join(self.folder, self._current_part, self._current_meta['type_tag'], '*'))
+        print(stream_list)
         try:
             uploader = '[{}]'.format(self.get_uploader())
         except BilibiliError:
