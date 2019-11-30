@@ -16,8 +16,12 @@ filetype plugin indent on
 
 " line number
 set number
-"noremap <F3> :set invnumber<CR>
-"inoremap <F3> <C-O>:set invnumber<CR>
+noremap <F3> :set invnumber<CR>
+inoremap <F3> <C-O>:set invnumber<CR>
+
+" Toggle paste
+nnoremap <F2> :set invpaste paste?<CR>
+set pastetoggle=<F2>
 
 " set cursorline
 :hi CursorLine term=inverse cterm=inverse gui=inverse
@@ -25,11 +29,6 @@ set number
 set ruler
 set showmode " Show mode in INSERT, REPLACE, VISUAL
 
-" Toggle paste
-" Invert "paste" when pressing F2 in NORMAL, and then show the "paste" value
-nnoremap <F10> :set invpaste paste?<CR>
-" Toggle "paste" when pressing F2 in INSERT
-set pastetoggle=<F10>
 " Tab Settings
 set tabstop=2
 set expandtab " Ctrl+V,Tab;Ctrl+Q,Tab
@@ -38,6 +37,7 @@ set shiftwidth=2
 set autoindent
 set smartindent
 set smarttab " shiftwidth at beginning, tabstop & softtabstop elsewhere
+
 " Searching
 set ignorecase
 set smartcase
