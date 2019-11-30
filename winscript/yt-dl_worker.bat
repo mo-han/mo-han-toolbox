@@ -9,7 +9,11 @@ title "%url%"
 set split=10
 set pause_range=5
 
-if %url:~0,1%==[ ( if %url:~-1%==] ( set url=https://www.youtube.com/watch?v=%url:~1,-1% ))
+if %url:~0,3%==[ph ( if %url:~-1%==] ( set url=https://www.pornhub.com/view_video.php?viewkey=%url:~1,-1% && goto :end_of_url))
+if %url:~0,3%==[sm ( if %url:~-1%==] ( set url=https://www.nicovideo.jp/watch/%url:~1,-1% && goto :end_of_url))
+if %url:~0,1%==[ ( if %url:~-1%==] ( set url=https://www.youtube.com/watch?v=%url:~1,-1% && goto :end_of_url))
+:end_of_url
+rem set base_args_uploader=--embed-thumbnail --embed-subs --youtube-skip-dash-manifest -o "%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s" --yes-playlist "%url%"
 set base_args_uploader=--youtube-skip-dash-manifest -o "%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s" --yes-playlist "%url%"
 rem set base_args_iwara=-o "%%(title)s [%%(id)s][%%(uploader)s][%%(creator)s][%%(uploader_id)s].%%(ext)s" --yes-playlist "%url%"
 set base_args_iwara=-o "%%(title)s [%%(id)s].%%(ext)s" --yes-playlist "%url%"

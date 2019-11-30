@@ -4,7 +4,7 @@ import os
 import sys
 from glob import glob
 
-from lib_bilibili import AppOfflineCacheFolder
+from lib_bilibili import BilibiliAppCacheEntry
 
 if __name__ == '__main__':
     # _, base = os.path.split(sys.argv[1])
@@ -15,5 +15,5 @@ if __name__ == '__main__':
     for folder in args:
         if not os.path.isdir(folder):
             continue
-        f = AppOfflineCacheFolder(folder)
-        f.handle_part()
+        f = BilibiliAppCacheEntry(folder)
+        f.extract_part()

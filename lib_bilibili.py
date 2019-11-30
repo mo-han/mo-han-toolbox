@@ -6,7 +6,7 @@ import re
 import shutil
 from glob import glob
 
-from lib_ffmpeg import concat_videos
+from lib_ffmpeg import concat_videos, merge_m4s
 from lib_misc import safe_print, safe_basename, get_headless_browser
 
 
@@ -48,7 +48,7 @@ def jijidown_rename_alpha(path: str, part_num=True):
         print('Not exist: {}'.format(path))
 
 
-class AppOfflineCacheFolder:
+class BilibiliAppCacheEntry:
     browser = get_headless_browser()
 
     def __init__(self, vid_dir_path):
@@ -56,8 +56,8 @@ class AppOfflineCacheFolder:
         self.work_dir, self.id = os.path.split(os.path.realpath(vid_dir_path))
         self.part_list = os.listdir(vid_dir_path)
         self.part_sum = len(self.part_list)
-        self.part = None
-        self.entry = None
+        self._current_part = None
+        self._current_meta = None
 
     def get_uploader(self):
         url = 'https://www.bilibili.com/video/av{}/'.format(self.id)
@@ -69,48 +69,55 @@ class AppOfflineCacheFolder:
         else:
             raise BilibiliError('No author found.')
 
-    def handle_part(self):
+    def extract_part(self):
         print('+ {}'.format(self.folder))
         for part in self.part_list:
-            self.part = part
+            self._current_part = part
             print('  + {}'.format(part), end=': ')
             try:
-                self.entry = entry = json.load(open(os.path.join(self.folder, part, 'entry.json'), encoding='utf8'))
+                self._current_meta = meta = json.load(
+                    open(os.path.join(self.folder, part, 'entry.json'), encoding='utf8'))
             except FileNotFoundError:
-                os.remove(os.path.join(self.folder, part))
+                # os.remove(os.path.join(self.folder, part))
+                print('    NO META FOUND')
                 continue
-            if 'page_data' in entry:
-                self.handle_vupload()
-            elif 'ep' in entry:
-                self.handle_bangumi()
+            if 'page_data' in meta:
+                self.extract_vupload()
+            elif 'ep' in meta:
+                self.extract_bangumi()
 
-    def handle_vupload(self):
-        title = safe_basename(self.entry['title'])
-        blv_list = glob(os.path.join(self.folder, self.part, self.entry['type_tag'], '*.blv'))
+    def extract_vupload(self):
+        title = safe_basename(self._current_meta['title'])
+        stream_list = glob(os.path.join(self.folder, self._current_part, self._current_meta['type_tag'], '*'))
         try:
-            uploader = self.get_uploader()
+            uploader = '[{}]'.format(self.get_uploader())
         except BilibiliError:
-            uploader = 'na'
-        output = os.path.join(self.work_dir, '{} [av{}][{}]'.format(title, self.id, uploader))
+            uploader = ''
+        output = os.path.join(self.work_dir, '{} [av{}]{}'.format(title, self.id, uploader))
         if len(self.part_list) >= 2:
-            part_title = safe_basename(self.entry['page_data']['part'])
-            output += '{}-{}.mp4'.format(self.part, part_title)
+            part_title = safe_basename(self._current_meta['page_data']['part'])
+            output += '{}-{}.mp4'.format(self._current_part, part_title)
         else:
             output += '.mp4'
         safe_print(output)
-        concat_videos(blv_list, output)
-        shutil.copy2(os.path.join(self.folder, self.part, 'danmaku.xml'), output[:-3] + 'xml')
+        if 'video.m4s' in stream_list:
+            m4s_list = [s for s in stream_list if s[-4:] == '.m4s']
+            merge_m4s(m4s_list, output)
+        elif '0.blv' in stream_list:
+            blv_list = [s for s in stream_list if s[-4:] == '.blv']
+            concat_videos(blv_list, output)
+        shutil.copy2(os.path.join(self.folder, self._current_part, 'danmaku.xml'), output[:-3] + 'xml')
 
-    def handle_bangumi(self):
-        title = safe_basename(self.entry['title'])
-        blv_list = glob(os.path.join(self.folder, self.part, self.entry['type_tag'], '*.blv'))
-        part_title = safe_basename(self.entry['ep']['index_title'])
-        av_id = self.entry['ep']['av_id']
-        ep_num = self.entry['ep']['index']
+    def extract_bangumi(self):
+        title = safe_basename(self._current_meta['title'])
+        blv_list = glob(os.path.join(self.folder, self._current_part, self._current_meta['type_tag'], '*.blv'))
+        part_title = safe_basename(self._current_meta['ep']['index_title'])
+        av_id = self._current_meta['ep']['av_id']
+        ep_num = self._current_meta['ep']['index']
         output_dir = os.path.join(self.work_dir, '{} [av{}][{}]'.format(title, av_id, self.id))
         if not os.path.isdir(output_dir):
             os.mkdir(output_dir)
         output = os.path.join(output_dir, '{}. {}.mp4'.format(str(ep_num).zfill(len(str(self.part_sum))), part_title))
         safe_print(output)
         concat_videos(blv_list, output)
-        shutil.copy2(os.path.join(self.folder, self.part, 'danmaku.xml'), output[:-3] + 'xml')
+        shutil.copy2(os.path.join(self.folder, self._current_part, 'danmaku.xml'), output[:-3] + 'xml')
