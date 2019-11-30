@@ -88,8 +88,8 @@ class BilibiliAppCacheEntry:
 
     def extract_vupload(self):
         title = safe_basename(self._current_meta['title'])
-        stream_list = glob(os.path.join(self.folder, self._current_part, self._current_meta['type_tag'], '*'))
-        print(stream_list)
+        file_list = glob(os.path.join(self.folder, self._current_part, self._current_meta['type_tag'], '*'))
+        ext_list = [f[-4:] for f in file_list]
         try:
             uploader = '[{}]'.format(self.get_uploader())
         except BilibiliError:
@@ -101,11 +101,11 @@ class BilibiliAppCacheEntry:
         else:
             output += '.mp4'
         safe_print(output)
-        if 'video.m4s' in stream_list:
-            m4s_list = [s for s in stream_list if s[-4:] == '.m4s']
+        if '.m4s' in ext_list:
+            m4s_list = [f for f in file_list if f[-4:] == '.m4s']
             merge_m4s(m4s_list, output)
-        elif '0.blv' in stream_list:
-            blv_list = [s for s in stream_list if s[-4:] == '.blv']
+        elif '.blv' in ext_list:
+            blv_list = [f for f in file_list if f[-4:] == '.blv']
             concat_videos(blv_list, output)
         else:
             print('    NO MEDIA STREAM FOUND')
