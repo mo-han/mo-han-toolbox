@@ -9,15 +9,15 @@ title "%url%"
 set split=10
 set pause_range=5
 
-if %url:~0,3%==[ph ( if %url:~-1%==] ( set url=https://www.pornhub.com/view_video.php?viewkey=%url:~1,-1% && goto :end_of_url))
-if %url:~0,3%==[sm ( if %url:~-1%==] ( set url=https://www.nicovideo.jp/watch/%url:~1,-1% && goto :end_of_url))
-if %url:~0,1%==[ ( if %url:~-1%==] ( set url=https://www.youtube.com/watch?v=%url:~1,-1% && goto :end_of_url))
+if %url:~0,3%==[ph ( if %url:~-1%==] ( set url=https://www.pornhub.com/view_video.php?viewkey=%url:~1,-1% && goto :end_url_completion))
+if %url:~0,3%==[sm ( if %url:~-1%==] ( set url=https://www.nicovideo.jp/watch/%url:~1,-1% && goto :end_url_completion))
+if %url:~0,1%==[ ( if %url:~-1%==] ( set url=https://www.youtube.com/watch?v=%url:~1,-1% && goto :end_url_completion))
 :end_url_completion
-set base_args_uploader=--embed-thumbnail --embed-subs --youtube-skip-dash-manifest -o "%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s" --yes-playlist "%url%"
-rem set base_args_uploader=--youtube-skip-dash-manifest -o "%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s" --yes-playlist "%url%"
+rem set base_args_uploader=--embed-thumbnail --embed-subs --youtube-skip-dash-manifest -o "%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s" --yes-playlist "%url%"
+set base_args_uploader=--youtube-skip-dash-manifest -o "%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s" --yes-playlist "%url%"
 rem set base_args_iwara=-o "%%(title)s [%%(id)s][%%(uploader)s][%%(creator)s][%%(uploader_id)s].%%(ext)s" --yes-playlist "%url%"
 set base_args_iwara=-o "%%(title)s [%%(id)s].%%(ext)s" --yes-playlist "%url%"
-set arial2_args=--external-downloader aria2c --external-downloader-args "-x%split% -s%split% -k 1M --file-allocation=falloc"
+set arial2_args=--external-downloader aria2c --external-downloader-args "-x%split% -s%split% -k 1M --file-allocation=trunc"
 set arial2_proxy_args=--proxy=%proxy% %arial2_args%
 rem set arial2_proxy_args=--proxy=%proxy% %arial2_args% --external-downloader-args "--all-proxy=%proxy% -x10 -s10"
 set args=%arial2_proxy_args% %base_args_uploader%
@@ -96,6 +96,9 @@ rem pause
 exit
 
 :: Changelog
+:: [0.5.2] - 2019-12-07
+:: - embed thumbnail & subs;
+:: * aria2 use trunc.
 :: [0.5.1] - 2019-12-07
 :: + embed thumbnail & subs; aria2 use falloc.
 :: [0.5.0] - 2019-11-01
