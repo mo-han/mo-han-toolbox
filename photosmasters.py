@@ -13,7 +13,7 @@ import json
 from requests import get, head
 from bs4 import BeautifulSoup
 
-from lib_misc import win32_ctrl_c, ExitCode, rectify_basename, LOG_FMT, LOG_FMT_MESSAGE_ONLY
+from lib_base import win32_ctrl_c, ExitCode, rectify_basename, LOG_FMT, LOG_FMT_MESSAGE_ONLY
 
 DB_FILE = 'db.json'
 INFO_FILE = 'info.txt'

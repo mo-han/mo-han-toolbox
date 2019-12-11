@@ -2,11 +2,7 @@
 
 import signal
 import sys
-import os
-import splinter
 import tempfile
-
-USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'
 
 LOG_FMT_MESSAGE_ONLY = '%(message)s'
 LOG_FMT_SHORT_LEVEL_SHORT_TIME_NAME = '[%(levelname).1s %(asctime).19s] [%(name)s] %(message)s'
@@ -17,17 +13,6 @@ LOG_DTF = LOG_DATETIME_SEC
 
 TEMPDIR = tempfile.gettempdir()
 ILLEGAL_CHARS = ['\\', '/', ':', '*', '"', '<', '>', '|', '?']
-
-
-def get_headless_browser(browser_type='phantomjs', user_agent=USER_AGENT_FIREFOX_WIN10) -> splinter.Browser:
-    b = splinter.Browser(
-        browser_type,
-        user_agent=user_agent,
-        service_args=['--webdriver-loglevel=WARN'],
-        service_log_path=os.path.join(TEMPDIR, 'ghostdriver.log'),
-    )
-    b.driver.set_window_size(800, 600)
-    return b
 
 
 def safe_basename(s: str):

@@ -33,7 +33,7 @@ def concat_videos(input_list: list, output_path: str):
     os.system(
         # 'ffmpeg -n -hide_banner -loglevel +level -f concat -safe 0 -i "{}" -c copy "{}"'
         'ffmpeg -n -hide_banner -loglevel warning -f concat -safe 0 -i "{}" -c copy "{}"'
-            .format(list_path, output_path))
+        .format(list_path, output_path))
     os.remove(list_path)
 
 

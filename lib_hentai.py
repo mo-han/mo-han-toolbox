@@ -11,7 +11,7 @@ from time import sleep
 from multiprocessing.dummy import Pool
 # import platform
 
-from lib_misc import rectify_basename
+from lib_base import rectify_basename
 
 
 _requests_session = requests.Session()
