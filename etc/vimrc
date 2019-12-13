@@ -3,13 +3,13 @@ set nocompatible " shut down vi-compat
 "> vim-plug
 "> curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 "> https://github.com/junegunn/vim-plug#usage
-"call plug#begin()
-"Plug 'scrooloose/nerdcommenter'
-"Plug 'ervandew/supertab'
-"Plug 'chr4/nginx.vim'
-"Plug 'vim-airline/vim-airline'
-"Plug 'vim-airline/vim-airline-themes'
-"call plug#end()
+call plug#begin()
+Plug 'scrooloose/nerdcommenter'
+Plug 'ervandew/supertab'
+Plug 'chr4/nginx.vim'
+Plug 'vim-airline/vim-airline'
+Plug 'vim-airline/vim-airline-themes'
+call plug#end()
 
 syntax on
 filetype plugin indent on
