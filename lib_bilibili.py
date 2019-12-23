@@ -68,7 +68,8 @@ class BilibiliAppCacheEntry:
         if author:
             return author
         else:
-            raise BilibiliError('No author found.')
+            # raise BilibiliError('No author found.')
+            return ''
 
     def extract_part(self):
         print('+ {}'.format(self.folder))
@@ -91,10 +92,11 @@ class BilibiliAppCacheEntry:
         title = safe_basename(self._current_meta['title'])
         file_list = glob(os.path.join(self.folder, self._current_part, self._current_meta['type_tag'], '*'))
         ext_list = [f[-4:] for f in file_list]
-        try:
-            uploader = '[{}]'.format(self.get_uploader())
-        except BilibiliError:
-            uploader = ''
+        # try:
+        #     uploader = '[{}]'.format(self.get_uploader())
+        # except BilibiliError:
+        #     uploader = ''
+        uploader = '[{}]'.format(self.get_uploader() or 'NA')
         output = os.path.join(self.work_dir, '{} [av{}]{}'.format(title, self.id, uploader))
         if len(self.part_list) >= 2:
             part_title = safe_basename(self._current_meta['page_data']['part'])
