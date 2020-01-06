@@ -25,5 +25,5 @@ def new_phantomjs() -> splinter.Browser:
     return b
 
 
-def try_download(url: str, max_retries: int):
+def try_dl_file(url: str, max_retries: int = 3) -> tuple:
     pass
