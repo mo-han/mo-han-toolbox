@@ -55,6 +55,7 @@ def rectify_basename(s: str, replace: bool = True):
         '\t': '',
         '\r': '',
         '\n': '',
+        '&amp': '&',
     }
     if replace:
         for k, v in char_map.items():

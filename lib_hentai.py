@@ -225,7 +225,12 @@ class HentaiCafeKit:
             if isinstance(soup, str):
                 return [(soup, chapter_uri.rsplit('/', 1)[-1])]
             else:
-                pages_l = json.loads(regex.search(r'var pages = (.*);', soup('script')[-1].decode()).group(1))
+                # pages_l = json.loads(regex.search(r'var pages = (.*);', soup('script')[-2].decode()).group(1))
+                for s in soup('script'):
+                    r = regex.search(r'var pages = (.*);', s.decode())
+                    if r:
+                        pages_l = json.loads(r.group(1))
+                        break
                 logger.info(' └─ {} pages total.'.format(len(pages_l)))
                 result_l = []
                 for d in pages_l:
