@@ -16,6 +16,9 @@ logging.basicConfig(
 
 if __name__ == '__main__':
     win32_ctrl_c()
-    hc = HentaiCafeKit(5)
     uri = sys.argv[1]
+    if len(sys.argv) >= 3:
+        hc = HentaiCafeKit(int(sys.argv[2]))
+    else:
+        hc = HentaiCafeKit(5)
     hc.save_entry_to_cbz(uri)
