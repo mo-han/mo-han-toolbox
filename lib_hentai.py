@@ -309,16 +309,23 @@ class HentaiCafeKit:
                 chapter_dl = self.download_chapter_gen(ch_uri)
                 if chapter_dl:
                     dl_file = 'dl.txt'
-                    with zipfile.ZipFile('{}.cbz'.format(rectify_basename(ch_title)), 'a') as cbz:
-                        logger.debug(cbz)
-                        if dl_file in cbz.namelist():
-                            logger.info('Skip completed one.')
-                        else:
+                    complete = False
+                    try:
+                        with zipfile.ZipFile('{}.cbz'.format(rectify_basename(ch_title)), 'r') as cbz:
+                            if dl_file in cbz.namelist():
+                                complete = True
+                            cbz.close()
+                    except (zipfile.BadZipFile, FileNotFoundError):
+                        pass
+                    if complete:
+                        logger.info('Skip completed one.')
+                    else:
+                        with zipfile.ZipFile('{}.cbz'.format(rectify_basename(ch_title)), 'w') as cbz:
                             for image, name, size in chapter_dl:
                                 logger.info('{}: {} ({})'.format(ch_title, name, size))
                                 cbz.writestr(name, image)
                             cbz.writestr(dl_file, datetime.datetime.utcnow().replace(
                                 tzinfo=datetime.timezone.utc).astimezone().replace(microsecond=0).isoformat())
-                        cbz.close()
+                            cbz.close()
         except HentaiParseError:
             logger.info('ERROR WHEN PARSING THE MANGA!')
