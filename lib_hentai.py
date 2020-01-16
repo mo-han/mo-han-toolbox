@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import datetime
 import os
 import requests
 import logging
@@ -13,6 +13,7 @@ from multiprocessing.dummy import Pool
 
 from lib_base import rectify_basename
 
+DRAW_LINE_LENGTH = 32
 
 _requests_session = requests.Session()
 _requests_session.headers['User-Agent'] = \
@@ -149,6 +150,10 @@ class HentaiException(Exception):
     pass
 
 
+class HentaiParseError(HentaiException):
+    pass
+
+
 class HentaiDownloadError(HentaiException):
     pass
 
@@ -161,14 +166,14 @@ class HentaiCafeKit:
 
     def parse(self, uri: str) -> list:
         logger = self.logger
-        logger.info('<<< {}'.format(uri))
+        logger.info('=' * DRAW_LINE_LENGTH + '\n' + '{}'.format(uri))
         soup = get_soup(uri)
         if soup(text='Read Online'):  # It's an entry, just get the chapters.
             yield from self.get_chapters(soup)
         else:  # It's not an entry, but a search-result-page.
             entries = [i['href'] for i in soup('a', class_='entry-thumb')]
             for entry_uri in entries:  # All chapters in all entries.
-                logger.debug('<<<<< {}'.format(entry_uri))
+                logger.debug('{}'.format(entry_uri))
                 entry_soup = get_soup(entry_uri)
                 yield from self.get_chapters(entry_soup)
             if not regex.search(r'/page/\d+/', uri) and soup.find('span', class_='current'):  # Traverse
@@ -180,11 +185,11 @@ class HentaiCafeKit:
                 single = soup.find('a', class_='single_page')['href']
                 for n in list(range(int(current) + 1, int(last) + 1)):  # Traverse next page.
                     n_uri = regex.sub(r'/page/\d+', r'/page/{}'.format(n), single)  # URI of next page
-                    logger.info('<<< {}'.format(n_uri))
+                    logger.info('=' * DRAW_LINE_LENGTH + '\n' + '{}'.format(n_uri))
                     n_soup = get_soup(n_uri)
                     n_entries = [i['href'] for i in n_soup('a', class_='entry-thumb')]  # entries on next page
                     for entry_uri in n_entries:  # Similar as above.
-                        logger.debug('<<<<<< {}'.format(entry_uri))
+                        logger.debug('{}'.format(entry_uri))
                         entry_soup = get_soup(entry_uri)
                         yield from self.get_chapters(entry_soup)
 
@@ -231,7 +236,9 @@ class HentaiCafeKit:
                     if r:
                         pages_l = json.loads(r.group(1))
                         break
-                logger.info(' └─ {} pages total.'.format(len(pages_l)))
+                else:
+                    raise HentaiParseError
+                logger.info('{} pages total.'.format(len(pages_l)))
                 result_l = []
                 for d in pages_l:
                     result_l.append((d['thumb_url'], d['filename']))
@@ -240,7 +247,7 @@ class HentaiCafeKit:
             return
 
     def get_pool(self, num: int):
-        self.logger.info('====== {}x thread pool'.format(num))
+        self.logger.info('{}x thread pool'.format(num))
         p = Pool(num)
         self.logger.debug(p)
         return p
@@ -294,15 +301,24 @@ class HentaiCafeKit:
     def save_entry_to_cbz(self, uri: str):
         """Save a chapter to a local \".cbz\" file."""
         logger = self.logger
-        chapters = self.parse(uri)
-        for ch_uri, ch_title in chapters:
-            logger.debug((ch_uri, ch_title))
-            logger.info('{} ({})'.format(ch_title, ch_uri))
-            chapter_dl = self.download_chapter_gen(ch_uri)
-            if chapter_dl:
-                with zipfile.ZipFile('{}.cbz'.format(rectify_basename(ch_title)), 'w') as cbz:
-                    logger.debug(cbz)
-                    for image, name, size in chapter_dl:
-                        logger.info('{}: {} ({})'.format(ch_title, name, size))
-                        cbz.writestr(name, image)
-                    cbz.close()
+        try:
+            chapters = self.parse(uri)
+            for ch_uri, ch_title in chapters:
+                logger.debug((ch_uri, ch_title))
+                logger.info('-' * DRAW_LINE_LENGTH + '\n' + '{} ({})'.format(ch_title, ch_uri))
+                chapter_dl = self.download_chapter_gen(ch_uri)
+                if chapter_dl:
+                    dl_file = 'dl.txt'
+                    with zipfile.ZipFile('{}.cbz'.format(rectify_basename(ch_title)), 'a') as cbz:
+                        logger.debug(cbz)
+                        if dl_file in cbz.namelist():
+                            logger.info('Skip completed one.')
+                        else:
+                            for image, name, size in chapter_dl:
+                                logger.info('{}: {} ({})'.format(ch_title, name, size))
+                                cbz.writestr(name, image)
+                            cbz.writestr(dl_file, datetime.datetime.utcnow().replace(
+                                tzinfo=datetime.timezone.utc).astimezone().replace(microsecond=0).isoformat())
+                        cbz.close()
+        except HentaiParseError:
+            logger.info('ERROR WHEN PARSING THE MANGA!')
