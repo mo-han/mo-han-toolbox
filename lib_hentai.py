@@ -141,7 +141,13 @@ def get_soup(uri: str, parser: str = 'lxml', retry: int = 3):
             r = requests.get(uri)
             return BeautifulSoup(r.content, parser)
         except requests.exceptions.MissingSchema:
-            return False
+            # return False
+            uri = 'http://' + uri
+            retry += 1
+        except requests.exceptions.InvalidSchema:
+            uri = uri.split('://', maxsplit=1)
+            uri = 'http://' + uri[1]
+            retry += 1
         finally:
             retry -= 1
 
@@ -159,6 +165,8 @@ class HentaiDownloadError(HentaiException):
 
 
 class HentaiCafeKit:
+    __page_sum = ...  # type: int
+
     def __init__(self, max_dl: int = 3):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.max_dl = max_dl
@@ -238,7 +246,7 @@ class HentaiCafeKit:
                         break
                 else:
                     raise HentaiParseError
-                logger.info('{} pages total.'.format(len(pages_l)))
+                self.__page_sum = len(pages_l)
                 result_l = []
                 for d in pages_l:
                     result_l.append((d['thumb_url'], d['filename']))
@@ -307,6 +315,8 @@ class HentaiCafeKit:
                 logger.debug((ch_uri, ch_title))
                 logger.info('-' * DRAW_LINE_LENGTH + '\n' + '{} ({})'.format(ch_title, ch_uri))
                 chapter_dl = self.download_chapter_gen(ch_uri)
+                dl_counter = 0
+                print('Pages: [{}/{}]'.format(dl_counter, self.__page_sum), end='\r')
                 if chapter_dl:
                     dl_file = 'dl.txt'
                     complete = False
@@ -322,10 +332,13 @@ class HentaiCafeKit:
                     else:
                         with zipfile.ZipFile('{}.cbz'.format(rectify_basename(ch_title)), 'w') as cbz:
                             for image, name, size in chapter_dl:
-                                logger.info('{}: {} ({})'.format(ch_title, name, size))
+                                dl_counter += 1
+                                logger.debug('{}: {} ({})'.format(ch_title, name, size))
+                                print('Pages: [{}/{}]'.format(dl_counter, self.__page_sum), end='\r')
                                 cbz.writestr(name, image)
                             cbz.writestr(dl_file, datetime.datetime.utcnow().replace(
                                 tzinfo=datetime.timezone.utc).astimezone().replace(microsecond=0).isoformat())
                             cbz.close()
+                print()
         except HentaiParseError:
             logger.info('ERROR WHEN PARSING THE MANGA!')
