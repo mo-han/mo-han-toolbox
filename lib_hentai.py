@@ -255,7 +255,7 @@ class HentaiCafeKit:
             return
 
     def get_pool(self, num: int):
-        self.logger.info('{}x thread pool'.format(num))
+        self.logger.debug('{}x thread pool'.format(num))
         p = Pool(num)
         self.logger.debug(p)
         return p
@@ -309,11 +309,11 @@ class HentaiCafeKit:
     def save_entry_to_cbz(self, uri: str):
         """Save a chapter to a local \".cbz\" file."""
         logger = self.logger
-        try:
-            chapters = self.parse(uri)
-            for ch_uri, ch_title in chapters:
-                logger.debug((ch_uri, ch_title))
-                logger.info('-' * DRAW_LINE_LENGTH + '\n' + '{} ({})'.format(ch_title, ch_uri))
+        chapters = self.parse(uri)
+        for ch_uri, ch_title in chapters:
+            logger.debug((ch_uri, ch_title))
+            logger.info('-' * DRAW_LINE_LENGTH + '\n' + '{} ({})'.format(ch_title, ch_uri.split('<br')[0]))
+            try:
                 chapter_dl = self.download_chapter_gen(ch_uri)
                 dl_counter = 0
                 print('Pages: [{}/{}]'.format(dl_counter, self.__page_sum), end='\r')
@@ -328,17 +328,19 @@ class HentaiCafeKit:
                     except (zipfile.BadZipFile, FileNotFoundError):
                         pass
                     if complete:
-                        logger.info('Skip completed one.')
+                        logger.info('(skip already downloaded)')
                     else:
                         with zipfile.ZipFile('{}.cbz'.format(rectify_basename(ch_title)), 'w') as cbz:
                             for image, name, size in chapter_dl:
                                 dl_counter += 1
                                 logger.debug('{}: {} ({})'.format(ch_title, name, size))
-                                print('Pages: [{}/{}]'.format(dl_counter, self.__page_sum), end='\r')
+                                print('Pages: [{}/{}] ({}x)'.format(dl_counter, self.__page_sum, self.max_dl), end='\r')
                                 cbz.writestr(name, image)
                             cbz.writestr(dl_file, datetime.datetime.utcnow().replace(
                                 tzinfo=datetime.timezone.utc).astimezone().replace(microsecond=0).isoformat())
                             cbz.close()
-                print()
-        except HentaiParseError:
-            logger.info('ERROR WHEN PARSING THE MANGA!')
+                        print()
+                else:
+                    print('(skip empty)')
+            except HentaiParseError:
+                logger.warning('ERROR WHEN PARSING THE MANGA!')
