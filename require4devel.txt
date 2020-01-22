@@ -1,7 +1,0 @@
-pyinstaller
-cython
-pip-chill
-pip-autoremove
-ptpython
-splinter<0.8
-selenium<3.8

@@ -1,5 +1,9 @@
 pip-chill
 pip-autoremove
+ptpython
+pyinstaller
+cython
+pipenv
 
 requests
 lxml
