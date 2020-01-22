@@ -1,5 +1,6 @@
 .idea/_.iml
 .idea/misc.xml
+.idea/mo-han-toolbox.iml
 .idea/modules.xml
 .idea/workspace.xml
 .ve35-win32/
@@ -19,5 +20,3 @@ rename-md5.evb
 rename-md5.spec
 tmp.py
 tmp.txt
-.idea/misc.xml
-.idea/mo-han-toolbox.iml
