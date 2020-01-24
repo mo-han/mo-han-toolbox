@@ -6,17 +6,16 @@
 setlocal
 title "%url%"
 
-set split=10
+set split=5
 set pause_range=5
 
 if %url:~0,3%==[ph ( if %url:~-1%==] ( set url=https://www.pornhub.com/view_video.php?viewkey=%url:~1,-1% && goto :end_url_completion))
 if %url:~0,3%==[sm ( if %url:~-1%==] ( set url=https://www.nicovideo.jp/watch/%url:~1,-1% && goto :end_url_completion))
 if %url:~0,1%==[ ( if %url:~-1%==] ( set url=https://www.youtube.com/watch?v=%url:~1,-1% && goto :end_url_completion))
 :end_url_completion
-rem set base_args_uploader=--embed-thumbnail --embed-subs --youtube-skip-dash-manifest -o "%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s" --yes-playlist "%url%"
-set base_args_uploader=--youtube-skip-dash-manifest -o "%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s" --yes-playlist "%url%"
+set base_args_uploader=--socket-timeout 30 --youtube-skip-dash-manifest -o "%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s" --yes-playlist -icw "%url%"
 rem set base_args_iwara=-o "%%(title)s [%%(id)s][%%(uploader)s][%%(creator)s][%%(uploader_id)s].%%(ext)s" --yes-playlist "%url%"
-set base_args_iwara=-o "%%(title)s [%%(id)s].%%(ext)s" --yes-playlist "%url%"
+set base_args_iwara=-o "%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s" --yes-playlist "%url%"
 set arial2_args=--external-downloader aria2c --external-downloader-args "-x%split% -s%split% -k 1M --file-allocation=trunc"
 set arial2_proxy_args=--proxy=%proxy% %arial2_args%
 rem set arial2_proxy_args=--proxy=%proxy% %arial2_args% --external-downloader-args "--all-proxy=%proxy% -x10 -s10"
@@ -42,6 +41,7 @@ echo --------------------------------
 :prompt
 set fmt=
 echo [Q]uit, [B]est, [F]ormat list (Default), [Enter]=Default
+echo [J]SON
 echo [M] try mp4 1080p 60fps
 echo [W] try webm 1440p 60fps
 if %default%==false (set /p "fmt=> ") else (set fmt=%default%)
@@ -51,10 +51,11 @@ rem echo --------------------------------
 if not defined fmt set fmt=f
 if "%fmt%"=="q" exit
 if "%fmt%"=="f" goto :formats
+if "%fmt%"=="j" goto :json
 if "%fmt%"=="b" set "fmt=bestvideo+bestaudio/best"
 if "%fmt%"=="m" set "fmt=(mp4)[height<=1080][fps<=60]+(aac/m4a)/bestvideo+bestaudio/best"
 if "%fmt%"=="w" set "fmt=(webm)[height<=1440][fps<=60]+(webm/opus/vorbis)/bestvideo+bestaudio/best"
-set args=-f "%fmt%" %args%
+set args=--embed-thumbnail -f "%fmt%" %args%
 goto :download
 
 :download
@@ -91,11 +92,21 @@ youtube-dl.exe -F %args%
 echo --------------------------------
 goto :prompt
 
+:json
+youtube-dl.exe -j %args%
+echo --------------------------------
+pause
+goto :end
+
 :end
 rem pause
 exit
 
 :: Changelog
+:: [0.6] - 2020-01-24
+:: + new option `j` for [J]SON (dumping only).
+:: [0.5.3] - 2019-12-07
+:: + embed thumbnail.
 :: [0.5.2] - 2019-12-07
 :: - embed thumbnail & subs;
 :: * aria2 use trunc.

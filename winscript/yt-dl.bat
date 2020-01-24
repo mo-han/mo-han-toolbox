@@ -14,6 +14,7 @@ set worker=start "" cmd /c "yt-dl_worker.bat || pause"
 if "%1"=="m" goto :push_default
 if "%1"=="w" goto :push_default
 if "%1"=="b" goto :push_default
+if "%1"=="j" goto :push_default
 
 :pop_default
 set "args=%*"
