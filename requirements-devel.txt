@@ -1,14 +1,4 @@
-pip-chill
-pip-autoremove
 ptpython
 pyinstaller
 cython
 pipenv
-
-requests
-lxml
-bs4
-splinter<0.8
-selenium<3.8
-pywinauto==0.6.6
-pyautogui #pyautogui==0.9.39

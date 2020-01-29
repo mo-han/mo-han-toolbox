@@ -1,10 +1,17 @@
 pip-chill
 pip-autoremove
 
+youtube-dl
+
 requests
 lxml
 bs4
-splinter<0.8
-selenium<3.8
+
+splinter<0.8  # phantomjs
+selenium<3.8  # phantomjs
+#splinter[zope.testbrowser]  # zope.testbrowser with splinter not support py3
+#splinter
+#selenium
+
 pywinauto==0.6.6
 pyautogui #pyautogui==0.9.39
