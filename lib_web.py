@@ -14,11 +14,14 @@ class DownloadFailure(Exception):
     pass
 
 
-def new_phantomjs() -> splinter.Browser:
+def create_phantomjs(proxy=None) -> splinter.Browser:
+    service_args_l = ['--webdriver-loglevel=WARN']
+    if proxy:
+        service_args_l.append('--proxy={}'.format(proxy))
     b = splinter.Browser(
         'phantomjs',
         user_agent=USER_AGENT_FIREFOX_WIN10,
-        service_args=['--webdriver-loglevel=WARN'],
+        service_args=service_args_l,
         service_log_path=os.path.join(TEMPDIR, 'ghostdriver.log'),
     )
     b.driver.set_window_size(800, 600)

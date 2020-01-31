@@ -8,7 +8,7 @@ from glob import glob
 
 from lib_ffmpeg import concat_videos, merge_m4s
 from lib_base import safe_print, safe_basename
-from lib_web import new_phantomjs
+from lib_web import create_phantomjs
 
 
 class BilibiliError(RuntimeError):
@@ -37,6 +37,7 @@ def jijidown_rename_alpha(path: str, part_num=True):
             new_name = new_name[:-5] + '+弹幕].xml'
         elif new_name[-6:] == 'lv.mp4':
             new_name = new_name[:-8] + '.mp4'
+        new_name = new_name.strip()
         print('{} -> {}'.format(name, new_name))
         new_filepath = path_join(parent, new_name)
         rename(filepath, new_filepath)
@@ -50,7 +51,7 @@ def jijidown_rename_alpha(path: str, part_num=True):
 
 
 class BilibiliAppCacheEntry:
-    browser = new_phantomjs()
+    browser = create_phantomjs()
 
     def __init__(self, vid_dir_path):
         self.folder = vid_dir_path
