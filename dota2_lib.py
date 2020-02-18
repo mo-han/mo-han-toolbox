@@ -88,11 +88,9 @@ class Dota2Controller:
 
     def accept_then_back(self):
         if locateOnScreen(self.material['game_ready'], grayscale=True) or locateOnScreen(self.material['accept'], grayscale=True):
-            print('NEW GAME', end='\r')
+            print('NEW GAME')
+            click()
             keyboard.send_keys('{ENTER}')
-            sleep(self.TIME_SLOT)
-            keyboard.send_keys('{ENTER}')
-            sleep(self.TIME_SLOT)
             hotkey('alt', 'tab')
 
     def auto_waiter(self, show_trend=(0, 0)):
