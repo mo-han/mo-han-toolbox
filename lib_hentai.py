@@ -253,6 +253,7 @@ class HentaiCafeKit:
             cover_uri = entry_soup.find('div', class_='entry-thumb').img['src']
             result_l = [(cover_uri, '{} - cover'.format(title))]
             for c in chapters:
+                chapter_uri = c.a['href'].split('<br')[0]
                 chapter_title = c.strong.decode_contents()
                 chapter_title = '{} {}'.format(
                     title,
