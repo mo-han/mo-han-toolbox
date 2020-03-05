@@ -36,6 +36,7 @@ class Dota2Controller:
     TIME_SLOT = 0.1
     POLL_INTERVAL_MAX = 10
     WINDOW_INFO = {'title': 'Dota 2', 'class': 'SDL_app', 'program': 'dota2.exe'}
+#    WINDOW_INFO = {'class': 'HoneyviewClassX'}
 
     poll_interval = TIME_SLOT
     last_fg = float()
@@ -65,7 +66,8 @@ class Dota2Controller:
         else:
             sleep(self.poll_interval)
         # Check if in foreground or not, changing polling interval dynamically.
-        if fgw_title() != self.WINDOW_INFO['title'] or fgw_class() != self.WINDOW_INFO['class']:
+#        if fgw_title() != self.WINDOW_INFO['title'] or fgw_class() != self.WINDOW_INFO['class']:
+        if fgw_class() != self.WINDOW_INFO['class']:
             self.last_bg = time()
             if time() - self.last_fg >= 300:
                 self.poll_interval = 10 * self.TIME_SLOT
@@ -86,8 +88,9 @@ class Dota2Controller:
 
     def accept_then_back(self):
         if locateOnScreen(self.material['game_ready'], grayscale=True) or locateOnScreen(self.material['accept'], grayscale=True):
-            keyboard.SendKeys('{ENTER}')
-            # sleep(self.TIME_SLOT)
+            print('NEW GAME')
+            click()
+            keyboard.send_keys('{ENTER}')
             hotkey('alt', 'tab')
 
     def auto_waiter(self, show_trend=(0, 0)):
@@ -95,6 +98,7 @@ class Dota2Controller:
         history = [self.poll_interval]
         while True:
             if self.is_fg():
+                print('DOTA2', end='\r')
                 sleep(0.1)
                 self.accept_then_back()
             if show_trend[0]:
@@ -104,4 +108,3 @@ class Dota2Controller:
                         history.append(self.poll_interval)
                         history = history[-show_trend[1]:]
                     last = now
-                    print(history, end='\r')
