@@ -8,7 +8,7 @@ from glob import glob
 
 from lib_ffmpeg import concat_videos, merge_m4s
 from lib_base import safe_print, safe_basename
-from lib_web import create_phantomjs
+from lib_web import new_phantomjs
 
 
 class BilibiliError(RuntimeError):
@@ -51,7 +51,7 @@ def jijidown_rename_alpha(path: str, part_num=True):
 
 
 class BilibiliAppCacheEntry:
-    browser = create_phantomjs()
+    browser = new_phantomjs()
 
     def __init__(self, vid_dir_path):
         self.folder = vid_dir_path

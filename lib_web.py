@@ -14,7 +14,7 @@ class DownloadFailure(Exception):
     pass
 
 
-def create_phantomjs(proxy=None) -> splinter.Browser:
+def new_phantomjs(proxy=None) -> splinter.Browser:
     service_args_l = ['--webdriver-loglevel=WARN']
     if proxy:
         service_args_l.append('--proxy={}'.format(proxy))
