@@ -32,11 +32,10 @@ def dota2_accept_game_and_switch_back():
 
 
 class Dota2Controller:
-
     TIME_SLOT = 0.1
     POLL_INTERVAL_MAX = 10
     WINDOW_INFO = {'title': 'Dota 2', 'class': 'SDL_app', 'program': 'dota2.exe'}
-#    WINDOW_INFO = {'class': 'HoneyviewClassX'}
+    #    WINDOW_INFO = {'class': 'HoneyviewClassX'}
 
     poll_interval = TIME_SLOT
     last_fg = float()
@@ -46,11 +45,11 @@ class Dota2Controller:
         'game_ready': box_of_game_ready,
     }
 
-    def __init__(self, material_dir: str= ''):
+    def __init__(self, material_dir: str = ''):
         self.last_fg = time()
         self.last_bg = time()
         self.path_prefix = material_dir
-        for k,v in self.material.items():
+        for k, v in self.material.items():
             self.material[k] = '/'.join((self.path_prefix, v))
 
     @staticmethod
@@ -66,7 +65,7 @@ class Dota2Controller:
         else:
             sleep(self.poll_interval)
         # Check if in foreground or not, changing polling interval dynamically.
-#        if fgw_title() != self.WINDOW_INFO['title'] or fgw_class() != self.WINDOW_INFO['class']:
+        #        if fgw_title() != self.WINDOW_INFO['title'] or fgw_class() != self.WINDOW_INFO['class']:
         if fgw_class() != self.WINDOW_INFO['class']:
             self.last_bg = time()
             if time() - self.last_fg >= 300:
@@ -87,9 +86,12 @@ class Dota2Controller:
             return True
 
     def accept_then_back(self):
-        if locateOnScreen(self.material['game_ready'], grayscale=True) or locateOnScreen(self.material['accept'], grayscale=True):
+        ready = locateOnScreen(self.material['game_ready'], grayscale=True) \
+                or locateOnScreen(self.material['accept'], grayscale=True) \
+                or None
+        if ready:
             print('NEW GAME')
-            click()
+            # click(ready)
             keyboard.send_keys('{ENTER}')
             hotkey('alt', 'tab')
 
