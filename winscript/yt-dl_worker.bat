@@ -1,7 +1,8 @@
-:: yt-dl_worker.bat
-:: Mo Han <zmhungrown@gmail.com>
-:: @ yt-dl.bat, python.exe (v3), youtube-dl.exe
-
+goto :bof
+yt-dl_worker.bat
+Mo Han <zmhungrown@gmail.com>
+@ yt-dl.bat, python.exe (v3), youtube-dl.exe
+:bof
 @echo off
 setlocal
 title "%url%"
@@ -13,20 +14,17 @@ if %url:~0,3%==[ph ( if %url:~-1%==] ( set url=https://www.pornhub.com/view_vide
 if %url:~0,3%==[sm ( if %url:~-1%==] ( set url=https://www.nicovideo.jp/watch/%url:~1,-1% && goto :end_url_completion))
 if %url:~0,1%==[ ( if %url:~-1%==] ( set url=https://www.youtube.com/watch?v=%url:~1,-1% && goto :end_url_completion))
 :end_url_completion
-set base_args_uploader=--socket-timeout 30 --youtube-skip-dash-manifest -o "%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s" --yes-playlist -icw "%url%"
-rem set base_args_iwara=-o "%%(title)s [%%(id)s][%%(uploader)s][%%(creator)s][%%(uploader_id)s].%%(ext)s" --yes-playlist "%url%"
+set base_args_uploader=-o "%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s" --yes-playlist --fragment-retries infinite -icw "%url%"
 set base_args_iwara=-o "%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s" --yes-playlist "%url%"
 set arial2_args=--external-downloader aria2c --external-downloader-args "-x%split% -s%split% -k 1M --file-allocation=trunc"
-set arial2_proxy_args=--proxy=%proxy% %arial2_args%
-rem set arial2_proxy_args=--proxy=%proxy% %arial2_args% --external-downloader-args "--all-proxy=%proxy% -x10 -s10"
-set args=%arial2_proxy_args% %base_args_uploader%
+set args=--proxy=%proxy% %arial2_args% %base_args_uploader%
+rem set args=--proxy %proxy% %base_args_uploader%
 echo "%url%" | findstr "sankakucomplex" > nul
-if %errorlevel%==0 set args=%arial2_proxy_args% -o "%%(id)s.%%(ext)s" "%url%"
+if %errorlevel%==0 set args=--proxy=%proxy% %arial2_args% -o "%%(id)s.%%(ext)s" "%url%"
 echo "%url%" | findstr "javdove.com" > nul
-if %errorlevel%==0 set args=%arial2_proxy_args% -o "%%(title)s [javdove].%%(ext)s" "%url%"
+if %errorlevel%==0 set args=--proxy=%proxy% %arial2_args% -o "%%(title)s [javdove].%%(ext)s" "%url%"
 echo "%url%" | findstr "iwara" > nul
-rem if %errorlevel%==0 set args=--no-check-certificate %args%
-if %errorlevel%==0 set args=%arial2_proxy_args% %base_args_iwara%
+if %errorlevel%==0 set args=--proxy=%proxy% %arial2_args% %base_args_iwara% --no-check-certificate
 echo "%url%" | findstr "bilibili" > nul
 if %errorlevel%==0 set args=%arial2_args% %base_args_uploader%
 rem Append `--no-check-certificate` for YouTube. Have no idea but it works. And since it's just video data downloaded, there should be no security/privacy issue.
@@ -43,7 +41,7 @@ set fmt=
 echo [Q]uit, [B]est, [F]ormat list (Default), [Enter]=Default
 echo [J]SON
 echo [M] try mp4 1080p 60fps
-echo [W] try webm 1440p 60fps
+echo [W] try webm 1080p 60fps
 if %default%==false (set /p "fmt=> ") else (set fmt=%default%)
 echo --------------------------------
 rem youtube-dl.exe --get-filename -q %args%
@@ -53,9 +51,12 @@ if "%fmt%"=="q" exit
 if "%fmt%"=="f" goto :formats
 if "%fmt%"=="j" goto :json
 if "%fmt%"=="b" set "fmt=bestvideo+bestaudio/best"
-if "%fmt%"=="m" set "fmt=(mp4)[height<=1080][fps<=60]+(aac/m4a)/bestvideo+bestaudio/best"
-if "%fmt%"=="w" set "fmt=(webm)[height<=1440][fps<=60]+(webm/opus/vorbis)/bestvideo+bestaudio/best"
-set args=--embed-thumbnail -f "%fmt%" %args%
+if "%fmt%"=="m" (
+set "fmt=(mp4)[height<=1080][fps<=60]+(m4a/aac)/bestvideo+bestaudio/best"
+set args=--embed-thumbnail %args%
+)
+if "%fmt%"=="w" set "fmt=(webm)[height<=1080][fps<=60]+bestaudio[ext=webm]/bestvideo+bestaudio/best"
+set args=-f "%fmt%" %args%
 goto :download
 
 :download
@@ -65,26 +66,24 @@ rem echo %errorlevel%
 rem pause
 set /a pause=(%random%*%pause_range%/32768)+%pause_range%
 if errorlevel 1 (
-rem   set /a retry+=1
-rem   if %retry% lss %retry_max% goto :download
-rem   set /p "_fin=Try again or [q]uit ? "
-rem   if not defined _fin (
-rem     set /a retry=0
-rem     goto :download
-rem   )
-rem   if not "%_fin%"=="q" (
-rem     set /a retry=0
-rem     goto :download
-rem   )
-rem   if "%_fin%"=="q" goto :end
-  timeout %pause%
-  goto :download
-) else (
-  echo --------------------------------
-  echo DOWNLOAD SUCCESS
-  timeout 3
-  goto :end
+rem set /a retry+=1
+rem if %retry% lss %retry_max% goto :download
+rem set /p "_fin=Try again or [q]uit ? "
+rem if not defined _fin (
+rem   set /a retry=0
+rem   goto :download
+rem )
+rem if not "%_fin%"=="q" (
+rem   set /a retry=0
+rem   goto :download
+rem )
+rem if "%_fin%"=="q" goto :end
+timeout %pause%
+goto :download
 )
+echo --------------------------------
+echo DOWNLOAD SUCCESS
+timeout 3
 goto :end
 
 :formats
@@ -103,6 +102,11 @@ rem pause
 exit
 
 :: Changelog
+:: [0.7.1] - 2020-02-11
+:: + option `--no-check-certificate` for iwara site.
+:: [0.7] - 2020-02-11
+:: - options `--socket-timeout 30 --youtube-skip-dash-manifest`;
+:: * webm 1440p -> 1080p, audio using opus/vorbis (remove webm).
 :: [0.6] - 2020-01-24
 :: + new option `j` for [J]SON (dumping only).
 :: [0.5.3] - 2019-12-07
@@ -144,7 +148,7 @@ exit
 :: 170517
 :: * Format list is optional now. It would only be showed chosen.
 :: 170514
-:: * `arial2_args` & `arial2_proxy_args`
+:: * `arial2_args` & `arial2_args`
 :: 170501
 :: + Auto retry downloading for 3 times, then prompt for retrying.
 :: 170414
