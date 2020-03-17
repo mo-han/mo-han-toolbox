@@ -31,10 +31,12 @@ def jijidown_rename_alpha(path: str, part_num=True):
         new_name = re.sub(r'^(\d+\.)?(.*?)\(Av(\d+).*?\)', r'\1 \2 [av\3]', new_name)
         if not part_num:
             new_name = re.sub(r'^\d+\.', '', new_name)
-        if new_name[-5:] == '].ass' and new_name[-8:-5] != '+弹幕':
-            new_name = new_name[:-5] + '+弹幕].ass'
-        elif new_name[-5:] == '].xml' and new_name[-8:-5] != '+弹幕':
-            new_name = new_name[:-5] + '+弹幕].xml'
+        # if new_name[-5:] == '].ass' and new_name[-8:-5] != '+弹幕':
+        #     new_name = new_name[:-5] + '+弹幕].ass'
+        # elif new_name[-5:] == '].xml' and new_name[-8:-5] != '+弹幕':
+        #     new_name = new_name[:-5] + '+弹幕].xml'
+        if new_name[-4:] == '.ass':
+            new_name = new_name[:-4] + '.bilibili-danmaku-ass'
         elif new_name[-6:] == 'lv.mp4':
             new_name = new_name[:-8] + '.mp4'
         new_name = new_name.strip()
@@ -45,7 +47,8 @@ def jijidown_rename_alpha(path: str, part_num=True):
     if isfile(path):
         _ren_file(path)
     elif isdir(path):
-        for i in [path_join(path, f) for f in os.listdir(path)]: _ren_file(i)
+        for i in [path_join(path, f) for f in os.listdir(path)]:
+            _ren_file(i)
     else:
         print('Not exist: {}'.format(path))
 
