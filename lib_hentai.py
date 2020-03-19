@@ -177,7 +177,8 @@ class HentaiCafeKit:
         logger = self.logger
         chapters = self.parse(uri)
         for ch_uri, ch_title in chapters:
-            logger.info('-' * DRAW_LINE_LENGTH + '\n' + '{} ({})'.format(ch_title, ch_uri))
+            logger.info('-' * DRAW_LINE_LENGTH)
+            logger.info('{} ({})'.format(ch_title, ch_uri))
             try:
                 chapter_dl = self.download_chapter_gen(ch_uri)
                 dl_counter = 0
