@@ -1,7 +1,13 @@
 goto :bof
 yt-dl_worker.bat
-Mo Han <zmhungrown@gmail.com>
-@ yt-dl.bat, python.exe (v3), youtube-dl.exe
+mo-han <zmhungrown@gmail.com>
+Dependencies:
+    python3
+        youtube-dl
+        ytdl.iwara.na2uploader.py
+            lxml
+Reverse dependencies:   
+    yt-dl.bat
 :bof
 @echo off
 setlocal
@@ -47,7 +53,7 @@ echo [M] try mp4 1080p 60fps
 echo [W] try webm 1080p 60fps
 if %default%==false (set /p "fmt=> ") else (set fmt=%default%)
 echo --------------------------------
-rem youtube-dl.exe --get-filename -q %args%
+rem youtube-dl --get-filename -q %args%
 rem echo --------------------------------
 if not defined fmt set fmt=f
 if "%fmt%"=="q" exit
@@ -64,7 +70,7 @@ goto :download
 
 :download
 echo %args%
-youtube-dl.exe %args%
+youtube-dl %args%
 rem echo %errorlevel%
 rem pause
 set /a pause=(%random%*%pause_range%/32768)+%pause_range%
@@ -91,12 +97,12 @@ timeout 3
 goto :end
 
 :formats
-youtube-dl.exe -F %args%
+youtube-dl -F %args%
 echo --------------------------------
 goto :prompt
 
 :json
-youtube-dl.exe -j %args%
+youtube-dl -j %args%
 echo --------------------------------
 pause
 goto :end
@@ -106,6 +112,8 @@ rem pause
 exit
 
 :: Changelog
+:: [0.7.2] - 2020-03-23
+:: + ytdl.iwara.na2uploader.py to rename downloaded videos from iwara, replacing [NA] with [%(uploader)s].
 :: [0.7.1] - 2020-02-11
 :: + option `--no-check-certificate` for iwara site.
 :: [0.7] - 2020-02-11
