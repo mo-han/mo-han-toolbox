@@ -24,7 +24,10 @@ if %errorlevel%==0 set args=--proxy=%proxy% %arial2_args% -o "%%(id)s.%%(ext)s" 
 echo "%url%" | findstr "javdove.com" > nul
 if %errorlevel%==0 set args=--proxy=%proxy% %arial2_args% -o "%%(title)s [javdove].%%(ext)s" "%url%"
 echo "%url%" | findstr "iwara" > nul
-if %errorlevel%==0 set args=--proxy=%proxy% %arial2_args% %base_args_iwara% --no-check-certificate
+if %errorlevel%==0 (
+set args=--proxy=%proxy% %arial2_args% %base_args_iwara% --no-check-certificate
+set postprocess=iwara
+) else set postprocess=null
 echo "%url%" | findstr "bilibili" > nul
 if %errorlevel%==0 set args=%arial2_args% %base_args_uploader%
 rem Append `--no-check-certificate` for YouTube. Have no idea but it works. And since it's just video data downloaded, there should be no security/privacy issue.
@@ -83,6 +86,7 @@ goto :download
 )
 echo --------------------------------
 echo DOWNLOAD SUCCESS
+if %postprocess%==iwara call ytdl.iwara.na2uploader.py "%url%"
 timeout 3
 goto :end
 

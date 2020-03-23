@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 """Library for website operation"""
 
-import splinter
 import os
+
+import splinter
 
 from lib_base import TEMPDIR
 
@@ -14,10 +15,12 @@ class DownloadFailure(Exception):
     pass
 
 
-def new_phantomjs(proxy=None) -> splinter.Browser:
+def new_phantomjs(proxy=None, no_img=True) -> splinter.Browser:
     service_args_l = ['--webdriver-loglevel=WARN']
     if proxy:
         service_args_l.append('--proxy={}'.format(proxy))
+    if no_img:
+        service_args_l.append('--load-images=no')
     b = splinter.Browser(
         'phantomjs',
         user_agent=USER_AGENT_FIREFOX_WIN10,
@@ -26,6 +29,9 @@ def new_phantomjs(proxy=None) -> splinter.Browser:
     )
     b.driver.set_window_size(800, 600)
     return b
+
+
+new_headless_browser = new_phantomjs
 
 
 def try_dl_file(url: str, max_retries: int = 3) -> tuple:

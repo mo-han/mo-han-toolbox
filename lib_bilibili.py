@@ -6,8 +6,8 @@ import re
 import shutil
 from glob import glob
 
-from lib_ffmpeg import concat_videos, merge_m4s
 from lib_base import safe_print, safe_basename
+from lib_ffmpeg import concat_videos, merge_m4s
 from lib_web import new_phantomjs
 
 
@@ -54,9 +54,8 @@ def jijidown_rename_alpha(path: str, part_num=True):
 
 
 class BilibiliAppCacheEntry:
-    browser = new_phantomjs()
-
-    def __init__(self, vid_dir_path):
+    def __init__(self, headless_browser, vid_dir_path):
+        self.browser = headless_browser
         self.folder = vid_dir_path
         self.work_dir, self.id = os.path.split(os.path.realpath(vid_dir_path))
         self.part_list = os.listdir(vid_dir_path)
