@@ -1,6 +1,6 @@
 :: yt-dl.bat
 :: Mo Han <zmhungrown@gmail.com>
-:: @ yt-dl_worker.bat
+:: @ ytdl.worker.bat
 
 @echo off
 setlocal
@@ -10,10 +10,11 @@ rem set proxy=%u_proxy%
 pushd "%u_dl%"
 
 set default=false
-set worker=start "" cmd /c "yt-dl_worker.bat || pause"
+set worker=start "" cmd /c "ytdl.worker.bat || pause"
 if "%1"=="m" goto :push_default
 if "%1"=="w" goto :push_default
 if "%1"=="b" goto :push_default
+if "%1"=="n" goto :push_default
 if "%1"=="j" goto :push_default
 
 :pop_default
@@ -29,7 +30,7 @@ goto :eof
 
 :push_default
 set default=%1
-set worker=start /min "" cmd /c "yt-dl_worker.bat || pause"
+set worker=start /min "" cmd /c "ytdl.worker.bat || pause"
 shift
 goto :pop_default
 

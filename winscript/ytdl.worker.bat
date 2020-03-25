@@ -1,5 +1,6 @@
+@echo off
 goto :bof
-yt-dl_worker.bat
+ytdl.worker
 mo-han <zmhungrown@gmail.com>
 Dependencies:
     python3
@@ -7,24 +8,41 @@ Dependencies:
         ytdl.iwara.na2uploader.py
             lxml
 Reverse dependencies:   
-    yt-dl.bat
+    ytdl
 :bof
-@echo off
 setlocal
 title "%url%"
 
 set split=5
 set pause_range=5
 
+if %url:~0,3%==[av ( if %url:~-1%==] ( set url=https://b23.tv/%url:~1,-1% && goto :end_url_completion))
+if %url:~0,3%==[BV ( if %url:~-1%==] ( set url=https://b23.tv/%url:~1,-1% && goto :end_url_completion))
 if %url:~0,3%==[ph ( if %url:~-1%==] ( set url=https://www.pornhub.com/view_video.php?viewkey=%url:~1,-1% && goto :end_url_completion))
 if %url:~0,3%==[sm ( if %url:~-1%==] ( set url=https://www.nicovideo.jp/watch/%url:~1,-1% && goto :end_url_completion))
 if %url:~0,1%==[ ( if %url:~-1%==] ( set url=https://www.youtube.com/watch?v=%url:~1,-1% && goto :end_url_completion))
+
 :end_url_completion
-set base_args_uploader=-o "%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s" --yes-playlist --fragment-retries infinite -icw "%url%"
+set e=0
+echo "%url%" | findstr bilibili > nul
+set /a e=%e%+%errorlevel%
+echo "%url%" | findstr b23.tv > nul
+set /a e=%e%+%errorlevel%
+if %e% lss 2 (set bilibili=1) else set bilibili=0
+
+echo "%url%" | findstr /c:"/av" > nul
+if %errorlevel%==0 set id_prefix=av
+echo "%url%" | findstr /c:"/BV" > nul
+if %errorlevel%==0 set id_prefix=BV
+
+if %bilibili%==1 set output_fmt=%%(title)s [%id_prefix%%%(id)s][%%(uploader)s].%%(ext)s
+if %bilibili%==0 set output_fmt=%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s
+set base_args_uploader=-o "%output_fmt%" --yes-playlist --fragment-retries infinite -icw "%url%"
 set base_args_iwara=-o "%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s" --yes-playlist "%url%"
 set arial2_args=--external-downloader aria2c --external-downloader-args "-x%split% -s%split% -k 1M --file-allocation=trunc"
 set args=--proxy=%proxy% %arial2_args% %base_args_uploader%
 rem set args=--proxy %proxy% %base_args_uploader%
+
 echo "%url%" | findstr "sankakucomplex" > nul
 if %errorlevel%==0 set args=--proxy=%proxy% %arial2_args% -o "%%(id)s.%%(ext)s" "%url%"
 echo "%url%" | findstr "javdove.com" > nul
@@ -34,30 +52,36 @@ if %errorlevel%==0 (
 set args=--proxy=%proxy% %arial2_args% %base_args_iwara% --no-check-certificate
 set postprocess=iwara
 ) else set postprocess=null
-echo "%url%" | findstr "bilibili" > nul
-if %errorlevel%==0 set args=%arial2_args% %base_args_uploader%
+if %bilibili%==1 set args=--exec "conv.copy2mp4 {} -map_metadata -1 -y -loglevel warning && del {}" %arial2_args% %base_args_uploader%
 rem Append `--no-check-certificate` for YouTube. Have no idea but it works. And since it's just video data downloaded, there should be no security/privacy issue.
 rem echo "%url%" | findstr "youtube youtu.be" > nul
 rem if %errorlevel%==0 set args=--no-check-certificate %args%
-:end_per_site_adjustment
-call yt-dl.custom.bat
 
+:end_per_site_adjustment
+call ytdl.custom.bat
+
+if not [%default%]==[false] (
+set fmt=%default%
+goto :afterprompt
+)
+:prompt
 echo %args%
 echo --------------------------------
-
-:prompt
 set fmt=
-echo [Q]uit, [B]est, [F]ormat list (Default), [Enter]=Default
-echo [J]SON
+echo [Q]uit, [B]est, [F]ormat list (Default), File[N]ame, [J]SON, [Enter]=Default
 echo [M] try mp4 1080p 60fps
 echo [W] try webm 1080p 60fps
-if %default%==false (set /p "fmt=> ") else (set fmt=%default%)
+set /p "fmt=> "
 echo --------------------------------
-rem youtube-dl --get-filename -q %args%
-rem echo --------------------------------
 if not defined fmt set fmt=f
+:afterprompt
 if "%fmt%"=="q" exit
-if "%fmt%"=="f" goto :formats
+if "%fmt%"=="f" (
+youtube-dl -F %args%
+echo --------------------------------
+goto :prompt
+)
+if "%fmt%"=="n" youtube-dl --get-filename %args% && goto :eof
 if "%fmt%"=="j" goto :json
 if "%fmt%"=="b" set "fmt=bestvideo+bestaudio/best"
 if "%fmt%"=="m" (
@@ -66,6 +90,7 @@ set args=--embed-thumbnail %args%
 )
 if "%fmt%"=="w" set "fmt=(webm)[height<=1080][fps<=60]+bestaudio[ext=webm]/bestvideo+bestaudio/best"
 set args=-f "%fmt%" %args%
+if %bilibili%==1 set args=%args:--embed-thumbnail =%
 goto :download
 
 :download
@@ -96,11 +121,6 @@ if %postprocess%==iwara call ytdl.iwara.na2uploader.py "%url%"
 timeout 3
 goto :end
 
-:formats
-youtube-dl -F %args%
-echo --------------------------------
-goto :prompt
-
 :json
 youtube-dl -j %args%
 echo --------------------------------
@@ -112,6 +132,8 @@ rem pause
 exit
 
 :: Changelog
+:: [0.7.2] -2020-03-25
+:: + bilibili with postprocess (flv -> mp4).
 :: [0.7.2] - 2020-03-23
 :: + ytdl.iwara.na2uploader.py to rename downloaded videos from iwara, replacing [NA] with [%(uploader)s].
 :: [0.7.1] - 2020-02-11
@@ -168,7 +190,7 @@ exit
 ::  [*] [1] mp4/webm 1080p 60fps bestaudio (default)
 ::  [*] [2] webm/mp4 1080p 60fps bestaudio
 :: 170331
-::  [+] Use aria2c to download Bilibili videos (to avoid speed limitation)
+::  [+] Use aria2c to download bilibili videos (to avoid speed limitation)
 ::  [+] New download choice: webm/mp4 [1]920 60fps bestaudio (default)
 ::  [+] New download choice: webm/mp4 [2]560 60fps bestaudio
 ::  [+] Wait 5 sec to exit after download

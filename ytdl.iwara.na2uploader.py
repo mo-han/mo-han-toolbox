@@ -30,10 +30,14 @@ class IwaraVideo:
         return self.html
 
     def get_uploader(self):
-        video_page = self.get_page()
-        uploader = video_page.xpath('//div[@class="node-info"]//div[@class="submitted"]//a[@class="username"]')[0].text
-        self.meta['uploader'] = uploader
-        return uploader
+        key_str = 'uploader'
+        if key_str in self.meta:
+            return self.meta[key_str]
+        else:
+            video_page = self.get_page()
+            uploader = video_page.xpath('//div[@class="node-info"]//div[@class="submitted"]//a[@class="username"]')[0].text
+            self.meta[key_str] = uploader
+            return uploader
 
     def find_files_by_id(self, search_in=''):
         id_tag = '[{}]'.format(self.meta['id'])
