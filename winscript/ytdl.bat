@@ -14,8 +14,8 @@ set worker=start "" cmd /c "ytdl.worker.bat || pause"
 if "%1"=="m" goto :push_default
 if "%1"=="w" goto :push_default
 if "%1"=="b" goto :push_default
-if "%1"=="n" goto :push_default
 if "%1"=="j" goto :push_default
+if "%1"=="n" goto :push_default
 
 :pop_default
 set "args=%*"
@@ -30,7 +30,11 @@ goto :eof
 
 :push_default
 set default=%1
+if %default%==n (
+set worker=call ytdl.worker.bat
+) else (
 set worker=start /min "" cmd /c "ytdl.worker.bat || pause"
+)
 shift
 goto :pop_default
 

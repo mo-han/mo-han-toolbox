@@ -4,30 +4,48 @@
 
 import re
 import subprocess
-import os
+import sys
+
+from lib_base import win32_ctrl_c
 
 
 def get_cmd_result(cmd):
-    r = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    return r.stdout, r.stderr
+    r = subprocess.run(cmd, stdout=subprocess.PIPE)
+    return r.stdout
 
 
 def get_video(url):
-    o, _ = get_cmd_result('you-get.bilibili.bat download {}'.format(url))
-    return o.decode().rsplit('\r\n\r\n', 2)[-2].rsplit('.cmt.xml ...', 1)[-2].split('Downloading ', 1)[1]
+    o = get_cmd_result('you-get.bilibili.bat download {}'.format(url))
+    return o.decode().rsplit('.cmt.xml ...', 1)[-2].split('Downloading ', 1)[1]
 
 
 def split_part_title(s):
-    part_title = re.sub(r'.+ \((P\d+\. .*)+\)', r'\1', s)
+    try:
+        part_title = re.match(r'^(.+) \((P\d+\. .*)+\)$', s).group(2)
+    except AttributeError:
+        part_title = ''
     return part_title
 
 
-def get_filename(url):
-    o, _ = get_cmd_result('ytdl.bat n {}'.format(url))
+def get_formatted_filename(url):
+    o = get_cmd_result('ytdl.bat n {}'.format(url))
     return o.decode('ansi').rsplit('.', 1)[-2]
 
 
 def rename(old, new):
-    _, part_title = split_title(old)
+    pt = split_part_title(old)
+    new_filename = ' '.join((new, pt)) if pt else new
+    try:
+        subprocess.run('you-get.bilibili.bat rename "{}" "{}"'.format(old, new_filename))
+    except FileNotFoundError:
+        exit(1)
 
-    pass
+
+def download(url):
+    v = get_video(url)
+    rename(v, get_formatted_filename(url))
+
+
+if __name__ == '__main__':
+    # win32_ctrl_c()
+    download(sys.argv[1])

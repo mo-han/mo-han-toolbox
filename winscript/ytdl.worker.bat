@@ -52,7 +52,7 @@ if %errorlevel%==0 (
 set args=--proxy=%proxy% %arial2_args% %base_args_iwara% --no-check-certificate
 set postprocess=iwara
 ) else set postprocess=null
-if %bilibili%==1 set args=--exec "conv.copy2mp4 {} -map_metadata -1 -y -loglevel warning && del {}" %arial2_args% %base_args_uploader%
+if %bilibili%==1 set args=--cookies %locallib_usretc%\cookies.bilibili.txt --exec "conv.copy2mp4 {} -map_metadata -1 -y -loglevel warning && del {}" %arial2_args% %base_args_uploader%
 rem Append `--no-check-certificate` for YouTube. Have no idea but it works. And since it's just video data downloaded, there should be no security/privacy issue.
 rem echo "%url%" | findstr "youtube youtu.be" > nul
 rem if %errorlevel%==0 set args=--no-check-certificate %args%
@@ -117,7 +117,7 @@ goto :download
 )
 echo --------------------------------
 echo DOWNLOAD SUCCESS
-if %postprocess%==iwara call ytdl.iwara.na2uploader.py "%url%"
+if %postprocess%==iwara call ytdl_iwara_na2uploader.py "%url%"
 timeout 3
 goto :end
 
