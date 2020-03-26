@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # encoding=utf8
-"""Windows OS only, need self-using batch script: you-get.bilibili.bat, ytdl.bat, etc."""
+"""Windows OS only, need self-using batch script: bilidl.bat, ytdl.bat, etc."""
 
 import re
 import subprocess
@@ -15,8 +15,15 @@ def get_cmd_result(cmd):
 
 
 def get_video(url):
-    o = get_cmd_result('you-get.bilibili.bat download {}'.format(url))
-    return o.decode().rsplit('.cmt.xml ...', 1)[-2].split('Downloading ', 1)[1]
+    o = get_cmd_result('bilidl.bat download {}'.format(url)).decode()
+    if '.cmt.xml ...' in o:
+        o = o.rsplit('.cmt.xml ...\r\n', 1)[0]
+        o = o.rsplit('\r\nDownloading ', 1)[-1]
+    elif '.mp4 ...' in o:
+        o = o.rsplit('.mp4 ...\r\n', 1)[0]
+        o = o.rsplit('\r\nMerging video parts... Merged into', 1)[-1]
+        o = o.rsplit('\r\nDownloading', 1)[-1]
+    return o
 
 
 def split_part_title(s):
@@ -28,22 +35,30 @@ def split_part_title(s):
 
 
 def get_formatted_filename(url):
-    o = get_cmd_result('ytdl.bat n {}'.format(url))
-    return o.decode('ansi').rsplit('.', 1)[-2]
+    o = get_cmd_result('ytdl.bat n {}'.format(url)).decode('ansi')
+    n = o.strip().rsplit('\n', 1)[-1].rsplit('.', 1)[-2]
+    if n.startswith('活动作品'):
+        n = n.split('活动作品', 1)[1]
+    return n
 
 
 def rename(old, new):
     pt = split_part_title(old)
     new_filename = ' '.join((new, pt)) if pt else new
     try:
-        subprocess.run('you-get.bilibili.bat rename "{}" "{}"'.format(old, new_filename))
+        r = subprocess.run('bilidl.bat rename "{}" "{}"'.format(old, new_filename))
+        r.check_returncode()
     except FileNotFoundError:
+        exit(1)
+    except subprocess.CalledProcessError as e:
+        print(e)
         exit(1)
 
 
 def download(url):
+    f = get_formatted_filename(url)
     v = get_video(url)
-    rename(v, get_formatted_filename(url))
+    rename(v, f)
 
 
 if __name__ == '__main__':

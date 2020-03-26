@@ -4,37 +4,40 @@ set cookies=%locallib_usretc%\cookies.bilibili.txt
 set workdir=%locallib_usrdl%
 set tempdir=you-get.%random%%random%%random%
 
+pushd %workdir%
 call :%*
-goto :eof
-
-:download
-pushd %workdir%
-you-get -c %cookies% %*
 popd
 goto :eof
 
-:rename
-pushd %workdir%
-for %%i in ("%~1.*") do (
-echo "%%~i" -^> "%~2%%~xi"
-move /y "%%~i" "%~2%%~xi" >nul
-)
-popd
+:i
+you-get -c %cookies% -i %*
 goto :eof
 
 :d
 if exist %1 (
-for /f "delims=" %%i in (%1) do call :dlurl %%i
-) else call :dlurl %*
+for /f "delims=" %%i in (%1) do call :urlhandler %%i
+) else call :urlhandler %*
 goto :eof
 
-:dlurl
+:download
+you-get -c %cookies% %*
+goto :eof
+
+:rename
+for %%i in ("%~1.*") do (
+echo "%%~i" -^> "%~2%%~xi"
+move /y "%%~i" "%~2%%~xi" >nul
+)
+goto :eof
+
+:urlhandler
 call :id2url %*
 call :bilidl_worker %url%
 goto :eof
 
 :bilidl_worker
 bilidl_worker.py %* && timeout /t 3 && goto :eof
+timeout /t 10
 goto :bilidl_worker
 goto :eof
 
