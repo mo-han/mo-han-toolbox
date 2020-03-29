@@ -2,9 +2,9 @@
 setlocal
 set cookies=%locallib_usretc%\cookies.bilibili.txt
 set workdir=%locallib_usrdl%
-set tempdir=you-get.%random%%random%%random%
 
-pushd %workdir%
+if not defined root set root=%workdir%
+pushd %root%
 call :%*
 popd
 goto :eof
@@ -43,6 +43,8 @@ goto :eof
 
 :id2url
 set id=%*
+if %id:~,1%==[ set id=%id:~1%
+if %id:~-1%==] set id=%id:~,-1%
 if %id:~,4%==http set url=%id%
 if %id:~,2%==BV set url=https://b23.tv/%id%
 if %id:~,2%==av set url=https://b23.tv/%id%
