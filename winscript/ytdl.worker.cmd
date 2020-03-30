@@ -58,7 +58,7 @@ rem echo "%url%" | findstr "youtube youtu.be" > nul
 rem if %errorlevel%==0 set args=--no-check-certificate %args%
 
 :end_per_site_adjustment
-call ytdl.custom.bat
+call ytdl.custom.cmd
 
 if not [%default%]==[false] (
 set fmt=%default%

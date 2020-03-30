@@ -15,9 +15,10 @@ pause
 goto :eof
 
 :smart_conv
-set _file=%1
-for /f %%i in ('videoinfo.bat _file') do set /a pixels=%%i
-call draw.line.lower
+call wincmdlib.cmd returnback videoinfo res %1
+set /a pixels=%_%
+echo %pixels%
+call drawincmd.cmd line lower
 if %pixels% lss %pixels.hd% (
 echo Skip non-HD video %1
 title skip %1
@@ -28,5 +29,5 @@ set args=-crf 23 %_args%
 ) else (
 set args=-crf 18 %_args%
 )
-call conv.hevc8b.bat %1
+call conv.hevc8b.cmd %1
 goto :eof

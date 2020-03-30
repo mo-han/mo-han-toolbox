@@ -11,6 +11,8 @@ goto :eof
 goto :eof
 
 :vc
+:vcodec
+:vencoder
 %ffprob% -select_streams v:0 -show_entries stream=codec_name -of csv=p=0 %*
 goto :eof
 

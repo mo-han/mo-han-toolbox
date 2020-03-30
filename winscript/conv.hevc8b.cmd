@@ -3,6 +3,7 @@ setlocal
 set ffmpegargs=-c:v hevc
 set encodedtag=.__source__
 
+%~2
 if defined args set ffmpegargs=%ffmpegargs% %args%
 call :check_hevc8b "%~n1"
 if %hevc8b%==1 goto :eof

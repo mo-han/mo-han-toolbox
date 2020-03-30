@@ -14,12 +14,6 @@ call :line.%* && goto :eof
 :line.double
 call :line.doubledash && goto :eof
 
-:line.lower
-call :line.underscore && goto :eof
-
-:line.under
-call :line.underscore && goto :eof
-
 :line.wave
 call :line.tilde && goto :eof
 
@@ -31,6 +25,8 @@ echo -------------------------------- && goto :eof
 :line.doubledash
 echo ================================ && goto :eof
 
+:line.lower
+:line.under
 :line.underscore
 echo ________________________________ && goto :eof
 
