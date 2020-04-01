@@ -22,6 +22,7 @@ setlocal
 endlocal & call :return %~z1
 goto :eof
 
+:filename
 :basename
 setlocal
 endlocal & call :return %~n1
@@ -30,6 +31,12 @@ goto :eof
 :dirname
 setlocal
 endlocal & call :return %~dp1
+goto :eof
+
+:fext
+:fileextension
+setlocal
+endlocal & call :return %~x1
 goto :eof
 
 :return

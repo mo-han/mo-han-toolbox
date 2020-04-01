@@ -35,7 +35,3 @@ echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ && goto :eof
 
 :line.dot
 echo ................................ && goto :eof
-
-:print
-echo %*
-goto :eof

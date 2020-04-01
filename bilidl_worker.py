@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # encoding=utf8
-"""Windows OS only, need self-using batch script: bilidl.bat, ytdl.bat, etc."""
+"""Windows OS only, need self-using batch script: bilidl.cmd , ytdl.cmd , etc."""
 
 import re
 import subprocess
@@ -15,7 +15,7 @@ def get_cmd_result(cmd):
 
 
 def get_video(url):
-    o = get_cmd_result('bilidl.bat download {}'.format(url)).decode()
+    o = get_cmd_result('bilidl.cmd download {}'.format(url)).decode()
     if '.cmt.xml ...' in o:
         o = o.rsplit('.cmt.xml ...\r\n', 1)[0]
         o = o.rsplit('\r\nDownloading ', 1)[-1]
@@ -35,7 +35,7 @@ def split_part_title(s):
 
 
 def get_formatted_filename(url):
-    o = get_cmd_result('ytdl.bat n {}'.format(url)).decode('ansi')
+    o = get_cmd_result('ytdl.cmd n {}'.format(url)).decode('ansi')
     n = o.strip().rsplit('\n', 1)[-1].rsplit('.', 1)[-2]
     if n.startswith('活动作品'):
         n = n.split('活动作品', 1)[1]
@@ -46,7 +46,7 @@ def rename(old, new):
     pt = split_part_title(old)
     new_filename = ' '.join((new, pt)) if pt else new
     try:
-        r = subprocess.run('bilidl.bat rename "{}" "{}"'.format(old, new_filename))
+        r = subprocess.run('bilidl.cmd rename "{}" "{}"'.format(old, new_filename))
         r.check_returncode()
     except FileNotFoundError:
         exit(1)
