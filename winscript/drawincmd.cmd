@@ -1,7 +1,4 @@
 @echo off
-goto :bof
-Draw ASCII art in console (cmd.exe).
-:bof
 setlocal
 
 call :%*
@@ -11,17 +8,11 @@ goto :eof
 if "%*"=="" call :line.underscore && goto :eof
 call :line.%* && goto :eof
 
-:line.double
-call :line.doubledash && goto :eof
-
-:line.wave
-call :line.tilde && goto :eof
-
 :line.single
 :line.dash
 echo -------------------------------- && goto :eof
 
-:line.doulbe
+:line.double
 :line.doubledash
 echo ================================ && goto :eof
 
@@ -30,6 +21,7 @@ echo ================================ && goto :eof
 :line.underscore
 echo ________________________________ && goto :eof
 
+:line.wave
 :line.tilde
 echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ && goto :eof
 

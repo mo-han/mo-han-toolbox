@@ -33,20 +33,17 @@ set /a max25=%max% * 25
 set /a max100=%max% * 100
 
 call drawincmd.cmd line double
-echo Working Directory: %workdir%
-echo Max webp size in bytes: %max%
+echo max=%max% th=%th% q=%q.max%...%q.min% %workdir%
 pushd %workdir%
-for %%i in (*) do if %%~xi==.webp (call :pass) else call :convert "%%~i"
+for %%i in (*) do if %%~xi==.webp (call :pass) else (call :convert "%%~i")
 del %tempprefix%.* 2>nul
 popd
-call drawincmd.cmd line double
-echo Done
 goto :eof
 
 :convert
 setlocal
 set /a q=q.max
-call drawincmd.cmd line single
+call drawincmd.cmd line
 echo %1
 if %~x1==.jpg goto :convert.begin
 if %~x1==.jpeg goto :convert.begin
@@ -73,7 +70,7 @@ goto :eof
 :reducequality
 if %ratio% leq %th% goto :eof
 if %q% leq %q.min% echo Skip insufficient compression %ratio%%% && goto :eof
-set /a q=q-5
+set /a q=q-10
 goto :convert.tempfile
 
 :resize.init
@@ -95,7 +92,7 @@ copy /y %~n1 %tempprefix%.i >nul
 :: %1 is such as `xxx.jpg.webp`, so %~n1 is `xxx.jpg`.
 cwebp-resizep %args.cwebp.common% -q %q% -resizep %scale%%% %tempprefix%.i -o %tempprefix%.o
 move /y %tempprefix%.o %1 >nul
-if %~z1 gtr %max% (set /a scale=%scale% - 5) else goto :eof
+if %~z1 gtr %max% (set /a scale=scale-5) else goto :eof
 if %scale%==0 goto :eof
 goto :resize.smaller
 

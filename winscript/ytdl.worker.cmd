@@ -95,10 +95,10 @@ goto :download
 
 :download
 echo %args%
+set /a pause=(%random%*%pause_range%/32768)+%pause_range%
 youtube-dl %args%
 rem echo %errorlevel%
 rem pause
-set /a pause=(%random%*%pause_range%/32768)+%pause_range%
 if errorlevel 1 (
 rem set /a retry+=1
 rem if %retry% lss %retry_max% goto :download
@@ -119,17 +119,13 @@ echo --------------------------------
 echo DOWNLOAD SUCCESS
 if %postprocess%==iwara call ytdl_iwara_na2uploader.py "%url%"
 timeout 3
-goto :end
+goto :eof
 
 :json
 youtube-dl -j %args%
 echo --------------------------------
 pause
-goto :end
-
-:end
-rem pause
-exit
+goto eof
 
 :: Changelog
 :: [0.7.2] -2020-03-25
