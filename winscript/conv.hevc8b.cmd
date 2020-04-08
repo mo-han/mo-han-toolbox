@@ -3,14 +3,14 @@ setlocal
 set ffmpegargs=-c:v hevc
 set encodedtag=.__source__
 
-%~2
+if not "%~2"=="" set args=%~2
 if defined args set ffmpegargs=%ffmpegargs% %args%
 call :check_hevc8b "%~n1"
-if %hevc8b%==1 goto :eof
+if %hevc8b%==1 echo Skip %~n1 && goto :eof
 call :check_encoded "%~n1"
-if %encoded%==1 goto :eof
+if %encoded%==1 echo Skip %~n1 && goto :eof
 title %args% %1
-ffmpeg -i %1 %ffmpegargs% "%~n1.hevc8b%~x1" && rename %1 "%~n1%encodedtag%%~x1" || pause
+ffmpeg -i "%~1" %ffmpegargs% "%~dp1%~n1.hevc8b%~x1" && rename "%~1" "%~n1%encodedtag%%~x1" || pause
 goto :eof
 
 :check_hevc8b

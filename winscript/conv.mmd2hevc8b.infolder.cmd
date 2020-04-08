@@ -15,9 +15,8 @@ pause
 goto :eof
 
 :smart_conv
-call wincmdlib.cmd returnback videoinfo res %1
+call wincmdlib.cmd returnback videoinfo res %1 >nul
 set /a pixels=%_%
-echo %pixels%
 call drawincmd.cmd line lower
 if %pixels% lss %pixels.hd% (
 echo Skip non-HD video %1
@@ -25,9 +24,10 @@ title skip %1
 goto :eof
 )
 if %pixels% geq %pixels.fhd% (
-set args=-crf 23 %_args%
+set args=-crf 23 %_args% -vf scale=1920:-2
 ) else (
-set args=-crf 18 %_args%
+set args=-crf 20 %_args%
 )
 call conv.hevc8b.cmd %1
+timeout /t 3
 goto :eof

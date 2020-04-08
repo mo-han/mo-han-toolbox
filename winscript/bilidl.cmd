@@ -10,12 +10,20 @@ popd
 goto :eof
 
 :i
-you-get -c %cookies% -i %*
+call :id2url %*
+you-get -c %cookies% -i %url%
 goto :eof
 
+:l
+set /p "url=#URL: "
+if not defined url goto :l
+if "%url%"=="q" goto :eof
+start /min cmd /c call bilidl d %url%
+goto :l
+
 :d
-if exist %1 (
-for /f "delims=" %%i in (%1) do call :urlhandler %%i
+if exist "%~1" (
+for /f "delims=" %%i in ("%~1") do call :urlhandler %%i
 ) else call :urlhandler %*
 goto :eof
 

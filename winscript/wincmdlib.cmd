@@ -6,6 +6,7 @@ goto :eof
 
 :test
 setlocal
+endlocal & call :return %~n0
 goto :eof
 
 :returnback
@@ -23,17 +24,29 @@ endlocal & call :return %~z1
 goto :eof
 
 :filename
-:basename
 setlocal
 endlocal & call :return %~n1
 goto :eof
 
+:basename
+setlocal
+endlocal & call :return %~n1%~x1
+goto :eof
+
+:parent
+:parentpath
 :dirname
 setlocal
 endlocal & call :return %~dp1
 goto :eof
 
-:fext
+:realpath
+:fullpath
+setlocal
+endlocal & call :return %~f1
+goto :eof
+
+:fileext
 :fileextension
 setlocal
 endlocal & call :return %~x1
