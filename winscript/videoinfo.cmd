@@ -5,6 +5,16 @@ set ffprob=ffprobe -v error
 call :%*
 goto :eof
 
+:w
+:width
+%ffprob% -select_streams v:0 -show_entries stream=width -of csv=p=0 %*
+goto :eof
+
+:h
+:height
+%ffprob% -select_streams v:0 -show_entries stream=height -of csv=p=0 %*
+goto :eof
+
 :res
 :resolution
 %ffprob% -select_streams v:0 -show_entries stream=width,height -of csv=p=0:s=* %*

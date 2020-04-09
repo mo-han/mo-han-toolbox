@@ -12,7 +12,9 @@ pushd "%u_dl%"
 set default=false
 set worker=start "" cmd /c "ytdl.worker.cmd|| pause"
 if "%1"=="m" goto :push_default
+if "%1"=="md" goto :push_default
 if "%1"=="w" goto :push_default
+if "%1"=="wd" goto :push_default
 if "%1"=="b" goto :push_default
 if "%1"=="j" goto :push_default
 if "%1"=="n" goto :push_default

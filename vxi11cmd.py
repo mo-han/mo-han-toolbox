@@ -35,18 +35,23 @@ class VXI11Cmd(cmd.Cmd):
         """退出程序"""
         sys.exit(0)
 
-    def do_addr(self, address, loud=True):
+    def do_remote(self, *args):
+        """命令仪器进入远程模式"""
+        self.inst.remote()
+
+    def do_addr(self, address, loud=True, remote=True):
         """设置地址"""
         self.address = address or input('设备地址：')
         self.prompt = 'VXI-11@{} ← '.format(self.address)
         self.inst = vxi11.Instrument(self.address)
-        self.inst.remote()
         if loud:
             self.do_idn()
+        if remote:
+            self.do_remote()
 
     def do_msg(self, command):
         """发送消息"""
-        command = command or input('消息：')
+        command = command or input('发送消息：')
         if command[-1] == '?':
             try:
                 self.print_method(self.inst.ask(command))
@@ -73,9 +78,9 @@ def main(args: argparse.Namespace):
     if args.remote:
         if args.command:
             cli = VXI11Cmd(args.remote, raw_print=True)
-            cmd = ' '.join(args.command)
-            cli.do_addr(args.remote, loud=False)
-            cli.onecmd(cmd)
+            command = ' '.join(args.command)
+            cli.do_addr(args.remote, loud=False, remote=False)
+            cli.onecmd(command)
         else:
             cli = VXI11Cmd(args.remote)
             cli.cmdloop()

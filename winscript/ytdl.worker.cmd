@@ -40,7 +40,7 @@ if %bilibili%==0 set output_fmt=%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s
 set base_args_uploader=-o "%output_fmt%" --yes-playlist --fragment-retries infinite -icw "%url%"
 set base_args_iwara=-o "%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s" --yes-playlist "%url%"
 set arial2_args=--external-downloader aria2c --external-downloader-args "-x%split% -s%split% -k 1M --file-allocation=trunc"
-set args=--proxy=%proxy% %arial2_args% %base_args_uploader%
+set args=--proxy=%proxy% --youtube-skip-dash-manifest %arial2_args% %base_args_uploader%
 rem set args=--proxy %proxy% %base_args_uploader%
 
 echo "%url%" | findstr "sankakucomplex" > nul
@@ -80,6 +80,14 @@ if "%fmt%"=="f" (
 youtube-dl -F %args%
 echo --------------------------------
 goto :prompt
+)
+if "%fmt%"=="md" (
+set fmt=m
+set args=%args:--youtube-skip-dash-manifest=%
+)
+if "%fmt%"=="wd" (
+set fmt=w
+set args=%args:--youtube-skip-dash-manifest=%
 )
 if "%fmt%"=="n" youtube-dl --get-filename %args% && goto :eof
 if "%fmt%"=="j" goto :json
