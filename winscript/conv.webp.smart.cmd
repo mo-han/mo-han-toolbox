@@ -9,7 +9,8 @@ set default.args.cwebp.common=-short
 set tmp="%temp%"\cwebptmp%random%%random%%random%
 goto :bof
 :help
-echo Usage: %~nx0 file ["set varibles"]
+echo Convert picture file to webp, smartly
+echo Usage: %~n0 [file^|-h^|?^|/?] ["set env_vars"]
 goto :eof
 Dependencies:
     - cwebp.exe
@@ -51,7 +52,7 @@ set /a iw=_
 call wincmdlib returnback wrap.ffprobe h %tmp%.i >nul
 set /a ih=_
 set /a ipix=iw*ih
-echo #%max% %iw%x%ih% scale^>=%scale.min%%% ratio^<=%ratio%%% q=%q.max%~%q.min% %1
+echo #%max% %iw%x%ih% scale^>=%scale.min%%% ratio^<=%ratio%%% q=%q.max%..%q.min% %1
 call :smartconv %1
 del %tmp%.* 2>nul
 goto :eof
