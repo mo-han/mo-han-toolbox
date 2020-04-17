@@ -2,6 +2,8 @@
 setlocal
 set cookies=%locallib_usretc%\cookies.bilibili.txt
 set workdir=%locallib_usrdl%
+set args=%*
+if not defined args set loopmode.title=%~nx0 & goto :l
 
 if not defined root set root=%workdir%
 pushd %root%
@@ -15,11 +17,10 @@ you-get -c %cookies% -i %url%
 goto :eof
 
 :l
-set /p "url=#URL: "
-if not defined url goto :l
-if "%url%"=="q" goto :eof
-start /min cmd /c call bilidl d %url%
-goto :l
+set loopmode.header=download from https://b23.tv
+set loopmode.callee=bilidl.cmd d
+call wincmdlib loopmode
+goto :eof
 
 :d
 if exist "%~1" (

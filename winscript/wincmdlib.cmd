@@ -6,7 +6,7 @@ goto :eof
 
 :test
 setlocal
-echo %~0
+echo "%x%"
 goto :eof
 
 :returnback
@@ -65,8 +65,27 @@ echo %*
 endlocal & set _=%*
 goto :eof
 
-:declare
+:echocall
 setlocal
 echo %*
 call %*
 goto :eof
+
+:loopmode
+setlocal
+if "%~1"=="-h" (
+    echo config: loopmode.{title^|header^|prompt^|caller^|callee}
+    goto :eof
+)
+title %loopmode.title% (%~0)
+if not defined loopmode.caller set loopmode.caller=start "" /min cmd /c
+echo # %loopmode.header%
+echo # %loopmode.caller% %loopmode.callee% ^<
+:loopmode.loop
+set input=
+set /p "input=%loopmode.prompt%"
+if not defined input goto :loopmode.loop
+if "%input%"=="q" goto :eof
+if "%input%"=="quit" goto :eof
+%loopmode.caller% %loopmode.callee% %input%
+goto :loopmode.loop

@@ -40,6 +40,7 @@ if /i %~x1==.bmp goto :nonwebp
 goto :eof
 :nonwebp
 call drawincmd line
+if %~z1==0 echo ! skip empty file & goto :eof
 if exist "%~1.webp" (
     echo * drop existing "%~1.webp"
     del "%~1.webp"
@@ -61,14 +62,23 @@ goto :eof
 setlocal
 set /a q=q.min & set /a scale=scale.min
 call :cwebptmp
+set /a omr=100*ofs/max
+set /a rrr=100*fsr/ratio
 if %ok%==0 (
     call :cwebptmp.targetsize
     goto :smartconv.output
 )
-set /a q=q.max & set /a scale=100
+set /a q=q.min & set /a scale=100
+if %omr% lss 90 (if %rrr% lss 90 set /a q=q+10)
+if %omr% lss 80 (if %rrr% lss 80 set /a q=q+10)
+if %omr% lss 70 (if %rrr% lss 70 set /a q=q+10)
+if %omr% lss 60 (if %rrr% lss 60 set /a q=q+10)
+if %omr% lss 50 (if %rrr% lss 50 set /a q=q.max)
+if %q% gtr %q.max% set /a q=q.max
 :smartconv.guess.scale
 call :cwebptmp
 if %ok%==1 goto :smartconv.output
+if %ofs% leq %max% (set /a scale=scale-5 && goto :smartconv.lower.scale)
 if %ofs% gtr %max% (set scale=95) else (goto :smartconv.lower.q)
 if %ofs% gtr %max.1.5% set scale=85
 if %ofs% gtr %max.2% set scale=75
