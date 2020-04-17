@@ -5,14 +5,22 @@
       <w>bangumi</w>
       <w>bilibili</w>
       <w>bilidl</w>
+      <w>errorlevel</w>
       <w>ffmpeg</w>
+      <w>getdata</w>
       <w>ifexist</w>
       <w>imap</w>
+      <w>irms</w>
       <w>iwara</w>
+      <w>lastcmd</w>
       <w>manga</w>
       <w>recv</w>
+      <w>scal</w>
+      <w>setdata</w>
+      <w>tcpserver</w>
       <w>testbrowser</w>
       <w>undoc</w>
+      <w>urms</w>
       <w>ytdl</w>
       <w>zope</w>
     </words>
