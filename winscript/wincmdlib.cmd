@@ -74,13 +74,15 @@ goto :eof
 :loopmode
 setlocal
 if "%~1"=="-h" (
-    echo config: loopmode.{title^|header^|prompt^|caller^|callee}
+    echo set env_var: loopmode.callee
+    echo set optional env_var: loopmode.{title^|header^|prompt^|caller}
     goto :eof
 )
-title %loopmode.title% (%~0)
+if defined loopmode.title title %loopmode.title% (%~0)
 if not defined loopmode.caller set loopmode.caller=start "" /min cmd /c
-echo # %loopmode.header%
-echo # %loopmode.caller% %loopmode.callee% ^<
+if defined loopmode.header echo # %loopmode.header%
+echo # %loopmode.caller% %loopmode.callee% ^<^<^<
+echo #
 :loopmode.loop
 set input=
 set /p "input=%loopmode.prompt%"

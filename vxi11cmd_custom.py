@@ -33,7 +33,9 @@ class VXI11CmdCustom(vxi11cmd.VXI11Cmd):
         self.do_cmd(self.DATA_ITEMS_CMD)
 
     def do_getdata(self, *args):
-        return self.do_cmd(':num:val?')
+        str2float = self.str2float
+        data = self.do_cmd(':num:val?')
+        return ','.join([str(str2float(s)) for s in data.split(',')])
 
     def do_ct(self, line=None):
         msg = ':scal:ct'

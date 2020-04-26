@@ -1,3 +1,6 @@
+pip-chill
+pip-autoremove
+
 ptpython
 pyinstaller
 cython

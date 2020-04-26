@@ -68,13 +68,15 @@ if %ok%==0 (
     call :cwebptmp.targetsize
     goto :smartconv.output
 )
-set /a q=q.min & set /a scale=100
+set /a q=q.min
 if %omr% lss 90 (if %rrr% lss 90 set /a q=q+10)
 if %omr% lss 80 (if %rrr% lss 80 set /a q=q+10)
 if %omr% lss 70 (if %rrr% lss 70 set /a q=q+10)
 if %omr% lss 60 (if %rrr% lss 60 set /a q=q+10)
 if %omr% lss 50 (if %rrr% lss 50 set /a q=q.max)
+if %q%==%q.min% if %scale%==100 if %ok%==1 goto :smartconv.output
 if %q% gtr %q.max% set /a q=q.max
+set /a scale=100
 :smartconv.guess.scale
 call :cwebptmp
 if %ok%==1 goto :smartconv.output

@@ -15,14 +15,12 @@ for /d %%i in (*) do (
     echo %%i
     title %title% %%i
     pushd "%%~i"
-    call :infolder "%%~i"
+    call :infolder
     popd
+    call delete.nonwebp.infolder "%%~i"
+    if not exist "%%~i"\FOLDER.TAG 7za a "%%~i.zip" "%%~i" -r && rd /s /q "%%~i"
 )
 call drawincmd line double
-for /d %%i in (*) do call delete.nonwebp.infolder "%%~i"
-for /d %%i in (*) do (
-    if not exist "%%~i"\folder.txt 7za a "%%~i.zip" "%%~i" -r && rd /s /q "%%~i"
-)
 call fname.cbz.cmd
 goto :eof
 
@@ -30,8 +28,8 @@ goto :eof
 setlocal
 move .ehviewer 0.ehviewer.txt >nul 2>&1
 move .thumb 0.thumb.jpg >nul 2>&1
-if exist 0.thumb.jpg (call wincmdlib filesize 0.thumb.jpg >nul) else set_=0
-if %_%==0 del 0.thumb.jpg
+if exist 0.thumb.jpg (call wincmdlib filesize 0.thumb.jpg >nul) else set _=0
+if %_%==0 del 0.thumb.jpg >nul 2>&1
 for %%i in (*) do call :file "%%~i"
 goto :eof
 
@@ -44,7 +42,11 @@ if /i %~x1==.gif (
     call conv.gif2mp4 "%~1"
     goto :eof
 )
+if /i %~x1==.mp4 goto :eof
+if /i %~x1==.webm goto :eof
 if /i %~x1==.webp goto :eof
+if /i %~x1==.txt goto :eof
+if /i %~x1==.tag goto :eof
 call wincmdlib returnback wrap.ffprobe w %1 >nul
 set /a w=_
 call wincmdlib returnback wrap.ffprobe h %1 >nul

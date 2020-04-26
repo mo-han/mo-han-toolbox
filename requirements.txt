@@ -1,7 +1,6 @@
-pip-chill
-pip-autoremove
-
 youtube-dl
+you-get
+gallery-dl
 
 requests
 lxml
@@ -16,3 +15,9 @@ selenium<3.8  # phantomjs
 pywinauto==0.6.6
 pyautogui #pyautogui==0.9.39
 opencv-python
+
+pillow
+imagehash
+
+pysimplegui
+pyreadline

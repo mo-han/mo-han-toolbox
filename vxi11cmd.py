@@ -116,6 +116,13 @@ class VXI11Cmd(cmd.Cmd):
     def do_idn(self, *args):
         return self.do_cmd('*idn?')
 
+    @staticmethod
+    def str2float(s: str):
+        try:
+            return float(s)
+        except ValueError:
+            return s
+
 
 def parse_args():
     parser = argparse.ArgumentParser()

@@ -2,25 +2,45 @@
   <dictionary name="mo-han">
     <words>
       <w>addr</w>
+      <w>ahash</w>
+      <w>asctime</w>
       <w>bangumi</w>
       <w>bilibili</w>
       <w>bilidl</w>
+      <w>bilidltemp</w>
+      <w>dedup</w>
+      <w>dhash</w>
       <w>errorlevel</w>
       <w>ffmpeg</w>
+      <w>fname</w>
+      <w>getch</w>
       <w>getdata</w>
+      <w>hamd</w>
+      <w>hashdiff</w>
       <w>ifexist</w>
+      <w>imagehash</w>
       <w>imap</w>
+      <w>infolder</w>
       <w>irms</w>
       <w>iwara</w>
       <w>lastcmd</w>
+      <w>levelname</w>
       <w>manga</w>
+      <w>opencv</w>
+      <w>phash</w>
+      <w>pyinstaller</w>
+      <w>pyreadline</w>
+      <w>pysimplegui</w>
       <w>recv</w>
       <w>scal</w>
       <w>setdata</w>
       <w>tcpserver</w>
       <w>testbrowser</w>
+      <w>thres</w>
       <w>undoc</w>
       <w>urms</w>
+      <w>webp</w>
+      <w>whash</w>
       <w>ytdl</w>
       <w>zope</w>
     </words>

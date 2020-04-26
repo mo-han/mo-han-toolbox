@@ -1,8 +1,10 @@
 #!/usr/bin/env python
-
+import os
 import signal
 import sys
 import tempfile
+import random
+import string
 
 LOG_FMT_MESSAGE_ONLY = '%(message)s'
 LOG_FMT_SHORT_LEVEL_SHORT_TIME_NAME = '[%(levelname).1s %(asctime).19s] [%(name)s] %(message)s'
@@ -11,8 +13,34 @@ LOG_DATETIME_SEC = '%Y-%m-%d %H:%M:%s'
 LOG_FMT = LOG_FMT_SHORT_LEVEL_TIME_NAME
 LOG_DTF = LOG_DATETIME_SEC
 
+CHARS_ALPHANUMERIC = string.ascii_letters + string.digits
+
 TEMPDIR = tempfile.gettempdir()
 ILLEGAL_CHARS = ['\\', '/', ':', '*', '"', '<', '>', '|', '?']
+
+try:
+    from msvcrt import getch
+except ImportError:
+    import sys
+    import tty
+    import termios
+
+    def getch():
+        """
+        Gets a single character from STDIO.
+        """
+        fd = sys.stdin.fileno()
+        old = termios.tcgetattr(fd)
+        try:
+            tty.setraw(fd)
+            return sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old)
+
+
+def random_fname(prefix: str = '', suffix: str = '', length: int = 8):
+    fname = prefix + ''.join(random.sample(CHARS_ALPHANUMERIC, length)) + suffix
+    return fname if not os.path.exists(fname) else random_fname(prefix=prefix, suffix=suffix, length=length)
 
 
 def safe_basename(s: str):

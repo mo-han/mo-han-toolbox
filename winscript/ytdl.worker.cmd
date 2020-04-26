@@ -39,20 +39,21 @@ if %bilibili%==1 set output_fmt=%%(title)s [%id_prefix%%%(id)s][%%(uploader)s].%
 if %bilibili%==0 set output_fmt=%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s
 set base_args_uploader=-o "%output_fmt%" --yes-playlist --fragment-retries infinite -icw "%url%"
 set base_args_iwara=-o "%%(title)s [%%(id)s][%%(uploader)s].%%(ext)s" --yes-playlist "%url%"
-set arial2_args=--external-downloader aria2c --external-downloader-args "-x%split% -s%split% -k 1M --file-allocation=trunc"
-set args=--proxy=%proxy% --youtube-skip-dash-manifest %arial2_args% %base_args_uploader%
+set aria2_args=--external-downloader aria2c --external-downloader-args "-x%split% -s%split% -k 1M --file-allocation=trunc"
+if defined noaria2 set aria2_args=
+set args=--proxy=%proxy% --youtube-skip-dash-manifest %aria2_args% %base_args_uploader%
 rem set args=--proxy %proxy% %base_args_uploader%
 
 echo "%url%" | findstr "sankakucomplex" > nul
-if %errorlevel%==0 set args=--proxy=%proxy% %arial2_args% -o "%%(id)s.%%(ext)s" "%url%"
+if %errorlevel%==0 set args=--proxy=%proxy% %aria2_args% -o "%%(id)s.%%(ext)s" "%url%"
 echo "%url%" | findstr "javdove.com" > nul
-if %errorlevel%==0 set args=--proxy=%proxy% %arial2_args% -o "%%(title)s [javdove].%%(ext)s" "%url%"
+if %errorlevel%==0 set args=--proxy=%proxy% %aria2_args% -o "%%(title)s [javdove].%%(ext)s" "%url%"
 echo "%url%" | findstr "iwara" > nul
 if %errorlevel%==0 (
-set args=--proxy=%proxy% %arial2_args% %base_args_iwara% --no-check-certificate
+set args=--proxy=%proxy% %aria2_args% %base_args_iwara% --no-check-certificate
 set postprocess=iwara
 ) else set postprocess=null
-if %bilibili%==1 set args=--cookies %locallib_usretc%\cookies.bilibili.txt --exec "conv.copy2mp4 {} -map_metadata -1 -y -loglevel warning && del {}" %arial2_args% %base_args_uploader%
+if %bilibili%==1 set args=--cookies %locallib_usretc%\cookies.bilibili.txt --exec "conv.copy2mp4 {} -map_metadata -1 -y -loglevel warning && del {}" %aria2_args% %base_args_uploader%
 rem Append `--no-check-certificate` for YouTube. Have no idea but it works. And since it's just video data downloaded, there should be no security/privacy issue.
 rem echo "%url%" | findstr "youtube youtu.be" > nul
 rem if %errorlevel%==0 set args=--no-check-certificate %args%
@@ -186,7 +187,7 @@ goto eof
 :: 170517
 :: * Format list is optional now. It would only be showed chosen.
 :: 170514
-:: * `arial2_args` & `arial2_args`
+:: * `aria2_args` & `aria2_args`
 :: 170501
 :: + Auto retry downloading for 3 times, then prompt for retrying.
 :: 170414
