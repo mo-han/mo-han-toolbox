@@ -40,7 +40,8 @@ class VXI11CmdCustom(vxi11cmd.VXI11Cmd):
     def do_ct(self, line=None):
         msg = ':scal:ct'
         if line:
-            msg = '{0} {1};{0}?'.format(msg, line)
+            # msg = '{0} {1};{0}?'.format(msg, line)
+            msg += ' ' + line
         else:
             msg += '?'
         return self.do_cmd(msg)
@@ -48,7 +49,8 @@ class VXI11CmdCustom(vxi11cmd.VXI11Cmd):
     def do_vt(self, line=None):
         msg = ':scal:vt'
         if line:
-            msg = '{0} {1};{0}?'.format(msg, line)
+            # msg = '{0} {1};{0}?'.format(msg, line)
+            msg = ' ' + line
         else:
             msg += '?'
         return self.do_cmd(msg)

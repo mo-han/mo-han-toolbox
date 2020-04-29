@@ -5,6 +5,7 @@
       <w>ahash</w>
       <w>asctime</w>
       <w>bangumi</w>
+      <w>baudrate</w>
       <w>bilibili</w>
       <w>bilidl</w>
       <w>bilidltemp</w>
@@ -30,6 +31,7 @@
       <w>phash</w>
       <w>pyinstaller</w>
       <w>pyreadline</w>
+      <w>pyserial</w>
       <w>pysimplegui</w>
       <w>recv</w>
       <w>scal</w>

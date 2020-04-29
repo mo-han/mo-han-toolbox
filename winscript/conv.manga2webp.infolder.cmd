@@ -4,11 +4,23 @@ setlocal
 set title=%~nx0
 %~2
 if not "%~1"=="" pushd %1
-rem fname.spechar.convert *
-call :infolder
-call delete.nonwebp.infolder .
-rem fname.spechar.revert *
+call :folders
 if not "%~1"=="" popd
+goto :eof
+
+:folders
+setlocal
+for /d %%i in (*) do (
+    call drawincmd line double
+    echo %%i
+    title %title% %%i
+    pushd "%%~i"
+    call conv.manga2webp
+    popd
+    if not exist "%%~i"\FOLDER.TAG 7za a "%%~i.zip" "%%~i" -r && rd /s /q "%%~i"
+)
+call drawincmd line double
+call fname.cbz.cmd
 goto :eof
 
 :infolder

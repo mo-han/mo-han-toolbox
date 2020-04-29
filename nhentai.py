@@ -3,7 +3,7 @@
 import sys
 import logging
 
-from lib_base import LOG_FMT_MESSAGE_ONLY, win32_ctrl_c, ExitCode
+from lib_basic import LOG_FMT_MESSAGE_ONLY, win32_ctrl_c, ExitCode
 from lib_hentai import NHentaiKit
 
 if __name__ == '__main__':

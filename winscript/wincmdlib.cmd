@@ -6,7 +6,8 @@ goto :eof
 
 :test
 setlocal
-echo "%x%"
+echo :test
+echo %*
 goto :eof
 
 :returnback

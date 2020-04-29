@@ -1,22 +1,39 @@
 #!/usr/bin/env python
+import logging
 import os
+import random
 import signal
+import string
 import sys
 import tempfile
-import random
-import string
 
+# logging format
 LOG_FMT_MESSAGE_ONLY = '%(message)s'
-LOG_FMT_SHORT_LEVEL_SHORT_TIME_NAME = '[%(levelname).1s %(asctime).19s] [%(name)s] %(message)s'
-LOG_FMT_SHORT_LEVEL_TIME_NAME = '[%(levelname).1s %(asctime)s] [%(name)s] %(message)s'
-LOG_DATETIME_SEC = '%Y-%m-%d %H:%M:%s'
-LOG_FMT = LOG_FMT_SHORT_LEVEL_TIME_NAME
-LOG_DTF = LOG_DATETIME_SEC
+LOG_FMT_SINGLE_LEVEL_SHORT_TIME_NAME = '[%(levelname).1s][%(asctime).19s][%(name)s] %(message)s'
+LOG_FMT_SINGLE_LEVEL_TIME_NAME = '[%(levelname).1s][%(asctime)s][%(name)s] %(message)s'
+LOG_FMT = LOG_FMT_SINGLE_LEVEL_TIME_NAME
+# logging datetime format
+LOG_DTF_SEC = '%Y-%m-%dT%H:%M:%S'
+LOG_DTF_SEC_ZONE = '%Y-%m-%dT%H:%M:%S%z'
+LOG_DTF = LOG_DTF_SEC_ZONE
 
 CHARS_ALPHANUMERIC = string.ascii_letters + string.digits
 
 TEMPDIR = tempfile.gettempdir()
 ILLEGAL_CHARS = ['\\', '/', ':', '*', '"', '<', '>', '|', '?']
+
+
+def new_logger(logger_name: str, level: str = 'INFO', fmt=LOG_FMT, datetime_fmt=LOG_DTF, handlers_l: list = None):
+    formatter = logging.Formatter(fmt=fmt, datefmt=datetime_fmt)
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(level)
+    if not handlers_l:
+        handlers_l = [logging.StreamHandler()]
+    for h in handlers_l:
+        h.setFormatter(formatter)
+        logger.addHandler(h)
+    return logger
+
 
 try:
     from msvcrt import getch
@@ -24,6 +41,7 @@ except ImportError:
     import sys
     import tty
     import termios
+
 
     def getch():
         """

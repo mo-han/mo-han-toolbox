@@ -7,6 +7,7 @@ goto :eof
 
 :w
 :width
+echo %ffprobe% -select_streams v:0 -show_entries stream=width -of csv=p=0 %*
 %ffprobe% -select_streams v:0 -show_entries stream=width -of csv=p=0 %*
 goto :eof
 

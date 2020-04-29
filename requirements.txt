@@ -21,3 +21,4 @@ imagehash
 
 pysimplegui
 pyreadline
+pyserial

@@ -61,8 +61,8 @@ def hash_image_file(
     return [HASH_FUNC[hash_m](v, hash_size=hash_size, **kwargs) for v in variants_l]
 
 
-def write_imagehash_file(hash_db: dict, path: str = IMAGEHASH_FILENAME):
-    d = copy.deepcopy(hash_db) or dict()
+def write_imagehash_file(hash_db: dict = None, path: str = IMAGEHASH_FILENAME):
+    d = copy.deepcopy(hash_db) if hash_db else dict()
     with open(path, 'w') as fp:
         for m in d:  # m is hash_method
             for i in d[m]:  # i is image_path
@@ -75,24 +75,37 @@ def read_imagehash_file(path: str = IMAGEHASH_FILENAME):
         with open(path, 'r') as fp:
             d = json.load(fp) or dict()
             for m in d:  # m is hash_method
-                for i in d[m]:  # i is image_path
-                    d[m][i] = [hex_to_hash(h) for h in d[m][i]]  # h is single hash in the `d[m][i]` list
+                for i in list(d[m]):  # i is image_path
+                    if os.path.isfile(i):
+                        d[m][i] = [hex_to_hash(h) for h in d[m][i]]  # h is single hash in the `d[m][i]` list
+                    else:
+                        del d[m][i]
             return d
     except FileNotFoundError:
         return dict()
 
 
 def hash_all_image_files(
+        hash_db: dict = None,
         hash_m: str = DEFAULT_IMAGEHASH_METHOD,
         hash_size: int = DEFAULT_IMAGEHASH_SIZE,
-        hash_db: dict = None,
+        verbose: bool = True,
         **kwargs
 ):
-    d = hash_db or {hash_m + str(hash_size): {}}
-    dm = d[hash_m + str(hash_size)]
+    m = hash_m + str(hash_size)
+    c, s = 0, 0
+    d = hash_db or {m: {}}
+    dm = d[m]
     for f in list_all_image_files():
+        if verbose:
+            s += 1
         if f not in dm:
-            dm[f] = hash_image_file(f, hash_m=hash_m, hash_db=hash_db, **kwargs)
+            dm[f] = hash_image_file(f, hash_m=hash_m, **kwargs)
+            if verbose:
+                c += 1
+                print(c, s, end='\r')
+    if verbose:
+        print()
     return d
 
 
@@ -105,26 +118,42 @@ def pair_similar_images(
         hash_db: dict,
         threshold: float = 0.8,
         hash_m: str = DEFAULT_IMAGEHASH_METHOD,
-        hash_size: int = DEFAULT_IMAGEHASH_SIZE
+        hash_size: int = DEFAULT_IMAGEHASH_SIZE,
+        verbose: bool = True,
+        **kwargs
 ):
     max_diff = int(hash_size * hash_size * (1 - threshold)) - 1
     diff_pairs_ll = []
     dm = hash_db[hash_m + str(hash_size)]
+    c, s = 0, 0
     for _ in range(max_diff + 1):
         diff_pairs_ll += [list()]
     image_pairs_l = [c for c in combinations(dm, 2)]
     for img1, img2 in image_pairs_l:
         diff = diff_hash_image_variants(dm[img1], dm[img2])
+        if verbose:
+            s += 1
         if diff <= max_diff:
             diff_pairs_ll[diff].append((img1, img2))
+            if verbose:
+                c += 1
+                print(c, s, end='\r')
+    if verbose:
+        print()
     return diff_pairs_ll
 
 
-def group_similar_images(similar_pairs_ll: list, groups_ds: DisjointSet = None) -> DisjointSet:
+def group_similar_images(similar_pairs_ll: list, groups_ds: DisjointSet = None, verbose: bool = True) -> DisjointSet:
+    c = 0
     if not groups_ds:
         groups_ds = DisjointSet()
     for p in [pair for pairs in similar_pairs_ll for pair in pairs]:
         groups_ds.union(*p)
+        if verbose:
+            c += 1
+            print(c, end='\r')
+    if verbose:
+        print()
     return groups_ds
 
 
@@ -133,15 +162,22 @@ def view_similar_images(
         extend: bool = False,
         extend_thres: float = 0.5,
         hash_m: str = DEFAULT_IMAGEHASH_METHOD,
-        hash_size: int = DEFAULT_IMAGEHASH_SIZE
+        hash_size: int = DEFAULT_IMAGEHASH_SIZE,
+        verbose: bool = True,
+        **kwargs
 ):
+    cmd = 'call "{}"' if os.name == 'nt' else '"{}"'
     basic_max_diff = int(hash_size * hash_size * (1 - basic_thres)) - 1
     db = read_imagehash_file()
-    db = hash_all_image_files(hash_m=hash_m, hash_size=hash_size, hash_db=db)
+    db = hash_all_image_files(hash_db=db, hash_m=hash_m, hash_size=hash_size, verbose=verbose)
     write_imagehash_file(db)
-    similar_pairs_ll = pair_similar_images(db, extend_thres, hash_m=hash_m, hash_size=hash_size)
-    basic_similar_pairs_ll = similar_pairs_ll[:basic_max_diff + 1]
-    groups_ds = group_similar_images(basic_similar_pairs_ll)
+    if extend:
+        similar_pairs_ll = pair_similar_images(db, extend_thres, hash_m=hash_m, hash_size=hash_size, verbose=verbose)
+        basic_similar_pairs_ll = similar_pairs_ll[:basic_max_diff + 1]
+    else:
+        basic_similar_pairs_ll = \
+            similar_pairs_ll = pair_similar_images(db, basic_thres, hash_m=hash_m, hash_size=hash_size)
+    groups_ds = group_similar_images(basic_similar_pairs_ll, verbose=verbose)
     groups_l = list(groups_ds.itersets())
     if extend:
         for diff_pairs_l in similar_pairs_ll[basic_max_diff + 1:]:
@@ -162,10 +198,15 @@ def view_similar_images(
             continue
         for f in real_files:
             shutil.move(f, folder)
-        os.system(os.path.join(folder, real_files[0]))
+        os.system(cmd.format(os.path.join(folder, real_files[0])))
         for f in real_files:
             try:
                 shutil.move(os.path.join(folder, f), '.')
             except FileNotFoundError:
                 pass
     os.removedirs(folder)
+
+
+def view_similar_images_twice():
+    view_similar_images(extend=False)
+    view_similar_images(extend=True)
