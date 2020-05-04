@@ -10,6 +10,8 @@ import vxi11
 
 PROMPT_LEFT_ARROW = '←'
 
+Vxi11Exception = vxi11.vxi11.Vxi11Exception
+
 
 def win32_ctrl_c():
     if sys.platform == 'win32':
@@ -32,6 +34,15 @@ class VXI11Cmd(cmd.Cmd):
     def default(self, line):
         return self.do_cmd(line)
 
+    def onecmd(self, line):
+        try:
+            r = super(VXI11Cmd, self).onecmd(line)
+        except Vxi11Exception as e:
+            r = 'FAIL: ' + e.msg
+        except AttributeError as e:
+            r = 'FAIL: ' + str(e)
+
+
     def preloop(self):
         super(VXI11Cmd, self).preloop()
         self.do_help('')
@@ -49,10 +60,7 @@ class VXI11Cmd(cmd.Cmd):
 
     def send_command(self, command):
         if command[-1] == '?':
-            try:
-                return self.inst.ask(command)
-            except vxi11.vxi11.Vxi11Exception as e:
-                return 'FAIL: {}'.format(str(e))
+            return self.inst.ask(command)
         else:
             return self.inst.write(command)
 
@@ -93,10 +101,7 @@ class VXI11Cmd(cmd.Cmd):
                             buffer[:] = buffer[i + 1:]
                             command = line.decode().strip()
                             print(command)
-                            try:
-                                answer = callback(command)
-                            except AttributeError as e:
-                                answer = 'FAIL: {}'.format(str(e))
+                            answer = callback(command)
                             if answer:
                                 self.request.send(answer.encode() + b'\r\n')
 
@@ -107,7 +112,7 @@ class VXI11Cmd(cmd.Cmd):
     def do_quit(*args):
         sys.exit(0)
 
-    def do_local(self, args):
+    def do_local(self, *args):
         self.inst.local()
 
     def do_remote(self, *args):

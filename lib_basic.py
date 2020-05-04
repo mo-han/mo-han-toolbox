@@ -23,6 +23,11 @@ TEMPDIR = tempfile.gettempdir()
 ILLEGAL_CHARS = ['\\', '/', ':', '*', '"', '<', '>', '|', '?']
 
 
+def percentage(quotient, digits: int = 1) -> str:
+    fmt = '{:.' + str(digits) + '%}'
+    return fmt.format(quotient)
+
+
 def new_logger(logger_name: str, level: str = 'INFO', fmt=LOG_FMT, datetime_fmt=LOG_DTF, handlers_l: list = None):
     formatter = logging.Formatter(fmt=fmt, datefmt=datetime_fmt)
     logger = logging.getLogger(logger_name)
