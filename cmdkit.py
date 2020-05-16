@@ -4,9 +4,7 @@
 import argparse
 
 from lib_image import view_similar_images_auto
-from lib_misc import win32_ctrl_c, ArgumentParserOptionHelpFormatter, arg_type_range_factory, arg_type_pow2
-
-win32_ctrl_c()
+from lib_misc import ArgumentParserOptionHelpFormatter, arg_type_range_factory, arg_type_pow2
 
 
 def parse_args():

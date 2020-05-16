@@ -223,12 +223,12 @@ def view_similar_images_auto(
     hd_l = [ist2hd(th, hashsize=hashsize) for th in thresholds]
     hd_l.sort()
     last_hd = 0
+    gs = DisjointSet()
     for hd in hd_l:
-        gs = DisjointSet()
         sp_ll = similar_pairs_ll[last_hd:hd + 1]
         last_hd = hd + 1
+        if stat:
+            print('hamming distance:', hd)
         gs = group_similar_images(sp_ll, groups_ds=gs, **common_kwargs)
         if not dryrun:
-            if stat:
-                print('hamming distance:', hd)
             view_similar_image_groups(gs)
