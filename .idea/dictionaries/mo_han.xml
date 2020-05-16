@@ -11,6 +11,7 @@
       <w>bilidltemp</w>
       <w>dedup</w>
       <w>dhash</w>
+      <w>dryrun</w>
       <w>errorlevel</w>
       <w>ffmpeg</w>
       <w>fname</w>
@@ -18,6 +19,9 @@
       <w>getdata</w>
       <w>hamd</w>
       <w>hashdiff</w>
+      <w>hashmethod</w>
+      <w>hashsize</w>
+      <w>hashtype</w>
       <w>ifexist</w>
       <w>imagehash</w>
       <w>imap</w>
@@ -35,6 +39,7 @@
       <w>pysimplegui</w>
       <w>recv</w>
       <w>scal</w>
+      <w>scpi</w>
       <w>setdata</w>
       <w>tcpserver</w>
       <w>testbrowser</w>

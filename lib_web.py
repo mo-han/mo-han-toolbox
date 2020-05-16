@@ -6,7 +6,7 @@ import os
 
 import splinter
 
-from lib_basic import TEMPDIR
+from lib_misc import TEMPDIR
 
 USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'
 

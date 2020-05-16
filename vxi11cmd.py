@@ -8,7 +8,8 @@ from socketserver import TCPServer, BaseRequestHandler
 
 import vxi11
 
-PROMPT_LEFT_ARROW = '←'
+# PROMPT_LEFT_ARROW = '←'
+PROMPT_LEFT_ARROW = '<-'
 
 Vxi11Exception = vxi11.vxi11.Vxi11Exception
 
@@ -37,22 +38,28 @@ class VXI11Cmd(cmd.Cmd):
     def onecmd(self, line):
         try:
             r = super(VXI11Cmd, self).onecmd(line)
+            ok = True
         except Vxi11Exception as e:
-            r = 'FAIL: ' + e.msg
+            r = 'VXI11 Error ' + e.msg
+            ok = False
         except AttributeError as e:
             r = 'FAIL: ' + str(e)
-
+            ok = False
+        if not ok:
+            print(r)
+        return r
 
     def preloop(self):
         super(VXI11Cmd, self).preloop()
         self.do_help('')
         self.do_addr(self.address)
-        self.do_idn()
-        self.do_remote()
         self.prompt = 'VXI-11@{} {} '.format(self.address, PROMPT_LEFT_ARROW)
+        for c in ['idn', 'remote']:
+            self.onecmd(c)
 
     def do_cmd(self, line=None):
-        command = line or input('命令：')
+        """Send (SCPI) command."""
+        command = line or input('Send command：')
         r = self.send_command(command)
         if r:
             print(r)
@@ -66,12 +73,17 @@ class VXI11Cmd(cmd.Cmd):
 
     # noinspection PyAttributeOutsideInit
     def do_addr(self, address):
-        self.address = address or input('设备地址：')
+        """Set remote address."""
+        self.address = address or input('Remote address：')
         self.inst = vxi11.Instrument(self.address)
         return str((self.inst, self.inst.host, self.inst.client_id))
 
     def do_tcpserver(self, line: str):
-        """tcpserver [host]:port"""
+        """
+        Usage: tcpserver [ADDRESS]:PORT
+        Start a TCP socket server as a command repeater, listing on [ADDRESS]:PORT.
+        `ADDRESS`, if omitted, default to `localhost`.
+        """
         try:
             host, port = line.split(':', maxsplit=1)
             host = host or 'localhost'
@@ -110,15 +122,25 @@ class VXI11Cmd(cmd.Cmd):
 
     @staticmethod
     def do_quit(*args):
+        """Quit interactive CLI."""
         sys.exit(0)
 
     def do_local(self, *args):
-        self.inst.local()
+        """Switch instrument into local mode."""
+        try:
+            self.inst.local()
+        except Vxi11Exception:
+            return self.do_cmd(':system:local')
 
     def do_remote(self, *args):
-        return self.inst.remote()
+        """Switch instrument into remote mode."""
+        try:
+            return self.inst.remote()
+        except Vxi11Exception:
+            return self.do_cmd(':system:remote')
 
     def do_idn(self, *args):
+        """Instrument identity."""
         return self.do_cmd('*idn?')
 
     @staticmethod

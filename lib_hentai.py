@@ -11,7 +11,7 @@ from time import sleep
 from multiprocessing.dummy import Pool
 # import platform
 
-from lib_basic import rectify_basename
+from lib_misc import rectify_basename
 
 DRAW_LINE_LENGTH = 32
 

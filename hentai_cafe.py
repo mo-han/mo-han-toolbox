@@ -6,7 +6,7 @@ import requests
 import logging
 
 from lib_hentai import HentaiCafeKit, HentaiDownloadError
-from lib_basic import LOG_FMT_MESSAGE_ONLY, win32_ctrl_c
+from lib_misc import LOG_FMT_MESSAGE_ONLY, win32_ctrl_c
 
 logging.basicConfig(
     level=logging.INFO,

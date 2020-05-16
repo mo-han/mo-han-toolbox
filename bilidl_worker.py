@@ -7,9 +7,8 @@ import os
 import re
 import shutil
 import subprocess
-import sys
 
-from lib_basic import win32_ctrl_c, random_fname, getch
+from lib_misc import win32_ctrl_c, random_fname, getch
 
 
 def auto_complete_url(url: str):

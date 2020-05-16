@@ -6,6 +6,9 @@ import signal
 import string
 import sys
 import tempfile
+import argparse
+
+from lib_math import is_power_of_2_int
 
 # logging format
 LOG_FMT_MESSAGE_ONLY = '%(message)s'
@@ -21,6 +24,34 @@ CHARS_ALPHANUMERIC = string.ascii_letters + string.digits
 
 TEMPDIR = tempfile.gettempdir()
 ILLEGAL_CHARS = ['\\', '/', ':', '*', '"', '<', '>', '|', '?']
+
+
+class ArgumentParserOptionHelpFormatter(argparse.HelpFormatter):
+    def _format_action_invocation(self, action):
+        if not action.option_strings or action.nargs == 0:
+            return super()._format_action_invocation(action)
+        default = self._get_default_metavar_for_optional(action)
+        args_string = self._format_args(action, default)
+        return ', '.join(action.option_strings) + '  ' + args_string
+
+
+def arg_type_pow2(x):
+    i = int(x)
+    if is_power_of_2_int(i):
+        return i
+    else:
+        raise argparse.ArgumentTypeError("'{}' is not power of 2".format(x))
+
+
+def arg_type_range_factory(x_type, x_range_condition: str):
+    def arg_type_range(xx):
+        x = x_type(xx)
+        if eval(x_range_condition):
+            return x
+        else:
+            raise argparse.ArgumentTypeError("'{}' not in range {}".format(xx, x_range_condition))
+
+    return arg_type_range
 
 
 def percentage(quotient, digits: int = 1) -> str:
