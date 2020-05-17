@@ -5,10 +5,13 @@ import os
 import re
 import shutil
 from glob import glob
+from http.cookiejar import MozillaCookieJar
 
-from lib_misc import safe_print, safe_basename
+import requests
+from lxml import html
+
 from lib_ffmpeg import concat_videos, merge_m4s
-from lib_web import new_phantomjs
+from lib_misc import safe_print, safe_basename
 
 
 class BilibiliError(RuntimeError):
@@ -54,8 +57,11 @@ def jijidown_rename_alpha(path: str, part_num=True):
 
 
 class BilibiliAppCacheEntry:
-    def __init__(self, headless_browser, vid_dir_path):
-        self.browser = headless_browser
+    def __init__(self, vid_dir_path, cookies_file_path: str = None):
+        if cookies_file_path:
+            self.cookies = requests.utils.dict_from_cookiejar(MozillaCookieJar(cookies_file_path))
+        else:
+            self.cookies = None
         self.folder = vid_dir_path
         self.work_dir, self.id = os.path.split(os.path.realpath(vid_dir_path))
         self.part_list = os.listdir(vid_dir_path)
@@ -65,14 +71,23 @@ class BilibiliAppCacheEntry:
 
     def get_uploader(self):
         url = 'https://www.bilibili.com/video/av{}/'.format(self.id)
-        self.browser.visit(url)
-        meta_author = self.browser.find_by_xpath('//meta[@name="author"]').first.outer_html
-        author = meta_author.split('content="')[-1].split('"')[0]
-        if author:
-            return author
-        else:
-            # raise BilibiliError('No author found.')
-            return ''
+        param = {}
+        if self.cookies:
+            param['cookies'] = self.cookies
+        r = requests.get(url, **param)
+        h = html.document_fromstring(r.text)
+        return h.xpath('//meta[@name="author"]')[0].attrib['content']
+
+    # def get_uploader(self):
+    #     url = 'https://www.bilibili.com/video/av{}/'.format(self.id)
+    #     self.browser.visit(url)
+    #     meta_author = self.browser.find_by_xpath('//meta[@name="author"]').first.outer_html
+    #     author = meta_author.split('content="')[-1].split('"')[0]
+    #     if author:
+    #         return author
+    #     else:
+    #         # raise BilibiliError('No author found.')
+    #         return ''
 
     def extract_part(self):
         print('+ {}'.format(self.folder))

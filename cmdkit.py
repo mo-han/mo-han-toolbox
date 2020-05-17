@@ -4,11 +4,11 @@
 import argparse
 
 from lib_image import view_similar_images_auto
-from lib_misc import ArgumentParserOptionHelpFormatter, arg_type_range_factory, arg_type_pow2
+from lib_misc import ArgumentParserCompactOptionHelpFormatter, arg_type_range_factory, arg_type_pow2
 
 
 def parse_args():
-    common_parser_kwargs = {'formatter_class': ArgumentParserOptionHelpFormatter}
+    common_parser_kwargs = {'formatter_class': ArgumentParserCompactOptionHelpFormatter}
     ap = argparse.ArgumentParser(**common_parser_kwargs)
     sub_image = ap.add_subparsers(title='commands for image files')
 
