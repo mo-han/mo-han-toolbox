@@ -14,7 +14,6 @@ def is_power_of_2_int(x: int):
 class Pow2(int):
     def __new__(cls, x):
         new = super(Pow2, cls).__new__(cls, x)
-        print(new)
         if is_power_of_2_int(new):
             return new
         else:
