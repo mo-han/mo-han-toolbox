@@ -13,7 +13,7 @@ from lxml.etree import ParseError as LxmlParseError
 import requests
 from bs4 import BeautifulSoup
 
-from lib_misc import rectify_basename, str_ishex, new_logger, LOG_FMT_MESSAGE_ONLY
+from lib_misc import rectify_basename, str_ishex, new_logger, LOG_FMT_MESSAGE_ONLY, VoidDuck
 from lib_web import cookies_from_file, html_etree
 
 DRAW_LINE_LENGTH = 32
@@ -26,9 +26,9 @@ _requests_session.headers['User-Agent'] = \
 
 def tidy_ehviewer_images(cookies=None, retry: int = 3):
     logger = new_logger('ehvimg', fmt=LOG_FMT_MESSAGE_ONLY)
-    logmsg_move = '* {} -> {}'
-    logmsg_skip = '# {}'
-    logmsg_data = '* {}'
+    logmsg_move = '* move {} -> {}'
+    logmsg_skip = '# skip {}'
+    logmsg_data = '* try {}'
     cache = 'ehdb.json'
     cookies = cookies or {}
     if os.path.isfile(cache):
@@ -39,7 +39,7 @@ def tidy_ehviewer_images(cookies=None, retry: int = 3):
     for f in os.listdir('.'):
         if not os.path.isfile(f):
             continue
-        g = EHentaiGallery(f)
+        g = EHentaiGallery(f, logger=logger)
         gid = g.gid
         if gid in db:
             d = db[gid]
@@ -56,12 +56,11 @@ def tidy_ehviewer_images(cookies=None, retry: int = 3):
                     logger.info(logmsg_data.format(g.url))
                     d = g.data
                     break
-                except Exception as err:
-                    e = err
+                except Exception as e:
+                    logger.error(str(e))
                     if toggle:
                         g.toggle_site()
             else:
-                logger.error(str(e))
                 return 1
             db[gid] = d
             with open(cache, 'w') as fp:
@@ -85,7 +84,8 @@ def tidy_ehviewer_images(cookies=None, retry: int = 3):
 
 
 class EHentaiGallery:
-    def __init__(self, gallery_identity, site: str = None, logger=None):
+    def __init__(self, gallery_identity, site: str = None, logger=VoidDuck()):
+        self.logger = logger
         if isinstance(gallery_identity, str):
             gid, token = re.split(r'(\d+)[./\- ]([0-9a-f]+)', gallery_identity)[1:3]
         elif isinstance(gallery_identity, (tuple, list)):
@@ -146,8 +146,11 @@ class EHentaiGallery:
             raise TypeError("invalid type cookies: '{}', must be a file path str or a dict.".format(cookies))
         self.config['cookies'] = cookies
 
-    def get_data(self, wait=10):
+    def get_data(self, wait=10, logger=None):
+        logger = logger or self.logger
         h = html_etree(self.url, cookies=self.config['cookies'])
+        logger.info('# wait for {}s'.format(wait))
+        sleep(wait)
         try:
             gn = h.xpath('//h1[@id="gn"]')[0].text
             gj = h.xpath('//h1[@id="gj"]')[0].text
@@ -159,7 +162,6 @@ class EHentaiGallery:
             tk = t[0].text.strip(':')
             tv = [e.text_content().split(' | ', maxsplit=1)[0] for e in t[1]]
             data[tk] = tv
-        sleep(wait)
         self._data = data
         return data
 
