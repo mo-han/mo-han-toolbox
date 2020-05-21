@@ -27,7 +27,7 @@ ILLEGAL_CHARS = ['\\', '/', ':', '*', '"', '<', '>', '|', '?']
 
 
 class VoidDuck:
-    """Void, versatile, useless and quiet duck, no return, no error, nothing."""
+    """a void, versatile, useless and quiet duck, called in any way, return nothing, raise nothing"""
     def __init__(self, *args, **kwargs):
         pass
 
