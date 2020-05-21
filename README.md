@@ -5,7 +5,7 @@ B站移动端应用离线缓存提取器
 
 bilibili mobile application offline cache extractor
 
-#### [VoidDuck](/blob/b386864cd8c3dd52113742c19e5d53774d7b46da/lib_misc.py#L29)
+#### [VoidDuck](https://github.com/mo-han/mo-han-toolbox/blob/b386864/lib_misc.py#L29)
 
 虚空之鸭，万能的鸭鸭，无能的鸭鸭，随你怎么对待它，鸭鸭不反抗，鸭鸭不回答
 

@@ -24,11 +24,12 @@ _requests_session.headers['User-Agent'] = \
     'AppleWebKit/531.21.10 (KHTML, like Gecko) Mobile/7B405'
 
 
-def tidy_ehviewer_images(cookies=None, retry: int = 3):
+def tidy_ehviewer_images(cookies=None, retry: int = 3, wait: float = 10):
     logger = new_logger('ehvimg', fmt=LOG_FMT_MESSAGE_ONLY)
     logmsg_move = '* move {} -> {}'
     logmsg_skip = '# skip {}'
-    logmsg_data = '* try {}'
+    logmsg_data = '  try {}'
+    logmsg_err = '! {}'
     cache = 'ehdb.json'
     cookies = cookies or {}
     if os.path.isfile(cache):
@@ -36,11 +37,19 @@ def tidy_ehviewer_images(cookies=None, retry: int = 3):
             db = json.load(fp)
     else:
         db = {}
+    skipped_gid_l = []
     for f in os.listdir('.'):
         if not os.path.isfile(f):
             continue
-        g = EHentaiGallery(f, logger=logger)
+        try:
+            g = EHentaiGallery(f, logger=logger, wait=wait)
+        except ValueError:
+            logger.info(logmsg_skip.format(f))
+            continue
         gid = g.gid
+        if gid in skipped_gid_l:
+            logger.info(logmsg_skip.format(f))
+            continue
         if gid in db:
             d = db[gid]
         else:
@@ -56,12 +65,19 @@ def tidy_ehviewer_images(cookies=None, retry: int = 3):
                     logger.info(logmsg_data.format(g.url))
                     d = g.data
                     break
+                except EHentaiError as e:
+                    if e.code == 404:
+                        d = {'token': g.token}
+                        logger.warning(logmsg_err.format(str(e)))
+                        break
                 except Exception as e:
-                    logger.error(str(e))
+                    logger.error(logmsg_err.format(str(e)))
                     if toggle:
                         g.toggle_site()
             else:
-                return 1
+                skipped_gid_l.append(gid)
+                logger.info(logmsg_skip.format(f))
+                continue
             db[gid] = d
             with open(cache, 'w') as fp:
                 json.dump(db, fp)
@@ -71,12 +87,10 @@ def tidy_ehviewer_images(cookies=None, retry: int = 3):
             try:
                 a = d['group']
             except KeyError:
-                logger.info(logmsg_skip.format(f))
-                continue
-        if len(a) > 2:
+                a = ['']
+        if len(a) > 3:
             a = ['']
-        a = ', '.join(a)
-        a = '[{}]'.format(a)
+        a = '[{}]'.format(', '.join(a))
         logger.info(logmsg_move.format(f, a))
         if not os.path.isdir(a):
             os.mkdir(a)
@@ -84,8 +98,9 @@ def tidy_ehviewer_images(cookies=None, retry: int = 3):
 
 
 class EHentaiGallery:
-    def __init__(self, gallery_identity, site: str = None, logger=VoidDuck()):
+    def __init__(self, gallery_identity, site: str = None, logger=VoidDuck(), wait: float = 10):
         self.logger = logger
+        self.wait = wait
         if isinstance(gallery_identity, str):
             gid, token = re.split(r'(\d+)[./\- ]([0-9a-f]+)', gallery_identity)[1:3]
         elif isinstance(gallery_identity, (tuple, list)):
@@ -146,22 +161,30 @@ class EHentaiGallery:
             raise TypeError("invalid type cookies: '{}', must be a file path str or a dict.".format(cookies))
         self.config['cookies'] = cookies
 
-    def get_data(self, wait=10, logger=None):
+    def get_data(self, wait=None, logger=None):
         logger = logger or self.logger
-        h = html_etree(self.url, cookies=self.config['cookies'])
-        logger.info('# wait for {}s'.format(wait))
-        sleep(wait)
+        wait = wait or self.wait
+        try:
+            h = html_etree(self.url, cookies=self.config['cookies'])
+        except ConnectionError as e:
+            raise EHentaiError(e.errno)
+        finally:
+            logger.info('! wait for {}s'.format(wait))
+            sleep(wait)
         try:
             gn = h.xpath('//h1[@id="gn"]')[0].text
             gj = h.xpath('//h1[@id="gj"]')[0].text
-            tags = h.xpath('//div[@id="taglist"]/table')[0]
         except IndexError:
             raise EHentaiError(h.text_content()[:512])
         data = {'title': gn, 'original title': gj, 'token': self.token}
-        for t in tags:
-            tk = t[0].text.strip(':')
-            tv = [e.text_content().split(' | ', maxsplit=1)[0] for e in t[1]]
-            data[tk] = tv
+        try:
+            tags = h.xpath('//div[@id="taglist"]/table')[0]
+            for t in tags:
+                tk = t[0].text.strip(':')
+                tv = [e.text_content().split(' | ', maxsplit=1)[0] for e in t[1]]
+                data[tk] = tv
+        except IndexError:
+            pass  # no tag
         self._data = data
         return data
 
@@ -185,7 +208,9 @@ class EHentaiGallery:
 
 class EHentaiError(Exception):
     errors_d = {
-        403: 'IP banned',
+        -1: 'unknown',
+        403: 'ip banned',
+        404: 'gallery not found',
     }
 
     def __init__(self, x):
@@ -208,7 +233,7 @@ class EHentaiError(Exception):
             self.reason += ', ' + comment
 
     def __str__(self):
-        return 'EHentai error {}: {}'.format(self.code, self.reason)
+        return 'EHentai Error {}: {}'.format(self.code, self.reason)
 
 
 class HentaiException(Exception):
