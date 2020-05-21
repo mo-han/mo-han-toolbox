@@ -12,7 +12,10 @@
       <w>dedup</w>
       <w>dhash</w>
       <w>dryrun</w>
+      <w>ehentai</w>
+      <w>ehviewer</w>
       <w>errorlevel</w>
+      <w>exhentai</w>
       <w>ffmpeg</w>
       <w>fname</w>
       <w>getch</w>
@@ -28,8 +31,10 @@
       <w>infolder</w>
       <w>irms</w>
       <w>iwara</w>
+      <w>khtml</w>
       <w>lastcmd</w>
       <w>levelname</w>
+      <w>logmsg</w>
       <w>manga</w>
       <w>opencv</w>
       <w>phash</w>

@@ -1,17 +1,20 @@
 #!/usr/bin/env python
 import datetime
-import os
-import requests
-import logging
-import re as regex
 import json
+import logging
+import os
+import re
+import shutil
 import zipfile
-from bs4 import BeautifulSoup
-from time import sleep
 from multiprocessing.dummy import Pool
-# import platform
+from time import sleep
+from lxml.etree import ParseError as LxmlParseError
 
-from lib_misc import rectify_basename
+import requests
+from bs4 import BeautifulSoup
+
+from lib_misc import rectify_basename, str_ishex, new_logger, LOG_FMT_MESSAGE_ONLY
+from lib_web import cookies_from_file, html_etree
 
 DRAW_LINE_LENGTH = 32
 
@@ -19,6 +22,191 @@ _requests_session = requests.Session()
 _requests_session.headers['User-Agent'] = \
     'Mozilla/5.0 (iPad; U; CPU OS 3_2_1 like Mac OS X; en-us) ' \
     'AppleWebKit/531.21.10 (KHTML, like Gecko) Mobile/7B405'
+
+
+def tidy_ehviewer_images(cookies=None, retry: int = 3):
+    logger = new_logger('ehvimg', fmt=LOG_FMT_MESSAGE_ONLY)
+    logmsg_move = '* {} -> {}'
+    logmsg_skip = '# {}'
+    logmsg_data = '* {}'
+    cache = 'ehdb.json'
+    cookies = cookies or {}
+    if os.path.isfile(cache):
+        with open(cache) as fp:
+            db = json.load(fp)
+    else:
+        db = {}
+    for f in os.listdir('.'):
+        if not os.path.isfile(f):
+            continue
+        g = EHentaiGallery(f)
+        gid = g.gid
+        if gid in db:
+            d = db[gid]
+        else:
+            if cookies:
+                g.set_cookies(cookies)
+                g.site = 'exhentai'
+                toggle = True
+            else:
+                g.site = 'e-hentai'
+                toggle = False
+            for _ in range(retry + 1):
+                try:
+                    logger.info(logmsg_data.format(g.url))
+                    d = g.data
+                    break
+                except Exception as err:
+                    e = err
+                    if toggle:
+                        g.toggle_site()
+            else:
+                logger.error(str(e))
+                return 1
+            db[gid] = d
+            with open(cache, 'w') as fp:
+                json.dump(db, fp)
+        try:
+            a = d['artist']
+        except KeyError:
+            try:
+                a = d['group']
+            except KeyError:
+                logger.info(logmsg_skip.format(f))
+                continue
+        if len(a) > 2:
+            a = ['']
+        a = ', '.join(a)
+        a = '[{}]'.format(a)
+        logger.info(logmsg_move.format(f, a))
+        if not os.path.isdir(a):
+            os.mkdir(a)
+        shutil.move(f, a)
+
+
+class EHentaiGallery:
+    def __init__(self, gallery_identity, site: str = None, logger=None):
+        if isinstance(gallery_identity, str):
+            gid, token = re.split(r'(\d+)[./\- ]([0-9a-f]+)', gallery_identity)[1:3]
+        elif isinstance(gallery_identity, (tuple, list)):
+            gid, token = gallery_identity
+            gid, token = str(gid), str(token)
+        elif isinstance(gallery_identity, dict):
+            gid, token = str(gallery_identity['gid']), str(gallery_identity['token'])
+        else:
+            raise ValueError("invalid e-hentai gallery identity: '{}'".format(gallery_identity))
+        if not gid.isdecimal():
+            raise ValueError("invalid e-hentai gallery id: '{}'".format(gid))
+        if not str_ishex(token):
+            raise ValueError("invalid e-hentai gallery token: '{}'".format(token))
+        self._gid = gid
+        self._token = token
+        if site in ('x', 'ex', 'exhentai'):
+            site = 'exhentai'
+        else:
+            site = 'e-hentai'
+        self._site = site
+        self._url = 'https://{}.org/g/{}/{}'.format(site, gid, token)
+        self.config = {'cookies': {}}
+        self._data = {}
+
+    @property
+    def gid(self):
+        return self._gid
+
+    @property
+    def token(self):
+        return self._token
+
+    @property
+    def url(self):
+        return self._url
+
+    @property
+    def site(self):
+        return self._site
+
+    @site.setter
+    def site(self, site: str):
+        self._site = site
+        self._url = 'https://{}.org/g/{}/{}'.format(site, self._gid, self._token)
+
+    def toggle_site(self):
+        if self.site == 'e-hentai':
+            self.site = 'exhentai'
+        elif self.site == 'exhentai':
+            self.site = 'e-hentai'
+
+    def set_cookies(self, cookies: str or dict):
+        if isinstance(cookies, str):
+            cookies = cookies_from_file(cookies)
+        elif isinstance(cookies, dict):
+            pass
+        else:
+            raise TypeError("invalid type cookies: '{}', must be a file path str or a dict.".format(cookies))
+        self.config['cookies'] = cookies
+
+    def get_data(self, wait=10):
+        h = html_etree(self.url, cookies=self.config['cookies'])
+        try:
+            gn = h.xpath('//h1[@id="gn"]')[0].text
+            gj = h.xpath('//h1[@id="gj"]')[0].text
+            tags = h.xpath('//div[@id="taglist"]/table')[0]
+        except IndexError:
+            raise EHentaiError(h.text_content()[:512])
+        data = {'title': gn, 'original title': gj, 'token': self.token}
+        for t in tags:
+            tk = t[0].text.strip(':')
+            tv = [e.text_content().split(' | ', maxsplit=1)[0] for e in t[1]]
+            data[tk] = tv
+        sleep(wait)
+        self._data = data
+        return data
+
+    @property
+    def data(self):
+        if self._data:
+            return self._data
+        else:
+            return self.get_data()
+
+    def save_data(self, file_path: str, indent: int = None):
+        if os.path.isfile(file_path):
+            with open(file_path) as f:
+                d = json.load(f)
+        else:
+            d = {}
+        d[self.gid] = self.data
+        with open(file_path, 'w') as f:
+            json.dump(d, f, indent=indent)
+
+
+class EHentaiError(Exception):
+    errors_d = {
+        403: 'IP banned',
+    }
+
+    def __init__(self, x):
+        code, reason, comment = None, None, None
+        if isinstance(x, int):
+            if x in self.errors_d:
+                code = x
+            else:
+                reason = "undefined error number '{}'".format(x)
+        else:
+            x = str(x)
+            if x.startswith('Your IP address has been temporarily banned'):
+                code = 403
+                comment = x.rsplit('The ban expires in ', maxsplit=1)[-1]
+                comment = 'recovering in ' + comment
+        self.code = code or -1
+        self.reason = reason or self.errors_d[self.code]
+        if comment:
+            self.comment = comment
+            self.reason += ', ' + comment
+
+    def __str__(self):
+        return 'EHentai error {}: {}'.format(self.code, self.reason)
 
 
 class HentaiException(Exception):
@@ -91,7 +279,7 @@ class NHentaiKit:
         # page_num = int(soup.find('div', id='info')('div')[-3].text.split(' pages')[0])
         # self.__logger.info('{} pages in {}'.format(page_num, gallery_path))
         all_thumb_url_l = [i.img['data-src'] for i in soup('a', class_='gallerythumb')]
-        all_pic_url_l = [regex.sub(r'(.*)t.nhentai.net(.*)t.(.*)', r'\1i.nhentai.net\2.\3', s) for s in all_thumb_url_l]
+        all_pic_url_l = [re.sub(r'(.*)t.nhentai.net(.*)t.(.*)', r'\1i.nhentai.net\2.\3', s) for s in all_thumb_url_l]
         return h1, all_pic_url_l
 
     def download_picture(self, picture_url: str):
@@ -156,14 +344,6 @@ class HentaiException(Exception):
     pass
 
 
-class HentaiParseError(HentaiException):
-    pass
-
-
-class HentaiDownloadError(HentaiException):
-    pass
-
-
 class HentaiCafeKit:
     __page_sum = ...  # type: int
 
@@ -223,7 +403,7 @@ class HentaiCafeKit:
                 logger.debug('{}'.format(entry_uri))
                 entry_soup = get_soup(entry_uri)
                 yield from self.get_chapters(entry_soup, entry_uri)
-            if not regex.search(r'/page/\d+/', uri) and soup.find('span', class_='current'):  # Traverse
+            if not re.search(r'/page/\d+/', uri) and soup.find('span', class_='current'):  # Traverse
                 current = soup.find('span', class_='current').text
                 try:
                     last = soup.find('a', class_='last', title='Last Page').text
@@ -231,7 +411,7 @@ class HentaiCafeKit:
                     last = soup('a', class_='single_page')[-1].text
                 single = soup.find('a', class_='single_page')['href']
                 for n in list(range(int(current) + 1, int(last) + 1)):  # Traverse next page.
-                    n_uri = regex.sub(r'/page/\d+', r'/page/{}'.format(n), single)  # URI of next page
+                    n_uri = re.sub(r'/page/\d+', r'/page/{}'.format(n), single)  # URI of next page
                     logger.info('=' * DRAW_LINE_LENGTH + '\n' + '{}'.format(n_uri))
                     n_soup = get_soup(n_uri)
                     n_entries = [i['href'] for i in n_soup('a', class_='entry-thumb')]  # entries on next page
@@ -258,7 +438,7 @@ class HentaiCafeKit:
                 chapter_title = c.strong.decode_contents()
                 chapter_title = '{} {}'.format(
                     title,
-                    regex.sub(
+                    re.sub(
                         r'^Chapter (\d+): (.*)$',
                         r'ch.\1 - \2',
                         chapter_title,
@@ -272,7 +452,7 @@ class HentaiCafeKit:
             chapter_uri = info[0].find('a', title="Read")['href'].split('<br')[0]
             chapter_title = '{} [hentai.cafe.{}]'.format(title, hc_id)
             chapter_title = chapter_title.replace('&amp;', '&')
-            return [(   chapter_uri, chapter_title)]
+            return [(chapter_uri, chapter_title)]
 
     def get_pages(self, chapter_uri: str) -> list or None:
         """get_pages(chapter_uri) -> [(image_uri, image_name), ...]"""
@@ -284,7 +464,7 @@ class HentaiCafeKit:
             else:
                 # pages_l = json.loads(regex.search(r'var pages = (.*);', soup('script')[-2].decode()).group(1))
                 for s in soup('script'):
-                    r = regex.search(r'var pages = (.*);', s.decode())
+                    r = re.search(r'var pages = (.*);', s.decode())
                     if r:
                         pages_l = json.loads(r.group(1))
                         break

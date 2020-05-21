@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import argparse
 import logging
 import os
 import random
@@ -6,7 +7,6 @@ import signal
 import string
 import sys
 import tempfile
-import argparse
 
 from lib_math import is_power_of_2_int
 
@@ -24,6 +24,29 @@ CHARS_ALPHANUMERIC = string.ascii_letters + string.digits
 
 TEMPDIR = tempfile.gettempdir()
 ILLEGAL_CHARS = ['\\', '/', ':', '*', '"', '<', '>', '|', '?']
+
+
+class VoidDuck:
+    """Void, versatile, useless and quiet duck, no return, no error, nothing."""
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __getattr__(self, item):
+        return self
+
+    def __call__(self, *args, **kwargs):
+        return self
+
+    def __bool__(self):
+        return False
+
+
+def str_ishex(s):
+    try:
+        int(s, 16)
+        return True
+    except ValueError:
+        return False
 
 
 class ArgumentParserCompactOptionHelpFormatter(argparse.HelpFormatter):
