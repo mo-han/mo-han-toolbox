@@ -10,7 +10,7 @@ from http.cookiejar import MozillaCookieJar
 import requests
 from lxml import html
 
-from lib_ffmpeg import concat_videos, merge_m4s
+from lib_video import concat_videos, merge_m4s
 from lib_misc import safe_print, safe_basename
 
 

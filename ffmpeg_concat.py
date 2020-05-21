@@ -3,7 +3,7 @@
 
 import sys
 
-from lib_ffmpeg import _concat_videos_deprecated
+from lib_video import _concat_videos_deprecated
 
 args = sys.argv[1:]
 if args:
