@@ -49,6 +49,40 @@ def str_ishex(s):
         return False
 
 
+def get_others_factory(all_elements):
+    def get_others(element):
+        if element in all_elements:
+            others = [e for e in all_elements if e != element]
+            lo = len(others)
+            if lo > 1:
+                return others
+            elif lo == 1:
+                return others[0]
+            else:
+                return
+        else:
+            raise ValueError('{} is not inside {}'.format(element, all_elements))
+
+    return get_others
+
+
+def get_others_factory(all_elements):
+    def get_others(element):
+        if element in all_elements:
+            others = [e for e in all_elements if e != element]
+            lo = len(others)
+            if lo > 1:
+                return others
+            elif lo == 1:
+                return others[0]
+            else:
+                return
+        else:
+            raise ValueError('{} is not inside {}'.format(element, all_elements))
+
+    return get_others
+
+
 class ArgumentParserCompactOptionHelpFormatter(argparse.HelpFormatter):
     def _format_action_invocation(self, action):
         if not action.option_strings or action.nargs == 0:
