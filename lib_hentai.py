@@ -24,14 +24,13 @@ _requests_session.headers['User-Agent'] = \
     'AppleWebKit/531.21.10 (KHTML, like Gecko) Mobile/7B405'
 
 
-def tidy_ehviewer_images(cookies=None, retry: int = 3, wait: float = 10):
+def tidy_ehviewer_images():
     logger = new_logger('ehvimg', fmt=LOG_FMT_MESSAGE_ONLY)
     logmsg_move = '* move {} -> {}'
     logmsg_skip = '# skip {}'
-    logmsg_data = '  try {}'
+    logmsg_data = '- /g/{}/{}'
     logmsg_err = '! {}'
     cache = 'ehdb.json'
-    cookies = cookies or {}
     if os.path.isfile(cache):
         with open(cache) as fp:
             db = json.load(fp)
@@ -42,7 +41,7 @@ def tidy_ehviewer_images(cookies=None, retry: int = 3, wait: float = 10):
         if not os.path.isfile(f):
             continue
         try:
-            g = EHentaiGallery(f, logger=logger, wait=wait)
+            g = EHentaiGallery(f, logger=logger)
         except ValueError:
             logger.info(logmsg_skip.format(f))
             continue
@@ -53,39 +52,16 @@ def tidy_ehviewer_images(cookies=None, retry: int = 3, wait: float = 10):
         if gid in db:
             d = db[gid]
         else:
-            if cookies:
-                g.set_cookies(cookies)
-                g.site = 'exhentai'
-                toggle = True
-            else:
-                g.site = 'e-hentai'
-                toggle = False
-            for _ in range(retry + 1):
-                try:
-                    logger.info(logmsg_data.format(g.url))
-                    d = g.data
-                    break
-                except EHentaiError as e:
-                    if e.code == 404:
-                        d = {'token': g.token}
-                        logger.warning(logmsg_err.format(str(e)))
-                        break
-                except Exception as e:
-                    logger.error(logmsg_err.format(str(e)))
-                    if toggle:
-                        g.toggle_site()
-            else:
-                skipped_gid_l.append(gid)
-                logger.info(logmsg_skip.format(f))
-                continue
+            logger.info(logmsg_data.format(g.gid, g.token))
+            d = g.data
             db[gid] = d
             with open(cache, 'w') as fp:
                 json.dump(db, fp)
         try:
-            a = d['artist']
+            a = d['tags']['artist']
         except KeyError:
             try:
-                a = d['group']
+                a = d['tags']['group']
             except KeyError:
                 a = ['']
         if len(a) > 3:
@@ -146,11 +122,14 @@ class EHentaiGallery:
         self._site = site
         self._url = 'https://{}.org/g/{}/{}'.format(site, self._gid, self._token)
 
-    def toggle_site(self):
-        if self.site == 'e-hentai':
+    def change_site(self, site: str = None):
+        if site:
+            self.site = site
+        elif self.site == 'e-hentai':
             self.site = 'exhentai'
         elif self.site == 'exhentai':
             self.site = 'e-hentai'
+        return self
 
     def set_cookies(self, cookies: str or dict):
         if isinstance(cookies, str):
@@ -160,29 +139,56 @@ class EHentaiGallery:
         else:
             raise TypeError("invalid type cookies: '{}', must be a file path str or a dict.".format(cookies))
         self.config['cookies'] = cookies
+        return self
 
-    def get_data(self, wait=None, logger=None):
+    def gdata(self, wait=None, logger=None):
+        j = {'method': 'gdata', 'namespace': 1, 'gidlist': [[self.gid, self.token]]}
+        r = requests.post('https://api.e-hentai.org/api.php', json=j)
+        gdata = r.json()
+        if 'error' in gdata:
+            raise EHentaiError(gdata['error'])
+        gdata = gdata['gmetadata'][0]
+        tags = gdata['tags']
+        new_tags = {}
+        for tag in tags:
+            if ':' in tag:
+                tk, tv = tag.split(':', maxsplit=1)
+            else:
+                tk, tv = 'misc', tag
+            if tk not in new_tags:
+                new_tags[tk] = []
+            new_tags[tk].append(tv)
+        gdata.update({'tags': new_tags, 'token': self.token})
+        self._data = gdata
+        return gdata
+
+    getdata = gdata
+
+    def get_data_from_page(self, wait=None, logger=None):
         logger = logger or self.logger
         wait = wait or self.wait
         try:
             h = html_etree(self.url, cookies=self.config['cookies'])
         except ConnectionError as e:
-            raise EHentaiError(e.errno)
+            if e.errno == 404:
+                raise EHentaiError(e.errno)
+            else:
+                raise
         finally:
             logger.info('! wait for {}s'.format(wait))
             sleep(wait)
         try:
-            gn = h.xpath('//h1[@id="gn"]')[0].text
-            gj = h.xpath('//h1[@id="gj"]')[0].text
+            gn = h.xpath('//h1[@id="gn"]')[0].text or ''
+            gj = h.xpath('//h1[@id="gj"]')[0].text or ''
         except IndexError:
             raise EHentaiError(h.text_content()[:512])
-        data = {'title': gn, 'original title': gj, 'token': self.token}
+        data = {'title': gn, 'title_jpn': gj, 'token': self.token, 'tags': {}}
         try:
             tags = h.xpath('//div[@id="taglist"]/table')[0]
             for t in tags:
                 tk = t[0].text.strip(':')
                 tv = [e.text_content().split(' | ', maxsplit=1)[0] for e in t[1]]
-                data[tk] = tv
+                data['tags'][tk] = tv
         except IndexError:
             pass  # no tag
         self._data = data
@@ -193,7 +199,8 @@ class EHentaiGallery:
         if self._data:
             return self._data
         else:
-            return self.get_data()
+            # return self.get_data_from_page()
+            return self.getdata()
 
     def save_data(self, file_path: str, indent: int = None):
         if os.path.isfile(file_path):
@@ -209,6 +216,8 @@ class EHentaiGallery:
 class EHentaiError(Exception):
     errors_d = {
         -1: 'unknown',
+        1: 'api invalid json',
+        2: 'api invalid key',
         403: 'ip banned',
         404: 'gallery not found',
     }
@@ -224,16 +233,26 @@ class EHentaiError(Exception):
             x = str(x)
             if x.startswith('Your IP address has been temporarily banned'):
                 code = 403
-                comment = x.rsplit('The ban expires in ', maxsplit=1)[-1]
-                comment = 'recovering in ' + comment
+                split_by_expire = x.rsplit('The ban expires in ', maxsplit=1)
+                if len(split_by_expire) == 2:
+                    comment = 'recovering in ' + split_by_expire[-1]
+            elif x == 'Key missing, or incorrect key provided.':
+                code = 2
+            elif x == 'Invalid JSON Request':
+                code = 1
+            else:
+                code = -1
+                comment = x
         self.code = code or -1
         self.reason = reason or self.errors_d[self.code]
         if comment:
             self.comment = comment
-            self.reason += ', ' + comment
 
     def __str__(self):
-        return 'EHentai Error {}: {}'.format(self.code, self.reason)
+        if self.comment:
+            return 'EHentai Error {}: {}, {}'.format(self.code, self.reason, self.comment)
+        else:
+            return 'EHentai Error {}: {}'.format(self.code, self.reason)
 
 
 class HentaiException(Exception):
@@ -306,7 +325,8 @@ class NHentaiKit:
         # page_num = int(soup.find('div', id='info')('div')[-3].text.split(' pages')[0])
         # self.__logger.info('{} pages in {}'.format(page_num, gallery_path))
         all_thumb_url_l = [i.img['data-src'] for i in soup('a', class_='gallerythumb')]
-        all_pic_url_l = [re.sub(r'(.*)t.nhentai.net(.*)t.(.*)', r'\1i.nhentai.net\2.\3', s) for s in all_thumb_url_l]
+        all_pic_url_l = [re.sub(r'(.*)t.nhentai.net(.*)t.(.*)', r'\1i.nhentai.net\2.\3', s) for s in
+                         all_thumb_url_l]
         return h1, all_pic_url_l
 
     def download_picture(self, picture_url: str):
@@ -407,7 +427,8 @@ class HentaiCafeKit:
                             for image, name, size in chapter_dl:
                                 dl_counter += 1
                                 logger.debug('{}: {} ({})'.format(ch_title, name, size))
-                                print('Pages: [{}/{}] ({}x)'.format(dl_counter, self.__page_sum, self.max_dl), end='\r')
+                                print('Pages: [{}/{}] ({}x)'.format(dl_counter, self.__page_sum, self.max_dl),
+                                      end='\r')
                                 cbz.writestr(name, image)
                             cbz.writestr(dl_file, datetime.datetime.utcnow().replace(
                                 tzinfo=datetime.timezone.utc).astimezone().replace(microsecond=0).isoformat())

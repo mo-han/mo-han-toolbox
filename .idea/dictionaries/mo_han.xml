@@ -20,6 +20,7 @@
       <w>fname</w>
       <w>getch</w>
       <w>getdata</w>
+      <w>gidlist</w>
       <w>hamd</w>
       <w>hashdiff</w>
       <w>hashmethod</w>
@@ -46,6 +47,7 @@
       <w>scal</w>
       <w>scpi</w>
       <w>setdata</w>
+      <w>taglist</w>
       <w>tcpserver</w>
       <w>testbrowser</w>
       <w>thres</w>

@@ -36,12 +36,6 @@ def parse_args():
     sub_move_ehviewer_images = sub.add_parser(
         'mvehv', aliases=[], help=text, description=text, **common_parser_kwargs)
     sub_move_ehviewer_images.set_defaults(callee=_move_ehviewer_images)
-    sub_move_ehviewer_images.add_argument(
-        '-c', '--cookies', metavar='FILE', help='path of cookies file')
-    sub_move_ehviewer_images.add_argument(
-        '-r', '--retry', type=int, metavar='N', help='maximum retry times', default=3)
-    sub_move_ehviewer_images.add_argument(
-        '-w', '--wait', type=float, metavar='N', help='delay in every try', default=10)
 
     return ap.parse_args()
 
@@ -64,7 +58,7 @@ def _view_similar_images(args: argparse.Namespace):
 
 def _move_ehviewer_images(args):
     win32_ctrl_c()
-    exit(tidy_ehviewer_images(args.cookies, args.retry, args.wait))
+    exit(tidy_ehviewer_images())
 
 
 if __name__ == '__main__':

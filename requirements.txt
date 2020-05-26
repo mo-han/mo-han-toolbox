@@ -1,11 +1,19 @@
+requests
+lxml
+pillow
+imagehash
+opencv-python
+av  # PyAV
+pysimplegui
+pyreadline
+fs  # PyFilesystem
+pyserial
+
 youtube-dl
 you-get
 gallery-dl
 
-requests
-lxml
 bs4
-
 splinter<0.8  # phantomjs
 selenium<3.8  # phantomjs
 #splinter[zope.testbrowser]  # zope.testbrowser with splinter not support py3
@@ -14,11 +22,3 @@ selenium<3.8  # phantomjs
 
 pywinauto==0.6.6
 pyautogui #pyautogui==0.9.39
-opencv-python
-
-pillow
-imagehash
-
-pysimplegui
-pyreadline
-pyserial
