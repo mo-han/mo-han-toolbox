@@ -11,6 +11,7 @@ from pyautogui import \
     moveTo, moveRel, click, hotkey
 from pywinauto import \
     handleprops, win32functions, keyboard
+from win32gui import GetForegroundWindow
 
 __author__ = '墨焓 <zmhungrown@gmail.com>'
 __program__ = 'dota2 lib'
@@ -21,7 +22,7 @@ _logger = logging.getLogger(__program__)
 button_of_accept = 'button_of_accept.png'
 box_of_game_ready = 'box_of_game_ready.png'
 
-fg_window = win32functions.GetForegroundWindow
+fg_window = GetForegroundWindow
 fgw_title = lambda: handleprops.text(fg_window())
 fgw_class = lambda: handleprops.classname(fg_window())
 
@@ -35,7 +36,7 @@ class Dota2Controller:
     TIME_SLOT = 0.1
     POLL_INTERVAL_MAX = 10
     WINDOW_INFO = {'title': 'Dota 2', 'class': 'SDL_app', 'program': 'dota2.exe'}
-    #    WINDOW_INFO = {'class': 'HoneyviewClassX'}
+    # WINDOW_INFO = {'class': 'HoneyviewClassX'}  # for test
 
     poll_interval = TIME_SLOT
     last_fg = float()
@@ -65,7 +66,6 @@ class Dota2Controller:
         else:
             sleep(self.poll_interval)
         # Check if in foreground or not, changing polling interval dynamically.
-        #        if fgw_title() != self.WINDOW_INFO['title'] or fgw_class() != self.WINDOW_INFO['class']:
         if fgw_class() != self.WINDOW_INFO['class']:
             self.last_bg = time()
             if time() - self.last_fg >= 300:
