@@ -8,7 +8,7 @@ from lib_misc import ArgumentParserCompactOptionHelpFormatter, arg_type_range_fa
 from lib_hentai import tidy_ehviewer_images
 
 
-def parse_args():
+def argument_parser():
     common_parser_kwargs = {'formatter_class': ArgumentParserCompactOptionHelpFormatter}
     ap = argparse.ArgumentParser(**common_parser_kwargs)
     sub = ap.add_subparsers(title='sub-commands')
@@ -37,11 +37,11 @@ def parse_args():
         'mvehv', aliases=[], help=text, description=text, **common_parser_kwargs)
     sub_move_ehviewer_images.set_defaults(callee=_move_ehviewer_images)
 
-    return ap.parse_args()
+    return ap
 
 
 def main():
-    args = parse_args()
+    args = argument_parser().parse_args()
     args.callee(args)
 
 
