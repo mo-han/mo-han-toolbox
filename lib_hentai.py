@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import datetime
 import json
 import logging
@@ -8,12 +9,12 @@ import shutil
 import zipfile
 from multiprocessing.dummy import Pool
 from time import sleep
-from lxml.etree import ParseError as LxmlParseError
 
 import requests
 from bs4 import BeautifulSoup
 
-from lib_misc import rectify_basename, str_ishex, new_logger, LOG_FMT_MESSAGE_ONLY, VoidDuck
+from lib_misc import rectify_basename, LOG_FMT_MESSAGE_ONLY
+from lib_struct import VoidDuck, str_ishex, new_logger
 from lib_web import cookies_from_file, html_etree
 
 DRAW_LINE_LENGTH = 32
