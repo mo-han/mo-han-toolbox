@@ -4,8 +4,6 @@
 
 import os
 
-from lib_misc import get_others_factory
-
 VIDEO_FILE_EXTENSIONS = ['.mp4', '.m4v', '.mkv', '.flv', '.webm']
 
 
@@ -15,9 +13,9 @@ def choose_between_origin_and_hevc8b(file_path: str):
         return
     tag_o = '__origin__'
     tag_h = 'hevc8b'
+    another_tag_d = {tag_o: tag_h, tag_h: tag_o}
     sizes = {}
     files = {}
-    get_another = get_others_factory([tag_o, tag_h])
     folder, file = os.path.split(file_path)
     fname, ext = os.path.splitext(file)
     if ext not in VIDEO_FILE_EXTENSIONS:
@@ -29,17 +27,17 @@ def choose_between_origin_and_hevc8b(file_path: str):
         print('# skip untagged video:', file_path)
         return
     try:
-        another_tag = get_another(tag)
+        another_tag_d = another_tag_d[tag]
     except ValueError:
         print('# skip untagged video:', file_path)
         return
-    another_file = fname + '.' + another_tag + ext
+    another_file = fname + '.' + another_tag_d + ext
     another_file_path = os.path.join(folder, another_file)
     if os.path.isfile(another_file_path):
         sizes[tag] = os.path.getsize(file_path)
-        sizes[another_tag] = os.path.getsize(another_file_path)
+        sizes[another_tag_d] = os.path.getsize(another_file_path)
         files[tag] = file_path
-        files[another_tag] = another_file_path
+        files[another_tag_d] = another_file_path
         ratio = sizes[tag_h] / sizes[tag_o]
         diff = sizes[tag_o] - sizes[tag_h]
         if ratio <= 0.66 or ratio <= 0.75 and diff >= 50000000:

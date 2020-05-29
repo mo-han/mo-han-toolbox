@@ -6,7 +6,7 @@ import signal
 import sys
 from socketserver import TCPServer, BaseRequestHandler
 
-import vxi11
+import vxi11  # python-vxi11
 
 # PROMPT_LEFT_ARROW = '←'
 PROMPT_LEFT_ARROW = '<-'
