@@ -40,7 +40,7 @@ class Segment:
         return self.value == other.value and self.formatter == other.formatter
 
 
-class BaseSegmentList:
+class BaseSegmentSliceList:
     def __init__(self, whole=None, segments: list = None):
         if whole:
             self._whole = whole
@@ -81,9 +81,9 @@ class BaseSegmentList:
         self.compose()
 
 
-class BracketedSegmentList(BaseSegmentList):
+class BracketedSegmentSliceList(BaseSegmentSliceList):
     def __init__(self, left_mark, right_mark, whole=None, segments: list = None):
-        super(BracketedSegmentList, self).__init__(whole=whole, segments=segments)
+        super(BracketedSegmentSliceList, self).__init__(whole=whole, segments=segments)
         left_mark_width = len(left_mark)
         right_mark_width = len(right_mark)
 
@@ -114,11 +114,4 @@ class BracketedSegmentList(BaseSegmentList):
         return self._formatter
 
     def decompose(self):
-        left, right = self.left_mark, self.right_mark
-        left_width, right_width = len(left), len(right)
-        whole = self.whole
-        segments = []
-        start, middle, end = 0, 0, 0
-        wait_right, wait_another_left = False, False
-        for i in range(len(whole)):
-            pass
+        pass
