@@ -41,7 +41,7 @@ class SolusVMClientAPI(lowendspirit.Solus_Enduser_API):
         :return tuple(total, used, avail, used_pct), in bytes by default, except `used_pct` (percentage).
         """
         full_info = self.get_full_info()
-        total, used, avail, used_pct = tuple(int(s) for s in full_info[sth].split(','))
+        total, used, avail, used_pct = tuple(int(s) for s in full_info[sth]._split(','))
         if convert:
             size = hurry.filesize.size
             # iec = hurry.filesize.iec

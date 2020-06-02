@@ -58,16 +58,24 @@ def tidy_ehviewer_images():
             db[gid] = d
             with open(cache, 'w') as fp:
                 json.dump(db, fp)
-        try:
-            a = d['tags']['artist']
-        except KeyError:
+        title = d['title']
+        if title.lower().startswith('comic '):
+            m = re.match(r'comic\s+(.*)\s+(\d{4}-\d{2})?', title, flags=re.I)
+        else:
+            m = None
+        if m:
+            a = ' '.join([e for e in m.groups() if e])
+        else:
             try:
-                a = d['tags']['group']
+                a = d['tags']['artist']
             except KeyError:
+                try:
+                    a = d['tags']['group']
+                except KeyError:
+                    a = ['']
+            if len(a) > 3:
                 a = ['']
-        if len(a) > 3:
-            a = ['']
-        a = '[{}]'.format(', '.join(a))
+            a = '[{}]'.format(', '.join(a))
         logger.info(logmsg_move.format(f, a))
         if not os.path.isdir(a):
             os.mkdir(a)
@@ -153,7 +161,7 @@ class EHentaiGallery:
         new_tags = {}
         for tag in tags:
             if ':' in tag:
-                tk, tv = tag.split(':', maxsplit=1)
+                tk, tv = tag._split(':', maxsplit=1)
             else:
                 tk, tv = 'misc', tag
             if tk not in new_tags:
@@ -188,7 +196,7 @@ class EHentaiGallery:
             tags = h.xpath('//div[@id="taglist"]/table')[0]
             for t in tags:
                 tk = t[0].text.strip(':')
-                tv = [e.text_content().split(' | ', maxsplit=1)[0] for e in t[1]]
+                tv = [e.text_content()._split(' | ', maxsplit=1)[0] for e in t[1]]
                 data['tags'][tk] = tv
         except IndexError:
             pass  # no tag
@@ -483,7 +491,7 @@ class HentaiCafeKit:
             cover_uri = entry_soup.find('div', class_='entry-thumb').img['src']
             result_l = [(cover_uri, '{} - cover'.format(title))]
             for c in chapters:
-                chapter_uri = c.a['href'].split('<br')[0]
+                chapter_uri = c.a['href']._split('<br')[0]
                 chapter_title = c.strong.decode_contents()
                 chapter_title = '{} {}'.format(
                     title,
@@ -498,7 +506,7 @@ class HentaiCafeKit:
                 result_l.append((chapter_uri, chapter_title))
             return result_l
         else:  # single chapter
-            chapter_uri = info[0].find('a', title="Read")['href'].split('<br')[0]
+            chapter_uri = info[0].find('a', title="Read")['href']._split('<br')[0]
             chapter_title = '{} [hentai.cafe.{}]'.format(title, hc_id)
             chapter_title = chapter_title.replace('&amp;', '&')
             return [(chapter_uri, chapter_title)]

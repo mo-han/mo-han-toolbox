@@ -5,8 +5,11 @@
 class Segment:
     def __init__(self, value, formatter):
         self._value = value
-        self._formatter = formatter or None
-        self._form = self._formatter(self._value)
+        self._formatter = formatter
+        if self._formatter:
+            self._form = self._formatter(self._value)
+        else:
+            self._form = self._value
 
     @property
     def value(self):
@@ -40,27 +43,27 @@ class Segment:
         return self.value == other.value and self.formatter == other.formatter
 
 
-class BaseSegmentSliceList:
+class BaseSegmentList:
     def __init__(self, whole=None, segments: list = None):
         if whole:
             self._whole = whole
-            self.decompose()
+            self._split()
         elif segments:
             self._segments = segments
-            self.compose()
+            self._join()
         else:
             self._whole = ''
             self._segments = []
 
-    def decompose(self):
+    def _split(self):
         self.segments = [Segment(self.whole, None)]
 
-    def compose(self):
+    def _join(self):
         segments = self.segments
         whole = segments[0].form
         for e in segments[1:]:
             whole += e.form
-        return whole
+        self.whole = whole
 
     @property
     def whole(self):
@@ -69,7 +72,7 @@ class BaseSegmentSliceList:
     @whole.setter
     def whole(self, new):
         self._whole = new
-        self.decompose()
+        self._split()
 
     @property
     def segments(self):
@@ -78,28 +81,20 @@ class BaseSegmentSliceList:
     @segments.setter
     def segments(self, new):
         self._segments = new
-        self.compose()
+        self._join()
 
 
-class BracketedSegmentSliceList(BaseSegmentSliceList):
-    def __init__(self, left_mark, right_mark, whole=None, segments: list = None):
-        super(BracketedSegmentSliceList, self).__init__(whole=whole, segments=segments)
-        left_mark_width = len(left_mark)
-        right_mark_width = len(right_mark)
+class BracketedSegmentList(BaseSegmentList):
+    def __init__(self, brackets: tuple, whole=None, segments: list = None):
+        left, right = brackets
 
         def formatter(value):
-            return left_mark + value + right_mark
+            return left + value + right
 
-        def decompose_once(sth):
-            stage = 0
-            for i in range(len(sth)):
-                if stage == 0:
-                    search = sth[i:i + left_mark_width]
-                    if search == left_mark
-
-        self._left = left_mark
-        self._right = right_mark
+        self._left = left
+        self._right = right
         self._formatter = formatter
+        super(BracketedSegmentList, self).__init__(whole=whole, segments=segments)
 
     @property
     def left_mark(self):
@@ -113,5 +108,56 @@ class BracketedSegmentSliceList(BaseSegmentSliceList):
     def formatter(self):
         return self._formatter
 
-    def decompose(self):
-        pass
+    def _split(self):
+        i = preamble_stop = start = stop = stage = 0
+        left = self.left_mark
+        left_n = len(left)
+        right = self.right_mark
+        right_n = len(right)
+        w = self.whole
+        seg_l = []
+        while w:
+            while i < len(w):
+                if stage == 0:
+                    search_l = w[i:i + left_n]
+                    if search_l == left:
+                        preamble_stop = i
+                        start = i + left_n
+                        i += left_n
+                        stage += 1
+                    else:
+                        i += 1
+                elif stage == 1:
+                    search_r = w[i:i + right_n]
+                    if search_r == right:
+                        stop = i
+                        i += right_n
+                        stage += 1
+                    else:
+                        i += 1
+                elif stage == 2:
+                    search_l = w[i:i + left_n]
+                    search_r = w[i:i + right_n]
+                    if search_l == left:
+                        seg_l.append(Segment(w[:preamble_stop], None))
+                        seg_l.append(Segment(w[start:stop], self.formatter))
+                        w = w[stop + right_n:]
+                        i = stage = preamble_stop = start = stop = 0
+                        break
+                    elif search_r == right:
+                        stop = i
+                        i += right_n
+                    else:
+                        i += 1
+            else:
+                if stop:
+                    if preamble_stop:
+                        seg_l.append(Segment(w[:preamble_stop], None))
+                    seg_l.append(Segment(w[start:stop], self.formatter))
+                    w = w[stop + right_n:]
+                else:
+                    seg_l.append(Segment(w, None))
+                    w = None
+                    break
+                i = stage = preamble_stop = start = stop = 0
+        self._segments = seg_l

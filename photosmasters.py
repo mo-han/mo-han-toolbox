@@ -198,7 +198,7 @@ def main(url: str = None):
     db_file = os.path.join(album_dir, DB_FILE)
     restore_db(db_file)
     totals = album_soup('td', class_='tableh1')[0].contents[0]
-    _, total_images, _, _, total_pages = totals.split()
+    _, total_images, _, _, total_pages = totals._split()
     global stat
     stat = {
         'dd': album_dir,  # download directory
@@ -241,7 +241,7 @@ def main(url: str = None):
         sys.exit(ExitCode.CTRL_C)
     finally:
         for th in thl:
-            th.join()
+            th._join()
         save_db(db_file)
         save_info(info_file)
 
