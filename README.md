@@ -1,4 +1,4 @@
-#### [bilibili_adx](bilibili_adx.py)
+#### [bilibili_adx](mykits/bilibili_adx.py)
 *adx for app download extract*
 
 B站移动端应用离线缓存提取器

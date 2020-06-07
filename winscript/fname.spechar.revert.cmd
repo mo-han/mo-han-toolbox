@@ -1,2 +1,2 @@
 @echo off
-Renamer.exe -g -x -b %locallib_etc%\antrenamer\spechar.revert.arb -afFr %*
+wrap.antrenamer spechar revert -g -x -afFr %*

@@ -1,13 +1,58 @@
 @echo off
 setlocal
 
+if "%~1"=="" goto :help
 endlocal & call :%*
+goto :eof
+
+:help
+cd /d "%~dp0"
+where grep >nul 2>&1
+if not errorlevel 1 (
+    call 
+)
 goto :eof
 
 :test
 setlocal
-echo :test
-echo %*
+set x=1
+set y.1=2
+if x lss y.1 echo yes
+goto :eof
+
+:procprio
+:processpriority
+setlocal
+wmic process where name=%1 CALL setpriority %2
+goto :eof
+
+:infoldercall
+setlocal
+call :lstriparg1 %*
+if "%~1"=="" (
+    call %*
+) else (
+    pushd %1
+    call %_%
+    popd
+)
+goto :eof
+
+:mergelines
+:: %~0 <"'command'"> <EOL>
+setlocal enabledelayedexpansion
+for /f "delims=" %%i in (%~1) do (
+    set line=!line!%~2%%i
+)
+endlocal enabledelayedexpansion & call :return "%line%"
+goto :eof
+
+:lstriparg1
+setlocal
+set args=%*
+call set args=%%args:*%1=%%
+if defined args set args=%args:* =%
+endlocal & call :return %args% >nul
 goto :eof
 
 :returnback
@@ -41,9 +86,7 @@ setlocal
 endlocal & call :return %~n1%~x1
 goto :eof
 
-:parent
-:parentpath
-:dirname
+:dirpath
 setlocal
 endlocal & call :return %~dp1
 goto :eof
@@ -88,7 +131,7 @@ echo #
 set input=
 set /p "input=%loopmode.prompt%"
 if not defined input goto :loopmode.loop
-if "%input%"=="q" goto :eof
-if "%input%"=="quit" goto :eof
+if "%input:"=%"=="q" goto :eof
+if "%input:"=%"=="quit" goto :eof
 %loopmode.caller% %loopmode.callee% %input%
 goto :loopmode.loop

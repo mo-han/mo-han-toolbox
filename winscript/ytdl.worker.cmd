@@ -94,7 +94,7 @@ if "%fmt%"=="n" youtube-dl --get-filename %args% && goto :eof
 if "%fmt%"=="j" goto :json
 if "%fmt%"=="b" set "fmt=bestvideo+bestaudio/best"
 if "%fmt%"=="m" (
-set "fmt=(mp4)[height<=1080][fps<=60]+(m4a/aac)/bestvideo+bestaudio/best"
+set "fmt=(299/137/mp4)[height<=?1080][fps<=60]+(m4a/aac)/bestvideo+bestaudio/best"
 set args=--embed-thumbnail %args%
 )
 if "%fmt%"=="w" set "fmt=(webm)[height<=1080][fps<=60]+bestaudio[ext=webm]/bestvideo+bestaudio/best"

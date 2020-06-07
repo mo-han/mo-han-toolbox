@@ -9,5 +9,6 @@ if defined args set args=%args:* =%
 pushd %workdir%
 for %%i in (*.mp4) do call conv.hevc8b "%%~i"
 for %%i in (*.mkv) do call conv.hevc8b "%%~i"
+for %%i in (*.flv) do call conv.hevc8b "%%~i"
 popd
 goto :eof

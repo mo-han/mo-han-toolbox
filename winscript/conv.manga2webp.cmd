@@ -4,10 +4,10 @@ setlocal
 set title=%~nx0
 %~2
 if not "%~1"=="" pushd %1
-rem fname.spechar.convert *
+call fname.spechar.convert *
 call :infolder
 call delete.nonwebp.infolder .
-rem fname.spechar.revert *
+call fname.spechar.revert *
 if not "%~1"=="" popd
 goto :eof
 

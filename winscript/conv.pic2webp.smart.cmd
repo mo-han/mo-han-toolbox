@@ -82,14 +82,18 @@ call :cwebptmp
 if %ok%==1 goto :smartconv.output
 if %ofs% leq %max% (set /a scale=scale-5 && goto :smartconv.lower.scale)
 if %ofs% gtr %max% (set scale=95) else (goto :smartconv.lower.q)
-if %ofs% gtr %max.1.5% set scale=85
-if %ofs% gtr %max.2% set scale=75
-if %ofs% gtr %max.4% set scale=60
-if %ofs% gtr %max.6.25% set scale=50
-if %ofs% gtr %max.9% set scale=40
-if %ofs% gtr %max.16% set scale=30
-if %ofs% gtr %max.25% set scale=25
-if %ofs% gtr %max.100% set scale=15
+if %ofs% gtr %max.1.25% set scale=90
+if %ofs% gtr %max.1.5% set scale=80
+if %ofs% gtr %max.2% set scale=70
+if %ofs% gtr %max.2.8% set scale=60
+if %ofs% gtr %max.4% set scale=50
+if %ofs% gtr %max.6.25% set scale=40
+if %ofs% gtr %max.9% set scale=35
+if %ofs% gtr %max.11% set scale=30
+if %ofs% gtr %max.16% set scale=25
+if %ofs% gtr %max.25% set scale=20
+if %ofs% gtr %max.50% set scale=15
+if %ofs% gtr %max.100% set scale=10
 :smartconv.lower.scale
 if %scale% lss %scale.min% goto :smartconv.lower.q
 call :cwebptmp
@@ -97,8 +101,10 @@ if %ok%==1 goto :smartconv.output
 set /a scale=scale-5
 goto :smartconv.lower.scale
 :smartconv.lower.q
-set /a q=q-5 && set /a scale=100
+set /a q=q-5 & set /a scale=100
 if %q% geq %q.min% goto :smartconv.guess.scale
+:: all q and scale reduction fail, fallback to q.min & scale.min & targetsize
+set /a q=q.min & set /a scale=scale.min
 call :cwebptmp.targetsize
 :smartconv.output
 if %ok%==0 goto :eof
@@ -140,7 +146,9 @@ set /a max.2.8=%max%*28/10
 set /a max.4=%max%*4
 set /a max.6.25=%max%*625/100
 set /a max.9=%max%*9
+set /a max.11=%max%*11
 set /a max.16=%max%*16
 set /a max.25=%max%*25
+set /a max.50=%max%*50
 set /a max.100=%max%*100
 goto :eof
