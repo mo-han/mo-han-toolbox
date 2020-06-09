@@ -11,20 +11,16 @@ import requests
 from .misc import LOG_FMT_MESSAGE_ONLY
 from .struct import new_logger, VoidDuck, str_ishex
 from .web import cookies_from_file, html_etree
-from .xos import legal_fs_name
+from .os import legal_fs_name
 
 # EH_TITLE_REGEX_PATTERN = re.compile(r'^(\([^(]+\))?\s*(\[[^\[]+\])?\s*([^()\[\]]+(?<!\s))\s*(\(.*\))?(\[.*\])?')
 EH_TITLE_REGEX_PATTERN = re.compile(
     r'^'
-    r'([\[(][^)\]]+[)\]]+)?'
-    r'\s*'
-    r'([\[(][^)\]]+[)\]]+)?'
+    r'([\[(].+[)\]])?'
     r'\s*'
     r'([^()\[\]]+(?<!\s))'
     r'\s*'
-    r'([\[(][^)\]]+[)\]]+)?'
-    r'\s*'
-    r'([\[(][^)\]]+[)\]]+)?'
+    r'([\[(].+[)\]])?'
 )
 
 
@@ -38,6 +34,7 @@ def tidy_ehviewer_images(dry_run: bool = False):
     if os.path.isfile(dbf):
         with open(dbf) as fp:
             db = json.load(fp)
+            logger.info('@ using DB file: {}'.format(dbf))
     else:
         db = {}
     skipped_gid_l = []
@@ -63,6 +60,23 @@ def tidy_ehviewer_images(dry_run: bool = False):
                 json.dump(db, fp)
         title = d['title']
         try:
+            core_title_l = EH_TITLE_REGEX_PATTERN.match(title).group(2).split()
+        except AttributeError:
+            print(logmsg_err.format(title))
+            raise
+        comic_magazine_title = None
+        if core_title_l[0].lower() == 'comic':
+            comic_magazine_title_l = []
+            for s in core_title_l[1:]:
+                if re.match(r'^\d+', s):
+                    break
+                elif re.match(r'^(?:vol|no\.|#)(.*)$', s.lower()):
+                    break
+                else:
+                    comic_magazine_title_l.append(s)
+            if comic_magazine_title_l:
+                comic_magazine_title = 'COMIC ' + ' '.join(comic_magazine_title_l)
+        try:
             a = d['tags']['artist']
         except KeyError:
             try:
@@ -70,16 +84,16 @@ def tidy_ehviewer_images(dry_run: bool = False):
             except KeyError:
                 a = ['']
         if len(a) > 3:
-            a = ['']
-        a = '[{}]'.format(', '.join(a))
-        try:
-            core_title = EH_TITLE_REGEX_PATTERN.match(title).group(3)
-        except AttributeError:
-            print(logmsg_err.format(title))
-            raise
+            if comic_magazine_title:
+                a = comic_magazine_title
+            else:
+                a = '[]'
+        else:
+            a = '[{}]'.format(', '.join(a))
         parent, basename = os.path.split(f)
         fn, ext = os.path.splitext(basename)
-        fn = ' '.join(core_title.split()[:5]) + ' ' + fn
+        fn = str(fn)
+        fn = ' '.join(core_title_l[:5]) + ' ' + fn.split()[-1]
         nf = os.path.join(a, legal_fs_name(fn + ext))
         logger.info(logmsg_move.format(f, nf))
         if not dry_run:

@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # encoding=utf8
 
-import os
+from os import *
 
-if os.name == 'nt':
-    from .xos_nt import *
-elif os.name == 'posix':
-    from .xos_posix import *
+if name == 'nt':
+    from .os_nt import *
+elif name == 'posix':
+    from .os_posix import *
 else:
-    raise ImportError("Off-design OS: '{}'".format(os.name))
+    raise ImportError("Off-design OS: '{}'".format(name))
 
 
 def legal_fs_name(x: str, repl: str or dict = None) -> str:
