@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""bilibili (mobile client) application (offline cache) download extractor."""
+"""bilibili mobile client APP offline cache extractor.
+\"offline cache\" means downloaded content."""
 
 import os
 from glob import glob
@@ -12,9 +13,11 @@ from mylib.struct import ArgumentParserCompactOptionHelpFormatter
 
 def parse_args():
     common_parser_kwargs = {'formatter_class': ArgumentParserCompactOptionHelpFormatter}
-    ap = argparse.ArgumentParser(**common_parser_kwargs)
-    ap.add_argument('-c', '--cookies', help='netscape format cookies (text) file', metavar='cookies_file')
-    ap.add_argument('folder', help='which is a bilibili app offline cache entry')
+    ap = argparse.ArgumentParser(**common_parser_kwargs,
+                                 description='bilibili APP offline cache extractor')
+    ap.add_argument('-c', '--cookies', help='netscape format cookies (text) file', metavar='<cookies_file>')
+    ap.add_argument('folder', metavar='<folder>',
+                    help='a bilibili app offline cache entry folder, usually named in digits, wildcard glob supported')
     return ap.parse_args()
 
 

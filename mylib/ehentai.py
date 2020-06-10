@@ -13,7 +13,6 @@ from .struct import new_logger, VoidDuck, str_ishex
 from .web import cookies_from_file, html_etree
 from .os import legal_fs_name
 
-# EH_TITLE_REGEX_PATTERN = re.compile(r'^(\([^(]+\))?\s*(\[[^\[]+\])?\s*([^()\[\]]+(?<!\s))\s*(\(.*\))?(\[.*\])?')
 EH_TITLE_REGEX_PATTERN = re.compile(
     r'^'
     r'([\[(].+[)\]])?'

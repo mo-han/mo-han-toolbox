@@ -21,13 +21,13 @@ def argument_parser():
     ap = argparse.ArgumentParser(**common_parser_kwargs)
     sub = ap.add_subparsers(title='sub-commands')
 
-    text = 'for text only'
+    text = 'TEST ONLY'
     test = sub.add_parser(
         'test', help=text, description=text, **common_parser_kwargs)
-    test.set_defaults(callee=test)
+    test.set_defaults(callee=test_only)
 
     text = 'query in JSON file'
-    json_query = sub.add_parser('json.query', aliases=['qj'], help=text, description=text, **common_parser_kwargs)
+    json_query = sub.add_parser('json.query', aliases=[], help=text, description=text, **common_parser_kwargs)
     json_query.set_defaults(callee=query_json_file)
     json_query.add_argument('file', help='JSON file to query')
     json_query.add_argument('key', help='query key')
@@ -70,7 +70,7 @@ def argument_parser():
 
     text = 'find URLs from clipboard, and copy them back to clipboard'
     cb_url = sub.add_parser(
-        'cb.url', aliases=[], help=text, description=text, **common_parser_kwargs)
+        'clipboard.findurl', aliases=['cb.url'], help=text, description=text, **common_parser_kwargs)
     cb_url.set_defaults(callee=url_from_clipboard)
     cb_url.add_argument('pattern', help='URL pattern, or website name')
 
@@ -92,7 +92,7 @@ def main():
 class MyKitCmd(cmd.Cmd):
     def __init__(self):
         super(MyKitCmd, self).__init__()
-        self.prompt = ':# '
+        self.prompt = __class__.__name__ + ':# '
         self._stop = None
         self._done = None
 
@@ -124,7 +124,7 @@ class MyKitCmd(cmd.Cmd):
     do_exit = do_q = do_quit
 
 
-def test(args):
+def test_only(args):
     print('ok')
 
 
