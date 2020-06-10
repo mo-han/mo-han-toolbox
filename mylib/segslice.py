@@ -2,14 +2,27 @@
 # encoding=utf8
 
 
+class Formatter:
+    def __init__(self, fmt_func=None, signature=None):
+        if fmt_func:
+            self._fmt_func = fmt_func
+        else:
+            self._fmt_func = lambda x: x
+        self._signature = signature
+
+    def __call__(self, *args, **kwargs):
+        return self._fmt_func(*args, **kwargs)
+
+    @property
+    def signature(self):
+        return self._signature
+
+
 class Segment:
-    def __init__(self, value, formatter):
+    def __init__(self, value, formatter: Formatter):
         self._value = value
         self._formatter = formatter
-        if self._formatter:
-            self._form = self._formatter(self._value)
-        else:
-            self._form = self._value
+        self._form = self._formatter(self._value)
 
     @property
     def value(self):
@@ -36,6 +49,10 @@ class Segment:
             self._form = self._value
 
     @property
+    def signature(self):
+        return self.formatter.signature
+
+    @property
     def form(self):
         return self._form
 
@@ -56,7 +73,7 @@ class BaseSegmentList:
             self._segments = []
 
     def redivide(self):
-        self.segments = [Segment(self.whole, None)]
+        self.segments = [Segment(self.whole, Formatter())]
 
     def reunion(self):
         segments = self.segments
@@ -64,6 +81,10 @@ class BaseSegmentList:
         for e in segments[1:]:
             whole += e.form
         self.whole = whole
+
+    @property
+    def is_original(self):
+        return len(self.segments) == 1 and (self.segments[0].formatter is None or self.segments[0].value == self.whole)
 
     @property
     def whole(self):
@@ -88,12 +109,12 @@ class BracketedSegmentList(BaseSegmentList):
     def __init__(self, brackets: tuple, whole=None, segments: list = None):
         left, right = brackets
 
-        def formatter(value):
+        def fmt_func(value):
             return left + value + right
 
         self._left = left
         self._right = right
-        self._formatter = formatter
+        self._formatter = Formatter(fmt_func, left + right)
         super(BracketedSegmentList, self).__init__(whole=whole, segments=segments)
 
     @property
@@ -139,7 +160,7 @@ class BracketedSegmentList(BaseSegmentList):
                     search_l = w[i:i + left_n]
                     search_r = w[i:i + right_n]
                     if search_l == left:
-                        seg_l.append(Segment(w[:preamble_stop], None))
+                        seg_l.append(Segment(w[:preamble_stop], Formatter()))
                         seg_l.append(Segment(w[start:stop], self.formatter))
                         w = w[stop + right_n:]
                         i = stage = preamble_stop = start = stop = 0
@@ -152,11 +173,11 @@ class BracketedSegmentList(BaseSegmentList):
             else:
                 if stop:
                     if preamble_stop:
-                        seg_l.append(Segment(w[:preamble_stop], None))
+                        seg_l.append(Segment(w[:preamble_stop], Formatter()))
                     seg_l.append(Segment(w[start:stop], self.formatter))
                     w = w[stop + right_n:]
                 else:
-                    seg_l.append(Segment(w, None))
+                    seg_l.append(Segment(w, Formatter()))
                     w = None
                     break
                 i = stage = preamble_stop = start = stop = 0
