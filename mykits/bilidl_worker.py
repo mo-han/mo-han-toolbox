@@ -49,7 +49,10 @@ def split_part_name(filename):
 
 
 def get_formatted_filename(url):
-    o = get_cmd_result('ytdl.cmd n {}'.format(url)).decode()
+    try:
+        o = get_cmd_result('ytdl.cmd n {}'.format(url)).decode()
+    except UnicodeDecodeError:
+        o = get_cmd_result('ytdl.cmd n {}'.format(url)).decode('ansi')
     fname = o.strip().rsplit('\n', 1)[-1].rsplit('.', 1)[-2]
     if fname.startswith('活动作品'):
         fname = fname.split('活动作品', 1)[1]
