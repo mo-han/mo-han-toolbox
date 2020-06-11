@@ -3,19 +3,22 @@
 
 
 class Formatter:
-    def __init__(self, fmt_func=None, signature=None):
-        if fmt_func:
-            self._fmt_func = fmt_func
-        else:
-            self._fmt_func = lambda x: x
-        self._signature = signature
+    def __init__(self, fmt_func=lambda x: x, mark=None):
+        self._fmt_func = fmt_func
+        self._mark = mark
 
     def __call__(self, *args, **kwargs):
         return self._fmt_func(*args, **kwargs)
 
+    def __hash__(self):
+        return hash(self._fmt_func)
+
+    def __eq__(self, other):
+        return hash(self) == hash(other) and self.mark == other.mark
+
     @property
-    def signature(self):
-        return self._signature
+    def mark(self):
+        return self._mark
 
 
 class Segment:
@@ -23,6 +26,19 @@ class Segment:
         self._value = value
         self._formatter = formatter
         self._form = self._formatter(self._value)
+
+    def __str__(self):
+        return 'segment({}, {})'.format(self.signature, self.value)
+
+    def __eq__(self, other):
+        return self.value == other.value and self.formatter == other.formatter
+
+    def __hash__(self):
+        return hash(self.value) + hash(self.formatter)
+
+    @property
+    def mark(self):
+        return self.formatter.mark
 
     @property
     def value(self):
@@ -50,14 +66,11 @@ class Segment:
 
     @property
     def signature(self):
-        return self.formatter.signature
+        return self.formatter.mark
 
     @property
     def form(self):
         return self._form
-
-    def __eq__(self, other):
-        return self.value == other.value and self.formatter == other.formatter
 
 
 class BaseSegmentList:
@@ -71,6 +84,9 @@ class BaseSegmentList:
         else:
             self._whole = ''
             self._segments = []
+
+    def __getitem__(self, item):
+        return self.segments[item]
 
     def redivide(self):
         self.segments = [Segment(self.whole, Formatter())]
@@ -130,6 +146,7 @@ class BracketedSegmentList(BaseSegmentList):
         return self._formatter
 
     def redivide(self):
+        empty_fmt = Formatter()
         i = preamble_stop = start = stop = stage = 0
         left = self.left_mark
         left_n = len(left)
@@ -160,7 +177,8 @@ class BracketedSegmentList(BaseSegmentList):
                     search_l = w[i:i + left_n]
                     search_r = w[i:i + right_n]
                     if search_l == left:
-                        seg_l.append(Segment(w[:preamble_stop], Formatter()))
+                        if preamble_stop:
+                            seg_l.append(Segment(w[:preamble_stop], empty_fmt))
                         seg_l.append(Segment(w[start:stop], self.formatter))
                         w = w[stop + right_n:]
                         i = stage = preamble_stop = start = stop = 0
@@ -173,11 +191,11 @@ class BracketedSegmentList(BaseSegmentList):
             else:
                 if stop:
                     if preamble_stop:
-                        seg_l.append(Segment(w[:preamble_stop], Formatter()))
+                        seg_l.append(Segment(w[:preamble_stop], empty_fmt))
                     seg_l.append(Segment(w[start:stop], self.formatter))
                     w = w[stop + right_n:]
                 else:
-                    seg_l.append(Segment(w, Formatter()))
+                    seg_l.append(Segment(w, empty_fmt))
                     w = None
                     break
                 i = stage = preamble_stop = start = stop = 0

@@ -4,8 +4,19 @@
 import argparse
 import logging
 
-from mylib.math import is_power_of_2_int
-from mylib.misc import LOG_FMT, LOG_DTF
+from .math import int_is_power_of_2
+from .misc import LOG_FMT, LOG_DTF
+
+
+def singleton(cls):
+    _instances = {}
+
+    def get_instance():
+        if cls not in _instances:
+            _instances[cls] = cls()
+        return _instances[cls]
+
+    return get_instance
 
 
 class VoidDuck:
@@ -34,19 +45,19 @@ def str_ishex(s):
 
 def arg_type_pow2(x):
     i = int(x)
-    if is_power_of_2_int(i):
+    if int_is_power_of_2(i):
         return i
     else:
         raise argparse.ArgumentTypeError("'{}' is not power of 2".format(x))
 
 
 def arg_type_range_factory(x_type, x_range_condition: str):
-    def arg_type_range(xx):
-        x = x_type(xx)
+    def arg_type_range(x):
+        xx = x_type(x)
         if eval(x_range_condition):
-            return x
+            return xx
         else:
-            raise argparse.ArgumentTypeError("'{}' not in range {}".format(xx, x_range_condition))
+            raise argparse.ArgumentTypeError("'{}' not in range {}".format(x, x_range_condition))
 
     return arg_type_range
 
