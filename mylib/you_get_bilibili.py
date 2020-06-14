@@ -64,7 +64,7 @@ class Bilibili(VideoExtractor):
     @staticmethod
     def bilibili_api(avid, cid, qn=0):
         return 'https://api.bilibili.com/x/player/playurl?avid=%s&cid=%s&qn=%s&type=&otype=json&fnver=0&fnval=16' % (
-        avid, cid, qn)
+            avid, cid, qn)
 
     @staticmethod
     def bilibili_audio_api(sid):
@@ -85,7 +85,7 @@ class Bilibili(VideoExtractor):
     @staticmethod
     def bilibili_bangumi_api(avid, cid, ep_id, qn=0):
         return 'https://api.bilibili.com/pgc/player/web/playurl?avid=%s&cid=%s&qn=%s&type=&otype=json&ep_id=%s&fnver=0&fnval=16' % (
-        avid, cid, qn, ep_id)
+            avid, cid, qn, ep_id)
 
     @staticmethod
     def bilibili_interface_api(cid, qn=0):
@@ -110,17 +110,17 @@ class Bilibili(VideoExtractor):
     @staticmethod
     def bilibili_space_channel_api(mid, cid, pn=1, ps=100):
         return 'https://api.bilibili.com/x/space/channel/video?mid=%s&cid=%s&pn=%s&ps=%s&order=0&jsonp=jsonp' % (
-        mid, cid, pn, ps)
+            mid, cid, pn, ps)
 
     @staticmethod
     def bilibili_space_favlist_api(fid, pn=1, ps=20):
         return 'https://api.bilibili.com/x/v3/fav/resource/list?media_id=%s&pn=%s&ps=%s&order=mtime&type=0&tid=0&jsonp=jsonp' % (
-        fid, pn, ps)
+            fid, pn, ps)
 
     @staticmethod
     def bilibili_space_video_api(mid, pn=1, ps=100):
         return 'https://space.bilibili.com/ajax/member/getSubmitVideos?mid=%s&page=%s&pagesize=%s&order=0&jsonp=jsonp' % (
-        mid, pn, ps)
+            mid, pn, ps)
 
     @staticmethod
     def bilibili_vc_api(video_id):
@@ -474,6 +474,11 @@ class Bilibili(VideoExtractor):
             self.streams[container] = {'container': container,
                                        'size': size, 'src': urls}
 
+        format_to_qn_id = {t['id']: t['quality'] for t in self.stream_types}
+        for f in list(self.dash_streams):
+            if format_to_qn_id[f.split('-', maxsplit=1)[-1]] > self.qn_max:
+                del self.dash_streams[f]
+
     def prepare_by_cid(self, avid, cid, title, html_content, playinfo, playinfo_, url):
         # response for interaction video
         # 主要针对互动视频，使用cid而不是url来相互区分
@@ -631,8 +636,8 @@ class Bilibili(VideoExtractor):
                                          headers=self.bilibili_headers(
                                              referer='https://www.bilibili.com/video/av{}'.format(aid)))
                 graph_version = \
-                json.loads(urlcontent[urlcontent.find('<interaction>') + 13:urlcontent.find('</interaction>')])[
-                    'graph_version']
+                    json.loads(urlcontent[urlcontent.find('<interaction>') + 13:urlcontent.find('</interaction>')])[
+                        'graph_version']
                 params = {
                     'aid': str(aid),
                     'graph_version': graph_version,
@@ -679,8 +684,8 @@ class Bilibili(VideoExtractor):
                                 try:
                                     self.streams_sorted = [dict(
                                         [('id', stream_type['id'])] + list(self.streams[stream_type['id']].items())) for
-                                                           stream_type in self.__class__.stream_types if
-                                                           stream_type['id'] in self.streams]
+                                        stream_type in self.__class__.stream_types if
+                                        stream_type['id'] in self.streams]
                                 except:
                                     self.streams_sorted = [dict([('itag', stream_type['itag'])] + list(
                                         self.streams[stream_type['itag']].items())) for stream_type in
@@ -698,7 +703,7 @@ class Bilibili(VideoExtractor):
                 p = int(match1(self.url, r'[\?&]p=(\d+)') or match1(self.url, r'/index_(\d+)') or '1') - 1
                 for pi in range(p, pn):
                     self.prepare_by_cid(aid, initial_state['videoData']['pages'][pi]['cid'], '%s (P%s. %s)' % (
-                    initial_state['videoData']['title'], pi + 1, initial_state['videoData']['pages'][pi]['part']),
+                        initial_state['videoData']['title'], pi + 1, initial_state['videoData']['pages'][pi]['part']),
                                         html_content, playinfo, playinfo_, url)
                     try:
                         self.streams_sorted = [

@@ -81,6 +81,7 @@ class BilibiliVideo(you_get_bilibili.Bilibili):
         self.cookie = None
         if cookies:
             self.set_cookie(cookies)
+        self.qn_max = qn_max
 
     def set_cookie(self, cookies: str or dict):
         if isinstance(cookies, dict):
