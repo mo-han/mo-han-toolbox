@@ -7,6 +7,7 @@ import re
 import shutil
 from glob import glob
 from http.cookiejar import MozillaCookieJar
+from time import sleep
 
 import requests
 from lxml import html
@@ -15,6 +16,8 @@ from . import you_get_bilibili
 from .misc import safe_print, safe_basename
 from .video import concat_videos, merge_m4s
 from .web import cookie_string_from_dict, cookies_dict_from_file
+
+BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'
 
 
 class BilibiliError(RuntimeError):
@@ -28,8 +31,31 @@ def tmp(avid, cid):
     return r.json()
 
 
-def download_bilibili_video(url, cookies: str or dict = None, part_list: list = None, playlist: bool = None,
-                            info: bool = False, output: str = '.'):
+def get_vid(x: str or int) -> str or None:
+    if isinstance(x, int):
+        vid = 'av{}'.format(x)
+    elif isinstance(x, str):
+        for m in (re.search(r'(av\d+)', x), re.search(r'(BV[\da-zA-Z]{10})', x, flags=re.I)):
+            if m:
+                vid = m.group(1)
+                if vid.startswith('bv'):
+                    vid = 'BV' + vid[2:]
+                break
+        else:
+            vid = None
+    else:
+        raise TypeError("'{}' is not str or int".format(x))
+    return vid
+
+
+def download_bilibili_video(url: str or int,
+                            cookies: str or dict = None, output: str = None, parts: list = None,
+                            info: bool = False, playlist: bool = None,
+                            **kwargs):
+    if not output:
+        output = '.'
+    url = BILIBILI_VIDEO_URL_PREFIX + get_vid(url)
+    print(url)
     bv = BilibiliVideo(cookies=cookies)
     if info:
         dl_kwargs = {'info_only': True}
@@ -38,12 +64,15 @@ def download_bilibili_video(url, cookies: str or dict = None, part_list: list = 
     if playlist:
         bv.download_playlist_by_url(url, **dl_kwargs)
     else:
-        if part_list:
-            bv.url = url
-            vid = bv.get_vid()
-            for p in part_list:
-                url = 'https://www.bilibili.com/video/{}?p={}'.format(vid, p)
+        if parts:
+            base_url = url
+            for p in parts:
+                url = base_url + '?p={}'.format(p)
+                print(url)
                 bv.download_by_url(url, **dl_kwargs)
+        else:
+            bv.download_by_url(url, **dl_kwargs)
+
 
 
 class BilibiliVideo(you_get_bilibili.Bilibili):
@@ -73,7 +102,7 @@ class BilibiliVideo(you_get_bilibili.Bilibili):
 
     def get_vid(self):
         url = self.url
-        for m in [re.search(r'/(av\d+)', url), re.search(r'/(bv\w+)', url, flags=re.I)]:
+        for m in [re.search(r'/(av\d+)', url), re.search(r'/(bv\w{10})', url, flags=re.I)]:
             if m:
                 vid = m.group(1)
                 if vid.startswith('bv'):

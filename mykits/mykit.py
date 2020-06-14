@@ -9,6 +9,7 @@ import pyperclip
 
 from mylib.misc import win32_ctrl_c
 from mylib.struct import arg_type_pow2, arg_type_range_factory, ArgumentParserCompactOptionHelpFormatter
+from mylib.bilibili import download_bilibili_video
 
 DRAW_LINE_LEN = 32
 DRAW_DOUBLE_LINE = '=' * DRAW_LINE_LEN
@@ -25,6 +26,17 @@ def argument_parser():
     test = sub.add_parser(
         'test', help=text, description=text, **common_parser_kwargs)
     test.set_defaults(callee=test_only)
+
+    text = 'bilibili video downloader (source-patched you-get)'
+    bilibili_download = sub.add_parser('bilibili.download', aliases=['bldl'], help=text, description=text,
+                                       **common_parser_kwargs)
+    bilibili_download.set_defaults(callee=bilibili_download_callee)
+    bilibili_download.add_argument('url')
+    bilibili_download.add_argument('-c', '--cookies')
+    bilibili_download.add_argument('-i', '--info', action='store_true')
+    bilibili_download.add_argument('-l', '--playlist', action='store_true')
+    bilibili_download.add_argument('-o', '--output', metavar='dir')
+    bilibili_download.add_argument('-p', '--parts', nargs='*', type=int, metavar='N')
 
     text = 'query in JSON file'
     json_query = sub.add_parser('json.query', aliases=[], help=text, description=text, **common_parser_kwargs)
@@ -126,6 +138,10 @@ class MyKitCmd(cmd.Cmd):
 
 def test_only(args):
     print('ok')
+
+
+def bilibili_download_callee(args: argparse.Namespace):
+    download_bilibili_video(**vars(args))
 
 
 def query_json_file(args):
