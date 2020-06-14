@@ -3,9 +3,25 @@
 
 import argparse
 import logging
+import importlib.util
+import sys
 
 from .math import int_is_power_of_2
 from .misc import LOG_FMT, LOG_DTF
+
+
+def modify_and_import(module_name, modifier_or_source, package=None):
+    # https://stackoverflow.com/a/41863728/7966259
+    spec = importlib.util.find_spec(module_name, package)
+    if isinstance(modifier_or_source, str):
+        source = modifier_or_source
+    else:
+        source = modifier_or_source(spec.loader.get_source(module_name))
+    module = importlib.util.module_from_spec(spec)
+    code_obj = compile(source, module.__spec__.origin, 'exec')
+    exec(code_obj, module.__dict__)
+    sys.modules[module_name] = module
+    return module
 
 
 def singleton(cls):

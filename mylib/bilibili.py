@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import argparse
 import json
 import os
 import re
@@ -10,12 +11,84 @@ from http.cookiejar import MozillaCookieJar
 import requests
 from lxml import html
 
-from mylib.video import concat_videos, merge_m4s
-from mylib.misc import safe_print, safe_basename
+from . import you_get_bilibili
+from .misc import safe_print, safe_basename
+from .video import concat_videos, merge_m4s
+from .web import cookie_string_from_dict, cookies_dict_from_file
 
 
 class BilibiliError(RuntimeError):
     pass
+
+
+def tmp(avid, cid):
+    param = {'avid': avid, 'cid': cid, 'type': '', 'otype': 'json', 'fnver': 0, 'fnval': 16}
+    api_url = 'https://api.bilibili.com/x/player/playurl'
+    r = requests.get(api_url, param)
+    return r.json()
+
+
+def download_bilibili_video(url, cookies: str or dict = None, part_list: list = None, playlist: bool = None,
+                            info: bool = False, output: str = '.'):
+    bv = BilibiliVideo(cookies=cookies)
+    if info:
+        dl_kwargs = {'info_only': True}
+    else:
+        dl_kwargs = {'output_dir': output, 'merge': True, 'caption': True}
+    if playlist:
+        bv.download_playlist_by_url(url, **dl_kwargs)
+    else:
+        if part_list:
+            bv.url = url
+            vid = bv.get_vid()
+            for p in part_list:
+                url = 'https://www.bilibili.com/video/{}?p={}'.format(vid, p)
+                bv.download_by_url(url, **dl_kwargs)
+
+
+class BilibiliVideo(you_get_bilibili.Bilibili):
+    def __init__(self, *args, cookies: str or dict = None, qn_max=116):
+        super(BilibiliVideo, self).__init__(*args)
+        self.cookie = None
+        if cookies:
+            self.set_cookie(cookies)
+
+    def set_cookie(self, cookies: str or dict):
+        if isinstance(cookies, dict):
+            c = cookie_string_from_dict(cookies)
+        elif isinstance(cookies, str):
+            if os.path.isfile(cookies):
+                c = cookie_string_from_dict(cookies_dict_from_file(cookies))
+            else:
+                c = cookies
+        else:
+            raise TypeError("'{}' is not cookies file path str or joined cookie str or dict".format(cookies))
+        self.cookie = c
+
+    def bilibili_headers(self, referer=None, cookie=None):
+        if not cookie:
+            cookie = self.cookie
+        headers = super(BilibiliVideo, self).bilibili_headers(referer=referer, cookie=cookie)
+        return headers
+
+    def get_vid(self):
+        url = self.url
+        for m in [re.search(r'/(av\d+)', url), re.search(r'/(bv\w+)', url, flags=re.I)]:
+            if m:
+                vid = m.group(1)
+                if vid.startswith('bv'):
+                    vid = 'BV' + vid[2:]
+                break
+        else:
+            vid = None
+        return vid
+
+    def get_uploader(self):
+        url = self.url
+        headers = self.bilibili_headers()
+        r = requests.get(url, headers=headers)
+        h = html.document_fromstring(r.text)
+        return h.xpath('//meta[@name="author"]')[0].attrib['content']
 
 
 def jijidown_rename_alpha(path: str, part_num=True):

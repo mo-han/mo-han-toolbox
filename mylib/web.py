@@ -26,10 +26,16 @@ def html_etree(url, **kwargs) -> html.HtmlElement:
         raise ConnectionError(r.status_code, r.reason)
 
 
-def cookies_from_file(file_path: str) -> dict:
+def cookies_dict_from_file(file_path: str) -> dict:
     cj = http.cookiejar.MozillaCookieJar(file_path)
     cj.load()
     return requests.utils.dict_from_cookiejar(cj)
+
+
+def cookie_string_from_dict(cookies: dict) -> str:
+    cookies_l = ['{}={}'.format(k,v) for k,v in cookies.items()]
+    cookie = '; '.join(cookies_l)
+    return cookie
 
 
 class DownloadFailure(Exception):

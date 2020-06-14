@@ -10,7 +10,7 @@ import requests
 
 from .misc import LOG_FMT_MESSAGE_ONLY
 from .struct import new_logger, VoidDuck, str_ishex
-from .web import cookies_from_file, html_etree
+from .web import cookies_dict_from_file, html_etree
 from .os import legal_fs_name
 
 EH_TITLE_REGEX_PATTERN = re.compile(
@@ -161,7 +161,7 @@ class EHentaiGallery:
 
     def set_cookies(self, cookies: str or dict):
         if isinstance(cookies, str):
-            cookies = cookies_from_file(cookies)
+            cookies = cookies_dict_from_file(cookies)
         elif isinstance(cookies, dict):
             pass
         else:
