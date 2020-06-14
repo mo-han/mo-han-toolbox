@@ -106,7 +106,7 @@ class EHentaiGallery:
         self.logger = logger
         self.wait = wait
         if isinstance(gallery_identity, str):
-            gid, token = re.split(r'(\d+)[./\- ]([0-9a-f]+)', gallery_identity)[1:3]
+            gid, token = re.split(r'(\d+)[./\- ]([0-9a-f]{10})', gallery_identity)[1:3]
         elif isinstance(gallery_identity, (tuple, list)):
             gid, token = gallery_identity
             gid, token = str(gid), str(token)
