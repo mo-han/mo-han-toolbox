@@ -44,29 +44,29 @@ def argument_parser():
     cmd.set_defaults(callee=cmd_mode)
 
     text = 'view similar images in current working directory'
-    image_similar_view = sub.add_parser(
+    img_sim_view = sub.add_parser(
         'img.sim.view', aliases=[], help=text, description=text, **common_parser_kwargs)
-    image_similar_view.set_defaults(callee=view_similar_images)
-    image_similar_view.add_argument(
+    img_sim_view.set_defaults(callee=view_similar_images)
+    img_sim_view.add_argument(
         '-t', '--thresholds', type=arg_type_range_factory(float, '0<x<=1'), nargs='+', metavar='N'
         , help='(multiple) similarity thresholds')
-    image_similar_view.add_argument(
+    img_sim_view.add_argument(
         '-H', '--hashtype', type=str, choices=[s + 'hash' for s in ('a', 'd', 'p', 'w')]
         , help='image hash type')
-    image_similar_view.add_argument(
+    img_sim_view.add_argument(
         '-s', '--hashsize', type=arg_type_pow2, metavar='N'
         , help='the side size of the image hash square, must be a integer power of 2')
-    image_similar_view.add_argument(
+    img_sim_view.add_argument(
         '-T', '--no-transpose', action='store_false', dest='transpose'
         , help='do not find similar images for transposed variants (rotated, flipped)')
-    image_similar_view.add_argument(
+    img_sim_view.add_argument(
         '--dry-run', action='store_true', help='find similar images, but without viewing them')
 
     text = 'move ehviewer downloaded images into corresponding folders named by the authors'
-    move_ehviewer_images = sub.add_parser(
+    ehv_img_mv = sub.add_parser(
         'ehv.img.mv', aliases=[], help=text, description=text, **common_parser_kwargs)
-    move_ehviewer_images.set_defaults(callee=move_ehviewer_images)
-    move_ehviewer_images.add_argument('-D', '--dry-run', action='store_true')
+    ehv_img_mv.set_defaults(callee=move_ehviewer_images)
+    ehv_img_mv.add_argument('-D', '--dry-run', action='store_true')
 
     text = 'find URLs from clipboard, and copy them back to clipboard'
     cb_url = sub.add_parser(
