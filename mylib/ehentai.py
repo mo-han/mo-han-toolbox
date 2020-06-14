@@ -176,7 +176,11 @@ class EHentaiGallery:
         if 'error' in gdata:
             raise EHentaiError(gdata['error'])
         gdata = gdata['gmetadata'][0]
-        tags = gdata['tags']
+        gdata.update({'token': self.token})
+        try:
+            tags = gdata['tags']
+        except KeyError:
+            return gdata
         new_tags = {}
         for tag in tags:
             if ':' in tag:
@@ -186,7 +190,7 @@ class EHentaiGallery:
             if tk not in new_tags:
                 new_tags[tk] = []
             new_tags[tk].append(tv)
-        gdata.update({'tags': new_tags, 'token': self.token})
+        gdata.update({'tags': new_tags})
         self._data = gdata
         return gdata
 
