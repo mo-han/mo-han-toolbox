@@ -13,19 +13,19 @@ class Bilibili(VideoExtractor):
     stream_types = [
         {'id': 'hdflv2_4k', 'quality': 120, 'audio_quality': 30280,
          'container': 'FLV', 'video_resolution': '2160p', 'desc': '超清 4K'},
-        {'id': 'flv_p60', 'quality': 116, 'audio_quality': 30232,
+        {'id': 'flv_p60', 'quality': 116, 'audio_quality': 30280,
          'container': 'FLV', 'video_resolution': '1080p', 'desc': '高清 1080P60'},
-        {'id': 'hdflv2', 'quality': 112, 'audio_quality': 30232,
+        {'id': 'hdflv2', 'quality': 112, 'audio_quality': 30280,
          'container': 'FLV', 'video_resolution': '1080p', 'desc': '高清 1080P+'},
-        {'id': 'flv', 'quality': 80, 'audio_quality': 30232,
+        {'id': 'flv', 'quality': 80, 'audio_quality': 30280,
          'container': 'FLV', 'video_resolution': '1080p', 'desc': '高清 1080P'},
-        {'id': 'flv720_p60', 'quality': 74, 'audio_quality': 30232,
+        {'id': 'flv720_p60', 'quality': 74, 'audio_quality': 30280,
          'container': 'FLV', 'video_resolution': '720p', 'desc': '高清 720P60'},
-        {'id': 'flv720', 'quality': 64, 'audio_quality': 30232,
+        {'id': 'flv720', 'quality': 64, 'audio_quality': 30280,
          'container': 'FLV', 'video_resolution': '720p', 'desc': '高清 720P'},
-        {'id': 'hdmp4', 'quality': 48, 'audio_quality': 30232,
+        {'id': 'hdmp4', 'quality': 48, 'audio_quality': 30280,
          'container': 'MP4', 'video_resolution': '720p', 'desc': '高清 720P (MP4)'},
-        {'id': 'flv480', 'quality': 32, 'audio_quality': 30232,
+        {'id': 'flv480', 'quality': 32, 'audio_quality': 30280,
          'container': 'FLV', 'video_resolution': '480p', 'desc': '清晰 480P'},
         {'id': 'flv360', 'quality': 16, 'audio_quality': 30216,
          'container': 'FLV', 'video_resolution': '360p', 'desc': '流畅 360P'},
@@ -476,7 +476,8 @@ class Bilibili(VideoExtractor):
 
         format_to_qn_id = {t['id']: t['quality'] for t in self.stream_types}
         for f in list(self.dash_streams):
-            if format_to_qn_id[f.split('-', maxsplit=1)[-1]] > self.qn_max:
+            q = format_to_qn_id[f.split('-', maxsplit=1)[-1]]
+            if q > self.qn_max or self.qn_single and self.qn_single == q:
                 del self.dash_streams[f]
 
     def prepare_by_cid(self, avid, cid, title, html_content, playinfo, playinfo_, url):
