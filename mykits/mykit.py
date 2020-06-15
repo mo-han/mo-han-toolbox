@@ -7,7 +7,7 @@ import shlex
 
 import pyperclip
 
-from mylib.misc import win32_ctrl_c
+from mylib.os_nt import win32_ctrl_c_signal
 from mylib.struct import arg_type_pow2, arg_type_range_factory, ArgumentParserCompactOptionHelpFormatter
 from mylib.bilibili import download_bilibili_video
 
@@ -37,6 +37,8 @@ def argument_parser():
     bilibili_download.add_argument('-l', '--playlist', action='store_true')
     bilibili_download.add_argument('-o', '--output', metavar='dir')
     bilibili_download.add_argument('-p', '--parts', nargs='*', type=int, metavar='N')
+    bilibili_download.add_argument('-q', '--qn-single', type=int, metavar='N')
+    bilibili_download.add_argument('-x', '--qn-max', type=int, metavar='N')
 
     text = 'query in JSON file'
     json_query = sub.add_parser('json.query', aliases=[], help=text, description=text, **common_parser_kwargs)
@@ -201,7 +203,7 @@ def view_similar_images(args: argparse.Namespace):
 
 def move_ehviewer_images(args):
     from mylib.ehentai import tidy_ehviewer_images
-    win32_ctrl_c()
+    win32_ctrl_c_signal()
     tidy_ehviewer_images(dry_run=args.dry_run)
 
 

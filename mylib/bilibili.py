@@ -16,6 +16,8 @@ from . import you_get_bilibili
 from .misc import safe_print, safe_basename
 from .video import concat_videos, merge_m4s
 from .web import cookie_string_from_dict, cookies_dict_from_file
+from .os_nt import win32_ctrl_c_signal
+from .struct import modify_and_import
 
 BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'
 
@@ -29,6 +31,19 @@ def tmp(avid, cid):
     api_url = 'https://api.bilibili.com/x/player/playurl'
     r = requests.get(api_url, param)
     return r.json()
+
+
+def modifier(x: str):
+    find = '''
+    def prepare(self, **kwargs):
+'''
+    repl = find + '''
+        """test ok"""
+        print('test ok')
+'''
+    return x.replace(find, repl)
+
+m_bilibili = modify_and_import('you_get.extractors.bilibili', modifier)
 
 
 def get_vid(x: str or int) -> str or None:
@@ -50,17 +65,23 @@ def get_vid(x: str or int) -> str or None:
 
 def download_bilibili_video(url: str or int,
                             cookies: str or dict = None, output: str = None, parts: list = None,
+                            qn_max: int = None, qn_single: int = None, fmt=None,
                             info: bool = False, playlist: bool = None,
                             **kwargs):
+    win32_ctrl_c_signal()
     if not output:
         output = '.'
+    if not qn_max:
+        qn_max = 116
     url = BILIBILI_VIDEO_URL_PREFIX + get_vid(url)
     print(url)
-    bv = BilibiliVideo(cookies=cookies)
+    bv = BilibiliVideo(cookies=cookies, qn_max=qn_max, qn_single=qn_single)
     if info:
         dl_kwargs = {'info_only': True}
     else:
         dl_kwargs = {'output_dir': output, 'merge': True, 'caption': True}
+    if fmt:
+        dl_kwargs['format'] = fmt
     if playlist:
         bv.download_playlist_by_url(url, **dl_kwargs)
     else:
@@ -74,14 +95,14 @@ def download_bilibili_video(url: str or int,
             bv.download_by_url(url, **dl_kwargs)
 
 
-
 class BilibiliVideo(you_get_bilibili.Bilibili):
-    def __init__(self, *args, cookies: str or dict = None, qn_max=116):
+    def __init__(self, *args, cookies: str or dict = None, qn_max=116, qn_single=None):
         super(BilibiliVideo, self).__init__(*args)
         self.cookie = None
         if cookies:
             self.set_cookie(cookies)
         self.qn_max = qn_max
+        self.qn_single = qn_single
 
     def set_cookie(self, cookies: str or dict):
         if isinstance(cookies, dict):

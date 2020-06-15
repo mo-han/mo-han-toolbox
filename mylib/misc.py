@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import os
 import random
-import signal
 import string
 import sys
 import tempfile
@@ -72,11 +71,6 @@ def safe_print(s):
                 pass
         else:
             print()
-
-
-def win32_ctrl_c():
-    if sys.platform == 'win32':
-        signal.signal(signal.SIGINT, signal.SIG_DFL)  # %ERRORLEVEL% = '-1073741510'
 
 
 def rectify_basename(s: str, replace: bool = True):

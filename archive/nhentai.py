@@ -3,11 +3,12 @@
 import sys
 import logging
 
-from mylib.misc import LOG_FMT_MESSAGE_ONLY, win32_ctrl_c, ExitCode
+from mylib.misc import LOG_FMT_MESSAGE_ONLY, ExitCode
+from mylib.os_nt import win32_ctrl_c_signal
 from mylib.hentai import NHentaiKit
 
 if __name__ == '__main__':
-    win32_ctrl_c()
+    win32_ctrl_c_signal()
     logging.basicConfig(
         level=logging.INFO,
         format=LOG_FMT_MESSAGE_ONLY,

@@ -4,7 +4,8 @@ import sys
 import logging
 
 from mylib.hentai import HentaiCafeKit
-from mylib.misc import LOG_FMT_MESSAGE_ONLY, win32_ctrl_c
+from mylib.misc import LOG_FMT_MESSAGE_ONLY
+from mylib.os_nt import win32_ctrl_c_signal
 
 logging.basicConfig(
     level=logging.INFO,
@@ -13,7 +14,7 @@ logging.basicConfig(
 
 
 if __name__ == '__main__':
-    win32_ctrl_c()
+    win32_ctrl_c_signal()
     uri = sys.argv[1]
     if len(sys.argv) >= 3:
         hc = HentaiCafeKit(int(sys.argv[2]))

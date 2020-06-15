@@ -13,7 +13,8 @@ import json
 from requests import get, head
 from bs4 import BeautifulSoup
 
-from mylib.misc import win32_ctrl_c, ExitCode, rectify_basename, LOG_FMT, LOG_FMT_MESSAGE_ONLY
+from mylib.misc import ExitCode, rectify_basename, LOG_FMT, LOG_FMT_MESSAGE_ONLY
+from mylib.os_nt import win32_ctrl_c_signal
 
 DB_FILE = 'db.json'
 INFO_FILE = 'info.txt'
@@ -149,7 +150,7 @@ def display_stat():
 
 
 def main(url: str = None):
-    win32_ctrl_c()
+    win32_ctrl_c_signal()
     args = parse_args()
     # Get verbose level from args
     if args.verbose:

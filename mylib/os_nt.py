@@ -2,6 +2,8 @@
 # encoding=utf8
 import inspect
 import re
+import signal
+import sys
 
 from .struct import singleton
 
@@ -76,3 +78,8 @@ class Clipboard:
 
 
 clipboard = Clipboard()
+
+
+def win32_ctrl_c_signal():
+    if sys.platform == 'win32':
+        signal.signal(signal.SIGINT, signal.SIG_DFL)  # %ERRORLEVEL% = '-1073741510'
