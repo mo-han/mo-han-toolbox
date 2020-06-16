@@ -2,9 +2,18 @@
 # encoding=utf8
 
 
-class BoxDrawer:
-    def __init__(self):
-        self.chars = '─│'
+class SimpleDrawer:
+    LONG_LINE_LENGTH = 32
+    BOX_DRAWING_CHARS = {'hl': '─', 'vl': '│'}
 
-    def vl(self, length=32):
-        print(self.chars[0]*32)
+    def __init__(self, print_method=print, print_end=''):
+        self._print = print_method
+        self.end = print_end
+
+    def print(self, text: str, **kwargs):
+        return self._print(text + self.end, **kwargs)
+
+    def horizontal_line(self, length=LONG_LINE_LENGTH, **kwargs):
+        return self.print(self.BOX_DRAWING_CHARS['hl'] * length, **kwargs)
+
+    hl = horizontal_line
