@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import argparse
+
 import json
 import os
 import re
 import shutil
+import sys
 from glob import glob
 from http.cookiejar import MozillaCookieJar
-from time import sleep
 
 import requests
 from lxml import html
 
-from . import you_get_bilibili
+from .cli import SimpleDrawer
 from .misc import safe_print, safe_basename
-from .video import concat_videos, merge_m4s
-from .web import cookie_string_from_dict, cookies_dict_from_file
 from .os_nt import win32_ctrl_c_signal
 from .struct import modify_and_import
+from .video import concat_videos, merge_m4s
+from .web import cookie_string_from_dict, cookies_dict_from_file
 
 BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'
 
@@ -26,7 +26,7 @@ class BilibiliError(RuntimeError):
     pass
 
 
-def tmp(avid, cid):
+def _tmp(avid, cid):
     param = {'avid': avid, 'cid': cid, 'type': '', 'otype': 'json', 'fnver': 0, 'fnval': 16}
     api_url = 'https://api.bilibili.com/x/player/playurl'
     r = requests.get(api_url, param)
@@ -43,7 +43,81 @@ def modifier(x: str):
 '''
     return x.replace(find, repl)
 
-m_bilibili = modify_and_import('you_get.extractors.bilibili', modifier)
+
+def modify_you_get_bilibili(x: str):
+    x = x.replace('''
+    stream_types = [
+        {'id': 'flv_p60', 'quality': 116, 'audio_quality': 30280,
+         'container': 'FLV', 'video_resolution': '1080p', 'desc': '高清 1080P60'},
+''', '''
+    stream_types = [
+        {'id': 'hdflv2_4k', 'quality': 120, 'audio_quality': 30280,
+         'container': 'FLV', 'video_resolution': '2160p', 'desc': '超清 4K'},
+        {'id': 'flv_p60', 'quality': 116, 'audio_quality': 30280,
+         'container': 'FLV', 'video_resolution': '1080p', 'desc': '高清 1080P60'},
+''')
+    x = x.replace('''
+        elif height <= 1080 and qn <= 80:
+            return 80
+        else:
+            return 112
+''', '''
+        elif height <= 1080 and qn <= 80:
+            return 80
+        elif height <= 1080 and qn <= 112:
+            return 112
+        else:
+            return 120
+''')
+
+    x = x.replace('''
+                log.w('This is a multipart video. (use --playlist to download all parts.)')
+''', r'''
+                sys.stderr.write('# multi-part video: use -p to download other part(s)\n')
+''')
+    x = x.replace('''
+            # set video title
+            self.title = initial_state['videoData']['title']
+            # refine title for a specific part, if it is a multi-part video
+            p = int(match1(self.url, r'[\?&]p=(\d+)') or match1(self.url, r'/index_(\d+)') or
+                    '1')  # use URL to decide p-number, not initial_state['p']
+            if pn > 1:
+                part = initial_state['videoData']['pages'][p - 1]['part']
+                self.title = '%s (P%s. %s)' % (self.title, p, part)
+''', '''
+            # set video title
+            self.title = initial_state['videoData']['title']
+            self.title += ' ' + self.get_vid_label() + self.get_author_label()
+            # refine title for a specific part, if it is a multi-part video
+            p = int(match1(self.url, r'[\?&]p=(\d+)') or match1(self.url, r'/index_(\d+)') or
+                    '1')  # use URL to decide p-number, not initial_state['p']
+            if pn > 1:
+                part = initial_state['videoData']['pages'][p - 1]['part']
+                self.title = '%s P%s. %s' % (self.title, p, part)
+''')
+    x = x.replace('''
+                # automatic format for durl: qn=0
+                # for dash, qn does not matter
+                if current_quality is None or qn < current_quality:
+''', '''
+                # automatic format for durl: qn=0
+                # for dash, qn does not matter
+                # if current_quality is None or qn < current_quality:
+                if True:
+''')
+    x = x.replace('''
+    def prepare_by_cid(self,avid,cid,title,html_content,playinfo,playinfo_,url):
+''', '''
+        self.del_unwanted_dash_streams()
+
+    def prepare_by_cid(self, avid, cid, title, html_content, playinfo, playinfo_, url):
+''')
+    with open('r:t.py', 'w') as f:
+        f.write(x)
+    return x
+
+
+modified_you_get_bilibili = modify_and_import('you_get.extractors.bilibili', modify_you_get_bilibili)
 
 
 def get_vid(x: str or int) -> str or None:
@@ -65,44 +139,63 @@ def get_vid(x: str or int) -> str or None:
 
 def download_bilibili_video(url: str or int,
                             cookies: str or dict = None, output: str = None, parts: list = None,
-                            qn_max: int = None, qn_single: int = None, fmt=None,
+                            qn_max: int = None, qn_single: int = None, moderate_audio: bool = True, fmt=None,
                             info: bool = False, playlist: bool = None,
                             **kwargs):
     win32_ctrl_c_signal()
+    dr = SimpleDrawer(sys.stderr.write, '\n')
     if not output:
         output = '.'
     if not qn_max:
         qn_max = 116
     url = BILIBILI_VIDEO_URL_PREFIX + get_vid(url)
-    print(url)
-    bv = BilibiliVideo(cookies=cookies, qn_max=qn_max, qn_single=qn_single)
+    dr.print(url)
+    dr.hl()
+    bd = YouGetBilibiliX(cookies=cookies, qn_max=qn_max, qn_single=qn_single)
     if info:
         dl_kwargs = {'info_only': True}
     else:
         dl_kwargs = {'output_dir': output, 'merge': True, 'caption': True}
     if fmt:
         dl_kwargs['format'] = fmt
+    if moderate_audio:
+        bd.set_audio_qn(30232)
     if playlist:
-        bv.download_playlist_by_url(url, **dl_kwargs)
+        bd.download_playlist_by_url(url, **dl_kwargs)
     else:
         if parts:
             base_url = url
             for p in parts:
                 url = base_url + '?p={}'.format(p)
-                print(url)
-                bv.download_by_url(url, **dl_kwargs)
+                dr.print(url)
+                dr.hl()
+                bd.download_by_url(url, **dl_kwargs)
         else:
-            bv.download_by_url(url, **dl_kwargs)
+            bd.download_by_url(url, **dl_kwargs)
 
 
-class BilibiliVideo(you_get_bilibili.Bilibili):
+class YouGetBilibiliX(modified_you_get_bilibili.Bilibili):
     def __init__(self, *args, cookies: str or dict = None, qn_max=116, qn_single=None):
-        super(BilibiliVideo, self).__init__(*args)
+        super(YouGetBilibiliX, self).__init__(*args)
         self.cookie = None
         if cookies:
             self.set_cookie(cookies)
         self.qn_max = qn_max
         self.qn_single = qn_single
+        self.html = None, None
+
+    def set_audio_qn(self, qn):
+        for d in self.stream_types:
+            d['audio_quality'] = qn
+
+    def update_html_doc(self):
+        url, doc = self.html
+        if url != self.url:
+            url = self.url
+            headers = self.bilibili_headers()
+            r = requests.get(url, headers=headers)
+            doc = html.document_fromstring(r.text)
+            self.html = url, doc
 
     def set_cookie(self, cookies: str or dict):
         if isinstance(cookies, dict):
@@ -119,7 +212,7 @@ class BilibiliVideo(you_get_bilibili.Bilibili):
     def bilibili_headers(self, referer=None, cookie=None):
         if not cookie:
             cookie = self.cookie
-        headers = super(BilibiliVideo, self).bilibili_headers(referer=referer, cookie=cookie)
+        headers = super(YouGetBilibiliX, self).bilibili_headers(referer=referer, cookie=cookie)
         return headers
 
     def get_vid(self):
@@ -134,12 +227,31 @@ class BilibiliVideo(you_get_bilibili.Bilibili):
             vid = None
         return vid
 
-    def get_uploader(self):
-        url = self.url
-        headers = self.bilibili_headers()
-        r = requests.get(url, headers=headers)
-        h = html.document_fromstring(r.text)
+    def get_vid_label(self, fmt='[{}]'):
+        the_vid = self.get_vid()
+        label = fmt.format(the_vid)
+        if the_vid.startswith('BV'):
+            self.update_html_doc()
+            _, h = self.html
+            canonical = h.xpath('//link[@rel="canonical"]')[0].attrib['href']
+            avid = re.split(r'/(av\d+)/', canonical)[-1]
+            label += fmt.format(avid)
+        return label
+
+    def get_author(self):
+        self.update_html_doc()
+        _, h = self.html
         return h.xpath('//meta[@name="author"]')[0].attrib['content']
+
+    def get_author_label(self, fmt='[{}]'):
+        return fmt.format(self.get_author())
+
+    def del_unwanted_dash_streams(self):
+        format_to_qn_id = {t['id']: t['quality'] for t in self.stream_types}
+        for f in list(self.dash_streams):
+            q = format_to_qn_id[f.split('-', maxsplit=1)[-1]]
+            if q > self.qn_max or self.qn_single and self.qn_single == q:
+                del self.dash_streams[f]
 
 
 def jijidown_rename_alpha(path: str, part_num=True):
