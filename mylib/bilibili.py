@@ -10,6 +10,7 @@ from glob import glob
 from http.cookiejar import MozillaCookieJar
 
 import requests
+import you_get.util.strings
 from lxml import html
 
 from .cli import SimpleDrawer
@@ -31,17 +32,6 @@ def _tmp(avid, cid):
     api_url = 'https://api.bilibili.com/x/player/playurl'
     r = requests.get(api_url, param)
     return r.json()
-
-
-def modifier(x: str):
-    find = '''
-    def prepare(self, **kwargs):
-'''
-    repl = find + '''
-        """test ok"""
-        print('test ok')
-'''
-    return x.replace(find, repl)
 
 
 def modify_you_get_bilibili(x: str):
@@ -69,7 +59,6 @@ def modify_you_get_bilibili(x: str):
         else:
             return 120
 ''')
-
     x = x.replace('''
                 log.w('This is a multipart video. (use --playlist to download all parts.)')
 ''', r'''
@@ -112,12 +101,24 @@ def modify_you_get_bilibili(x: str):
 
     def prepare_by_cid(self, avid, cid, title, html_content, playinfo, playinfo_, url):
 ''')
-    with open('r:t.py', 'w') as f:
-        f.write(x)
     return x
 
 
-modified_you_get_bilibili = modify_and_import('you_get.extractors.bilibili', modify_you_get_bilibili)
+def modify_you_get_fs(x: str):
+    x = x.replace("ord('['): '(',", "#ord('['): '(',")
+    x = x.replace("ord(']'): ')',", "#ord(']'): ')',")
+    x = x.replace('''
+    text = text[:80] # Trim to 82 Unicode characters long
+''', '''
+    text = text[:200] # Trim to 82 Unicode characters long
+''')
+    return x
+
+
+you_get.util.fs = modify_and_import('you_get.util.fs', modify_you_get_fs)
+you_get.util.strings.legitimize = you_get.util.fs.legitimize
+# you_get.extractor.get_filename = you_get.common.get_filename = you_get.util.strings.get_filename
+you_get.extractors.bilibili = modify_and_import('you_get.extractors.bilibili', modify_you_get_bilibili)
 
 
 def get_vid(x: str or int) -> str or None:
@@ -144,14 +145,17 @@ def download_bilibili_video(url: str or int,
                             **kwargs):
     win32_ctrl_c_signal()
     dr = SimpleDrawer(sys.stderr.write, '\n')
+
     if not output:
         output = '.'
     if not qn_max:
         qn_max = 116
     url = BILIBILI_VIDEO_URL_PREFIX + get_vid(url)
+
     dr.print(url)
     dr.hl()
     bd = YouGetBilibiliX(cookies=cookies, qn_max=qn_max, qn_single=qn_single)
+
     if info:
         dl_kwargs = {'info_only': True}
     else:
@@ -160,6 +164,7 @@ def download_bilibili_video(url: str or int,
         dl_kwargs['format'] = fmt
     if moderate_audio:
         bd.set_audio_qn(30232)
+
     if playlist:
         bd.download_playlist_by_url(url, **dl_kwargs)
     else:
@@ -174,7 +179,7 @@ def download_bilibili_video(url: str or int,
             bd.download_by_url(url, **dl_kwargs)
 
 
-class YouGetBilibiliX(modified_you_get_bilibili.Bilibili):
+class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     def __init__(self, *args, cookies: str or dict = None, qn_max=116, qn_single=None):
         super(YouGetBilibiliX, self).__init__(*args)
         self.cookie = None
@@ -234,7 +239,7 @@ class YouGetBilibiliX(modified_you_get_bilibili.Bilibili):
             self.update_html_doc()
             _, h = self.html
             canonical = h.xpath('//link[@rel="canonical"]')[0].attrib['href']
-            avid = re.split(r'/(av\d+)/', canonical)[-1]
+            avid = re.search(r'/(av\d+)/', canonical).group(1)
             label += fmt.format(avid)
         return label
 

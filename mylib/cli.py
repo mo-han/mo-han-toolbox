@@ -11,7 +11,8 @@ class SimpleDrawer:
         self.end = print_end
 
     def print(self, text: str, **kwargs):
-        return self._print(text + self.end, **kwargs)
+        end = kwargs.pop('end', None) or self.end
+        return self._print(text + end, **kwargs)
 
     def horizontal_line(self, length=LONG_LINE_LENGTH, **kwargs):
         return self.print(self.BOX_DRAWING_CHARS['hl'] * length, **kwargs)
