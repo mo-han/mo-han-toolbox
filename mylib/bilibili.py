@@ -141,7 +141,7 @@ def get_vid(x: str or int) -> str or None:
 def download_bilibili_video(url: str or int,
                             cookies: str or dict = None, output: str = None, parts: list = None,
                             qn_max: int = None, qn_single: int = None, moderate_audio: bool = True, fmt=None,
-                            info: bool = False, playlist: bool = None,
+                            info: bool = False, playlist: bool = False, caption: bool = True,
                             **kwargs):
     win32_ctrl_c_signal()
     dr = SimpleDrawer(sys.stderr.write, '\n')
@@ -152,14 +152,15 @@ def download_bilibili_video(url: str or int,
         qn_max = 116
     url = BILIBILI_VIDEO_URL_PREFIX + get_vid(url)
 
-    dr.print(url)
+    dr.hl()
+    dr.print('{} -> {}'.format(url, output))
     dr.hl()
     bd = YouGetBilibiliX(cookies=cookies, qn_max=qn_max, qn_single=qn_single)
 
     if info:
         dl_kwargs = {'info_only': True}
     else:
-        dl_kwargs = {'output_dir': output, 'merge': True, 'caption': True}
+        dl_kwargs = {'output_dir': output, 'merge': True, 'caption': caption}
     if fmt:
         dl_kwargs['format'] = fmt
     if moderate_audio:
