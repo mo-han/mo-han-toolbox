@@ -1,3 +1,4 @@
+uiautomator2
 requests
 lxml
 pillow
