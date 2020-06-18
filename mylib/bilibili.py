@@ -85,10 +85,14 @@ def modify_you_get_bilibili(x: str):
                 self.title = '%s P%s. %s' % (self.title, p, part)
 ''')
     x = x.replace('''
+            # get alternative formats from API
+            for qn in [112, 80, 64, 32, 16]:
                 # automatic format for durl: qn=0
                 # for dash, qn does not matter
                 if current_quality is None or qn < current_quality:
 ''', '''
+            # get alternative formats from API
+            for qn in [116, 112, 80, 64, 32, 16]:
                 # automatic format for durl: qn=0
                 # for dash, qn does not matter
                 # if current_quality is None or qn < current_quality:
@@ -253,9 +257,12 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         return fmt.format(self.get_author())
 
     def del_unwanted_dash_streams(self):
+        from pprint import pprint
         format_to_qn_id = {t['id']: t['quality'] for t in self.stream_types}
         for f in list(self.dash_streams):
             q = format_to_qn_id[f.split('-', maxsplit=1)[-1]]
+            print(f,q)
+            pprint(self.dash_streams[f])
             if q > self.qn_max or self.qn_single and self.qn_single == q:
                 del self.dash_streams[f]
 
