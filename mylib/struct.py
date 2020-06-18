@@ -2,12 +2,44 @@
 # encoding=utf8
 
 import argparse
-import logging
 import importlib.util
+import logging
 import sys
-
+from functools import wraps
 from .math import int_is_power_of_2
 from .misc import LOG_FMT, LOG_DTF
+
+_module_data = {}
+
+
+def retry_on_exception(max_retries, exceptions, condition_on_exceptions=None, raise_queue=None):
+    coe = condition_on_exceptions or (lambda e: True)
+    max_retries = int(max_retries)
+    initial_counter = max_retries if max_retries < 0 else max_retries + 1
+
+    def decorator(func):
+        @wraps(func)
+        def decorated_func(*args, **kwargs):
+            cnt = initial_counter
+            err = None
+            while cnt:
+                try:
+                    return func(*args, **kwargs)
+                except exceptions as e:
+                    if coe(e):
+                        if raise_queue:
+                            raise_queue.put(e)
+                        err = e
+                        cnt -= 1
+                        continue
+                    else:
+                        raise
+            else:
+                raise err
+
+        return decorated_func
+
+    return decorator
 
 
 def modify_and_import(module_name, modifier_or_source, package=None):
