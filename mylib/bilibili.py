@@ -257,12 +257,9 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         return fmt.format(self.get_author())
 
     def del_unwanted_dash_streams(self):
-        from pprint import pprint
         format_to_qn_id = {t['id']: t['quality'] for t in self.stream_types}
         for f in list(self.dash_streams):
             q = format_to_qn_id[f.split('-', maxsplit=1)[-1]]
-            print(f,q)
-            pprint(self.dash_streams[f])
             if q > self.qn_max or self.qn_single and self.qn_single == q:
                 del self.dash_streams[f]
 
