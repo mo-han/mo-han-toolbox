@@ -15,8 +15,8 @@ from lxml import html
 
 from .cli import SimpleDrawer
 from .misc import safe_print, safe_basename
-from .os_nt import win32_ctrl_c_signal
-from .struct import modify_and_import
+from .osutil import ensure_sigint_signal
+from .tricks import modify_and_import
 from .video import concat_videos, merge_m4s
 from .web import cookie_string_from_dict, cookies_dict_from_file
 
@@ -147,7 +147,7 @@ def download_bilibili_video(url: str or int,
                             qn_max: int = None, qn_single: int = None, moderate_audio: bool = True, fmt=None,
                             info: bool = False, playlist: bool = False, caption: bool = True,
                             **kwargs):
-    win32_ctrl_c_signal()
+    ensure_sigint_signal()
     dr = SimpleDrawer(sys.stderr.write, '\n')
 
     if not output:

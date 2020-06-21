@@ -5,12 +5,6 @@ import argparse
 import cmd
 import shlex
 
-import pyperclip
-
-from mylib.os_nt import win32_ctrl_c_signal
-from mylib.struct import arg_type_pow2, arg_type_range_factory, ArgumentParserCompactOptionHelpFormatter
-from mylib.bilibili import download_bilibili_video
-
 DRAW_LINE_LEN = 32
 DRAW_DOUBLE_LINE = '=' * DRAW_LINE_LEN
 DRAW_SINGLE_LINE = '-' * DRAW_LINE_LEN
@@ -18,6 +12,7 @@ DRAW_UNDER_LINE = '_' * DRAW_LINE_LEN
 
 
 def argument_parser():
+    from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgumentParserCompactOptionHelpFormatter
     common_parser_kwargs = {'formatter_class': ArgumentParserCompactOptionHelpFormatter}
     ap = argparse.ArgumentParser(**common_parser_kwargs)
     sub = ap.add_subparsers(title='sub-commands')
@@ -26,6 +21,11 @@ def argument_parser():
     test = sub.add_parser(
         'test', help=text, description=text, **common_parser_kwargs)
     test.set_defaults(callee=test_only)
+
+    text = 'rename media file playing in PotPlayer'
+    potplayer_rename = sub.add_parser('potplayer.rename', aliases=['ppren'], help=text, description=text,
+                                      **common_parser_kwargs)
+    potplayer_rename.set_defaults(callee=potplayer_rename_callee)
 
     text = 'bilibili video downloader (source-patched you-get)'
     bilibili_download = sub.add_parser('bilibili.download', aliases=['bldl'], help=text, description=text,
@@ -94,14 +94,15 @@ def argument_parser():
 
 
 def main():
+    from mylib.osutil import ensure_sigint_signal
+    ensure_sigint_signal()
     ap = argument_parser()
     args = ap.parse_args()
     callee = print
     try:
         callee = args.callee
     except AttributeError:
-        ap.print_usage()
-        exit()
+        callee = cmd_mode
     callee(args)
 
 
@@ -144,7 +145,13 @@ def test_only(args):
     print('ok')
 
 
+def potplayer_rename_callee(args):
+    from mylib.potplayer import PotPlayerKit
+    PotPlayerKit().rename_file_gui()
+
+
 def bilibili_download_callee(args: argparse.Namespace):
+    from mylib.bilibili import download_bilibili_video
     download_bilibili_video(**vars(args))
 
 
@@ -167,6 +174,7 @@ def update_json_file(args):
 
 
 def url_from_clipboard(args):
+    import pyperclip
     pattern = args.pattern
     t = pyperclip.paste()
     if pattern == 'pornhub':
@@ -205,7 +213,6 @@ def view_similar_images(args: argparse.Namespace):
 
 def move_ehviewer_images(args):
     from mylib.ehentai import tidy_ehviewer_images
-    win32_ctrl_c_signal()
     tidy_ehviewer_images(dry_run=args.dry_run)
 
 

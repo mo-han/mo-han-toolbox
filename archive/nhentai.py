@@ -4,11 +4,11 @@ import sys
 import logging
 
 from mylib.misc import LOG_FMT_MESSAGE_ONLY, ExitCode
-from mylib.os_nt import win32_ctrl_c_signal
+from mylib.osutil import ensure_sigint_signal
 from mylib.hentai import NHentaiKit
 
 if __name__ == '__main__':
-    win32_ctrl_c_signal()
+    ensure_sigint_signal()
     logging.basicConfig(
         level=logging.INFO,
         format=LOG_FMT_MESSAGE_ONLY,

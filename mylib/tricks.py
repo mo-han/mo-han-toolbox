@@ -6,14 +6,47 @@ import importlib.util
 import logging
 import sys
 from functools import wraps
+from typing import Dict, Iterable, Callable, TypeVar
+
 from .math import int_is_power_of_2
 from .misc import LOG_FMT, LOG_DTF
 
 _module_data = {}
 
 
-def retry_on_exception(max_retries, exceptions, condition_on_exceptions=None, raise_queue=None):
-    coe = condition_on_exceptions or (lambda e: True)
+def limited_argument_choices(choices: Dict[int or str, Iterable] = None) -> Callable:
+    """decorator factory: force arguments of a func limited in the given choices
+
+    :param choices: a dict which describes the choices for the value-limited arguments.
+            the key of the dict must be either the index of args or the key_str of kwargs,
+            while the value of the dict must be an iterable."""
+    err_fmt = "value of '{}' is not a valid choice: '{}'"
+
+    def decorator(func):
+        if not choices:
+            return func
+
+        @wraps(func)
+        def decorated_func(*args, **kwargs):
+            for i in range(len(args)):
+                if i in choices and args[i] not in choices[i]:
+                    param_name = func.__code__.co_varnames[i]
+                    valid_choices = list(choices[i])
+                    raise ValueError(err_fmt.format(param_name, valid_choices))
+            for k in kwargs:
+                if k in choices and kwargs[k] not in choices[k]:
+                    raise ValueError(err_fmt.format(k, list(choices[k])))
+
+            return func(*args, **kwargs)
+
+        return decorated_func
+
+    return decorator
+
+
+def while_retry_on_exception(max_retries, exceptions, exception_predicate=None, raise_queue=None):
+    """decorator factory: force a func re-running for several times on exception(s)"""
+    coe = exception_predicate or (lambda e: True)
     max_retries = int(max_retries)
     initial_counter = max_retries if max_retries < 0 else max_retries + 1
 
@@ -130,3 +163,11 @@ class ArgumentParserCompactOptionHelpFormatter(argparse.HelpFormatter):
         default = self._get_default_metavar_for_optional(action)
         args_string = self._format_args(action, default)
         return ', '.join(action.option_strings) + ' ' + args_string
+
+
+def import_pywinauto():
+    """sys.coinit_flags=2 before import pywinauto
+    https://github.com/pywinauto/pywinauto/issues/472"""
+    sys.coinit_flags = 2
+    import pywinauto
+    return pywinauto

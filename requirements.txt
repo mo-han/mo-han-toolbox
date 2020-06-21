@@ -1,19 +1,27 @@
+pywinauto
+keyboard
+mouse
+pyperclip
+pure-python-adb
 uiautomator2
 requests
 lxml
 pillow
 imagehash
 opencv-python
-av  # PyAV
-pysimplegui
 pyreadline
-fs  # PyFilesystem
+pysimplegui
+pysimpleguiqt
+pysimpleguiwx
 pyserial
 
 youtube-dl
 you-get
 gallery-dl
 
+pyautogui #pyautogui==0.9.39
+av  # PyAV
+fs  # PyFilesystem
 bs4
 splinter<0.8  # phantomjs
 selenium<3.8  # phantomjs
@@ -21,6 +29,3 @@ selenium<3.8  # phantomjs
 #splinter
 #selenium
 
-pywinauto
-pyautogui #pyautogui==0.9.39
-pyperclip

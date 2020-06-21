@@ -9,7 +9,7 @@ import shutil
 import subprocess
 
 from mylib.misc import random_fname
-from mylib.os_nt import win32_ctrl_c_signal
+from mylib.osutil import ensure_sigint_signal
 
 
 def auto_complete_url(url: str):
@@ -129,5 +129,5 @@ def main():
 
 
 if __name__ == '__main__':
-    win32_ctrl_c_signal()
+    ensure_sigint_signal()
     main()
