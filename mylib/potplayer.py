@@ -54,7 +54,13 @@ class PotPlayerKit:
 
     def get_fileinfo(self, keep_front: bool = True):
         self.focus()
-        keyboard.press_and_release('ctrl+f1, tab, tab, tab, enter')
+        keyboard.press_and_release('ctrl+f1')
+        keyboard.press_and_release('shift+tab')
+        keyboard.press_and_release('shift+tab')
+        keyboard.press_and_release('shift+tab')
+        keyboard.press_and_release('shift+tab')
+        keyboard.press_and_release('shift+tab')
+        keyboard.press_and_release('enter')
         self.gasp()
         keyboard.press_and_release('alt+p, esc')
         self.gasp()
@@ -91,7 +97,7 @@ class PotPlayerKit:
             vs0 = d['video'][0]
             d['vc'] = vs0['format'].lower()
             d['vbd'] = int(vs0['bit depth'].rstrip(' bits'))
-            d['fps'] = float(vs0['frame rate'].rstrip(' FPS'))
+            d['fps'] = float(vs0['frame rate'].split()[0])
             d['pix_fmt'] = \
                 vs0['color space'].lower() + \
                 vs0['chroma subsampling'].replace(':', '') + \
