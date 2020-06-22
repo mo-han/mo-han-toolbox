@@ -20,17 +20,22 @@ def argument_parser():
     text = 'TEST ONLY'
     test = sub.add_parser(
         'test', help=text, description=text, **common_parser_kwargs)
-    test.set_defaults(callee=test_only)
+    test.set_defaults(func=test_only)
 
-    text = 'rename media file playing in PotPlayer'
+    text = 'rename files in clipboard'
+    clipboard_rename = sub.add_parser('clipboard.rename', aliases=['cb.ren'], help=text, description=text,
+                                      **common_parser_kwargs)
+    clipboard_rename.set_defaults(func=clipboard_rename_func)
+
+    text = 'rename media file opened in PotPlayer'
     potplayer_rename = sub.add_parser('potplayer.rename', aliases=['ppren'], help=text, description=text,
                                       **common_parser_kwargs)
-    potplayer_rename.set_defaults(callee=potplayer_rename_callee)
+    potplayer_rename.set_defaults(func=potplayer_rename_func)
 
     text = 'bilibili video downloader (source-patched you-get)'
     bilibili_download = sub.add_parser('bilibili.download', aliases=['bldl'], help=text, description=text,
                                        **common_parser_kwargs)
-    bilibili_download.set_defaults(callee=bilibili_download_callee)
+    bilibili_download.set_defaults(func=bilibili_download_func)
     bilibili_download.add_argument('url')
     bilibili_download.add_argument('-c', '--cookies')
     bilibili_download.add_argument('-i', '--info', action='store_true')
@@ -44,25 +49,25 @@ def argument_parser():
 
     text = 'query in JSON file'
     json_query = sub.add_parser('json.query', aliases=[], help=text, description=text, **common_parser_kwargs)
-    json_query.set_defaults(callee=query_json_file)
+    json_query.set_defaults(func=query_json_file)
     json_query.add_argument('file', help='JSON file to query')
     json_query.add_argument('key', help='query key')
 
     text = 'update <old> JSON file with <new>'
     json_update = sub.add_parser('json.update', aliases=[], help=text, description=text, **common_parser_kwargs)
-    json_update.set_defaults(callee=update_json_file)
+    json_update.set_defaults(func=update_json_file)
     json_update.add_argument('old', help='JSON file with old data')
     json_update.add_argument('new', help='JSON file with new data')
 
     text = 'line-oriented interactive command mode'
     cmd = sub.add_parser(
         'cmd', aliases=['cli'], help=text, description=text, **common_parser_kwargs)
-    cmd.set_defaults(callee=cmd_mode)
+    cmd.set_defaults(func=cmd_mode)
 
     text = 'view similar images in current working directory'
     img_sim_view = sub.add_parser(
         'img.sim.view', aliases=[], help=text, description=text, **common_parser_kwargs)
-    img_sim_view.set_defaults(callee=view_similar_images)
+    img_sim_view.set_defaults(func=view_similar_images)
     img_sim_view.add_argument(
         '-t', '--thresholds', type=arg_type_range_factory(float, '0<x<=1'), nargs='+', metavar='N'
         , help='(multiple) similarity thresholds')
@@ -81,13 +86,13 @@ def argument_parser():
     text = 'move ehviewer downloaded images into corresponding folders named by the authors'
     ehv_img_mv = sub.add_parser(
         'ehv.img.mv', aliases=[], help=text, description=text, **common_parser_kwargs)
-    ehv_img_mv.set_defaults(callee=move_ehviewer_images)
+    ehv_img_mv.set_defaults(func=move_ehviewer_images)
     ehv_img_mv.add_argument('-D', '--dry-run', action='store_true')
 
     text = 'find URLs from clipboard, and copy them back to clipboard'
     cb_url = sub.add_parser(
         'clipboard.findurl', aliases=['cb.url'], help=text, description=text, **common_parser_kwargs)
-    cb_url.set_defaults(callee=url_from_clipboard)
+    cb_url.set_defaults(func=url_from_clipboard)
     cb_url.add_argument('pattern', help='URL pattern, or website name')
 
     return ap
@@ -98,12 +103,12 @@ def main():
     ensure_sigint_signal()
     ap = argument_parser()
     args = ap.parse_args()
-    callee = print
+    func = print
     try:
-        callee = args.callee
+        func = args.func
     except AttributeError:
-        callee = cmd_mode
-    callee(args)
+        func = cmd_mode
+    func(args)
 
 
 class MyKitCmd(cmd.Cmd):
@@ -126,10 +131,10 @@ class MyKitCmd(cmd.Cmd):
         try:
             argv_l = shlex.split(line)
             args = argument_parser().parse_args(argv_l)
-            callee = args.callee
-            if callee not in [cmd_mode, gui_mode]:
-                self._done = callee
-                return callee(args)
+            func = args.func
+            if func not in [cmd_mode, gui_mode]:
+                self._done = func
+                return func(args)
             else:
                 self._done = None
         except SystemExit:
@@ -145,12 +150,19 @@ def test_only(args):
     print('ok')
 
 
-def potplayer_rename_callee(args):
+def clipboard_rename_func(args):
+    from mylib.gui import rename_dialog
+    from mylib.osutil import clipboard
+    for f in clipboard.get_path():
+        rename_dialog(f)
+
+
+def potplayer_rename_func(args):
     from mylib.potplayer import PotPlayerKit
     PotPlayerKit().rename_file_gui()
 
 
-def bilibili_download_callee(args: argparse.Namespace):
+def bilibili_download_func(args: argparse.Namespace):
     from mylib.bilibili import download_bilibili_video
     download_bilibili_video(**vars(args))
 
