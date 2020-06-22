@@ -4,7 +4,8 @@ import inspect
 import re
 from time import sleep
 import win32clipboard
-from .tricks import singleton
+
+from .tricks import singleton, with_self_context_for_class_method
 
 ILLEGAL_FS_CHARS = r'\/:*?"<>|'
 ILLEGAL_FS_CHARS_LEN = len(ILLEGAL_FS_CHARS)
@@ -49,16 +50,20 @@ class Clipboard:
             raise TypeError("'{}' is not str or int".format(x))
         return x
 
+    @with_self_context_for_class_method
     def clear(self):
         return self._wcb.EmptyClipboard()
 
+    @with_self_context_for_class_method
     def set(self, data, cf=_wcb.CF_UNICODETEXT):
         cf = self.valid_format(cf)
         return self._wcb.SetClipboardData(cf, data)
 
+    @with_self_context_for_class_method
     def set_text(self, text):
         return self._wcb.SetClipboardText(text)
 
+    @with_self_context_for_class_method
     def get(self, cf=_wcb.CF_UNICODETEXT):
         cf = self.valid_format(cf)
         if self._wcb.IsClipboardFormatAvailable(cf):
@@ -67,17 +72,19 @@ class Clipboard:
             data = None
         return data
 
-    def get_paths(self):
+    def get_path(self) -> list:
         paths = self.get(self._wcb.CF_HDROP)
         if paths:
             return list(paths)
         else:
             return []
 
-    def get_all(self):
+    @with_self_context_for_class_method
+    def get_all(self) -> dict:
         d = {}
         for k, v in self.cf_dict.items():
-            d[k] = self.get(v)
+            if self._wcb.IsClipboardFormatAvailable(v):
+                d[k] = self._wcb.GetClipboardData(v)
         return d
 
 

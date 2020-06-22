@@ -171,3 +171,14 @@ def import_pywinauto():
     sys.coinit_flags = 2
     import pywinauto
     return pywinauto
+
+
+def with_self_context_for_class_method(func):
+    """decorator: wrap a class method inside a `with self: ...` context"""
+
+    def decorated_func(self, *args, **kwargs):
+        with self:
+            r = func(self, *args, **kwargs)
+        return r
+
+    return decorated_func
