@@ -17,7 +17,6 @@ find_elements = pywinauto.findwindows.find_elements
 
 
 class PotPlayerKit:
-
     def __init__(self, delay: int or float = 0.05):
         self.delay = delay
         self._window = App().connect(handle=self.list[0].handle).window()
