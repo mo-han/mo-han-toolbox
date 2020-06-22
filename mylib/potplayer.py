@@ -65,8 +65,7 @@ class PotPlayerKit:
         self.gasp()
         if not keep_front:
             keyboard.press_and_release('alt+tab')
-        with clipboard:
-            data = clipboard.get()
+        data = clipboard.get()
 
         lines = data.splitlines()
         d = {}

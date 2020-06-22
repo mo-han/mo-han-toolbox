@@ -173,7 +173,7 @@ def import_pywinauto():
     return pywinauto
 
 
-def with_self_context_for_class_method(func):
+def with_self_context(func):
     """decorator: wrap a class method inside a `with self: ...` context"""
 
     def decorated_func(self, *args, **kwargs):
