@@ -6,15 +6,25 @@ import importlib.util
 import logging
 import sys
 from functools import wraps
-from typing import Dict, Iterable, Callable, TypeVar
+from typing import Dict, Iterable, Callable
 
 from .math import int_is_power_of_2
 from .misc import LOG_FMT, LOG_DTF
 
 _module_data = {}
 
+Decorator = Callable[[Callable], Callable]
 
-def limited_argument_choices(choices: Dict[int or str, Iterable] = None) -> Callable:
+
+class TypedQueue:
+    def put(self, *args, **kwargs):
+        ...
+
+    def get(self, *args, **kwargs):
+        ...
+
+
+def limit_argv_choice(choices: Dict[int or str, Iterable] = None) -> Decorator:
     """decorator factory: force arguments of a func limited in the given choices
 
     :param choices: a dict which describes the choices for the value-limited arguments.
@@ -44,9 +54,10 @@ def limited_argument_choices(choices: Dict[int or str, Iterable] = None) -> Call
     return decorator
 
 
-def while_retry_on_exception(max_retries, exceptions, exception_predicate=None, raise_queue=None):
+def while_retry_on_exception(exceptions: Exception or Iterable[Exception], max_retries: int = 3,
+                             exception_tester=Callable[[Exception], bool], exception_queue=TypedQueue) -> Decorator:
     """decorator factory: force a func re-running for several times on exception(s)"""
-    coe = exception_predicate or (lambda e: True)
+    test_exc = exception_tester or (lambda e: True)
     max_retries = int(max_retries)
     initial_counter = max_retries if max_retries < 0 else max_retries + 1
 
@@ -59,9 +70,9 @@ def while_retry_on_exception(max_retries, exceptions, exception_predicate=None, 
                 try:
                     return func(*args, **kwargs)
                 except exceptions as e:
-                    if coe(e):
-                        if raise_queue:
-                            raise_queue.put(e)
+                    if test_exc(e):
+                        if exception_queue:
+                            exception_queue.put(e)
                         err = e
                         cnt -= 1
                         continue

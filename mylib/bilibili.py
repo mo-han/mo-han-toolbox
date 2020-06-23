@@ -18,7 +18,7 @@ from .misc import safe_print, safe_basename
 from .osutil import ensure_sigint_signal
 from .tricks import modify_and_import
 from .video import concat_videos, merge_m4s
-from .web import cookie_string_from_dict, cookies_dict_from_file
+from .web import cookie_str_from_dict, cookies_dict_from_file
 
 BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'
 
@@ -209,10 +209,10 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
 
     def set_cookie(self, cookies: str or dict):
         if isinstance(cookies, dict):
-            c = cookie_string_from_dict(cookies)
+            c = cookie_str_from_dict(cookies)
         elif isinstance(cookies, str):
             if os.path.isfile(cookies):
-                c = cookie_string_from_dict(cookies_dict_from_file(cookies))
+                c = cookie_str_from_dict(cookies_dict_from_file(cookies))
             else:
                 c = cookies
         else:

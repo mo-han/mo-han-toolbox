@@ -5,10 +5,14 @@ import argparse
 import cmd
 import shlex
 
+from mylib.cli import SimpleDrawer
+
 DRAW_LINE_LEN = 32
 DRAW_DOUBLE_LINE = '=' * DRAW_LINE_LEN
 DRAW_SINGLE_LINE = '-' * DRAW_LINE_LEN
 DRAW_UNDER_LINE = '_' * DRAW_LINE_LEN
+
+cli_draw = SimpleDrawer()
 
 
 def argument_parser():
@@ -119,12 +123,12 @@ class MyKitCmd(cmd.Cmd):
         self._done = None
 
     def precmd(self, line):
-        print(DRAW_SINGLE_LINE)
+        cli_draw.hl()
         return line
 
     def postcmd(self, stop, line):
         if self._done:
-            print(DRAW_SINGLE_LINE)
+            cli_draw.hl()
         return self._stop
 
     def default(self, line):
