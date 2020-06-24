@@ -1,12 +1,11 @@
-.idea/*
-!.idea/dictionaries
+.idea/
 .vscode/
 __pycache__/
 build/
 dist/
 *.tmp
-tmp
+tmp/
 tmp.*
-test
+test/
 test.*
 *.exe
