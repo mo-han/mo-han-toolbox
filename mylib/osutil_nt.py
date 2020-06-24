@@ -19,8 +19,8 @@ class Clipboard:
     _wcb = win32clipboard
     cf_dict = {n.lstrip('CF_'): m for n, m in inspect.getmembers(_wcb) if n.startswith('CF_')}
 
-    def __init__(self, delay=0.25):
-        self.delay = delay
+    def __init__(self):
+        self.delay = 0
 
     def __enter__(self):
         self.open()
@@ -35,7 +35,7 @@ class Clipboard:
 
     def close(self):
         self._wcb.CloseClipboard()
-        sleep(self.delay)
+        # sleep(self.delay)  # maybe not needed
 
     def valid_format(self, x: str or int):
         """get valid clipboard format ('CF_*')"""

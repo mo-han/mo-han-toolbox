@@ -54,8 +54,8 @@ def limit_argv_choice(choices: Dict[int or str, Iterable] = None) -> Decorator:
     return decorator
 
 
-def while_retry_on_exception(exceptions: Exception or Iterable[Exception], max_retries: int = 3,
-                             exception_tester=Callable[[Exception], bool], exception_queue=TypedQueue) -> Decorator:
+def loop_retry_on_exception(exceptions: Exception or Iterable[Exception], max_retries: int = 3,
+                            exception_tester=Callable[[Exception], bool], exception_queue=TypedQueue) -> Decorator:
     """decorator factory: force a func re-running for several times on exception(s)"""
     test_exc = exception_tester or (lambda e: True)
     max_retries = int(max_retries)
@@ -193,3 +193,21 @@ def with_self_context(func):
         return r
 
     return decorated_func
+
+
+def getitem_default(x, index_or_key, default=None):
+    try:
+        return x[index_or_key]
+    except (IndexError, KeyError):
+        return default
+
+
+def getitem_set_default(x, index_or_key, default=None):
+    try:
+        return x[index_or_key]
+    except IndexError:
+        x += type(x)([default] * (index_or_key - len(x)))
+        return default
+    except KeyError:
+        x[index_or_key] = default
+        return default

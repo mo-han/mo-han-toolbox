@@ -6,7 +6,7 @@ from time import sleep
 import keyboard
 import mouse
 
-from .tricks import import_pywinauto
+from .tricks import import_pywinauto, getitem_default
 from .osutil import clipboard, rename_helper
 from .gui import rename_dialog
 
@@ -17,8 +17,8 @@ find_elements = pywinauto.findwindows.find_elements
 
 
 class PotPlayerKit:
-    def __init__(self, delay: int or float = 0.05):
-        self.delay = delay
+    def __init__(self, gasp_time: int or float = 0.01):
+        self.gasp_time = gasp_time
         self._window = App().connect(handle=self.list[0].handle).window()
         self._cache = {'fileinfo': {}}
 
@@ -26,7 +26,7 @@ class PotPlayerKit:
         self._window = App().connect(handle=element.handle)
 
     def gasp(self, t: int or float = None):
-        t = t or self.delay
+        t = t or self.gasp_time
         sleep(t)
 
     @property
@@ -51,7 +51,13 @@ class PotPlayerKit:
     def fileinfo(self):
         return self.cache['fileinfo']
 
-    def get_fileinfo(self, keep_front: bool = True):
+    def get_fileinfo(self, alt_tab: bool = True):
+        const_general = 'General'
+        const_general_lower = const_general.lower()
+        const_complete_name = 'Complete name'
+        const_complete_name_lower = const_complete_name.lower()
+
+        clipboard.clear()
         self.focus()
         keyboard.press_and_release('ctrl+f1')
         keyboard.press_and_release('shift+tab')
@@ -63,11 +69,16 @@ class PotPlayerKit:
         self.gasp()
         keyboard.press_and_release('alt+p, esc')
         self.gasp()
-        if not keep_front:
+        if alt_tab:
             keyboard.press_and_release('alt+tab')
-        data = clipboard.get()
 
-        lines = data.splitlines()
+        while True:
+            self.gasp()
+            data = clipboard.get() or ''
+            lines = data.splitlines()
+            if getitem_default(lines, 0) == const_general and getitem_default(lines, 1).startswith(const_complete_name):
+                break
+
         d = {}
         group = ''
         stream_id = -1
@@ -81,17 +92,18 @@ class PotPlayerKit:
                     continue
                 elif k == 'encoding settings':
                     v = [e.strip() for e in v.split('/')]
-                if group == 'general':
+                if group == const_general_lower:
                     d[k] = v
                 elif group:
                     d[group][stream_id][k] = v
             else:
                 group = line.strip().lower()
-                if group and group != 'general':
+                if group and group != const_general_lower:
                     d[group] = []
                     stream_id = -1
+
         try:
-            d['path'] = d['complete name']
+            d['path'] = d[const_complete_name_lower]
             vs0 = d['video'][0]
             d['vc'] = vs0['format'].lower()
             d['vbd'] = int(vs0['bit depth'].rstrip(' bits'))
@@ -104,8 +116,8 @@ class PotPlayerKit:
             d['w'] = int(vs0['width'].rstrip(' pixels').replace(' ', ''))
         except KeyError:
             pprint(d)
+
         self._cache['fileinfo'] = d
-        self.gasp()
         return d
 
     def rename_file(self, new: str, use_cache: bool = False, move_to: str = None, keep_ext: bool = True):
@@ -113,7 +125,7 @@ class PotPlayerKit:
         src = fileinfo['path']
         rename_helper(src, new, move_to=move_to, keep_ext=keep_ext)
 
-    def rename_file_gui(self):
-        fileinfo = self.get_fileinfo()
+    def rename_file_gui(self, alt_tab: bool = False):
+        fileinfo = self.get_fileinfo(alt_tab=alt_tab)
         src = fileinfo['path']
         rename_dialog(src)

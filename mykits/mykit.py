@@ -21,24 +21,55 @@ def argument_parser():
     ap = argparse.ArgumentParser(**common_parser_kwargs)
     sub = ap.add_subparsers(title='sub-commands')
 
-    text = 'TEST ONLY'
-    test = sub.add_parser(
-        'test', help=text, description=text, **common_parser_kwargs)
+    def add_parser(name: str, aliases: list, desc: str):
+        def decorator(f):
+            def decorated_f():
+                return sub.add_parser(name, aliases=aliases, help=desc, description=desc, **common_parser_kwargs)
+
+            return decorated_f
+
+        return decorator
+
+    @add_parser('test', [], 'for testing...')
+    def test(): pass
+
+    test = test()
     test.set_defaults(func=test_only)
 
-    text = 'rename files in clipboard'
-    clipboard_rename = sub.add_parser('clipboard.rename', aliases=['cb.ren'], help=text, description=text,
-                                      **common_parser_kwargs)
+    @add_parser('cmd', ['cli'],
+                'command line oriented interactive mode')
+    def cmd_mode(): pass
+
+    cmd_mode = cmd_mode()
+    cmd_mode.set_defaults(func=cmd_mode_func)
+
+    @add_parser('clipboard.findurl', ['cb.url', 'cburl'],
+                'find URLs from clipboard, then copy found URLs back to clipboard')
+    def clipboard_findurl(): pass
+
+    clipboard_findurl = clipboard_findurl()
+    clipboard_findurl.set_defaults(func=url_from_clipboard)
+    clipboard_findurl.add_argument('pattern', help='URL pattern, or website name')
+
+    @add_parser('clipboard.rename', ['cb.ren', 'cbren'],
+                'rename files in clipboard')
+    def clipboard_rename(): pass
+
+    clipboard_rename = clipboard_rename()
     clipboard_rename.set_defaults(func=clipboard_rename_func)
 
-    text = 'rename media file opened in PotPlayer'
-    potplayer_rename = sub.add_parser('potplayer.rename', aliases=['ppren'], help=text, description=text,
-                                      **common_parser_kwargs)
+    @add_parser('potplayer.rename', ['pp.ren', 'ppren'],
+                'rename media file opened in PotPlayer')
+    def potplayer_rename(): pass
+
+    potplayer_rename = potplayer_rename()
     potplayer_rename.set_defaults(func=potplayer_rename_func)
 
-    text = 'bilibili video downloader (source-patched you-get)'
-    bilibili_download = sub.add_parser('bilibili.download', aliases=['bldl'], help=text, description=text,
-                                       **common_parser_kwargs)
+    @add_parser('bilibili.download', ['bldl'],
+                'bilibili video downloader (source-patched you-get)')
+    def bilibili_download(): pass
+
+    bilibili_download = bilibili_download()
     bilibili_download.set_defaults(func=bilibili_download_func)
     bilibili_download.add_argument('url')
     bilibili_download.add_argument('-c', '--cookies')
@@ -51,53 +82,51 @@ def argument_parser():
     bilibili_download.add_argument('-C', '--no-caption', dest='caption', action='store_false')
     bilibili_download.add_argument('-A', '--no-moderate-audio', dest='moderate_audio', action='store_false')
 
-    text = 'query in JSON file'
-    json_query = sub.add_parser('json.query', aliases=[], help=text, description=text, **common_parser_kwargs)
-    json_query.set_defaults(func=query_json_file)
-    json_query.add_argument('file', help='JSON file to query')
-    json_query.add_argument('key', help='query key')
+    @add_parser('json.getkey', ['jsk'],
+                'find in JSON file by key')
+    def json_key(): pass
 
-    text = 'update <old> JSON file with <new>'
-    json_update = sub.add_parser('json.update', aliases=[], help=text, description=text, **common_parser_kwargs)
+    json_key = json_key()
+    json_key.set_defaults(func=json_key_func)
+    json_key.add_argument('file', help='JSON file to query')
+    json_key.add_argument('key', help='query key')
+
+    @add_parser('json.update', ['jsup'],
+                'update <old> JSON file with <new>')
+    def json_update(): pass
+
+    json_update = json_update()
     json_update.set_defaults(func=update_json_file)
     json_update.add_argument('old', help='JSON file with old data')
     json_update.add_argument('new', help='JSON file with new data')
 
-    text = 'line-oriented interactive command mode'
-    cmd = sub.add_parser(
-        'cmd', aliases=['cli'], help=text, description=text, **common_parser_kwargs)
-    cmd.set_defaults(func=cmd_mode)
+    @add_parser('img.sim.view', ['vsi'],
+                'view similar images in current working directory')
+    def img_sim_view(): pass
 
-    text = 'view similar images in current working directory'
-    img_sim_view = sub.add_parser(
-        'img.sim.view', aliases=[], help=text, description=text, **common_parser_kwargs)
+    img_sim_view = img_sim_view()
     img_sim_view.set_defaults(func=view_similar_images)
     img_sim_view.add_argument(
-        '-t', '--thresholds', type=arg_type_range_factory(float, '0<x<=1'), nargs='+', metavar='N'
-        , help='(multiple) similarity thresholds')
+        '-t', '--thresholds', type=arg_type_range_factory(float, '0<x<=1'), nargs='+', metavar='N',
+        help='(multiple) similarity thresholds')
     img_sim_view.add_argument(
-        '-H', '--hashtype', type=str, choices=[s + 'hash' for s in ('a', 'd', 'p', 'w')]
-        , help='image hash type')
+        '-H', '--hashtype', type=str, choices=[s + 'hash' for s in ('a', 'd', 'p', 'w')], help='image hash type')
     img_sim_view.add_argument(
-        '-s', '--hashsize', type=arg_type_pow2, metavar='N'
-        , help='the side size of the image hash square, must be a integer power of 2')
+        '-s', '--hashsize', type=arg_type_pow2, metavar='N',
+        help='the side size of the image hash square, must be a integer power of 2')
     img_sim_view.add_argument(
-        '-T', '--no-transpose', action='store_false', dest='transpose'
-        , help='do not find similar images for transposed variants (rotated, flipped)')
+        '-T', '--no-transpose', action='store_false', dest='transpose',
+        help='do not find similar images for transposed variants (rotated, flipped)')
     img_sim_view.add_argument(
         '--dry-run', action='store_true', help='find similar images, but without viewing them')
 
-    text = 'move ehviewer downloaded images into corresponding folders named by the authors'
-    ehv_img_mv = sub.add_parser(
-        'ehv.img.mv', aliases=[], help=text, description=text, **common_parser_kwargs)
+    @add_parser('ehv.img.mv', ['ehvmv'],
+                'move ehviewer downloaded images into corresponding folders named by the authors')
+    def ehv_img_mv(): pass
+
+    ehv_img_mv = ehv_img_mv()
     ehv_img_mv.set_defaults(func=move_ehviewer_images)
     ehv_img_mv.add_argument('-D', '--dry-run', action='store_true')
-
-    text = 'find URLs from clipboard, and copy them back to clipboard'
-    cb_url = sub.add_parser(
-        'clipboard.findurl', aliases=['cb.url'], help=text, description=text, **common_parser_kwargs)
-    cb_url.set_defaults(func=url_from_clipboard)
-    cb_url.add_argument('pattern', help='URL pattern, or website name')
 
     return ap
 
@@ -107,11 +136,10 @@ def main():
     ensure_sigint_signal()
     ap = argument_parser()
     args = ap.parse_args()
-    func = print
     try:
         func = args.func
     except AttributeError:
-        func = cmd_mode
+        func = cmd_mode_func
     func(args)
 
 
@@ -136,7 +164,7 @@ class MyKitCmd(cmd.Cmd):
             argv_l = shlex.split(line)
             args = argument_parser().parse_args(argv_l)
             func = args.func
-            if func not in [cmd_mode, gui_mode]:
+            if func not in [cmd_mode_func, gui_mode]:
                 self._done = func
                 return func(args)
             else:
@@ -148,6 +176,10 @@ class MyKitCmd(cmd.Cmd):
         self._stop = True
 
     do_exit = do_q = do_quit
+
+
+def cmd_mode_func(args):
+    MyKitCmd().cmdloop()
 
 
 def test_only(args):
@@ -171,7 +203,7 @@ def bilibili_download_func(args: argparse.Namespace):
     download_bilibili_video(**vars(args))
 
 
-def query_json_file(args):
+def json_key_func(args):
     from json import load
     with open(args.file) as f:
         d = load(f)
@@ -194,21 +226,16 @@ def url_from_clipboard(args):
     pattern = args.pattern
     t = pyperclip.paste()
     if pattern == 'pornhub':
-        from mylib.pornhub import find_url_from
-        urls = find_url_from(t)
+        from mylib.pornhub import find_url_in_text
+        urls = find_url_in_text(t)
     elif pattern == 'youtube':
-        from mylib.youtube import find_url_from
-        urls = find_url_from(t)
+        from mylib.youtube import find_url_in_text
+        urls = find_url_in_text(t)
     else:
         from mylib.text import regex_find
         urls = regex_find(pattern, t)
     pyperclip.copy('\n'.join(urls))
-    for u in urls:
-        print(u)
-
-
-def cmd_mode(args):
-    MyKitCmd().cmdloop()
+    print(urls)
 
 
 def gui_mode(args):
