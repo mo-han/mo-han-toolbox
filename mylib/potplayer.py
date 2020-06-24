@@ -76,7 +76,9 @@ class PotPlayerKit:
             self.gasp()
             data = clipboard.get() or ''
             lines = data.splitlines()
-            if getitem_default(lines, 0) == const_general and getitem_default(lines, 1).startswith(const_complete_name):
+            line0 = getitem_default(lines, 0)
+            line1 = getitem_default(lines, 1)
+            if line0 == const_general and (line1.startswith(const_complete_name) or line1.startswith('Unique ID')):
                 break
 
         d = {}
@@ -93,13 +95,18 @@ class PotPlayerKit:
                 elif k == 'encoding settings':
                     v = [e.strip() for e in v.split('/')]
                 if group == const_general_lower:
-                    d[k] = v
+                    if k == 'attachments':
+                        d[k] = v.split(' / ')
+                    else:
+                        d[k] = v
                 elif group:
                     d[group][stream_id][k] = v
             else:
-                group = line.strip().lower()
-                if group and group != const_general_lower:
-                    d[group] = []
+                g = line.strip().lower().split(' #', maxsplit=1)[0]
+                if g and g != group:
+                    if g != const_general_lower:
+                        d[g] = []
+                    group = g
                     stream_id = -1
 
         try:
@@ -107,15 +114,18 @@ class PotPlayerKit:
             vs0 = d['video'][0]
             d['vc'] = vs0['format'].lower()
             d['vbd'] = int(vs0['bit depth'].rstrip(' bits'))
-            d['fps'] = float(vs0['frame rate'].split()[0])
+            if 'frame rate' in vs0:
+                d['fps'] = float(vs0['frame rate'].split()[0])
+            elif 'original frame rate' in vs0:
+                d['fps'] = float(vs0['original frame rate'].split()[0])
             d['pix_fmt'] = \
                 vs0['color space'].lower() + \
                 vs0['chroma subsampling'].replace(':', '') + \
                 vs0['scan type'][0].lower() if 'scan type' in vs0 else 'p'
             d['h'] = int(vs0['height'].rstrip(' pixels').replace(' ', ''))
             d['w'] = int(vs0['width'].rstrip(' pixels').replace(' ', ''))
-        except KeyError:
-            pprint(d)
+        except KeyError as e:
+            print(repr(e))
 
         self._cache['fileinfo'] = d
         return d
