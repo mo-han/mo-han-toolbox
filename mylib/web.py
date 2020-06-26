@@ -7,10 +7,6 @@ import requests
 from lxml import html
 import http.cookiejar
 
-import splinter
-
-from mylib.misc import TEMPDIR
-
 USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'
 
 _headers = {
@@ -33,7 +29,7 @@ def cookies_dict_from_file(file_path: str) -> dict:
 
 
 def cookie_str_from_dict(cookies: dict) -> str:
-    cookies_l = ['{}={}'.format(k,v) for k,v in cookies.items()]
+    cookies_l = ['{}={}'.format(k, v) for k, v in cookies.items()]
     cookie = '; '.join(cookies_l)
     return cookie
 
@@ -42,24 +38,30 @@ class DownloadFailure(Exception):
     pass
 
 
-def new_phantomjs(proxy=None, no_img=True) -> splinter.Browser:
-    service_args_l = ['--webdriver-loglevel=WARN']
+def get_phantomjs_splinter(proxy=None, show_image=False, window_size=(1024, 1024)):
+    import splinter
+    from mylib.osutil import TEMPDIR
+
+    extra_argv = ['--webdriver-loglevel=WARN']
     if proxy:
-        service_args_l.append('--proxy={}'.format(proxy))
-    if no_img:
-        service_args_l.append('--load-images=no')
+        extra_argv.append('--proxy={}'.format(proxy))
+    if not show_image:
+        extra_argv.append('--load-images=no')
+
     b = splinter.Browser(
         'phantomjs',
-        user_agent=USER_AGENT_FIREFOX_WIN10,
-        service_args=service_args_l,
         service_log_path=os.path.join(TEMPDIR, 'ghostdriver.log'),
+        user_agent=USER_AGENT_FIREFOX_WIN10,
+        service_args=extra_argv,
     )
-    b.driver.set_window_size(800, 600)
+    b.driver.set_window_size(*window_size)
     return b
-
-
-new_headless_browser = new_phantomjs
 
 
 def try_dl_file(url: str, max_retries: int = 3) -> tuple:
     pass
+
+
+get_browser = {
+    'splinter.phantomjs': get_phantomjs_splinter
+}

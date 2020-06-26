@@ -129,11 +129,14 @@ def get_vid(x: str or int) -> str or None:
     if isinstance(x, int):
         vid = 'av{}'.format(x)
     elif isinstance(x, str):
-        for m in (re.search(r'(av\d+)', x), re.search(r'(BV[\da-zA-Z]{10})', x, flags=re.I)):
+        for p in (r'(av\d+)', r'(BV[\da-zA-Z]{10})'):
+            m = re.search(p, x, flags=re.I)
             if m:
                 vid = m.group(1)
                 if vid.startswith('bv'):
                     vid = 'BV' + vid[2:]
+                elif vid.startswith('AV'):
+                    vid = 'av' + vid[2:]
                 break
         else:
             vid = None

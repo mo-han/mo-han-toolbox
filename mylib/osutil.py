@@ -5,6 +5,7 @@ import os
 import shutil
 import signal
 import sys
+import tempfile
 
 if os.name == 'nt':
     from .osutil_nt import *
@@ -48,3 +49,6 @@ def rename_helper(old_path: str, new: str, move_to: str = None, keep_ext: bool =
 def ensure_sigint_signal():
     if sys.platform == 'win32':
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # %ERRORLEVEL% = '-1073741510'
+
+
+TEMPDIR = tempfile.gettempdir()

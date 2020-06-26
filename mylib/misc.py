@@ -3,7 +3,6 @@ import os
 import random
 import string
 import sys
-import tempfile
 
 # logging format
 LOG_FMT_MESSAGE_ONLY = '%(message)s'
@@ -17,7 +16,6 @@ LOG_DTF = LOG_DTF_SEC_ZONE
 
 CHARS_ALPHANUMERIC = string.ascii_letters + string.digits
 
-TEMPDIR = tempfile.gettempdir()
 ILLEGAL_CHARS = ['\\', '/', ':', '*', '"', '<', '>', '|', '?']
 
 
