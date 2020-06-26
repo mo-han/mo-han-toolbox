@@ -37,7 +37,7 @@ def rename_dialog(src: str):
     fname = 'fname'
     ext = 'ext'
     new = 'new'
-    ok = 'OK'
+    ok = 'OK ↩'
     discard = 'Esc'
     title = 'Rename - {}'.format(src)
     h = .7
@@ -47,7 +47,7 @@ def rename_dialog(src: str):
 
     # sg.theme(random.choice(sg.theme_list()))
     layout = [
-        [sg.T(src)],
+        [sg.T(src, key='src')],
         [sg.HorizontalSeparator()],
         [
             sg.I(default_text=old_root, key=root),

@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 # encoding=utf8
-from pprint import pprint
 from time import sleep
 
 import keyboard
 import mouse
 
-from .tricks import import_pywinauto, getitem_default
-from .osutil import clipboard, rename_helper
 from .gui import rename_dialog
+from .osutil import clipboard, rename_helper
+from .tricks import import_pywinauto, getitem_default
 
 pywinauto = import_pywinauto()
 App = pywinauto.Application

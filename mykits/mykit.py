@@ -64,6 +64,7 @@ def argument_parser():
 
     potplayer_rename = potplayer_rename()
     potplayer_rename.set_defaults(func=potplayer_rename_func)
+    potplayer_rename.add_argument('-F', '--no-keep-front', action='store_true', help='do not keep PotPlayer in front')
 
     @add_parser('bilibili.download', ['bldl'],
                 'bilibili video downloader (source-patched you-get)')
@@ -195,7 +196,7 @@ def clipboard_rename_func(args):
 
 def potplayer_rename_func(args):
     from mylib.potplayer import PotPlayerKit
-    PotPlayerKit().rename_file_gui()
+    PotPlayerKit().rename_file_gui(alt_tab=args.no_keep_front)
 
 
 def bilibili_download_func(args: argparse.Namespace):
