@@ -87,7 +87,11 @@ def loop_retry_on_exception(exceptions: Exception or Iterable[Exception], max_re
 
 
 def modify_and_import(module_name, modifier_or_source, package=None):
-    # https://stackoverflow.com/a/41863728/7966259
+    # How to modify imported source code on-the-fly?
+    #     https://stackoverflow.com/a/41863728/7966259  (answered by Martin Valgur)
+    # Modules and Packages: Live and Let Die!  (by David Beazley)
+    #     http://www.dabeaz.com/modulepackage/ModulePackage.pdf
+    #     https://www.youtube.com/watch?v=0oTh1CXRaQ0
     spec = importlib.util.find_spec(module_name, package)
     if isinstance(modifier_or_source, str):
         source = modifier_or_source
