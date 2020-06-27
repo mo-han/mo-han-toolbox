@@ -39,7 +39,6 @@ def rename_dialog(src: str):
     root = 'root'
     fname = 'fname'
     ext = 'ext'
-    new = 'new'
     new_root = 'new_root'
     new_base = 'new_base'
     ok = 'OK ↩'
@@ -50,6 +49,7 @@ def rename_dialog(src: str):
     repl = 'replace'
     title = 'Rename - {}'.format(src)
     h = .7
+    error = 'error'
 
     conf_dict = read_json_file(conf_file, default={patt: [''], repl: ['']})
     pattern_l = conf_dict[patt]
@@ -57,6 +57,7 @@ def rename_dialog(src: str):
     old_root, old_base = os.path.split(src)
     old_fn, old_ext = os.path.splitext(old_base)
 
+    # import random
     # sg.theme(random.choice(sg.theme_list()))
     layout = [
         [sg.T(src, key='src')],
@@ -68,14 +69,15 @@ def rename_dialog(src: str):
         [sg.HorizontalSeparator()],
         [sg.T('Regular Expression Substitution', size=(32, h)), ],
         [sg.T('Pattern:', size=(5, h)),
-         sg.Drop(pattern_l, key=patt, enable_events=True)],
+         sg.Drop(pattern_l, default_value=pattern_l[0], key=patt, enable_events=True)],
         [sg.T('Replace:', size=(5, h)),
-         sg.Drop(replace_l, key=repl, enable_events=True)],
+         sg.Drop(replace_l, default_value=pattern_l[0], key=repl, enable_events=True)],
         [sg.T(''), sg.B('+', key=add_regex, size=(3, h)), sg.B('-', key=del_regex, size=(3, h)), sg.T('')],
         [sg.HorizontalSeparator()],
         [sg.I(old_root, key=new_root)],
         [sg.I(old_fn + old_ext, key=new_base)],
         [sg.Submit(ok, size=(10, 1)),
+         # sg.T('', key=error, font=(None, None, 'bold'), text_color='red'),
          sg.Stretch(),
          sg.Cancel(esc, size=(10, 1))]]
 
@@ -94,11 +96,8 @@ def rename_dialog(src: str):
         return pl, rl
 
     loop = True
+    data = {fname: old_fn, ext: old_ext, patt: pattern_l[0], repl: replace_l[0], root: old_root}
     while loop:
-        event, data = window.read()
-        cur_p = data[patt]
-        cur_r = data[repl]
-
         try:
             tmp_fname = data[fname] + data[ext]
             if data[patt]:
@@ -114,6 +113,12 @@ def rename_dialog(src: str):
         window[new_root].update(np)
         window[new_base].update(nb)
 
+        event, data = window.read()
+        window[new_root].update(text_color=None)
+        window[new_base].update(text_color=None)
+        cur_p = data[patt]
+        cur_r = data[repl]
+
         if event == add_regex:
             pattern_l.insert(0, cur_p)
             replace_l.insert(0, cur_r)
@@ -127,8 +132,12 @@ def rename_dialog(src: str):
         elif event in (None, esc):
             loop = False
         elif event == ok:
-            shutil.move(src, dst)
-            loop = False
+            try:
+                shutil.move(src, dst)
+                loop = False
+            except (FileNotFoundError, FileExistsError) as e:
+                window[new_root].update(text_color='red')
+                window[new_base].update(text_color='red')
         elif event in SPECIAL_KEYS and SPECIAL_KEYS[event] == 'esc':
             loop = False
 

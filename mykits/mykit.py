@@ -152,13 +152,18 @@ class MyKitCmd(cmd.Cmd):
         self._done = None
 
     def precmd(self, line):
-        cli_draw.hl()
+        if line:
+            cli_draw.hl()
+        self._done = False
         return line
 
     def postcmd(self, stop, line):
         if self._done:
             cli_draw.hl()
         return self._stop
+
+    def emptyline(self):
+        return
 
     def default(self, line):
         try:
@@ -178,6 +183,16 @@ class MyKitCmd(cmd.Cmd):
 
     do_exit = do_q = do_quit
 
+    def do_repeat(self, line):
+        if self.last_not_repeat:
+            return self.onecmd(self.last_not_repeat)
+
+    do_r = do_repeat
+
+    def onecmd(self, line):
+        super(MyKitCmd, self).onecmd(line)
+        if self.lastcmd not in ('r', 'repeat'):
+            self.last_not_repeat = self.lastcmd
 
 def cmd_mode_func(args):
     MyKitCmd().cmdloop()
