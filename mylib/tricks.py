@@ -217,5 +217,12 @@ def getitem_set_default(x, index_or_key, default=None):
         return default
 
 
-def remove_from_iterable(source: Iterable, remove: Iterable) -> list:
-    return [x for x in source if x not in remove]
+def remove_from_iterable(source: Iterable, rmv_set: Iterable) -> list:
+    """return a list, which contains elements in source but not in rmv_set"""
+    return [x for x in source if x not in rmv_set]
+
+
+def dedup_iterable(source: Iterable) -> list:
+    r = []
+    [r.append(e) for e in source if e not in r]
+    return r

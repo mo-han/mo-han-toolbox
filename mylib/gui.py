@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 # encoding=utf8
 import os
+import re
 import shutil
 
 import PySimpleGUIQt as PySimpleGUI
 
-from .osutil import ensure_sigint_signal, real_join_path
+from .tricks import remove_from_iterable, dedup_iterable
+from .util import ensure_sigint_signal, real_join_path, write_json_file, read_json_file
 
 SPECIAL_KEYS = {
     'special 16777216': 'esc',
     'special 16777249': 'ctrl',
     'special 16777248': 'shift',
     'special 16777250': 'win',
-    'special 16777301': 'apps',
+    'special 16777301': 'menu',
     'special 16777217': 'tab',
     'special 16777251': 'alt',
     'special 16777223': 'delete',
@@ -33,16 +35,25 @@ SPECIAL_KEYS = {
 
 def rename_dialog(src: str):
     sg = PySimpleGUI
-    conf_file = real_join_path(os.path.expanduser('~'), '.config/rename_dialog_conf.json')
+    conf_file = real_join_path('~', '.config/rename_dialog.json')
     root = 'root'
     fname = 'fname'
     ext = 'ext'
     new = 'new'
+    new_root = 'new_root'
+    new_base = 'new_base'
     ok = 'OK ↩'
-    discard = 'Esc'
+    esc = 'Esc'
+    patt = 'pattern'
+    add_regex = 'add'
+    del_regex = 'del'
+    repl = 'replace'
     title = 'Rename - {}'.format(src)
     h = .7
 
+    conf_dict = read_json_file(conf_file, default={patt: [''], repl: ['']})
+    pattern_l = conf_dict[patt]
+    replace_l = conf_dict[repl]
     old_root, old_base = os.path.split(src)
     old_fn, old_ext = os.path.splitext(old_base)
 
@@ -50,38 +61,75 @@ def rename_dialog(src: str):
     layout = [
         [sg.T(src, key='src')],
         [sg.HorizontalSeparator()],
-        [
-            sg.I(default_text=old_root, key=root),
-            sg.FolderBrowse(button_text='...', target=root, initial_folder=old_root, size=(6, h))
-        ],
-        [
-            sg.I(default_text=old_fn, key=fname, focus=True),
-            sg.I(default_text=old_ext, key=ext, size=(6, h))
-        ],
-        [sg.Combo(['1', '2'])],
+        [sg.I(old_root, key=root),
+         sg.FolderBrowse('...', target=root, initial_folder=old_root, size=(6, h))],
+        [sg.I(old_fn, key=fname, focus=True),
+         sg.I(old_ext, key=ext, size=(6, h))],
         [sg.HorizontalSeparator()],
-        [sg.MultilineOutput(src, key=new)],
-        [
-            sg.Submit(button_text=ok, size=(10, 1)),
-            sg.Stretch(),
-            sg.Cancel(button_text=discard, size=(10, 1))]
-    ]
+        [sg.T('Regular Expression Substitution', size=(32, h)), ],
+        [sg.T('Pattern:', size=(5, h)),
+         sg.Drop(pattern_l, key=patt, enable_events=True)],
+        [sg.T('Replace:', size=(5, h)),
+         sg.Drop(replace_l, key=repl, enable_events=True)],
+        [sg.T(''), sg.B('+', key=add_regex, size=(3, h)), sg.B('-', key=del_regex, size=(3, h)), sg.T('')],
+        [sg.HorizontalSeparator()],
+        [sg.I(old_root, key=new_root)],
+        [sg.I(old_fn + old_ext, key=new_base)],
+        [sg.Submit(ok, size=(10, 1)),
+         sg.Stretch(),
+         sg.Cancel(esc, size=(10, 1))]]
 
     ensure_sigint_signal()
-    window = sg.Window(title, return_keyboard_events=True, ).layout(layout).finalize()
+    window = sg.Window(title, return_keyboard_events=True).layout(layout).finalize()
     window.bring_to_front()
-    while True:
-        e, d = window.read()
+
+    def update_regex(pl, rl):
+        pl = dedup_iterable(pl)
+        rl = dedup_iterable(rl)
+        window[patt].update(values=pl)
+        window[repl].update(values=rl)
+        conf_dict[patt] = pl
+        conf_dict[repl] = rl
+        write_json_file(conf_file, conf_dict, indent=0)
+        return pl, rl
+
+    loop = True
+    while loop:
+        event, data = window.read()
+        cur_p = data[patt]
+        cur_r = data[repl]
+
         try:
-            dst = os.path.realpath(os.path.join(d[root], d[fname] + d[ext]))
+            tmp_fname = data[fname] + data[ext]
+            if data[patt]:
+                # noinspection PyBroadException
+                try:
+                    tmp_fname = re.sub(data[patt], data[repl], tmp_fname)
+                except Exception:
+                    pass
+            dst = os.path.realpath(os.path.join(data[root], tmp_fname))
         except TypeError:
             dst = src
-        window.find_element(new).update(dst)
-        if e in (None, discard):
-            break
-        elif e == ok:
+        np, nb = os.path.split(dst)
+        window[new_root].update(np)
+        window[new_base].update(nb)
+
+        if event == add_regex:
+            pattern_l.insert(0, cur_p)
+            replace_l.insert(0, cur_r)
+            pattern_l, replace_l = update_regex(pattern_l, replace_l)
+        elif event == del_regex:
+            if cur_p:
+                pattern_l = remove_from_iterable(pattern_l, [cur_p])
+            if cur_r:
+                replace_l = remove_from_iterable(replace_l, [cur_r])
+            pattern_l, replace_l = update_regex(pattern_l, replace_l)
+        elif event in (None, esc):
+            loop = False
+        elif event == ok:
             shutil.move(src, dst)
-            break
-        elif e in SPECIAL_KEYS and SPECIAL_KEYS[e] == 'esc':
-            break
+            loop = False
+        elif event in SPECIAL_KEYS and SPECIAL_KEYS[event] == 'esc':
+            loop = False
+
     window.close()

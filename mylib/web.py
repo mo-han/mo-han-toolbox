@@ -40,7 +40,7 @@ class DownloadFailure(Exception):
 
 def get_phantomjs_splinter(proxy=None, show_image=False, window_size=(1024, 1024)):
     import splinter
-    from mylib.osutil import TEMPDIR
+    from mylib.util import TEMPDIR
 
     extra_argv = ['--webdriver-loglevel=WARN']
     if proxy:

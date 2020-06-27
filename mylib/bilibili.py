@@ -18,7 +18,7 @@ from lxml import html
 
 from .cli import SimpleDrawer
 from .misc import safe_print, safe_basename
-from .osutil import ensure_sigint_signal
+from .util import ensure_sigint_signal
 from .tricks import modify_and_import
 from .video import concat_videos, merge_m4s
 from .web import cookie_str_from_dict, cookies_dict_from_file

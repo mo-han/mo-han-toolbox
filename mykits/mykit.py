@@ -133,7 +133,7 @@ def argument_parser():
 
 
 def main():
-    from mylib.osutil import ensure_sigint_signal
+    from mylib.util import ensure_sigint_signal
     ensure_sigint_signal()
     ap = argument_parser()
     args = ap.parse_args()
@@ -189,7 +189,7 @@ def test_only(args):
 
 def clipboard_rename_func(args):
     from mylib.gui import rename_dialog
-    from mylib.osutil import clipboard
+    from mylib.util import clipboard
     for f in clipboard.get_path():
         rename_dialog(f)
 

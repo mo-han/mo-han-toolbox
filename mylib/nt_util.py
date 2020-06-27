@@ -4,6 +4,7 @@ import inspect
 import re
 from time import sleep
 import win32clipboard
+import pywintypes
 
 from .tricks import singleton, with_self_context
 
@@ -21,6 +22,12 @@ class Clipboard:
 
     def __init__(self):
         self.delay = 0
+        try:
+            self._wcb.CloseClipboard()
+        except pywintypes.error:
+            pass
+        finally:
+            self.__opened = False
 
     def __enter__(self):
         self.open()
@@ -29,13 +36,25 @@ class Clipboard:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
+    @property
+    def is_opened(self):
+        return self.__opened
+
+    @property
+    def is_closed(self):
+        return not self.__opened
+
     def open(self):
-        sleep(self.delay)
-        self._wcb.OpenClipboard()
+        if not self.__opened:
+            sleep(self.delay)
+            self._wcb.OpenClipboard()
+            self.__opened = True
 
     def close(self):
-        self._wcb.CloseClipboard()
-        # sleep(self.delay)  # maybe not needed
+        if self.__opened:
+            self._wcb.CloseClipboard()
+            # sleep(self.delay)  # maybe not needed
+            self.__opened = False
 
     def valid_format(self, x: str or int):
         """get valid clipboard format ('CF_*')"""

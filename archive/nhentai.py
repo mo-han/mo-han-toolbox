@@ -4,7 +4,7 @@ import sys
 import logging
 
 from mylib.misc import LOG_FMT_MESSAGE_ONLY, ExitCode
-from mylib.osutil import ensure_sigint_signal
+from mylib.util import ensure_sigint_signal
 from mylib.hentai import NHentaiKit
 
 if __name__ == '__main__':

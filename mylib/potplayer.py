@@ -6,7 +6,7 @@ import keyboard
 import mouse
 
 from .gui import rename_dialog
-from .osutil import clipboard, rename_helper
+from .util import clipboard, rename_helper
 from .tricks import import_pywinauto, getitem_default
 
 pywinauto = import_pywinauto()

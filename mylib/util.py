@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # encoding=utf8
-
+import json
 import os
 import shutil
 import signal
@@ -8,9 +8,9 @@ import sys
 import tempfile
 
 if os.name == 'nt':
-    from .osutil_nt import *
+    from .nt_util import *
 elif os.name == 'posix':
-    from .osutil_posix import *
+    from .posix_util import *
 else:
     raise ImportError("Off-design OS: '{}'".format(os.name))
 
@@ -63,3 +63,29 @@ def real_join_path(path, *paths, expanduser: bool = True, expandvars: bool = Tru
         path = os.path.expandvars(path)
         paths = [os.path.expandvars(p) for p in paths]
     return os.path.realpath(os.path.join(path, *paths))
+
+
+def ensure_open_file(file, mode='r', **kwargs):
+    parent, basename = os.path.split(file)
+    if not os.path.isdir(parent):
+        os.makedirs(parent, exist_ok=True)
+    if not os.path.isfile(file):
+        if os.path.exists(file):
+            raise ValueError("Non-file already exists: {}".format(file))
+        else:
+            open(file, 'w', **kwargs).close()
+    return open(file, mode, **kwargs)
+
+
+def read_json_file(file, default=None, **kwargs):
+    with ensure_open_file(file, 'r') as jf:
+        try:
+            d = json.load(jf, **kwargs)
+        except json.decoder.JSONDecodeError:
+            d = default or {}
+    return d
+
+
+def write_json_file(file, data, **kwargs):
+    with ensure_open_file(file, 'w') as jf:
+        json.dump(data, jf, **kwargs)
