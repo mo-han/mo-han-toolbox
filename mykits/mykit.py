@@ -235,7 +235,8 @@ def url_from_clipboard(args):
     else:
         from mylib.text import regex_find
         urls = regex_find(pattern, t)
-    pyperclip.copy('\n'.join(urls))
+    urls = '\n'.join(urls)
+    pyperclip.copy(urls)
     print(urls)
 
 

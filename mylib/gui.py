@@ -5,7 +5,7 @@ import shutil
 
 import PySimpleGUIQt as PySimpleGUI
 
-from .osutil import ensure_sigint_signal
+from .osutil import ensure_sigint_signal, real_join_path
 
 SPECIAL_KEYS = {
     'special 16777216': 'esc',
@@ -33,6 +33,7 @@ SPECIAL_KEYS = {
 
 def rename_dialog(src: str):
     sg = PySimpleGUI
+    conf_file = real_join_path(os.path.expanduser('~'), '.config/rename_dialog_conf.json')
     root = 'root'
     fname = 'fname'
     ext = 'ext'
@@ -57,6 +58,7 @@ def rename_dialog(src: str):
             sg.I(default_text=old_fn, key=fname, focus=True),
             sg.I(default_text=old_ext, key=ext, size=(6, h))
         ],
+        [sg.Combo(['1', '2'])],
         [sg.HorizontalSeparator()],
         [sg.MultilineOutput(src, key=new)],
         [

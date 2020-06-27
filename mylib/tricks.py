@@ -215,3 +215,7 @@ def getitem_set_default(x, index_or_key, default=None):
     except KeyError:
         x[index_or_key] = default
         return default
+
+
+def remove_from_iterable(source: Iterable, remove: Iterable) -> list:
+    return [x for x in source if x not in remove]

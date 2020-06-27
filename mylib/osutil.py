@@ -52,3 +52,14 @@ def ensure_sigint_signal():
 
 
 TEMPDIR = tempfile.gettempdir()
+
+
+def real_join_path(path, *paths, expanduser: bool = True, expandvars: bool = True):
+    """realpath(join(...))"""
+    if expanduser:
+        path = os.path.expanduser(path)
+        paths = [os.path.expanduser(p) for p in paths]
+    if expandvars:
+        path = os.path.expandvars(path)
+        paths = [os.path.expandvars(p) for p in paths]
+    return os.path.realpath(os.path.join(path, *paths))
