@@ -8,11 +8,11 @@ from glob import glob
 import argparse
 
 from mylib.bilibili import BilibiliAppCacheEntry
-from mylib.tricks import ArgumentParserCompactOptionHelpFormatter
+from mylib.tricks import ArgParseHelpFormatterCompact
 
 
 def parse_args():
-    common_parser_kwargs = {'formatter_class': ArgumentParserCompactOptionHelpFormatter}
+    common_parser_kwargs = {'formatter_class': ArgParseHelpFormatterCompact}
     ap = argparse.ArgumentParser(**common_parser_kwargs,
                                  description='bilibili APP offline cache extractor')
     ap.add_argument('-c', '--cookies', help='netscape format cookies (text) file', metavar='<cookies_file>')

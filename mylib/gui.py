@@ -6,7 +6,7 @@ import shutil
 
 import PySimpleGUIQt as PySimpleGUI
 
-from .tricks import remove_from_iterable, dedup_iterable
+from .tricks import remove_from_list, dedup_list
 from .util import ensure_sigint_signal, real_join_path, write_json_file, read_json_file
 
 SPECIAL_KEYS = {
@@ -41,24 +41,21 @@ def rename_dialog(src: str):
     ext = 'ext'
     new_root = 'new_root'
     new_base = 'new_base'
-    ok = 'OK ↩'
-    esc = 'Esc'
-    patt = 'pattern'
-    add_regex = 'add'
-    del_regex = 'del'
-    repl = 'replace'
+    ok = 'OK'
+    cancel = 'Cancel'
+    pattern = 'pattern'
+    replace = 'replace'
+    save_replace = 'save_replace'
+    save_pattern = 'save_pattern'
     title = 'Rename - {}'.format(src)
     h = .7
-    error = 'error'
 
-    conf_dict = read_json_file(conf_file, default={patt: [''], repl: ['']})
-    pattern_l = conf_dict[patt]
-    replace_l = conf_dict[repl]
+    conf = read_json_file(conf_file, default={pattern: [''], replace: ['']})
+    tmp_pl = conf[pattern]
+    tmp_rl = conf[replace]
     old_root, old_base = os.path.split(src)
     old_fn, old_ext = os.path.splitext(old_base)
 
-    # import random
-    # sg.theme(random.choice(sg.theme_list()))
     layout = [
         [sg.T(src, key='src')],
         [sg.HorizontalSeparator()],
@@ -67,43 +64,32 @@ def rename_dialog(src: str):
         [sg.I(old_fn, key=fname, focus=True),
          sg.I(old_ext, key=ext, size=(6, h))],
         [sg.HorizontalSeparator()],
-        [sg.T('Regular Expression Substitution', size=(32, h)), ],
-        [sg.T('Pattern:', size=(5, h)),
-         sg.Drop(pattern_l, default_value=pattern_l[0], key=patt, enable_events=True)],
-        [sg.T('Replace:', size=(5, h)),
-         sg.Drop(replace_l, default_value=pattern_l[0], key=repl, enable_events=True)],
-        [sg.T(''), sg.B('+', key=add_regex, size=(3, h)), sg.B('-', key=del_regex, size=(3, h)), sg.T('')],
+        [sg.T('Regular Expression Substitution Pattern & Replacement')],
+        [sg.T(size=(0, h)),
+         sg.Drop(tmp_pl, key=pattern, enable_events=True, text_color='blue'),
+         sg.CB('', default=True, key=save_pattern, enable_events=True, size=(2, h)),
+         sg.Drop(tmp_rl, key=replace, enable_events=True, text_color='blue'),
+         sg.CB('', default=True, key=save_replace, enable_events=True, size=(2, h))],
         [sg.HorizontalSeparator()],
         [sg.I(old_root, key=new_root)],
         [sg.I(old_fn + old_ext, key=new_base)],
         [sg.Submit(ok, size=(10, 1)),
-         # sg.T('', key=error, font=(None, None, 'bold'), text_color='red'),
          sg.Stretch(),
-         sg.Cancel(esc, size=(10, 1))]]
+         sg.Cancel(cancel, size=(10, 1))]]
 
     ensure_sigint_signal()
     window = sg.Window(title, return_keyboard_events=True).layout(layout).finalize()
     window.bring_to_front()
 
-    def update_regex(pl, rl):
-        pl = dedup_iterable(pl)
-        rl = dedup_iterable(rl)
-        window[patt].update(values=pl)
-        window[repl].update(values=rl)
-        conf_dict[patt] = pl
-        conf_dict[repl] = rl
-        write_json_file(conf_file, conf_dict, indent=0)
-        return pl, rl
-
     loop = True
-    data = {fname: old_fn, ext: old_ext, patt: pattern_l[0], repl: replace_l[0], root: old_root}
+    data = {fname: old_fn, ext: old_ext, pattern: tmp_pl[0], replace: tmp_rl[0], root: old_root}
     while loop:
         try:
             tmp_fname = data[fname] + data[ext]
-            if data[patt]:
+            if data[pattern]:
                 # noinspection PyBroadException
                 try:
-                    tmp_fname = re.sub(data[patt], data[repl], tmp_fname)
+                    tmp_fname = re.sub(data[pattern], data[replace], tmp_fname)
                 except Exception:
                     pass
             dst = os.path.realpath(os.path.join(data[root], tmp_fname))
@@ -116,21 +102,27 @@ def rename_dialog(src: str):
         event, data = window.read()
         window[new_root].update(text_color=None)
         window[new_base].update(text_color=None)
-        cur_p = data[patt]
-        cur_r = data[repl]
+        cur_p = data[pattern]
+        cur_r = data[replace]
 
-        if event == add_regex:
-            pattern_l.insert(0, cur_p)
-            replace_l.insert(0, cur_r)
-            pattern_l, replace_l = update_regex(pattern_l, replace_l)
-        elif event == del_regex:
-            if cur_p:
-                pattern_l = remove_from_iterable(pattern_l, [cur_p])
-            if cur_r:
-                replace_l = remove_from_iterable(replace_l, [cur_r])
-            pattern_l, replace_l = update_regex(pattern_l, replace_l)
-        elif event in (None, esc):
+        if event in SPECIAL_KEYS and SPECIAL_KEYS[event] == 'esc':
             loop = False
+        elif event == save_pattern:
+            if data[save_pattern]:
+                conf[pattern].insert(0, cur_p)
+                conf[pattern] = dedup_list(conf[pattern])
+            elif cur_p:
+                conf[pattern] = remove_from_list(conf[pattern], [cur_p])
+        elif event == save_replace:
+            if data[save_replace]:
+                conf[replace].insert(0, cur_r)
+                conf[replace] = dedup_list(conf[replace])
+            elif cur_r:
+                conf[replace] = remove_from_list(conf[replace], [cur_r])
+        elif event == pattern:
+            window[save_pattern].update(value=cur_p in conf[pattern])
+        elif event == replace:
+            window[save_replace].update(value=cur_r in conf[replace])
         elif event == ok:
             try:
                 shutil.move(src, dst)
@@ -138,7 +130,11 @@ def rename_dialog(src: str):
             except (FileNotFoundError, FileExistsError) as e:
                 window[new_root].update(text_color='red')
                 window[new_base].update(text_color='red')
-        elif event in SPECIAL_KEYS and SPECIAL_KEYS[event] == 'esc':
+        elif event in (None, cancel):
             loop = False
+        else:
+            ...
+    else:
+        write_json_file(conf_file, conf, indent=0)
 
     window.close()

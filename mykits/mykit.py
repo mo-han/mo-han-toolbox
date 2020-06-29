@@ -16,8 +16,8 @@ cli_draw = SimpleDrawer()
 
 
 def argument_parser():
-    from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgumentParserCompactOptionHelpFormatter
-    common_parser_kwargs = {'formatter_class': ArgumentParserCompactOptionHelpFormatter}
+    from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseHelpFormatterCompact
+    common_parser_kwargs = {'formatter_class': ArgParseHelpFormatterCompact}
     ap = argparse.ArgumentParser(**common_parser_kwargs)
     sub = ap.add_subparsers(title='sub-commands')
 

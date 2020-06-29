@@ -16,7 +16,7 @@ _module_data = {}
 Decorator = Callable[[Callable], Callable]
 
 
-class TypedQueue:
+class TypingQueue:
     def put(self, *args, **kwargs):
         ...
 
@@ -24,7 +24,7 @@ class TypedQueue:
         ...
 
 
-def limit_argv_choice(choices: Dict[int or str, Iterable] = None) -> Decorator:
+def limit_argv_choice(choices: Dict[int or str, Iterable]) -> Decorator:
     """decorator factory: force arguments of a func limited in the given choices
 
     :param choices: a dict which describes the choices for the value-limited arguments.
@@ -33,19 +33,15 @@ def limit_argv_choice(choices: Dict[int or str, Iterable] = None) -> Decorator:
     err_fmt = "value of '{}' is not a valid choice: '{}'"
 
     def decorator(func):
-        if not choices:
-            return func
-
         @wraps(func)
         def decorated_func(*args, **kwargs):
             for i in range(len(args)):
                 if i in choices and args[i] not in choices[i]:
                     param_name = func.__code__.co_varnames[i]
-                    valid_choices = list(choices[i])
-                    raise ValueError(err_fmt.format(param_name, valid_choices))
+                    raise ValueError(err_fmt.format(param_name, set(choices[i])))
             for k in kwargs:
                 if k in choices and kwargs[k] not in choices[k]:
-                    raise ValueError(err_fmt.format(k, list(choices[k])))
+                    raise ValueError(err_fmt.format(k, set(choices[k])))
 
             return func(*args, **kwargs)
 
@@ -54,10 +50,11 @@ def limit_argv_choice(choices: Dict[int or str, Iterable] = None) -> Decorator:
     return decorator
 
 
-def loop_retry_on_exception(exceptions: Exception or Iterable[Exception], max_retries: int = 3,
-                            exception_tester=Callable[[Exception], bool], exception_queue=TypedQueue) -> Decorator:
+def with_exception_retry(exceptions: Exception or Iterable[Exception], max_retries: int = 3,
+                         exception_checker: Callable[[Exception], bool] = None,
+                         exception_queue: TypingQueue = None) -> Decorator:
     """decorator factory: force a func re-running for several times on exception(s)"""
-    test_exc = exception_tester or (lambda e: True)
+    check_exc = exception_checker or (lambda e: True)
     max_retries = int(max_retries)
     initial_counter = max_retries if max_retries < 0 else max_retries + 1
 
@@ -70,7 +67,7 @@ def loop_retry_on_exception(exceptions: Exception or Iterable[Exception], max_re
                 try:
                     return func(*args, **kwargs)
                 except exceptions as e:
-                    if test_exc(e):
+                    if check_exc(e):
                         if exception_queue:
                             exception_queue.put(e)
                         err = e
@@ -158,7 +155,7 @@ def arg_type_range_factory(x_type, x_range_condition: str):
     return arg_type_range
 
 
-def new_logger(logger_name: str, level: str = 'INFO', fmt=LOG_FMT, datetime_fmt=LOG_DTF, handlers_l: list = None):
+def get_logger(logger_name: str, level: str = 'INFO', fmt=LOG_FMT, datetime_fmt=LOG_DTF, handlers_l: list = None):
     formatter = logging.Formatter(fmt=fmt, datefmt=datetime_fmt)
     logger = logging.getLogger(logger_name)
     logger.setLevel(level)
@@ -170,7 +167,7 @@ def new_logger(logger_name: str, level: str = 'INFO', fmt=LOG_FMT, datetime_fmt=
     return logger
 
 
-class ArgumentParserCompactOptionHelpFormatter(argparse.HelpFormatter):
+class ArgParseHelpFormatterCompact(argparse.HelpFormatter):
     def _format_action_invocation(self, action):
         if not action.option_strings or action.nargs == 0:
             # noinspection PyProtectedMember
@@ -206,23 +203,12 @@ def getitem_default(x, index_or_key, default=None):
         return default
 
 
-def getitem_set_default(x, index_or_key, default=None):
-    try:
-        return x[index_or_key]
-    except IndexError:
-        x += type(x)([default] * (index_or_key - len(x)))
-        return default
-    except KeyError:
-        x[index_or_key] = default
-        return default
-
-
-def remove_from_iterable(source: Iterable, rmv_set: Iterable) -> list:
+def remove_from_list(source: Iterable, rmv_set: Iterable) -> list:
     """return a list, which contains elements in source but not in rmv_set"""
     return [x for x in source if x not in rmv_set]
 
 
-def dedup_iterable(source: Iterable) -> list:
+def dedup_list(source: Iterable) -> list:
     r = []
     [r.append(e) for e in source if e not in r]
     return r

@@ -9,7 +9,7 @@ from time import sleep
 import requests
 
 from .misc import LOG_FMT_MESSAGE_ONLY
-from .tricks import new_logger, VoidDuck, str_ishex
+from .tricks import get_logger, VoidDuck, str_ishex
 from .web import cookies_dict_from_file, html_etree
 from .util import legal_fs_name
 
@@ -24,7 +24,7 @@ EH_TITLE_REGEX_PATTERN = re.compile(
 
 
 def tidy_ehviewer_images(dry_run: bool = False):
-    logger = new_logger('ehvimg', fmt=LOG_FMT_MESSAGE_ONLY)
+    logger = get_logger('ehvimg', fmt=LOG_FMT_MESSAGE_ONLY)
     logmsg_move = '* move {} -> {}'
     logmsg_skip = '# skip {}'
     logmsg_data = '+ /g/{}/{}'
