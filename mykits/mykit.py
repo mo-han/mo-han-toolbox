@@ -78,7 +78,7 @@ def argument_parser():
     bilibili_download.add_argument('-l', '--playlist', action='store_true')
     bilibili_download.add_argument('-o', '--output', metavar='dir')
     bilibili_download.add_argument('-p', '--parts', nargs='*', type=int, metavar='N')
-    bilibili_download.add_argument('-q', '--qn-single', type=int, metavar='N')
+    bilibili_download.add_argument('-q', '--qn-want', type=int, metavar='N')
     bilibili_download.add_argument('-Q', '--qn-max', type=int, metavar='N')
     bilibili_download.add_argument('-C', '--no-caption', dest='caption', action='store_false')
     bilibili_download.add_argument('-A', '--no-moderate-audio', dest='moderate_audio', action='store_false')

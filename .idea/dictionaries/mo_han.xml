@@ -10,8 +10,10 @@
       <w>bilidl</w>
       <w>bilidltemp</w>
       <w>dedup</w>
+      <w>dest</w>
       <w>dhash</w>
       <w>dryrun</w>
+      <w>dukto</w>
       <w>ehentai</w>
       <w>ehviewer</w>
       <w>errorlevel</w>
@@ -37,12 +39,14 @@
       <w>levelname</w>
       <w>logmsg</w>
       <w>manga</w>
+      <w>ndrop</w>
       <w>opencv</w>
       <w>phash</w>
       <w>pyinstaller</w>
       <w>pyreadline</w>
       <w>pyserial</w>
       <w>pysimplegui</w>
+      <w>pysimpleguiqt</w>
       <w>recv</w>
       <w>scal</w>
       <w>scpi</w>
@@ -52,6 +56,7 @@
       <w>testbrowser</w>
       <w>thres</w>
       <w>undoc</w>
+      <w>unicast</w>
       <w>urms</w>
       <w>webp</w>
       <w>whash</w>

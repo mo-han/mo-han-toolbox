@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # encoding=utf8
-from time import sleep
+from time import sleep, time
 
 import keyboard
 import mouse
@@ -50,20 +50,18 @@ class PotPlayerKit:
     def fileinfo(self):
         return self.cache['fileinfo']
 
-    def get_fileinfo(self, alt_tab: bool = True):
+    def get_fileinfo(self, alt_tab: bool = True, timeout=5):
         const_general = 'General'
         const_general_lower = const_general.lower()
         const_complete_name = 'Complete name'
         const_complete_name_lower = const_complete_name.lower()
 
+        t0 = time()
         clipboard.clear()
         self.focus()
         keyboard.press_and_release('ctrl+f1')
-        keyboard.press_and_release('shift+tab')
-        keyboard.press_and_release('shift+tab')
-        keyboard.press_and_release('shift+tab')
-        keyboard.press_and_release('shift+tab')
-        keyboard.press_and_release('shift+tab')
+        for _ in range(5):
+            keyboard.press_and_release('shift+tab')
         keyboard.press_and_release('enter')
         self.gasp()
         keyboard.press_and_release('alt+p, esc')
@@ -72,6 +70,8 @@ class PotPlayerKit:
             keyboard.press_and_release('alt+tab')
 
         while True:
+            if time() - t0 > timeout:
+                raise TimeoutError
             self.gasp()
             data = clipboard.get() or ''
             lines = data.splitlines()
@@ -135,6 +135,10 @@ class PotPlayerKit:
         rename_helper(src, new, move_to=move_to, keep_ext=keep_ext)
 
     def rename_file_gui(self, alt_tab: bool = False):
-        fileinfo = self.get_fileinfo(alt_tab=alt_tab)
+        try:
+            fileinfo = self.get_fileinfo(alt_tab=alt_tab)
+        except TimeoutError:
+            print('! TIMEOUT: clipboard data')
+            return
         src = fileinfo['path']
         rename_dialog(src)

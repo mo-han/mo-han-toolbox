@@ -1,4 +1,6 @@
+ndrop
 pywinauto
+pyautogui #pyautogui==0.9.39
 keyboard
 mouse
 pyperclip
@@ -12,18 +14,14 @@ opencv-python
 pyreadline
 pysimpleguiqt
 pyserial
+splinter<0.8  # phantomjs
+selenium<3.8  # phantomjs
 
 youtube-dl
 you-get
 gallery-dl
 
-pyautogui #pyautogui==0.9.39
-av  # PyAV
-fs  # PyFilesystem
-#splinter<0.8  # phantomjs
-#selenium<3.8  # phantomjs
+#av  # PyAV
+#fs  # PyFilesystem
 #bs4
 #splinter[zope.testbrowser]  # zope.testbrowser with splinter not support py3
-#splinter
-#selenium
-

@@ -146,7 +146,7 @@ def code_modify_you_get_fs(x: str):
     x = x.replace('''
     text = text[:80] # Trim to 82 Unicode characters long
 ''', '''
-    text = text[:200] # Trim to 82 Unicode characters long
+    text = text[:200]
 ''')
     return x
 
@@ -169,7 +169,7 @@ you_get.util.strings.legitimize = you_get.util.fs.legitimize
 you_get.extractors.bilibili = modify_and_import('you_get.extractors.bilibili', code_modify_you_get_bilibili)
 
 
-# 搜寻av、BV、AV、bv开头的字符串或者整形数，将之变成B站视频的av嗯号或者BV号
+# 搜寻av、BV、AV、bv开头的字符串或者整形数，将之变成B站视频的av号或者BV号
 def get_vid(x: str or int) -> str or None:
     if isinstance(x, int):
         vid = 'av{}'.format(x)
@@ -231,7 +231,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
             else:
                 c = cookies
         else:
-            raise TypeError("'{}' is not cookies file path str or joined cookie str or dict".format(cookies))
+            raise TypeError("'{}' is not cookies file path or single-line cookie str or cookies dict".format(cookies))
         self.cookie = c
 
     def bilibili_headers(self, referer=None, cookie=None):
@@ -286,7 +286,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
 # 这是一个任务函数，包装了修改版的you-get的B站下载功能，供另外编写的命令行工具调用
 def download_bilibili_video(url: str or int,
                             cookies: str or dict = None, output: str = None, parts: list = None,
-                            qn_max: int = None, qn_single: int = None, moderate_audio: bool = True, fmt=None,
+                            qn_max: int = None, qn_want: int = None, moderate_audio: bool = True, fmt=None,
                             info: bool = False, playlist: bool = False, caption: bool = True,
                             **kwargs):
     # 确保在Windows操作系统中，SIGINT信号能够被传递到下层扩展中，从而确保Ctrl+C能够立即停止程序
@@ -302,7 +302,7 @@ def download_bilibili_video(url: str or int,
     dr.hl()
     dr.print('{} -> {}'.format(url, output))
     dr.hl()
-    bd = YouGetBilibiliX(cookies=cookies, qn_max=qn_max, qn_single=qn_single)
+    bd = YouGetBilibiliX(cookies=cookies, qn_max=qn_max, qn_single=qn_want)
 
     if info:
         dl_kwargs = {'info_only': True}
