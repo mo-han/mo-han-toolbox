@@ -83,7 +83,8 @@ def with_exception_retry(exceptions: Exception or Iterable[Exception], max_retri
     return decorator
 
 
-def modify_and_import(module_path: str, code_modifier: str or Callable, package_path: str = None):
+def modify_and_import(module_path: str, code_modifier: str or Callable, package_path: str = None,
+                      output: bool = False, output_file: str = 'tmp.py'):
     # How to modify imported source code on-the-fly?
     #     https://stackoverflow.com/a/41863728/7966259  (answered by Martin Valgur)
     # Modules and Packages: Live and Let Die!  (by David Beazley)
@@ -94,6 +95,9 @@ def modify_and_import(module_path: str, code_modifier: str or Callable, package_
         source = code_modifier
     else:
         source = code_modifier(spec.loader.get_source(module_path))
+    if output:
+        with open(output_file, 'w') as f:
+            f.write(source)
     module = importlib.util.module_from_spec(spec)
     code_obj = compile(source, module.__spec__.origin, 'exec')
     exec(code_obj, module.__dict__)

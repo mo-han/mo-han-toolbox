@@ -1,40 +1,72 @@
 #!/usr/bin/env python3
 # encoding=utf8
-import ndrop.netdrop
+
 import ndrop.__main__
+import ndrop.netdrop
+
 from .tricks import modify_and_import
 
+_config = {'server_text_queue': None}
 
-def code_modify_ndrop_dukto(x: str):
+
+def config(sth: dict = None, **kwargs):
+    if sth:
+        _config.update(sth)
+    elif kwargs:
+        _config.update(kwargs)
+    else:
+        for k in _config:
+            print(repr(k), '=', repr(_config[k]))
+
+
+def code_modify_ndrop_dukto_udp_pause(x: str):
     x = x.replace('''
 class DuktoServer(Transport):
 ''', '''
 class DuktoServer(Transport):
-    delay_after_udp_broadcast = 3
+    udp_pause = 0.1
 ''')
-    start = x.find('''
-    def say_hello(self, dest):
-''')
-    x = x[:start] + x[start:].replace('''
-            sock.close()
-''','''
-            logger.debug('Delay {}s after UDP unicast to {}:{}'.format(self.delay_after_udp_broadcast, *dest))
-            time.sleep(self.delay_after_udp_broadcast)
-            sock.close()
-''')
-    start = x.find('''
-    def send_broadcast(self, data, port):
-''')
-    x = x[:start] + x[start:].replace('''
-
-        sock.close()
-''', '''
-        logger.debug('Delay {}s after UDP broadcast'.format(self.delay_after_udp_broadcast))
-        time.sleep(self.delay_after_udp_broadcast)
-        sock.close()
-''')
+    start = x.find('''def send_broadcast(self, data, port):''')
+    x = x[:start] + x[start:].replace(
+        '''.sendto(data, (broadcast, port))''',
+        '''.sendto(data, (broadcast, port));''' +
+        '''logger.debug('Pause {}s after UDP to {}:{}'.format(self.udp_pause, broadcast, port));''' +
+        '''time.sleep(self.udp_pause)'''
+    )
+    start = x.find('''def say_hello(self, dest):''')
+    x = x[:start] + x[start:].replace(
+        '''.sendto(data, dest)''',
+        '''.sendto(data, dest);''' +
+        '''logger.debug('Pause {}s after UDP to {}:{}'.format(self.udp_pause, *dest));''' +
+        '''time.sleep(self.udp_pause)'''
+    )
     return x
 
 
-ndrop.netdrop.dukto = modified_ndrop_dukto = modify_and_import('ndrop.dukto', code_modify_ndrop_dukto)
-ndrop_run = ndrop.__main__.run
+ndrop.netdrop.dukto\
+    = ndrop_dukto_with_udp_pause\
+    = modify_and_import('ndrop.dukto', code_modify_ndrop_dukto_udp_pause)
+
+
+class NetDropServerX(ndrop.netdrop.NetDropServer):
+    def recv_finish_text(self):
+        logger = ndrop.netdrop.logger
+        server_text_queue = _config['server_text_queue']
+        data = self._file_io.getvalue()
+        text = data.decode('utf-8')
+        logger.info('TEXT: %s' % text)
+        if server_text_queue:
+            server_text_queue.put(text)
+        self._file_io.close()
+        self._file_io = None
+
+
+ndrop.netdrop.NetDropServer \
+    = ndrop.__main__.NetDropServer\
+    = NetDropServerX
+
+
+def run(**kwargs):
+    if kwargs:
+        config(**kwargs)
+    ndrop.__main__.run()
