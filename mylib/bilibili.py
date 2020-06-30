@@ -194,13 +194,13 @@ def get_vid(x: str or int) -> str or None:
 # 其中包含了`del_unwanted_dash_streams`这个新方法
 # 但是对`del_unwanted_dash_streams`的调用却是在被继承的`Bilibili`（的修改版）中进行的
 class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
-    def __init__(self, *args, cookies: str or dict = None, qn_max=116, qn_single=None):
+    def __init__(self, *args, cookies: str or dict = None, qn_max=116, qn_want=None):
         super(YouGetBilibiliX, self).__init__(*args)
         self.cookie = None
         if cookies:
             self.set_cookie(cookies)
         self.qn_max = qn_max
-        self.qn_single = qn_single
+        self.qn_want = qn_want
         self.html = None, None
 
     # B站视频的音频流分不同档次，选择中档128kbps就足够了，也可以选择最高音质
@@ -279,7 +279,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         format_to_qn_id = {t['id']: t['quality'] for t in self.stream_types}
         for f in list(self.dash_streams):
             q = format_to_qn_id[f.split('-', maxsplit=1)[-1]]
-            if q > self.qn_max or self.qn_single and self.qn_single == q:
+            if q > self.qn_max or self.qn_want and self.qn_want != q:
                 del self.dash_streams[f]
 
 
@@ -302,7 +302,7 @@ def download_bilibili_video(url: str or int,
     dr.hl()
     dr.print('{} -> {}'.format(url, output))
     dr.hl()
-    bd = YouGetBilibiliX(cookies=cookies, qn_max=qn_max, qn_single=qn_want)
+    bd = YouGetBilibiliX(cookies=cookies, qn_max=qn_max, qn_want=qn_want)
 
     if info:
         dl_kwargs = {'info_only': True}
