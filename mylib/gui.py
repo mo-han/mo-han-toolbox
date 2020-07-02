@@ -6,7 +6,7 @@ import shutil
 
 import PySimpleGUIQt as PySimpleGUI
 
-from .tricks import remove_from_list, dedup_list
+from .tricks import remove_from_list, dedup_list, with_exception_retry
 from .util import ensure_sigint_signal, real_join_path, write_json_file, read_json_file
 
 SPECIAL_KEYS = {
@@ -45,6 +45,7 @@ def rename_dialog(src: str):
     cancel = 'Cancel'
     pattern = 'pattern'
     replace = 'replace'
+    substitute = 'substitute'
     save_replace = 'save_replace'
     save_pattern = 'save_pattern'
     title = 'Rename - {}'.format(src)
@@ -56,6 +57,7 @@ def rename_dialog(src: str):
     old_root, old_base = os.path.split(src)
     old_fn, old_ext = os.path.splitext(old_base)
 
+    # sg.theme('SystemDefaultForReal')
     layout = [
         [sg.T(src, key='src')],
         [sg.HorizontalSeparator()],
@@ -69,7 +71,8 @@ def rename_dialog(src: str):
          sg.Drop(tmp_pl, key=pattern, enable_events=True, text_color='blue'),
          sg.CB('', default=True, key=save_pattern, enable_events=True, size=(2, h)),
          sg.Drop(tmp_rl, key=replace, enable_events=True, text_color='blue'),
-         sg.CB('', default=True, key=save_replace, enable_events=True, size=(2, h))],
+         sg.CB('', default=True, key=save_replace, enable_events=True, size=(2, h)),
+         sg.B('⮤', key=substitute, size=(3, h))],
         [sg.HorizontalSeparator()],
         [sg.I(old_root, key=new_root)],
         [sg.I(old_fn + old_ext, key=new_base)],
@@ -82,31 +85,37 @@ def rename_dialog(src: str):
     window.bring_to_front()
 
     loop = True
-    data = {fname: old_fn, ext: old_ext, pattern: tmp_pl[0], replace: tmp_rl[0], root: old_root}
+    data = {fname: old_fn, ext: old_ext, pattern: tmp_pl[0], replace: tmp_rl[0], root: old_root,
+            new_root: '', new_base: ''}
+
+    @with_exception_retry(Exception, 0, enable_default=True, default=None)
+    def re_sub():
+        return re.sub(data[pattern], data[replace], data[fname] + data[ext])
+
     while loop:
+        dst_from_data = os.path.join(data[new_root], data[new_base])
         try:
-            tmp_fname = data[fname] + data[ext]
-            if data[pattern]:
-                # noinspection PyBroadException
-                try:
-                    tmp_fname = re.sub(data[pattern], data[replace], tmp_fname)
-                except Exception:
-                    pass
+            tmp_fname = re_sub() or data[fname] + data[ext]
             dst = os.path.realpath(os.path.join(data[root], tmp_fname))
         except TypeError:
             dst = src
-        np, nb = os.path.split(dst)
-        window[new_root].update(np)
-        window[new_base].update(nb)
+        if dst != dst_from_data:
+            nr, nb = os.path.split(dst)
+            window[new_root].update(nr)
+            window[new_base].update(nb)
 
         event, data = window.read()
-        window[new_root].update(text_color=None)
-        window[new_base].update(text_color=None)
+        for k in (root, fname, ext, new_root, new_base):
+            window[k].update(text_color=None)
         cur_p = data[pattern]
         cur_r = data[replace]
 
         if event in SPECIAL_KEYS and SPECIAL_KEYS[event] == 'esc':
             loop = False
+        if event == substitute:
+            data[fname], data[ext] = os.path.splitext(re_sub() or data[fname] + data[ext])
+            window[fname].update(data[fname])
+            window[ext].update(data[ext])
         elif event == save_pattern:
             if data[save_pattern]:
                 conf[pattern].insert(0, cur_p)
@@ -127,9 +136,14 @@ def rename_dialog(src: str):
             try:
                 shutil.move(src, dst)
                 loop = False
-            except (FileNotFoundError, FileExistsError) as e:
-                window[new_root].update(text_color='red')
-                window[new_base].update(text_color='red')
+            except FileNotFoundError:
+                for k in (root, fname, ext):
+                    window[k].update(text_color='red')
+            except FileExistsError:
+                for k in (new_root, new_base):
+                    window[k].update(text_color='red')
+            except OSError as e:
+                sg.PopupError(str(e))
         elif event in (None, cancel):
             loop = False
         else:
