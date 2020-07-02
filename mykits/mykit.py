@@ -43,6 +43,13 @@ def argument_parser():
     cmd_mode = cmd_mode()
     cmd_mode.set_defaults(func=cmd_mode_func)
 
+    @add_parser('dukto.to.clipboard', ['dukto.cb', 'duktocb'],
+                'put text received in dukto into clipboard')
+    def dukto_to_clipboard(): pass
+
+    dukto_to_clipboard = dukto_to_clipboard()
+    dukto_to_clipboard.set_defaults(func=dukto_to_clipboard_func)
+
     @add_parser('clipboard.findurl', ['cb.url', 'cburl'],
                 'find URLs from clipboard, then copy found URLs back to clipboard')
     def clipboard_findurl(): pass
@@ -194,12 +201,24 @@ class MyKitCmd(cmd.Cmd):
         if self.lastcmd not in ('r', 'repeat'):
             self.last_not_repeat = self.lastcmd
 
+
 def cmd_mode_func(args):
     MyKitCmd().cmdloop()
 
 
 def test_only(args):
     print('ok')
+
+
+def dukto_to_clipboard_func(args):
+    from mylib.dukto import run, recv_text_into_clipboard, config
+    from threading import Thread
+    from queue import Queue
+    config(server_text_queue=Queue())
+    t = Thread(target=recv_text_into_clipboard)
+    t.daemon = True
+    t.start()
+    run()
 
 
 def clipboard_rename_func(args):

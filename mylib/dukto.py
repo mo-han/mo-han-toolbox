@@ -5,6 +5,7 @@ import ndrop.__main__
 import ndrop.netdrop
 
 from .tricks import modify_and_import
+from .util import clipboard
 
 _config = {'server_text_queue': None}
 
@@ -70,3 +71,9 @@ def run(**kwargs):
     if kwargs:
         config(**kwargs)
     ndrop.__main__.run()
+
+
+def recv_text_into_clipboard():
+    q = _config['server_text_queue']
+    while 1:
+        clipboard.set(q.get())
