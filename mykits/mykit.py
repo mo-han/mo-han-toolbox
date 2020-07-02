@@ -258,6 +258,7 @@ def update_json_file(args):
 
 def url_from_clipboard(args):
     import pyperclip
+    from mylib.text import regex_find
     pattern = args.pattern
     t = pyperclip.paste()
     if pattern == 'pornhub':
@@ -266,6 +267,9 @@ def url_from_clipboard(args):
     elif pattern == 'youtube':
         from mylib.youtube import find_url_in_text
         urls = find_url_in_text(t)
+    elif pattern == 'ed2k':
+        p = r'ed2k://[^/]*/'
+        urls = [e for e in regex_find(p, t, dedup=True)]
     else:
         from mylib.text import regex_find
         urls = regex_find(pattern, t)
