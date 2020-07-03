@@ -5,10 +5,13 @@ import json
 import os
 import shutil
 from itertools import combinations
+from logging import warning
+from typing import Iterable
 
 from PIL import Image
 from disjoint_set import DisjointSet
 from imagehash import average_hash, dhash, phash, whash, hex_to_hash
+
 from mylib.misc import percentage
 
 AHASH = 'ahash'
@@ -22,7 +25,8 @@ HASH_FUNC = {
     WHASH: whash,
 }
 
-IMAGE_FILE_EXTENSION = ['.webp', '.jpg', '.bmp', '.jpeg', '.png']
+IMAGE_FILE_EXT_COMMON = ['.webp', '.jpg', '.bmp', '.jpeg', '.png']
+IMAGE_FILE_EXT_ANIMATION = ['.gif', '.apng']
 DEFAULT_IMAGE_HASHTYPE = DHASH
 DEFAULT_IMAGE_HASHSIZE = 16
 IMAGEHASH_FILENAME = 'imagehash.json'
@@ -40,7 +44,7 @@ def ist2hd(
 
 def list_all_image_files():
     listdir = os.listdir(os.curdir)
-    return [i for i in listdir if os.path.splitext(i)[-1] in IMAGE_FILE_EXTENSION]
+    return [i for i in listdir if os.path.splitext(i)[-1] in IMAGE_FILE_EXT_COMMON]
 
 
 def open_image_file(path: str) -> Image.Image:
@@ -232,3 +236,28 @@ def view_similar_images_auto(
         gs = group_similar_images(sp_ll, groups_ds=gs, **common_kwargs)
         if not dryrun:
             view_similar_image_groups(gs)
+
+
+def accept_image_file_ext(fp: str, ext_list=IMAGE_FILE_EXT_COMMON):
+    _, ext = os.path.splitext(fp)
+    if ext.lower() in ext_list:
+        return True
+    else:
+        return False
+
+
+def get_image_files_in(x: Iterable) -> list:
+    y = []
+    for e in x:
+        if os.path.isfile(e) and e not in y:
+            if accept_image_file_ext(e):
+                y.append(e)
+        elif os.path.isdir(e):
+            for r, _, fl in os.walk(e):
+                for f in fl:
+                    fp = os.path.join(r, f)
+                    if fp not in y and accept_image_file_ext(f):
+                        y.append(fp)
+        else:
+            warning("invalid path: '{}'".format(e))
+    return y

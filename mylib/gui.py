@@ -3,38 +3,47 @@
 import os
 import re
 import shutil
+from collections import defaultdict
 
-import PySimpleGUIQt as PySimpleGUI
-
-from .tricks import remove_from_list, dedup_list, with_exception_retry
+from .tricks import remove_from_list, dedup_list, with_exception_retry, singleton
 from .util import ensure_sigint_signal, real_join_path, write_json_file, read_json_file
 
-SPECIAL_KEYS = {
-    'special 16777216': 'esc',
-    'special 16777249': 'ctrl',
-    'special 16777248': 'shift',
-    'special 16777250': 'win',
-    'special 16777301': 'menu',
-    'special 16777217': 'tab',
-    'special 16777251': 'alt',
-    'special 16777223': 'delete',
-    'special 16777232': 'home',
-    'special 16777233': 'end',
-    'special 16777238': 'pageup',
-    'special 16777239': 'pagedown',
-    'special 16777222': 'insert',
-    'special 16777253': 'numlock',
-    'special 16777220': 'enter',
-    'special 16777219': 'backspace',
-    'special 16777235': 'up',
-    'special 16777237': 'down',
-    'special 16777234': 'left',
-    'special 16777236': 'right',
-}
+
+@singleton
+class PySimpleGUISpecialKeyEvent:
+    key_event_mapping = defaultdict(lambda: None, {
+        'alt': 'special 16777251',
+        'backspace': 'special 16777219',
+        'ctrl': 'special 16777249',
+        'delete': 'special 16777223',
+        'down': 'special 16777237',
+        'end': 'special 16777233',
+        'enter': 'special 16777220',
+        'esc': 'special 16777216',
+        'home': 'special 16777232',
+        'insert': 'special 16777222',
+        'left': 'special 16777234',
+        'menu': 'special 16777301',
+        'numlock': 'special 16777253',
+        'pagedown': 'special 16777239',
+        'pageup': 'special 16777238',
+        'right': 'special 16777236',
+        'shift': 'special 16777248',
+        'tab': 'special 16777217',
+        'up': 'special 16777235',
+        'win': 'special 16777250'
+    })
+
+    def __getitem__(self, item):
+        return self.key_event_mapping[item]
+
+    def __getattr__(self, item):
+        return self.key_event_mapping[item]
 
 
 def rename_dialog(src: str):
-    sg = PySimpleGUI
+    import PySimpleGUIQt as sg
+    ske = PySimpleGUISpecialKeyEvent()
     conf_file = real_join_path('~', '.config/rename_dialog.json')
     root = 'root'
     fname = 'fname'
@@ -110,9 +119,9 @@ def rename_dialog(src: str):
         cur_p = data[pattern]
         cur_r = data[replace]
 
-        if event in SPECIAL_KEYS and SPECIAL_KEYS[event] == 'esc':
+        if event == ske.esc:
             loop = False
-        if event == substitute:
+        elif event == substitute:
             data[fname], data[ext] = os.path.splitext(re_sub() or data[fname] + data[ext])
             window[fname].update(data[fname])
             window[ext].update(data[ext])

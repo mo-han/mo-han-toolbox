@@ -30,7 +30,7 @@ def legal_fs_name(x: str, repl: str or dict = None) -> str:
         else:
             raise ValueError("Invalid repl '{}'".format(repl))
     else:
-        legal = x.translate(ILLEGAL_FS_CHARS_SUBSTITUTES_UNICODE_TABLE)
+        legal = x.translate(ILLEGAL_FS_CHARS_UNICODE_ALT)
     return legal
 
 

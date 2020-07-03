@@ -308,7 +308,7 @@ def gui_mode(args):
 
 
 def view_similar_images(args: argparse.Namespace):
-    from mylib.image import view_similar_images_auto
+    from mylib.picture import view_similar_images_auto
     kwargs = {
         'thresholds': args.thresholds,
         'hashtype': args.hashtype,
