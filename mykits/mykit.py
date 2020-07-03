@@ -23,7 +23,8 @@ def argument_parser():
 
     def add_parser(name: str, aliases: list, desc: str):
         def decorator(f):
-            def decorated_f():
+            def decorated_f() -> argparse.ArgumentParser:
+                f()
                 return sub.add_parser(name, aliases=aliases, help=desc, description=desc, **common_parser_kwargs)
 
             return decorated_f
@@ -42,6 +43,14 @@ def argument_parser():
 
     cmd_mode = cmd_mode()
     cmd_mode.set_defaults(func=cmd_mode_func)
+
+    @add_parser('run.from.lines', ['runlines', 'rl'],
+                'given lines from file, clipboard, etc. formatted command will be excuted for each of the line')
+    def run_from_lines() -> argparse.ArgumentParser: pass
+
+    run_from_lines = run_from_lines()
+    run_from_lines.set_defaults(func=run_from_lines_func)
+    run_from_lines.add_argument('-f', '--file', help='text file of lines')
 
     @add_parser('dukto.to.clipboard', ['dukto.cb', 'duktocb'],
                 'put text received in dukto into clipboard')
@@ -208,6 +217,22 @@ def cmd_mode_func(args):
 
 def test_only(args):
     print('ok')
+
+
+def run_from_lines_func(args):
+    import os
+    from mylib.util import clipboard
+    file = args.file
+    if file:
+        with open(file, 'r') as fd:
+            lines = fd.readlines()
+    else:
+        lines = str(clipboard.get()).splitlines()
+    cmd_text = input('> ')
+    for line in lines:
+        command = cmd_text.format(line)
+        print('#', command)
+        os.system(command)
 
 
 def dukto_to_clipboard_func(args):
