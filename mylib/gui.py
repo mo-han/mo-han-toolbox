@@ -81,7 +81,7 @@ def rename_dialog(src: str):
          sg.CB('', default=True, key=save_pattern, enable_events=True, size=(2, h)),
          sg.Drop(tmp_rl, key=replace, enable_events=True, text_color='blue'),
          sg.CB('', default=True, key=save_replace, enable_events=True, size=(2, h)),
-         sg.B('\u2ba4', key=substitute, size=(3, h))],
+         sg.B('Go', key=substitute, size=(3, h))],
         [sg.HorizontalSeparator()],
         [sg.I(old_root, key=new_root)],
         [sg.I(old_fn + old_ext, key=new_base)],
