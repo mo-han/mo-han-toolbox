@@ -3,6 +3,7 @@
 
 import argparse
 import cmd
+import glob
 import shlex
 
 from mylib.cli import SimpleDrawer
@@ -43,6 +44,17 @@ def argument_parser():
 
     cmd_mode = cmd_mode()
     cmd_mode.set_defaults(func=cmd_mode_func)
+
+    @add_parser('rename', ['ren', 'rn'], 'rename file(s) or folder(s)')
+    def rename() -> argparse.ArgumentParser: pass
+
+    rename = rename()
+    rename.set_defaults(func=rename_func)
+    rename.add_argument('-B', '-not-only-basename', dest='only_basename', action='store_false')
+    rename.add_argument('-D', '--dry-run', action='store_true')
+    rename.add_argument('source')
+    rename.add_argument('pattern')
+    rename.add_argument('replace')
 
     @add_parser('run.from.lines', ['runlines', 'rl'],
                 'given lines from file, clipboard, etc. formatted command will be excuted for each of the line')
@@ -219,6 +231,20 @@ def test_only(args):
     print('ok')
 
 
+def rename_func(args):
+    from mylib.util import regex_move_path
+    source = args.source
+    pattern = args.pattern
+    replace = args.replace
+    only_basename = args.only_basename
+    dry_run = args.dry_run
+    for src_path in glob.glob(source):
+        try:
+            regex_move_path(src_path, pattern, replace, only_basename, dry_run)
+        except OSError as e:
+            print(repr(e))
+
+
 def run_from_lines_func(args):
     import os
     from mylib.util import clipboard
@@ -231,7 +257,9 @@ def run_from_lines_func(args):
     cmd_text = input('> ')
     for line in lines:
         command = cmd_text.format(line)
+        print()
         print('#', command)
+        print()
         os.system(command)
 
 
@@ -284,6 +312,7 @@ def update_json_file(args):
 def url_from_clipboard(args):
     import pyperclip
     from mylib.text import regex_find
+    from mylib.web import html_char_ref_decode
     pattern = args.pattern
     t = pyperclip.paste()
     if pattern == 'pornhub':
@@ -293,8 +322,11 @@ def url_from_clipboard(args):
         from mylib.youtube import find_url_in_text
         urls = find_url_in_text(t)
     elif pattern == 'ed2k':
-        p = r'ed2k://[^/]*/'
+        p = r'ed2k://[^/]+/'
         urls = [e for e in regex_find(p, t, dedup=True)]
+    elif pattern == 'magnet':
+        p = r'magnet:[^\s"]+'
+        urls = [e for e in regex_find(p, html_char_ref_decode(t), dedup=True)]
     else:
         from mylib.text import regex_find
         urls = regex_find(pattern, t)

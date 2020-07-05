@@ -6,12 +6,17 @@ import os
 import requests
 from lxml import html
 import http.cookiejar
+import re
 
 USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'
 
 _headers = {
     'user-agent': USER_AGENT_FIREFOX_WIN10,
 }
+
+
+def html_char_ref_decode(x: str) -> str:
+    return re.sub(r'&amp;', '&', x, flags=re.I)
 
 
 def html_etree(url, **kwargs) -> html.HtmlElement:

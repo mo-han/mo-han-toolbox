@@ -15,6 +15,17 @@ else:
     raise ImportError("Off-design OS: '{}'".format(os.name))
 
 
+def regex_move_path(source: str, pattern: str, replace: str, only_basename: bool = True, dry_run: bool = False):
+    if only_basename:
+        parent, basename = os.path.split(source)
+        dst = os.path.join(parent, re.sub(pattern, replace, basename))
+    else:
+        dst = re.sub(pattern, replace, source)
+    print('{}\n-> {}'.format(source, dst))
+    if not dry_run:
+        shutil.move(source, dst)
+
+
 def legal_fs_name(x: str, repl: str or dict = None) -> str:
     if repl:
         if isinstance(repl, str):
