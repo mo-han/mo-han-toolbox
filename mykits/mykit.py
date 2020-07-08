@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # encoding=utf8
 
-import argparse
+from argparse import ArgumentParser, Namespace
 import cmd
 import glob
 import shlex
 
 from mylib.cli import SimpleDrawer
+from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter
 
 DRAW_LINE_LEN = 32
 DRAW_DOUBLE_LINE = '=' * DRAW_LINE_LEN
@@ -17,14 +18,13 @@ cli_draw = SimpleDrawer()
 
 
 def argument_parser():
-    from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseHelpFormatterCompact
-    common_parser_kwargs = {'formatter_class': ArgParseHelpFormatterCompact}
-    ap = argparse.ArgumentParser(**common_parser_kwargs)
+    common_parser_kwargs = {'formatter_class': ArgParseCompactHelpFormatter}
+    ap = ArgumentParser(**common_parser_kwargs)
     sub = ap.add_subparsers(title='sub-commands')
 
     def add_parser(name: str, aliases: list, desc: str):
         def decorator(f):
-            def decorated_f() -> argparse.ArgumentParser:
+            def decorated_f() -> ArgumentParser:
                 f()
                 return sub.add_parser(name, aliases=aliases, help=desc, description=desc, **common_parser_kwargs)
 
@@ -46,7 +46,7 @@ def argument_parser():
     cmd_mode.set_defaults(func=cmd_mode_func)
 
     @add_parser('rename', ['ren', 'rn'], 'rename file(s) or folder(s)')
-    def rename() -> argparse.ArgumentParser: pass
+    def rename() -> ArgumentParser: pass
 
     rename = rename()
     rename.set_defaults(func=rename_func)
@@ -57,12 +57,14 @@ def argument_parser():
     rename.add_argument('replace')
 
     @add_parser('run.from.lines', ['runlines', 'rl'],
-                'given lines from file, clipboard, etc. formatted command will be excuted for each of the line')
-    def run_from_lines() -> argparse.ArgumentParser: pass
+                'given lines from file, clipboard, etc. formatted command will be executed for each of the line')
+    def run_from_lines() -> ArgumentParser: pass
 
     run_from_lines = run_from_lines()
     run_from_lines.set_defaults(func=run_from_lines_func)
     run_from_lines.add_argument('-f', '--file', help='text file of lines')
+    run_from_lines.add_argument('command', nargs='*', help='format command from this string and a line')
+    run_from_lines.add_argument('-D', '--dry-run', action='store_true')
 
     @add_parser('dukto.to.clipboard', ['dukto.cb', 'duktocb'],
                 'put text received in dukto into clipboard')
@@ -173,6 +175,8 @@ def main():
 
 
 class MyKitCmd(cmd.Cmd):
+    last_not_repeat = None
+
     def __init__(self):
         super(MyKitCmd, self).__init__()
         self.prompt = __class__.__name__ + ':# '
@@ -207,11 +211,13 @@ class MyKitCmd(cmd.Cmd):
             pass
 
     def do_quit(self, line):
+        assert line
         self._stop = True
 
     do_exit = do_q = do_quit
 
     def do_repeat(self, line):
+        assert line
         if self.last_not_repeat:
             return self.onecmd(self.last_not_repeat)
 
@@ -224,10 +230,12 @@ class MyKitCmd(cmd.Cmd):
 
 
 def cmd_mode_func(args):
+    assert args
     MyKitCmd().cmdloop()
 
 
 def test_only(args):
+    assert args
     print('ok')
 
 
@@ -249,21 +257,25 @@ def run_from_lines_func(args):
     import os
     from mylib.util import clipboard
     file = args.file
+    dry_run = args.dry_run
+    cmd_fmt = ' '.join(args.command) or input('< ')
+    if '{}' not in cmd_fmt:
+        cmd_fmt += ' {}'
+    print('<', cmd_fmt)
     if file:
         with open(file, 'r') as fd:
             lines = fd.readlines()
     else:
         lines = str(clipboard.get()).splitlines()
-    cmd_text = input('> ')
     for line in lines:
-        command = cmd_text.format(line)
-        print()
+        command = cmd_fmt.format(line)
         print('#', command)
-        print()
-        os.system(command)
+        if not dry_run:
+            os.system(command)
 
 
 def dukto_to_clipboard_func(args):
+    assert args
     from mylib.dukto import run, recv_text_into_clipboard, config
     from threading import Thread
     from queue import Queue
@@ -275,6 +287,7 @@ def dukto_to_clipboard_func(args):
 
 
 def clipboard_rename_func(args):
+    assert args
     from mylib.gui import rename_dialog
     from mylib.util import clipboard
     for f in clipboard.get_path():
@@ -286,7 +299,7 @@ def potplayer_rename_func(args):
     PotPlayerKit().rename_file_gui(alt_tab=args.no_keep_front)
 
 
-def bilibili_download_func(args: argparse.Namespace):
+def bilibili_download_func(args: Namespace):
     from mylib.bilibili import download_bilibili_video
     download_bilibili_video(**vars(args))
 
@@ -336,10 +349,11 @@ def url_from_clipboard(args):
 
 
 def gui_mode(args):
+    assert args
     pass
 
 
-def view_similar_images(args: argparse.Namespace):
+def view_similar_images(args: Namespace):
     from mylib.picture import view_similar_images_auto
     kwargs = {
         'thresholds': args.thresholds,

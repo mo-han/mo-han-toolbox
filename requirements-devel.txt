@@ -3,5 +3,5 @@ pip-autoremove
 
 ptpython
 pyinstaller
-cython
+cython>=3a
 pipenv

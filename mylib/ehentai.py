@@ -75,13 +75,25 @@ def tidy_ehviewer_images(dry_run: bool = False):
                     comic_magazine_title_l.append(s)
             if comic_magazine_title_l:
                 comic_magazine_title = 'COMIC ' + ' '.join(comic_magazine_title_l)
-        try:
-            a = d['tags']['artist']
-        except KeyError:
-            try:
-                a = d['tags']['group']
-            except KeyError:
-                a = ['']
+
+        tags = d['tags']
+        if 'artist' in tags:
+            a = tags['artist']
+        elif 'group' in tags:
+            a = tags['group']
+        else:
+            for m in (
+                    re.match(r'^\s*(?:\([^)]+\))\s*\[([^\]]+)\]', title),
+                    re.match(r'^\s*\[(?:pixiv|fanbox|tumblr|twitter)\]\s*(.+)\s*[(\[]', title, flags=re.I),
+                    re.match(r'^\s*artist - ([^(\[]+)\s*', title, flags=re.I),
+            ):
+                if m:
+                    a = m.group(1)
+                    break
+            else:
+                a = ''
+            a = [a]
+
         if len(a) > 3:
             if comic_magazine_title:
                 a = comic_magazine_title

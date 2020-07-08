@@ -6,6 +6,7 @@ import shutil
 import signal
 import sys
 import tempfile
+from typing import Iterable
 
 if os.name == 'nt':
     from .nt_util import *
@@ -100,3 +101,7 @@ def read_json_file(file, default=None, **kwargs):
 def write_json_file(file, data, **kwargs):
     with ensure_open_file(file, 'w') as jf:
         json.dump(data, jf, **kwargs)
+
+
+def check_file_ext(fp: str, ext_list: Iterable):
+    return os.path.isfile(fp) and os.path.splitext(fp)[-1].lower() in ext_list

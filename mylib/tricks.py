@@ -8,7 +8,7 @@ import sys
 from functools import wraps
 from typing import Dict, Iterable, Callable
 
-from .math import int_is_power_of_2
+from .number import int_is_power_of_2
 from .misc import LOG_FMT, LOG_DTF
 
 _module_data = {}
@@ -52,10 +52,10 @@ def limit_argv_choice(choices: Dict[int or str, Iterable]) -> Decorator:
 
 def with_exception_retry(exceptions: Exception or Iterable[Exception], max_retries: int = 3,
                          enable_default=False, default=None,
-                         exception_acceptor: Callable[[Exception], bool] = None,
+                         exception_predicate: Callable[[Exception], bool] = None,
                          exception_queue: TypingQueue = None) -> Decorator:
     """decorator factory: force a func re-running for several times on exception(s)"""
-    accept = exception_acceptor or (lambda e: True)
+    predicate = exception_predicate or (lambda e: True)
     max_retries = int(max_retries)
     initial_counter = max_retries if max_retries < 0 else max_retries + 1
 
@@ -68,7 +68,7 @@ def with_exception_retry(exceptions: Exception or Iterable[Exception], max_retri
                 try:
                     return func(*args, **kwargs)
                 except exceptions as e:
-                    if accept(e):
+                    if predicate(e):
                         if exception_queue:
                             exception_queue.put(e)
                         err = e
@@ -176,7 +176,7 @@ def get_logger(logger_name: str, level: str = 'INFO', fmt=LOG_FMT, datetime_fmt=
     return logger
 
 
-class ArgParseHelpFormatterCompact(argparse.HelpFormatter):
+class ArgParseCompactHelpFormatter(argparse.HelpFormatter):
     def _format_action_invocation(self, action):
         if not action.option_strings or action.nargs == 0:
             # noinspection PyProtectedMember
@@ -221,3 +221,18 @@ def dedup_list(source: Iterable) -> list:
     r = []
     [r.append(e) for e in source if e not in r]
     return r
+
+
+def constrain_value(x, x_type: Callable, x_constraint: str or Callable = None, enable_default=False, default=None):
+    x = x_type(x)
+    if x_constraint:
+        if isinstance(x_constraint, str) and eval(x_constraint):
+            return x
+        elif isinstance(x_constraint, Callable) and x_constraint(x):
+            return x
+        elif enable_default:
+            return default
+        else:
+            raise ValueError("'{}' conflicts with '{}'".format(x, x_constraint))
+    else:
+        return x

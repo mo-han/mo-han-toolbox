@@ -13,6 +13,7 @@ from disjoint_set import DisjointSet
 from imagehash import average_hash, dhash, phash, whash, hex_to_hash
 
 from mylib.misc import percentage
+from mylib.util import check_file_ext
 
 AHASH = 'ahash'
 DHASH = 'dhash'
@@ -238,25 +239,17 @@ def view_similar_images_auto(
             view_similar_image_groups(gs)
 
 
-def accept_image_file_ext(fp: str, ext_list=IMAGE_FILE_EXT_COMMON):
-    _, ext = os.path.splitext(fp)
-    if ext.lower() in ext_list:
-        return True
-    else:
-        return False
-
-
 def get_image_files_in(x: Iterable) -> list:
     y = []
     for e in x:
         if os.path.isfile(e) and e not in y:
-            if accept_image_file_ext(e):
+            if check_file_ext(e):
                 y.append(e)
         elif os.path.isdir(e):
             for r, _, fl in os.walk(e):
                 for f in fl:
                     fp = os.path.join(r, f)
-                    if fp not in y and accept_image_file_ext(f):
+                    if fp not in y and check_file_ext(f):
                         y.append(fp)
         else:
             warning("invalid path: '{}'".format(e))
