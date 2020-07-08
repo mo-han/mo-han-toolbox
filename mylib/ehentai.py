@@ -30,6 +30,7 @@ def tidy_ehviewer_images(dry_run: bool = False):
     logmsg_data = '+ /g/{}/{}'
     logmsg_err = '! {}'
     dbf = 'ehdb.json'
+
     if os.path.isfile(dbf):
         with open(dbf) as fp:
             db = json.load(fp)
@@ -37,18 +38,22 @@ def tidy_ehviewer_images(dry_run: bool = False):
     else:
         db = {}
     skipped_gid_l = []
+
     for f in os.listdir('.'):
         if not os.path.isfile(f):
             continue
+
         try:
             g = EHentaiGallery(f, logger=logger)
         except ValueError:
             logger.info(logmsg_skip.format(f))
             continue
         gid = g.gid
+
         if gid in skipped_gid_l:
             logger.info(logmsg_skip.format(f))
             continue
+
         if gid in db:
             d = db[gid]
         else:
@@ -57,6 +62,7 @@ def tidy_ehviewer_images(dry_run: bool = False):
             db[gid] = d
             with open(dbf, 'w') as fp:
                 json.dump(db, fp)
+
         title = d['title']
         try:
             core_title_l = EH_TITLE_REGEX_PATTERN.match(title).group(2).split()

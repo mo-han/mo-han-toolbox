@@ -211,13 +211,11 @@ class MyKitCmd(cmd.Cmd):
             pass
 
     def do_quit(self, line):
-        assert line
         self._stop = True
 
     do_exit = do_q = do_quit
 
     def do_repeat(self, line):
-        assert line
         if self.last_not_repeat:
             return self.onecmd(self.last_not_repeat)
 
@@ -230,12 +228,10 @@ class MyKitCmd(cmd.Cmd):
 
 
 def cmd_mode_func(args):
-    assert args
     MyKitCmd().cmdloop()
 
 
 def test_only(args):
-    assert args
     print('ok')
 
 
@@ -275,7 +271,6 @@ def run_from_lines_func(args):
 
 
 def dukto_to_clipboard_func(args):
-    assert args
     from mylib.dukto import run, recv_text_into_clipboard, config
     from threading import Thread
     from queue import Queue
@@ -287,7 +282,6 @@ def dukto_to_clipboard_func(args):
 
 
 def clipboard_rename_func(args):
-    assert args
     from mylib.gui import rename_dialog
     from mylib.util import clipboard
     for f in clipboard.get_path():
@@ -349,7 +343,6 @@ def url_from_clipboard(args):
 
 
 def gui_mode(args):
-    assert args
     pass
 
 

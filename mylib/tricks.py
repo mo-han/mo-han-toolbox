@@ -5,11 +5,12 @@ import argparse
 import importlib.util
 import logging
 import sys
+from collections import defaultdict
 from functools import wraps
 from typing import Dict, Iterable, Callable
 
-from .number import int_is_power_of_2
 from .misc import LOG_FMT, LOG_DTF
+from .number import int_is_power_of_2
 
 _module_data = {}
 
@@ -236,3 +237,62 @@ def constrain_value(x, x_type: Callable, x_constraint: str or Callable = None, e
             raise ValueError("'{}' conflicts with '{}'".format(x, x_constraint))
     else:
         return x
+
+
+def get_kwargs(**kwargs):
+    return kwargs
+
+
+def default_dict_tree():
+    return defaultdict(default_dict_tree)
+
+
+class AttrTree:
+    __wrapped__ = None
+
+    def __init__(self, data: dict = None, **kwargs):
+        if data:
+            self.__dict__.update(data)
+        if kwargs:
+            self.__dict__.update(kwargs)
+
+    def __getitem__(self, item):
+        try:
+            return self.__dict__[item]
+        except KeyError:
+            v = self.__dict__[item] = AttrTree()
+        return v
+
+    __getattr__ = __getitem__
+
+    def __setitem__(self, key, value):
+        self.__dict__[key] = value
+
+    __setattr__ = __setitem__
+
+    def __delitem__(self, key):
+        del self.__dict__[key]
+
+    __delattr__ = __delitem__
+
+    def __iter__(self):
+        yield from self.__dict__
+
+    def __contains__(self, item):
+        return item in self.__dict__
+
+    @property
+    def __data__(self):
+        tmp = {}
+        for k in self.__dict__:
+            if isinstance(self[k], AttrTree):
+                tmp[k] = self[k].__data__
+            else:
+                tmp[k] = self[k]
+        return tmp
+
+    def __bool__(self):
+        return bool(self.__dict__)
+
+    def __len__(self):
+        return len(self.__dict__)

@@ -10,9 +10,9 @@ from .util import clipboard
 _config = {'server_text_queue': None}
 
 
-def config(sth: dict = None, **kwargs):
-    if sth:
-        _config.update(sth)
+def config(new: dict = None, **kwargs):
+    if new:
+        _config.update(new)
     elif kwargs:
         _config.update(kwargs)
     else:

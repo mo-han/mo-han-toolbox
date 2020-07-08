@@ -291,7 +291,7 @@ def download_bilibili_video(url: str or int,
                             **kwargs):
     # 确保在Windows操作系统中，SIGINT信号能够被传递到下层扩展中，从而确保Ctrl+C能够立即停止程序
     ensure_sigint_signal()
-    dr = SimpleDrawer(sys.stderr.write, '\n')
+    dr = SimpleDrawer(print_method=sys.stderr.write, print_end='\n')
 
     if not output:
         output = '.'

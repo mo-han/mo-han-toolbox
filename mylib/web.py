@@ -63,10 +63,6 @@ def get_phantomjs_splinter(proxy=None, show_image=False, window_size=(1024, 1024
     return b
 
 
-def try_dl_file(url: str, max_retries: int = 3) -> tuple:
-    pass
-
-
 get_browser = {
-    'splinter.phantomjs': get_phantomjs_splinter
+    'splinter.phantomjs': get_phantomjs_splinter,
 }
