@@ -114,6 +114,7 @@ def rename_dialog(src: str):
             window[new_base].update(nb)
 
         event, data = window.read()
+        f = window.find_element_with_focus()
         for k in (root, fname, ext, new_root, new_base):
             window[k].update(text_color=None)
         cur_p = data[pattern]

@@ -6,8 +6,8 @@ import keyboard
 import mouse
 
 from .gui import rename_dialog
-from .util import clipboard, rename_helper
 from .tricks import import_pywinauto, getitem_default
+from .util import clipboard, rename_helper
 
 pywinauto = import_pywinauto()
 App = pywinauto.Application
@@ -17,6 +17,8 @@ find_elements = pywinauto.findwindows.find_elements
 
 class PotPlayerKit:
     def __init__(self, gasp_time: int or float = 0.01):
+        # import warnings
+        # warnings.simplefilter('ignore', category=UserWarning)
         self.gasp_time = gasp_time
         self._window = App().connect(handle=self.list[0].handle).window()
         self._cache = {'fileinfo': {}}
