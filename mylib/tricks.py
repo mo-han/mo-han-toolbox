@@ -191,6 +191,8 @@ class ArgParseCompactHelpFormatter(argparse.HelpFormatter):
 def import_pywinauto():
     """sys.coinit_flags=2 before import pywinauto
     https://github.com/pywinauto/pywinauto/issues/472"""
+    # import warnings
+    # warnings.simplefilter('ignore', category=UserWarning)
     sys.coinit_flags = 2
     import pywinauto
     return pywinauto
