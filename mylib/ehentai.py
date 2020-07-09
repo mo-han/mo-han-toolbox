@@ -10,7 +10,7 @@ import requests
 
 from .misc import LOG_FMT_MESSAGE_ONLY
 from .tricks import get_logger, VoidDuck, str_ishex
-from .web import cookies_dict_from_file, html_etree
+from .web import cookies_dict_from_file, get_html_element_tree
 from .util import legal_fs_name
 
 EH_TITLE_REGEX_PATTERN = re.compile(
@@ -218,7 +218,7 @@ class EHentaiGallery:
         logger = logger or self.logger
         wait = wait or self.wait
         try:
-            h = html_etree(self.url, cookies=self.config['cookies'])
+            h = get_html_element_tree(self.url, cookies=self.config['cookies'])
         except ConnectionError as e:
             if e.errno == 404:
                 raise EHentaiError(e.errno)

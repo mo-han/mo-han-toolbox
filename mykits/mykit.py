@@ -6,7 +6,7 @@ import cmd
 import glob
 import shlex
 
-from mylib.cli import SimpleDrawer
+from mylib.cli import SimpleCLIDisplay
 from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter
 
 DRAW_LINE_LEN = 32
@@ -14,7 +14,7 @@ DRAW_DOUBLE_LINE = '=' * DRAW_LINE_LEN
 DRAW_SINGLE_LINE = '-' * DRAW_LINE_LEN
 DRAW_UNDER_LINE = '_' * DRAW_LINE_LEN
 
-cli_draw = SimpleDrawer()
+cli_draw = SimpleCLIDisplay()
 
 
 def argument_parser():
@@ -319,7 +319,7 @@ def update_json_file(args):
 def url_from_clipboard(args):
     import pyperclip
     from mylib.text import regex_find
-    from mylib.web import html_char_ref_decode
+    from mylib.web import decode_html_char_ref
     pattern = args.pattern
     t = pyperclip.paste()
     if pattern == 'pornhub':
@@ -333,7 +333,7 @@ def url_from_clipboard(args):
         urls = [e for e in regex_find(p, t, dedup=True)]
     elif pattern == 'magnet':
         p = r'magnet:[^\s"]+'
-        urls = [e for e in regex_find(p, html_char_ref_decode(t), dedup=True)]
+        urls = [e for e in regex_find(p, decode_html_char_ref(t), dedup=True)]
     else:
         from mylib.text import regex_find
         urls = regex_find(pattern, t)

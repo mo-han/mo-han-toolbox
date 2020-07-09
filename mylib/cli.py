@@ -1,23 +1,22 @@
 #!/usr/bin/env python3
 # encoding=utf8
 import shutil
+import sys
 
 from .tricks import constrain_value
 
 
-class SimpleDrawer:
-    def __init__(self, width: int = 0, print_method=print, print_end=''):
-        self._print = print_method
-        self.end = print_end
+class SimpleCLIDisplay:
+    def __init__(self, width: int = 0, output=sys.stdout):
+        self.output = output
         self.width = constrain_value(width, int, 'x > 0', True, 0)
 
     def print(self, text: str, **kwargs):
-        end = kwargs.pop('end', None) or self.end
-        return self._print(text + end, **kwargs)
+        return print(text, file=self.output, **kwargs)
 
     def horizontal_line(self, char: str = '-', **kwargs):
-        width = self.width or shutil.get_terminal_size()[0] - 1
-        return self.print(char * width, **kwargs)
+        width = self.width or shutil.get_terminal_size()[0]
+        return self.print(char * width, end='', **kwargs)
 
     hl = horizontal_line
 

@@ -8,6 +8,7 @@ import sys
 from collections import defaultdict
 from functools import wraps
 from typing import Dict, Iterable, Callable
+from pprint import pformat
 
 from .misc import LOG_FMT, LOG_DTF
 from .number import int_is_power_of_2
@@ -247,31 +248,58 @@ def default_dict_tree():
     return defaultdict(default_dict_tree)
 
 
-class AttrTree:
+class AttribTree:
     __wrapped__ = None
+    __data = {}
 
     def __init__(self, data: dict = None, **kwargs):
         if data:
             self.__dict__.update(data)
         if kwargs:
             self.__dict__.update(kwargs)
+        for k in self.__dict__:
+            v = self.__dict__[k]
+            if isinstance(v, AttribTree):
+                self.__data[k] = v.__dict__
+            else:
+                self.__data[k] = v
+
+    # @property
+    # def __data__(self):
+    #     return self.__data
+
+    @property
+    def __data__(self):
+        tmp = {}
+        for k in self.__dict__:
+            if isinstance(self[k], AttribTree):
+                tmp[k] = self[k].__data__
+            else:
+                tmp[k] = self[k]
+        return tmp
 
     def __getitem__(self, item):
         try:
             return self.__dict__[item]
         except KeyError:
-            v = self.__dict__[item] = AttrTree()
+            v = self.__dict__[item] = AttribTree()
+            self.__data[item] = v.__dict__
         return v
 
     __getattr__ = __getitem__
 
     def __setitem__(self, key, value):
         self.__dict__[key] = value
+        if isinstance(value, AttribTree):
+            self.__data[key] = value.__dict__
+        else:
+            self.__data[key] = value
 
     __setattr__ = __setitem__
 
     def __delitem__(self, key):
         del self.__dict__[key]
+        del self.__data[key]
 
     __delattr__ = __delitem__
 
@@ -281,18 +309,16 @@ class AttrTree:
     def __contains__(self, item):
         return item in self.__dict__
 
-    @property
-    def __data__(self):
-        tmp = {}
-        for k in self.__dict__:
-            if isinstance(self[k], AttrTree):
-                tmp[k] = self[k].__data__
-            else:
-                tmp[k] = self[k]
-        return tmp
-
     def __bool__(self):
         return bool(self.__dict__)
 
     def __len__(self):
         return len(self.__dict__)
+
+    def __repr__(self):
+        head = super(AttribTree, self).__repr__()
+        body = pformat(self.__data__)
+        return '\n'.join((head, body))
+
+    def __str__(self):
+        return pformat(self.__data__)

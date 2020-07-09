@@ -85,7 +85,7 @@ def ensure_open_file(file, mode='r', **kwargs):
         if os.path.exists(file):
             raise ValueError("Non-file already exists: {}".format(file))
         else:
-            open(file, 'w', **kwargs).close()
+            open(file, 'w').close()
     return open(file, mode, **kwargs)
 
 

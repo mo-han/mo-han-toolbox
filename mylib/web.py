@@ -4,25 +4,29 @@
 
 import os
 import requests
-from lxml import html
+import lxml.html
 import http.cookiejar
 import re
 
 USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'
+
+HTMLElementTree = lxml.html.HtmlElement
 
 _headers = {
     'user-agent': USER_AGENT_FIREFOX_WIN10,
 }
 
 
-def html_char_ref_decode(x: str) -> str:
+def decode_html_char_ref(x: str) -> str:
     return re.sub(r'&amp;', '&', x, flags=re.I)
 
 
-def html_etree(url, **kwargs) -> html.HtmlElement:
-    r = requests.get(url, headers=_headers, **kwargs)
+def get_html_element_tree(url, **kwargs) -> HTMLElementTree:
+    if 'headers' in kwargs:
+        kwargs['headers'].update(_headers)
+    r = requests.get(url, **kwargs)
     if r.ok:
-        return html.document_fromstring(r.text)
+        return lxml.html.document_fromstring(r.text)
     else:
         raise ConnectionError(r.status_code, r.reason)
 
@@ -45,7 +49,7 @@ class DownloadFailure(Exception):
 
 def get_phantomjs_splinter(proxy=None, show_image=False, window_size=(1024, 1024)):
     import splinter
-    from mylib.util import TEMPDIR
+    from .util import TEMPDIR
 
     extra_argv = ['--webdriver-loglevel=WARN']
     if proxy:
@@ -61,6 +65,14 @@ def get_phantomjs_splinter(proxy=None, show_image=False, window_size=(1024, 1024
     )
     b.driver.set_window_size(*window_size)
     return b
+
+
+def get_firefox_splinter(**kwargs):
+    import splinter
+    from .util import TEMPDIR
+    config = {'service_log_path': os.path.join(TEMPDIR, 'geckodriver.log')}
+    config.update(kwargs)
+    return splinter.Browser(driver_name='firefox', **config)
 
 
 get_browser = {

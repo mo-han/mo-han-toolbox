@@ -61,8 +61,8 @@ def rename_dialog(src: str):
     h = .7
 
     conf = read_json_file(conf_file, default={pattern: [''], replace: ['']})
-    tmp_pl = conf[pattern]
-    tmp_rl = conf[replace]
+    tmp_pl = conf[pattern] or ['']
+    tmp_rl = conf[replace] or ['']
     old_root, old_base = os.path.split(src)
     old_fn, old_ext = os.path.splitext(old_base)
 
@@ -129,13 +129,13 @@ def rename_dialog(src: str):
             if data[save_pattern]:
                 conf[pattern].insert(0, cur_p)
                 conf[pattern] = dedup_list(conf[pattern])
-            elif cur_p:
+            else:
                 conf[pattern] = remove_from_list(conf[pattern], [cur_p])
         elif event == save_replace:
             if data[save_replace]:
                 conf[replace].insert(0, cur_r)
                 conf[replace] = dedup_list(conf[replace])
-            elif cur_r:
+            else:
                 conf[replace] = remove_from_list(conf[replace], [cur_r])
         elif event == pattern:
             window[save_pattern].update(value=cur_p in conf[pattern])

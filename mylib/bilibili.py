@@ -8,6 +8,8 @@ import shutil
 import sys
 from glob import glob
 from http.cookiejar import MozillaCookieJar
+from typing import Tuple
+from time import sleep
 
 import requests
 # 下面导入的是通过pip安装的you-get
@@ -16,12 +18,12 @@ import requests
 import you_get.util.strings
 from lxml import html
 
-from .cli import SimpleDrawer
+from .cli import SimpleCLIDisplay
 from .misc import safe_print, safe_basename
 from .util import ensure_sigint_signal
 from .tricks import modify_and_import
 from .video import concat_videos, merge_m4s
-from .web import cookie_str_from_dict, cookies_dict_from_file
+from .web import cookie_str_from_dict, cookies_dict_from_file, get_html_element_tree, HTMLElementTree
 
 BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'
 
@@ -165,6 +167,7 @@ you_get.util.strings.legitimize = you_get.util.fs.legitimize
 # 那些从``you_get.util.strings`二次导入`legitimize`函数的模块会自动导入已被替换的修改版
 # 综上所述，下面这行可以注释掉了
 # you_get.extractor.get_filename = you_get.common.get_filename = you_get.util.strings.get_filename
+you_get_filename = you_get.util.strings.get_filename
 # 下面则是将B站下载模块替换成修改版，所用的源码替换函数是`code_modify_you_get_bilibili`
 you_get.extractors.bilibili = modify_and_import('you_get.extractors.bilibili', code_modify_you_get_bilibili)
 
@@ -193,6 +196,7 @@ def get_vid(x: str or int) -> str or None:
 # `YouGetBilibiliX`继承了`you_get.extractors.bilibili.Bilibili`，添加了一些新的功能
 # 其中包含了`del_unwanted_dash_streams`这个新方法
 # 但是对`del_unwanted_dash_streams`的调用却是在被继承的`Bilibili`（的修改版）中进行的
+# noinspection PyUnresolvedReferences
 class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     def __init__(self, *args, cookies: str or dict = None, qn_max=116, qn_want=None):
         super(YouGetBilibiliX, self).__init__(*args)
@@ -201,7 +205,8 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
             self.set_cookie(cookies)
         self.qn_max = qn_max
         self.qn_want = qn_want
-        self.html = None, None
+        # noinspection PyTypeChecker
+        self.html: Tuple[str, HTMLElementTree] = (None, None)
 
     # B站视频的音频流分不同档次，选择中档128kbps就足够了，也可以选择最高音质
     # 低档30216码率偏低，30232约128kbps，30280可能是320kbps也可能是128kbps，貌似跟4K有关，尚不确定
@@ -210,13 +215,12 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
             d['audio_quality'] = qn
 
     # 更新视频页面的HTML文档（超长字符串）
-    def update_html_doc(self):
+    def update_html(self):
         url, doc = self.html
         if url != self.url:
             url = self.url
             headers = self.bilibili_headers()
-            r = requests.get(url, headers=headers)
-            doc = html.document_fromstring(r.text)
+            doc = get_html_element_tree(url, headers=headers)
             self.html = url, doc
 
     # 设置cookies，大会员用得着
@@ -240,6 +244,31 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         headers = super(YouGetBilibiliX, self).bilibili_headers(referer=referer, cookie=cookie)
         return headers
 
+    def get_title(self):
+        self.update_html()
+        _, h = self.html
+        t = h.xpath('//*[@class="video-title"]')[0].attrib['title']
+        t += ' ' + self.get_vid_label() + self.get_author_label()
+        return t
+
+    def write_info_file(self, fp: str = None):
+        fp = fp or self.get_title() + '.info'
+        print(fp)
+        with open(fp, 'w', encoding='utf8') as f:
+            f.write(self.get_desc())
+            f.write('\n\n')
+            f.write(str(self.get_tags()))
+
+    def get_desc(self):
+        self.update_html()
+        _, h = self.html
+        return h.xpath('//div[@id="v_desc"]')[0].text_content()
+
+    def get_tags(self):
+        self.update_html()
+        _, h = self.html
+        return [e.text_content().splitlines()[0] for e in h.xpath('//li[@class="tag"]')]
+
     # 从URL和HTML获取av号BV号
     def get_vid(self):
         url = self.url
@@ -258,7 +287,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         the_vid = self.get_vid()
         label = fmt.format(the_vid)
         if the_vid.startswith('BV'):
-            self.update_html_doc()
+            self.update_html()
             _, h = self.html
             canonical = h.xpath('//link[@rel="canonical"]')[0].attrib['href']
             avid = re.search(r'/(av\d+)/', canonical).group(1)
@@ -267,7 +296,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
 
     # 上传者（UP主）用户名
     def get_author(self):
-        self.update_html_doc()
+        self.update_html()
         _, h = self.html
         return h.xpath('//meta[@name="author"]')[0].attrib['content']
 
@@ -291,7 +320,7 @@ def download_bilibili_video(url: str or int,
                             **kwargs):
     # 确保在Windows操作系统中，SIGINT信号能够被传递到下层扩展中，从而确保Ctrl+C能够立即停止程序
     ensure_sigint_signal()
-    dr = SimpleDrawer(print_method=sys.stderr.write, print_end='\n')
+    cli = SimpleCLIDisplay()
 
     if not output:
         output = '.'
@@ -299,10 +328,9 @@ def download_bilibili_video(url: str or int,
         qn_max = 116
     url = BILIBILI_VIDEO_URL_PREFIX + get_vid(url)
 
-    dr.hl()
-    dr.print('{} -> {}'.format(url, output))
-    dr.hl()
-    bd = YouGetBilibiliX(cookies=cookies, qn_max=qn_max, qn_want=qn_want)
+    cli.print(url)
+    cli.hl()
+    b = YouGetBilibiliX(cookies=cookies, qn_max=qn_max, qn_want=qn_want)
 
     if info:
         dl_kwargs = {'info_only': True}
@@ -311,20 +339,22 @@ def download_bilibili_video(url: str or int,
     if fmt:
         dl_kwargs['format'] = fmt
     if moderate_audio:
-        bd.set_audio_qn(30232)
+        b.set_audio_qn(30232)
 
+    b.url = url
+    b.write_info_file()
     if playlist:
-        bd.download_playlist_by_url(url, **dl_kwargs)
+        b.download_playlist_by_url(url, **dl_kwargs)
     else:
         if parts:
             base_url = url
             for p in parts:
                 url = base_url + '?p={}'.format(p)
-                dr.print(url)
-                dr.hl()
-                bd.download_by_url(url, **dl_kwargs)
+                cli.hl()
+                cli.print(url)
+                b.download_by_url(url, **dl_kwargs)
         else:
-            bd.download_by_url(url, **dl_kwargs)
+            b.download_by_url(url, **dl_kwargs)
 
 
 def jijidown_rename_alpha(path: str, part_num=True):
