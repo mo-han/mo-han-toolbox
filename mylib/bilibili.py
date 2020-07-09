@@ -253,6 +253,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
 
     def write_info_file(self, fp: str = None):
         fp = fp or self.get_title() + '.info'
+        fp = you_get_filename(fp)
         print(fp)
         with open(fp, 'w', encoding='utf8') as f:
             f.write(self.get_desc())
