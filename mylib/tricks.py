@@ -251,59 +251,92 @@ def default_dict_tree():
 
 
 class AttribTree:
-    __wrapped__ = None
-    __data = {}
+    __exclude__ = ['__data__', '__index__']
 
     def __init__(self, data: dict = None, **kwargs):
         if data:
             self.__dict__.update(data)
         if kwargs:
             self.__dict__.update(kwargs)
-        for k in self.__dict__:
-            v = self.__dict__[k]
-            if isinstance(v, AttribTree):
-                self.__data[k] = v.__dict__
-            else:
-                self.__data[k] = v
+        self.__data__ = {}
+        for k in self:
+            self.__update_data__(k, self[k])
 
-    # @property
-    # def __data__(self):
-    #     return self.__data
+    def __call__(self, *args, **kwargs):
+        return self.__table__
+
+    def __update_data__(self, key, value):
+        if isinstance(value, AttribTree):
+            self.__data__[key] = value.__data__
+        elif key not in self.__exclude__:
+            self.__data__[key] = value
 
     @property
-    def __data__(self):
+    def __map__(self):
         tmp = {}
         for k in self.__dict__:
-            if isinstance(self[k], AttribTree):
-                tmp[k] = self[k].__data__
-            else:
-                tmp[k] = self[k]
+            v = self[k]
+            if isinstance(v, AttribTree):
+                for ik in v.__map__:
+                    tmp['{}.{}'.format(k, ik)] = v.__map__[ik]
+            elif k not in self.__exclude__:
+                tmp[k] = v
         return tmp
 
+    @property
+    def __table__(self):
+        return sorted(self.__map__.items())
+
+    @staticmethod
+    def __valid_path__(path):
+        if '.' in str(path):
+            key, sub_path = path.split('.', maxsplit=1)
+        else:
+            key, sub_path = path, None
+        return key, sub_path
+
     def __getitem__(self, item):
+        key, sub_path = self.__valid_path__(item)
         try:
-            return self.__dict__[item]
+            target = self.__dict__[key]
         except KeyError:
-            v = self.__dict__[item] = AttribTree()
-            self.__data[item] = v.__dict__
-        return v
+            target = self.__dict__[key] = AttribTree()
+            self.__update_data__(key, target)
+        if sub_path:
+            return target[sub_path]
+        else:
+            return target
 
     __getattr__ = __getitem__
 
     def __setitem__(self, key, value):
-        self.__dict__[key] = value
-        if isinstance(value, AttribTree):
-            self.__data[key] = value.__dict__
+        self_key, sub_path = self.__valid_path__(key)
+        if sub_path:
+            if self_key in self:
+                self[self_key][sub_path] = value
+            else:
+                target = self.__dict__[self_key] = AttribTree()
+                self.__update_data__(self_key, target)
+                target[sub_path] = value
         else:
-            self.__data[key] = value
+            self.__dict__[self_key] = value
+            self.__update_data__(self_key, value)
 
     __setattr__ = __setitem__
 
     def __delitem__(self, key):
-        del self.__dict__[key]
-        del self.__data[key]
+        self_key, sub_path = self.__valid_path__(key)
+        if sub_path:
+            del self.__dict__[self_key][sub_path]
+        else:
+            del self.__dict__[self_key]
+            del self.__data__[self_key]
 
-    __delattr__ = __delitem__
+    def __delattr__(self, item):
+        try:
+            self.__delitem__(item)
+        except KeyError as e:
+            raise AttributeError(*e.args)
 
     def __iter__(self):
         yield from self.__dict__
@@ -318,9 +351,10 @@ class AttribTree:
         return len(self.__dict__)
 
     def __repr__(self):
-        head = super(AttribTree, self).__repr__()
-        body = pformat(self.__data__)
-        return '\n'.join((head, body))
+        lines = [super(AttribTree, self).__repr__()]
+        for p, v in self.__table__:
+            lines.append('{}={}'.format(p, v))
+        return '\n'.join(lines)
 
     def __str__(self):
-        return pformat(self.__data__)
+        return str(self.__data__)
