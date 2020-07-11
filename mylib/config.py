@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # encoding=utf8
 
-from .tricks import AttribTree
+from .tricks import AttrTree
 
-_config = AttribTree()
+_config = AttrTree()
 
 def

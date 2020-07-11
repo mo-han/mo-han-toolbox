@@ -250,7 +250,7 @@ def default_dict_tree():
     return defaultdict(default_dict_tree)
 
 
-class AttribTree:
+class AttrTree:
     __exclude__ = ['__data__', '__index__']
 
     def __init__(self, data: dict = None, **kwargs):
@@ -266,7 +266,7 @@ class AttribTree:
         return self.__table__
 
     def __update_data__(self, key, value):
-        if isinstance(value, AttribTree):
+        if isinstance(value, AttrTree):
             self.__data__[key] = value.__data__
         elif key not in self.__exclude__:
             self.__data__[key] = value
@@ -276,7 +276,7 @@ class AttribTree:
         tmp = {}
         for k in self.__dict__:
             v = self[k]
-            if isinstance(v, AttribTree):
+            if isinstance(v, AttrTree):
                 for ik in v.__map__:
                     tmp['{}.{}'.format(k, ik)] = v.__map__[ik]
             elif k not in self.__exclude__:
@@ -300,7 +300,7 @@ class AttribTree:
         try:
             target = self.__dict__[key]
         except KeyError:
-            target = self.__dict__[key] = AttribTree()
+            target = self.__dict__[key] = AttrTree()
             self.__update_data__(key, target)
         if sub_path:
             return target[sub_path]
@@ -315,7 +315,7 @@ class AttribTree:
             if self_key in self:
                 self[self_key][sub_path] = value
             else:
-                target = self.__dict__[self_key] = AttribTree()
+                target = self.__dict__[self_key] = AttrTree()
                 self.__update_data__(self_key, target)
                 target[sub_path] = value
         else:
@@ -345,13 +345,13 @@ class AttribTree:
         return item in self.__dict__
 
     def __bool__(self):
-        return bool(self.__dict__)
+        return bool(self.__data__)
 
     def __len__(self):
         return len(self.__dict__)
 
     def __repr__(self):
-        lines = [super(AttribTree, self).__repr__()]
+        lines = [super(AttrTree, self).__repr__()]
         for p, v in self.__table__:
             lines.append('{}={}'.format(p, v))
         return '\n'.join(lines)
