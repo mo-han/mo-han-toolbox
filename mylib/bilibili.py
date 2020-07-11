@@ -58,7 +58,7 @@ def code_modify_you_get_bilibili(x: str):
 ''')
     # 下面也是跟4K相关的判断代码
     # B站视频流用不同数字ID标定不同的格式码率，120是4K，112则是大会员的1080P+（即较高码率的1080P30）
-    # （160是大会员1080P60，这里的不需要对160作判断）
+    # （116是大会员1080P60，从实际效果来看，无需对116作判断）
     x = x.replace('''
         elif height <= 1080 and qn <= 80:
             return 80
@@ -158,14 +158,14 @@ def code_modify_you_get_fs(x: str):
 you_get.util.fs = modify_and_import('you_get.util.fs', code_modify_you_get_fs)
 # 接着把原版中的`you_get.util.strings.legitimize`函数替换成修改版`you_get.util.fs`中的对应函数
 you_get.util.strings.legitimize = you_get.util.fs.legitimize
-# （上面的`code_modify_you_get_fs`修改的就是`legitimize`的源码）
+# （上面的`code_modify_you_get_fs`修改的正是`legitimize`）
 # 在原版的you-get中，`.util.string`从`.util.fs`中导入了`legitimize`这个函数
-# `.util.string`又利用已经导入的`legitimize`和其他几个函数，构建了一个`get_filename`函数
+# `.util.string`又利用这个导入的`legitimize`和其他几个函数，构建了一个`get_filename`函数
 # 而`you_get.extractor`和`you_get.common`又都用到了`get_filename`，当然是各自分别从`you_get.util.strings`导入的
 # 因此，所以，故而，然则，
 # 只要将原版`you_get.util.strings.legitimize`替换成修改版的`you_get.util.fs.legitimize`即可
-# 那些从``you_get.util.strings`二次导入`legitimize`函数的模块会自动导入已被替换的修改版
-# 综上所述，下面这行可以注释掉了
+# 那些从`you_get.util.strings`导入`legitimize`函数的模块会自动导入已被替换的修改版
+# 综上所述，下面这行可以注释掉了（已经注释掉了）
 # you_get.extractor.get_filename = you_get.common.get_filename = you_get.util.strings.get_filename
 you_get_filename = you_get.util.strings.get_filename
 # 下面则是将B站下载模块替换成修改版，所用的源码替换函数是`code_modify_you_get_bilibili`
