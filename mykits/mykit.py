@@ -163,7 +163,7 @@ def argument_parser():
 
 
 def main():
-    from mylib.util import ensure_sigint_signal
+    from mylib.os_util import ensure_sigint_signal
     ensure_sigint_signal()
     ap = argument_parser()
     args = ap.parse_args()
@@ -236,7 +236,7 @@ def test_only(args):
 
 
 def rename_func(args):
-    from mylib.util import regex_move_path
+    from mylib.os_util import regex_move_path
     source = args.source
     pattern = args.pattern
     replace = args.replace
@@ -251,7 +251,7 @@ def rename_func(args):
 
 def run_from_lines_func(args):
     import os
-    from mylib.util import clipboard
+    from mylib.os_util import clipboard
     file = args.file
     dry_run = args.dry_run
     cmd_fmt = ' '.join(args.command) or input('< ')
@@ -283,7 +283,7 @@ def dukto_to_clipboard_func(args):
 
 def clipboard_rename_func(args):
     from mylib.gui import rename_dialog
-    from mylib.util import clipboard
+    from mylib.os_util import clipboard
     for f in clipboard.get_path():
         rename_dialog(f)
 

@@ -49,7 +49,7 @@ class DownloadFailure(Exception):
 
 def get_phantomjs_splinter(proxy=None, show_image=False, window_size=(1024, 1024)):
     import splinter
-    from .util import TEMPDIR
+    from .os_util import TEMPDIR
 
     extra_argv = ['--webdriver-loglevel=WARN']
     if proxy:
@@ -69,7 +69,7 @@ def get_phantomjs_splinter(proxy=None, show_image=False, window_size=(1024, 1024
 
 def get_firefox_splinter(**kwargs):
     import splinter
-    from .util import TEMPDIR
+    from .os_util import TEMPDIR
     config = {'service_log_path': os.path.join(TEMPDIR, 'geckodriver.log')}
     config.update(kwargs)
     return splinter.Browser(driver_name='firefox', **config)

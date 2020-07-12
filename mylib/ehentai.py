@@ -11,7 +11,7 @@ import requests
 from .misc import LOG_FMT_MESSAGE_ONLY
 from .tricks import get_logger, VoidDuck, str_ishex
 from .web import cookies_dict_from_file, get_html_element_tree
-from .util import legal_fs_name
+from .os_util import legal_fs_name
 
 EH_TITLE_REGEX_PATTERN = re.compile(
     r'^'

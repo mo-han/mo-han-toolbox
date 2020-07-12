@@ -20,7 +20,7 @@ from lxml import html
 
 from .cli import SimpleCLIDisplay
 from .misc import safe_print, safe_basename
-from .util import ensure_sigint_signal
+from .os_util import ensure_sigint_signal
 from .tricks import modify_and_import
 from .video import concat_videos, merge_m4s
 from .web import cookie_str_from_dict, cookies_dict_from_file, get_html_element_tree, HTMLElementTree

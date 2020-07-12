@@ -5,7 +5,7 @@ import logging
 
 from mylib.hentai import HentaiCafeKit
 from mylib.misc import LOG_FMT_MESSAGE_ONLY
-from mylib.util import ensure_sigint_signal
+from mylib.os_util import ensure_sigint_signal
 
 logging.basicConfig(
     level=logging.INFO,

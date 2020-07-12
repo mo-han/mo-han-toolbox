@@ -12,6 +12,7 @@ pillow
 imagehash
 opencv-python
 pyreadline
+gooey
 pysimpleguiqt
 pyserial
 splinter<0.8  # phantomjs

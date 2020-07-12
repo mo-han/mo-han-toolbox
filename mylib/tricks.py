@@ -8,7 +8,6 @@ import sys
 from collections import defaultdict
 from functools import wraps
 from typing import Dict, Iterable, Callable
-from pprint import pformat
 
 from .misc import LOG_FMT, LOG_DTF
 from .number import int_is_power_of_2
@@ -26,24 +25,26 @@ class TypingQueue:
         ...
 
 
-def limit_argv_choice(choices: Dict[int or str, Iterable]) -> Decorator:
-    """decorator factory: force arguments of a func limited in the given choices
+def argv_choices(choices: Dict[int or str, Iterable]) -> Decorator:
+    """decorator factory: force arguments of a func limited inside the given choices
 
-    :param choices: a dict which describes the choices for the value-limited arguments.
+    :param choices: a dict which describes the value choices of arguments.
             the key of the dict must be either the index of args or the key_str of kwargs,
             while the value of the dict must be an iterable."""
-    err_fmt = "value of '{}' is not a valid choice: '{}'"
+    err_fmt = "value of '{}' is not a valid choice in {}"
 
     def decorator(func):
         @wraps(func)
         def decorated_func(*args, **kwargs):
-            for i in range(len(args)):
-                if i in choices and args[i] not in choices[i]:
-                    param_name = func.__code__.co_varnames[i]
-                    raise ValueError(err_fmt.format(param_name, set(choices[i])))
-            for k in kwargs:
-                if k in choices and kwargs[k] not in choices[k]:
-                    raise ValueError(err_fmt.format(k, set(choices[k])))
+            for argv_index in range(len(args)):
+                param_name = func.__code__.co_varnames[argv_index]
+                if argv_index in choices and args[argv_index] not in choices[argv_index]:
+                    raise ValueError(err_fmt.format(param_name, choices[argv_index]))
+                elif param_name in choices and args[argv_index] not in choices[param_name]:
+                    raise ValueError(err_fmt.format(param_name, choices[param_name]))
+            for param_name in kwargs:
+                if param_name in choices and kwargs[param_name] not in choices[param_name]:
+                    raise ValueError(err_fmt.format(param_name, choices[param_name]))
 
             return func(*args, **kwargs)
 
@@ -186,16 +187,6 @@ class ArgParseCompactHelpFormatter(argparse.HelpFormatter):
         default = self._get_default_metavar_for_optional(action)
         args_string = self._format_args(action, default)
         return ', '.join(action.option_strings) + ' ' + args_string
-
-
-def import_pywinauto():
-    """sys.coinit_flags=2 before import pywinauto
-    https://github.com/pywinauto/pywinauto/issues/472"""
-    # import warnings
-    # warnings.simplefilter('ignore', category=UserWarning)
-    sys.coinit_flags = 2
-    import pywinauto
-    return pywinauto
 
 
 def with_self_context(func):

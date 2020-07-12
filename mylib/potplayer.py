@@ -6,10 +6,11 @@ import keyboard
 import mouse
 
 from .gui import rename_dialog
-from .tricks import import_pywinauto, getitem_default
-from .util import clipboard, rename_helper
+from .tricks import getitem_default
+from .uia import pywinauto_import
+from .os_util import clipboard, rename_helper
 
-pywinauto = import_pywinauto()
+pywinauto = pywinauto_import()
 App = pywinauto.Application
 HwndElementInfo = pywinauto.win32_element_info.HwndElementInfo
 find_elements = pywinauto.findwindows.find_elements

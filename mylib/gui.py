@@ -6,7 +6,7 @@ import shutil
 from collections import defaultdict
 
 from .tricks import remove_from_list, dedup_list, with_exception_retry, singleton
-from .util import ensure_sigint_signal, real_join_path, write_json_file, read_json_file
+from .os_util import ensure_sigint_signal, real_join_path, write_json_file, read_json_file
 
 
 @singleton

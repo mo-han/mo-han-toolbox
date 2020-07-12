@@ -5,7 +5,7 @@ import ndrop.__main__
 import ndrop.netdrop
 
 from .tricks import modify_and_import
-from .util import clipboard
+from .os_util import clipboard
 
 _config = {'server_text_queue': None}
 
