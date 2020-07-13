@@ -322,7 +322,7 @@ def url_from_clipboard(args):
     from mylib.web import decode_html_char_ref
     pattern = args.pattern
     t = pyperclip.paste()
-    if pattern == 'pornhub':
+    if pattern in ('pornhub', 'ph'):
         from mylib.pornhub import find_url_in_text
         urls = find_url_in_text(t)
     elif pattern == 'youtube':
