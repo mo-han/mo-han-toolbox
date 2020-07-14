@@ -350,7 +350,7 @@ class AttrTree:
         p1, p2, p3, p4 = 6, half - 3, half + 3, -6
         max_ = 3 * (6 + 1)
         lines = [super(AttrTree, self).__repr__()]
-        if len(table) > max_:
+        if len(table) >= max_:
             lines.extend(['{}={}'.format(k, v) for k, v in table[:p1]])
             lines.append('...')
             lines.extend(['{}={}'.format(k, v) for k, v in table[p2:p3]])

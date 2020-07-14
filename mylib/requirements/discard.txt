@@ -1,0 +1,2 @@
+splinter[zope.testbrowser]  # zope.testbrowser with splinter not support py3
+bs4
