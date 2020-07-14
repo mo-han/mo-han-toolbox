@@ -65,7 +65,7 @@ def tidy_ehviewer_images(dry_run: bool = False):
 
         title = d['title']
         try:
-            core_title_l = EH_TITLE_REGEX_PATTERN.match(title).group(2).split()
+            core_title_l = re.findall(r'[\w]+[\-\+\']?[\w]?', EH_TITLE_REGEX_PATTERN.match(title).group(2))
         except AttributeError:
             print(logmsg_err.format(title))
             raise
@@ -110,7 +110,7 @@ def tidy_ehviewer_images(dry_run: bool = False):
         parent, basename = os.path.split(f)
         fn, ext = os.path.splitext(basename)
         fn = str(fn)
-        fn = ' '.join(core_title_l[:5]) + ' ' + fn.split()[-1]
+        fn = ' '.join(core_title_l[:6]) + ' ' + fn.split()[-1]
         nf = os.path.join(a, legal_fs_name(fn + ext))
         logger.info(logmsg_move.format(f, nf))
         if not dry_run:
