@@ -10,7 +10,7 @@ from .web import get_html_element_tree
 
 def find_url_in_text(text: str) -> list:
     prefix = 'https://iwara.tv'
-    pattern = '/videos/[0-9a-z]{15,16}'
+    pattern = '/videos/[0-9a-z]+'
     urls = [prefix + e for e in regex_find(pattern, text, dedup=True) if 'thumbnail' not in e]
     return urls
 

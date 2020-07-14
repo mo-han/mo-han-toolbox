@@ -164,14 +164,14 @@ def run_from_lines_func():
     cmd_fmt = ' '.join(args.command) or input('< ')
     if '{}' not in cmd_fmt:
         cmd_fmt += ' {}'
-    print('<', cmd_fmt)
+    print('>', cmd_fmt)
     if file:
         with open(file, 'r') as fd:
             lines = fd.readlines()
     else:
         lines = str(clipboard.get()).splitlines()
     for line in lines:
-        command = cmd_fmt.format(line)
+        command = cmd_fmt.format(line.strip())
         print('#', command)
         if not dry_run:
             os.system(command)
