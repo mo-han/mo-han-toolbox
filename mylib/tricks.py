@@ -255,10 +255,7 @@ class AttrTree:
 
     def __query__(self, *args, **kwargs):
         if not args and not kwargs:
-            lines = []
-            for p, v in self.__table__:
-                lines.append('{}={}'.format(p, v))
-            return '\n'.join(lines)
+            return self.__table__
 
     __call__ = __query__
 
@@ -346,3 +343,22 @@ class AttrTree:
 
     def __len__(self):
         return len(self.__dict__)
+
+    def __repr__(self):
+        table = self.__table__
+        half = len(table) // 2
+        p1, p2, p3, p4 = 6, half - 3, half + 3, -6
+        max_ = 3 * (6 + 1)
+        lines = [super(AttrTree, self).__repr__()]
+        if len(table) > max_:
+            lines.extend(['{}={}'.format(k, v) for k, v in table[:p1]])
+            lines.append('...')
+            lines.extend(['{}={}'.format(k, v) for k, v in table[p2:p3]])
+            lines.append('...')
+            lines.extend(['{}={}'.format(k, v) for k, v in table[p4:]])
+        else:
+            lines.extend(['{}={}'.format(k, v) for k, v in table])
+        return '\n'.join(lines)
+
+    def __str__(self):
+        return '\n'.join(['{}={}'.format(k, v) for k, v in self.__table__])
