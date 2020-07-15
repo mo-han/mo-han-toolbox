@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # encoding=utf8
 
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 import cmd
 import glob
 import shlex
@@ -9,12 +9,7 @@ import shlex
 from mylib.cli import SimpleCLIDisplay
 from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, AttrTree
 
-DRAW_LINE_LEN = 32
-DRAW_DOUBLE_LINE = '=' * DRAW_LINE_LEN
-DRAW_SINGLE_LINE = '-' * DRAW_LINE_LEN
-DRAW_UNDER_LINE = '_' * DRAW_LINE_LEN
-
-rte = AttrTree()
+rt_data = AttrTree()
 cli_draw = SimpleCLIDisplay()
 common_parser_kwargs = {'formatter_class': ArgParseCompactHelpFormatter}
 ap = ArgumentParser(**common_parser_kwargs)
@@ -87,7 +82,7 @@ def main():
     #     rte.unknown_argv = None
     # try:
     #     func = rte.args.func
-    rte.args = args = ap.parse_args()
+    rt_data.args = args = ap.parse_args()
     try:
         func = args.func
     except AttributeError:
@@ -123,7 +118,7 @@ def iwara_dl_func():
     from mylib.iwara import youtube_dl_main_x_iwara
     import sys
     sys.argv[0] = ' '.join(sys.argv[:2])
-    youtube_dl_main_x_iwara(rte.args.argv)
+    youtube_dl_main_x_iwara(rt_data.args.argv)
 
 
 iwara_dl = add_sub_parser('iwara.dl', ['iwrdl'], 'modified youtube-dl for iwara.tv (fix issue of missing uploader)')
@@ -133,7 +128,7 @@ iwara_dl.add_argument('argv', nargs='*', help='argument(s) propagated to youtube
 
 def rename_func():
     from mylib.os_util import regex_move_path
-    args = rte.args
+    args = rt_data.args
     source = args.source
     pattern = args.pattern
     replace = args.replace
@@ -158,7 +153,7 @@ rename.add_argument('replace')
 def run_from_lines_func():
     import os
     from mylib.os_util import clipboard
-    args = rte.args
+    args = rt_data.args
     file = args.file
     dry_run = args.dry_run
     cmd_fmt = ' '.join(args.command) or input('< ')
@@ -198,7 +193,7 @@ def dukto_to_clipboard_func():
 
 
 dukto_to_clipboard = add_sub_parser('dukto.to.clipboard', ['dukto.cb', 'duktocb'],
-                                    'put text received in dukto into clipboard')
+                                    'start a dukto service and put received text into clipboard')
 dukto_to_clipboard.set_defaults(func=dukto_to_clipboard_func)
 
 
@@ -206,7 +201,7 @@ def url_from_clipboard():
     import pyperclip
     from mylib.text import regex_find
     from mylib.web import decode_html_char_ref
-    args = rte.args
+    args = rt_data.args
     pattern = args.pattern
     t = pyperclip.paste()
     if pattern == 'ed2k':
@@ -251,7 +246,7 @@ clipboard_rename.set_defaults(func=clipboard_rename_func)
 
 def potplayer_rename_func():
     from mylib.potplayer import PotPlayerKit
-    args = rte.args
+    args = rt_data.args
     PotPlayerKit().rename_file_gui(alt_tab=args.no_keep_front)
 
 
@@ -262,7 +257,7 @@ potplayer_rename.add_argument('-F', '--no-keep-front', action='store_true', help
 
 def bilibili_download_func():
     from mylib.bilibili import download_bilibili_video
-    args = rte.args
+    args = rt_data.args
     download_bilibili_video(**vars(args))
 
 
@@ -282,7 +277,7 @@ bilibili_download.add_argument('-A', '--no-moderate-audio', dest='moderate_audio
 
 def json_key_func():
     from json import load
-    args = rte.args
+    args = rt_data.args
     with open(args.file) as f:
         d = load(f)
     print(d[args.key])
@@ -296,7 +291,7 @@ json_key.add_argument('key', help='query key')
 
 def update_json_file():
     from json import load, dump
-    args = rte.args
+    args = rt_data.args
     old, new = args.old, args.new
     with open(old) as f:
         d = load(f)
@@ -314,7 +309,7 @@ json_update.add_argument('new', help='JSON file with new data')
 
 def view_similar_images():
     from mylib.picture import view_similar_images_auto
-    args = rte.args
+    args = rt_data.args
     kwargs = {
         'thresholds': args.thresholds,
         'hashtype': args.hashtype,
@@ -344,7 +339,7 @@ img_sim_view.add_argument(
 
 def move_ehviewer_images():
     from mylib.ehentai import tidy_ehviewer_images
-    args = rte.args
+    args = rt_data.args
     tidy_ehviewer_images(dry_run=args.dry_run)
 
 
