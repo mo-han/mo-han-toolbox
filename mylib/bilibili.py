@@ -5,11 +5,9 @@ import json
 import os
 import re
 import shutil
-import sys
 from glob import glob
 from http.cookiejar import MozillaCookieJar
 from typing import Tuple
-from time import sleep
 
 import requests
 # 下面导入的是通过pip安装的you-get
@@ -247,8 +245,17 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     def get_title(self):
         self.update_html()
         _, h = self.html
-        t = h.xpath('//*[@class="video-title"]')[0].attrib['title']
-        t += ' ' + self.get_vid_label() + self.get_author_label()
+        keep_trying = True
+        try:
+            t = h.xpath('//*[@class="video-title"]')[0].attrib['title']
+        except IndexError:
+            pass
+        try:
+            t = h.xpath('//meta[property="og:title"]')[0].attrib['content']
+        if keep_trying:
+            pass
+        else:
+            t += ' ' + self.get_vid_label() + self.get_author_label()
         return t
 
     def write_info_file(self, fp: str = None):
@@ -273,14 +280,19 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     # 从URL和HTML获取av号BV号
     def get_vid(self):
         url = self.url
-        for m in [re.search(r'/(av\d+)', url), re.search(r'/(bv\w{10})', url, flags=re.I)]:
+        for m in [
+            re.search(r'/(bv\w{10})', url, flags=re.I),
+            re.search(r'/(av\d+)', url),
+            re.search(r'/bangumi/play/(ep\d+)', url),
+            re.search(r'/bangumi/play/(ss\d+)', url)
+        ]:
             if m:
                 vid = m.group(1)
                 if vid.startswith('bv'):
                     vid = 'BV' + vid[2:]
                 break
         else:
-            vid = None
+            vid = ''
         return vid
 
     # [av号][BV号]
@@ -327,7 +339,8 @@ def download_bilibili_video(url: str or int,
         output = '.'
     if not qn_max:
         qn_max = 116
-    url = BILIBILI_VIDEO_URL_PREFIX + get_vid(url)
+    if '://' not in url:
+        url = BILIBILI_VIDEO_URL_PREFIX + get_vid(url)
 
     cli.print(url)
     cli.hl()
