@@ -2,7 +2,6 @@
 # encoding=utf8
 
 import mouse
-import pygetwindow
 
 
 def pywinauto_import(disable_warning: bool = False, coinit: int = 2):
@@ -24,6 +23,5 @@ def pywinauto_set_focus(pywinauto_object, homing_mouse: bool = True):
         r = pywinauto_object.set_focus()
         mouse.move(*original_coord)
     else:
-        r= pywinauto_object.set_focus()
+        r = pywinauto_object.set_focus()
     return r
-

@@ -253,8 +253,11 @@ class AttrTree:
         for k in self:
             self.__update_data__(k, self[k])
 
-    def __call__(self, *args, **kwargs):
-        return self.__table__
+    def __query__(self, *args, **kwargs):
+        if not args and not kwargs:
+            return self.__table__
+
+    __call__ = __query__
 
     def __update_data__(self, key, value):
         if isinstance(value, AttrTree):
@@ -342,10 +345,20 @@ class AttrTree:
         return len(self.__dict__)
 
     def __repr__(self):
+        table = self.__table__
+        half = len(table) // 2
+        p1, p2, p3, p4 = 6, half - 3, half + 3, -6
+        max_ = 3 * (6 + 1)
         lines = [super(AttrTree, self).__repr__()]
-        for p, v in self.__table__:
-            lines.append('{}={}'.format(p, v))
+        if len(table) >= max_:
+            lines.extend(['{}={}'.format(k, v) for k, v in table[:p1]])
+            lines.append('...')
+            lines.extend(['{}={}'.format(k, v) for k, v in table[p2:p3]])
+            lines.append('...')
+            lines.extend(['{}={}'.format(k, v) for k, v in table[p4:]])
+        else:
+            lines.extend(['{}={}'.format(k, v) for k, v in table])
         return '\n'.join(lines)
 
     def __str__(self):
-        return str(self.__data__)
+        return '\n'.join(['{}={}'.format(k, v) for k, v in self.__table__])

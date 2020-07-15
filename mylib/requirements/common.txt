@@ -1,0 +1,21 @@
+gallery-dl
+gooey
+imagehash
+keyboard
+lxml
+mouse
+ndrop
+opencv-python
+pillow
+pure-python-adb
+pyautogui #pyautogui==0.9.39
+pyperclip
+pyreadline
+pyserial
+pysimpleguiqt
+requests
+selenium<3.8  # phantomjs
+splinter<0.8  # phantomjs
+uiautomator2
+you-get
+youtube-dl
