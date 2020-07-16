@@ -273,7 +273,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     def get_tags(self):
         self.update_html()
         _, h = self.html
-        return [e.text_content().splitlines()[0] for e in h.xpath('//li[@class="tag"]')]
+        return [e.text_content() for e in h.xpath('//*[@class="tag-link"]')]
 
     # 从URL和HTML获取av号BV号
     def get_vid(self):
