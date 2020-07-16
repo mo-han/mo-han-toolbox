@@ -362,3 +362,28 @@ class AttrTree:
 
     def __str__(self):
         return '\n'.join(['{}={}'.format(k, v) for k, v in self.__table__])
+
+
+def until_return_try(schedule: Iterable[dict], unified_exception=Exception):
+    """try through `schedule`, bypass specified exception, until sth returned, then return it.
+    format of every task inside `schedule`:
+        {'callable':..., 'args':(...), 'kwargs':{...}, 'exception':...}
+    if a task in `schedule` has `exception` specified for its own, the `unified_exception` will be ignored
+    if a task has wrong format, it will be ignored"""
+    for task in schedule:
+        if 'exception' in task:
+            exception = task['exception']
+        else:
+            exception = unified_exception
+        if 'args' in task:
+            args = task['args']
+        else:
+            args = ()
+        if 'kwargs' in task:
+            kwargs = task['kwargs']
+        else:
+            kwargs = {}
+        try:
+            return task['callable'](*args, **kwargs)
+        except exception:
+            pass
