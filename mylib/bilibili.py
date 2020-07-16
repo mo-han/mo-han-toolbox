@@ -19,7 +19,7 @@ from lxml import html
 from .cli import SimpleCLIDisplay
 from .misc import safe_print, safe_basename
 from .os_util import ensure_sigint_signal
-from .tricks import modify_and_import
+from .tricks import modify_and_import, until_return_try
 from .video import concat_videos, merge_m4s
 from .web import cookie_str_from_dict, cookies_dict_from_file, get_html_element_tree, HTMLElementTree
 
@@ -245,17 +245,11 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     def get_title(self):
         self.update_html()
         _, h = self.html
-        keep_trying = True
-        try:
-            t = h.xpath('//*[@class="video-title"]')[0].attrib['title']
-        except IndexError:
-            pass
-        try:
-            t = h.xpath('//meta[property="og:title"]')[0].attrib['content']
-        if keep_trying:
-            pass
-        else:
-            t += ' ' + self.get_vid_label() + self.get_author_label()
+        t = until_return_try((
+            {'callable': lambda: h.xpath('//*[@class="video-title"]')[0].attrib['title']},
+            {'callable': lambda: h.xpath('//meta[@property="og:title"]')[0].attrib['content']}
+        ), unified_exception=IndexError)
+        t += ' ' + self.get_vid_label() + self.get_author_label()
         return t
 
     def write_info_file(self, fp: str = None):
@@ -270,7 +264,11 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     def get_desc(self):
         self.update_html()
         _, h = self.html
-        return h.xpath('//div[@id="v_desc"]')[0].text_content()
+        desc = until_return_try((
+            {'callable': lambda: h.xpath('//div[@id="v_desc"]')[0].text_content()},
+            {'callable': lambda: h.xpath('//meta[@name="description"]')[0].attrib['content']}
+        ))
+        return desc
 
     def get_tags(self):
         self.update_html()
@@ -305,6 +303,12 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
             canonical = h.xpath('//link[@rel="canonical"]')[0].attrib['href']
             avid = re.search(r'/(av\d+)/', canonical).group(1)
             label += fmt.format(avid)
+        elif the_vid.startswith('ep'):
+            self.update_html()
+            _, h = self.html
+            og_url = h.xpath('//meta[@property="og:url"]')[0].attrib['content']
+            ss = re.search(r'/play/(ss\d+)', og_url).group(1)
+            label += fmt.format(ss)
         return label
 
     # 上传者（UP主）用户名
