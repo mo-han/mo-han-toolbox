@@ -24,6 +24,8 @@ from .video import concat_videos, merge_m4s
 from .web import cookie_str_from_dict, cookies_dict_from_file, get_html_element_tree, HTMLElementTree
 
 BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'
+BILIBILI_EPISODE_URL_PREFIX = 'https://www.bilibili.com/bangumi/play/'
+BILIBILI_SHORT_URL_PREFIX = 'https://b23.tv/'
 
 
 class BilibiliError(RuntimeError):
@@ -171,7 +173,7 @@ you_get.extractors.bilibili = modify_and_import('you_get.extractors.bilibili', c
 
 
 # 搜寻av、BV、AV、bv开头的字符串或者整形数，将之变成B站视频的av号或者BV号
-def get_vid(x: str or int) -> str or None:
+def find_bilibili_vid(x: str or int) -> str or None:
     if isinstance(x, int):
         vid = 'av{}'.format(x)
     elif isinstance(x, str):
@@ -189,6 +191,15 @@ def get_vid(x: str or int) -> str or None:
     else:
         raise TypeError("'{}' is not str or int".format(x))
     return vid
+
+
+def bilibili_url_from_vid(vid: str) -> str:
+    if vid[:2] in ('BV', 'av'):
+        return BILIBILI_VIDEO_URL_PREFIX + vid
+    elif vid[:2] in ('ep', 'ss'):
+        return BILIBILI_EPISODE_URL_PREFIX + vid
+    else:
+        return BILIBILI_SHORT_URL_PREFIX + vid
 
 
 # `YouGetBilibiliX`继承了`you_get.extractors.bilibili.Bilibili`，添加了一些新的功能
@@ -332,7 +343,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
 # 这是一个任务函数，包装了修改版的you-get的B站下载功能，供另外编写的命令行工具调用
 def download_bilibili_video(url: str or int,
                             cookies: str or dict = None, output: str = None, parts: list = None,
-                            qn_max: int = None, qn_want: int = None, moderate_audio: bool = True, fmt=None,
+                            qn_max: int = 116, qn_want: int = None, moderate_audio: bool = True, fmt=None,
                             info: bool = False, playlist: bool = False, caption: bool = True,
                             **kwargs):
     # 确保在Windows操作系统中，SIGINT信号能够被传递到下层扩展中，从而确保Ctrl+C能够立即停止程序
@@ -341,10 +352,8 @@ def download_bilibili_video(url: str or int,
 
     if not output:
         output = '.'
-    if not qn_max:
-        qn_max = 116
     if '://' not in url:
-        url = BILIBILI_VIDEO_URL_PREFIX + get_vid(url)
+        url = bilibili_url_from_vid(find_bilibili_vid(url) or url)
 
     cli.print(url)
     cli.hl()

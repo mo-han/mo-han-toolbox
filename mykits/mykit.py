@@ -258,21 +258,28 @@ potplayer_rename.add_argument('-F', '--no-keep-front', action='store_true', help
 def bilibili_download_func():
     from mylib.bilibili import download_bilibili_video
     args = rt_data.args
+    if args.verbose:
+        print(args)
     download_bilibili_video(**vars(args))
 
 
 bilibili_download = add_sub_parser('bilibili.download', ['bldl'], 'bilibili video downloader (source-patched you-get)')
 bilibili_download.set_defaults(func=bilibili_download_func)
 bilibili_download.add_argument('url')
-bilibili_download.add_argument('-c', '--cookies')
+bilibili_download.add_argument('-v', '--verbose', action='store_true')
+bilibili_download.add_argument('-c', '--cookies', metavar='FILE')
 bilibili_download.add_argument('-i', '--info', action='store_true')
 bilibili_download.add_argument('-l', '--playlist', action='store_true')
 bilibili_download.add_argument('-o', '--output', metavar='dir')
 bilibili_download.add_argument('-p', '--parts', nargs='*', type=int, metavar='N')
 bilibili_download.add_argument('-q', '--qn-want', type=int, metavar='N')
-bilibili_download.add_argument('-Q', '--qn-max', type=int, metavar='N')
+bilibili_download.add_argument('-Q', '--qn-max', type=int, metavar='N', default=116,
+                               help='max qn (quality number), default to 116 (1080P60), while qn of 4K is 120.')
 bilibili_download.add_argument('-C', '--no-caption', dest='caption', action='store_false')
-bilibili_download.add_argument('-A', '--no-moderate-audio', dest='moderate_audio', action='store_false')
+bilibili_download.add_argument('-A', '--no-moderate-audio', dest='moderate_audio', action='store_false',
+                               help='by default the best quality audio is NOT used, '
+                                    'instead, a moderate quality (~128kbps) is chose, which is good enough. '
+                                    'this option force choosing the best quality audio stream')
 
 
 def json_key_func():

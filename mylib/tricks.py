@@ -186,7 +186,7 @@ class ArgParseCompactHelpFormatter(argparse.HelpFormatter):
             return super()._format_action_invocation(action)
         default = self._get_default_metavar_for_optional(action)
         args_string = self._format_args(action, default)
-        return ', '.join(action.option_strings) + ' ' + args_string
+        return ', '.join(action.option_strings) + '  ' + args_string
 
 
 def with_self_context(func):
