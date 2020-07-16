@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # encoding=utf8
+"""This tool heavily depends on `mylib` package, make sure `mylib` folder is in the same path with this tool."""
 
 from argparse import ArgumentParser
 import cmd
