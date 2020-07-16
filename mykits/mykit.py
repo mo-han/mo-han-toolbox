@@ -73,16 +73,6 @@ class MyKitCmd(cmd.Cmd):
 def main():
     from mylib.os_util import ensure_sigint_signal
     ensure_sigint_signal()
-    # args, unknown_argv = ap.parse_known_args()
-    # if '__unknown__' in args:
-    #     del args.__unknown__
-    #     rte.args = args
-    #     rte.unknown_argv = unknown_argv
-    # else:
-    #     rte.args = ap.parse_args()
-    #     rte.unknown_argv = None
-    # try:
-    #     func = rte.args.func
     rt_data.args = args = ap.parse_args()
     try:
         func = args.func
@@ -117,12 +107,10 @@ cmd_mode.set_defaults(func=cmd_mode_func)
 
 def iwara_dl_func():
     from mylib.iwara import youtube_dl_main_x_iwara
-    import sys
-    sys.argv[0] = ' '.join(sys.argv[:2])
     youtube_dl_main_x_iwara(rt_data.args.argv)
 
 
-iwara_dl = add_sub_parser('iwara.dl', ['iwrdl'], 'modified youtube-dl for iwara.tv (fix issue of missing uploader)')
+iwara_dl = add_sub_parser('iwara.dl', ['iwrdl'], 'modified youtube-dl for iwara.tv (fixing issue of missing uploader)')
 iwara_dl.set_defaults(func=iwara_dl_func)
 iwara_dl.add_argument('argv', nargs='*', help='argument(s) propagated to youtube-dl, better put a -- before it')
 

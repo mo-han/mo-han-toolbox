@@ -3,6 +3,7 @@
 """Some FFmpeg commands"""
 
 import os
+import ffmpeg
 
 VIDEO_FILE_EXTENSIONS = ['.mp4', '.m4v', '.mkv', '.flv', '.webm']
 
