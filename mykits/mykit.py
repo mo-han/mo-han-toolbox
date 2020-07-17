@@ -108,8 +108,9 @@ cmd_mode.set_defaults(func=cmd_mode_func)
 def iwara_dl_func():
     from mylib.iwara import youtube_dl_main_x_iwara
     import sys
-    sys.argv[0] = ' '.join(sys.argv[:2]) + ' --'
-    youtube_dl_main_x_iwara(rt_data.args.argv)
+    argv0 = ' '.join(sys.argv[:2]) + ' --'
+    sys.argv = [argv0] + rt_data.args.argv
+    youtube_dl_main_x_iwara()
 
 
 iwara_dl = add_sub_parser('iwara.dl', ['iwrdl'], 'modified youtube-dl for iwara.tv (fixing issue of missing uploader)')
