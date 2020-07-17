@@ -193,7 +193,7 @@ class ArgParseCompactHelpFormatter(argparse.HelpFormatter):
         return ', '.join(action.option_strings) + '  ' + args_string
 
 
-def with_self_context(func):
+def context_with_self(func):
     """decorator: wrap a class method inside a `with self: ...` context"""
 
     def decorated_func(self, *args, **kwargs):

@@ -8,6 +8,10 @@ import ffmpeg
 VIDEO_FILE_EXTENSIONS = ['.mp4', '.m4v', '.mkv', '.flv', '.webm']
 
 
+class SegmentTranscode:
+    pass
+
+
 def choose_between_origin_and_hevc8b(file_path: str):
     if not os.path.isfile(file_path):
         print('# file not exist:', file_path)

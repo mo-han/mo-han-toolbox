@@ -6,6 +6,7 @@ import shutil
 import signal
 import sys
 import tempfile
+from contextlib import contextmanager
 from typing import Iterable
 
 if os.name == 'nt':
@@ -75,6 +76,31 @@ def real_join_path(path, *paths, expanduser: bool = True, expandvars: bool = Tru
         path = os.path.expandvars(path)
         paths = [os.path.expandvars(p) for p in paths]
     return os.path.realpath(os.path.join(path, *paths))
+
+
+def ensure_chdir(dest: str):
+    if not os.path.isdir(dest):
+        os.makedirs(dest, exist_ok=True)
+    os.chdir(dest)
+
+
+@contextmanager
+def pushd_context(dest: str, ensure_dest: bool = False):
+    if ensure_dest:
+        cd = ensure_chdir
+    else:
+        cd = os.chdir
+    prev = os.getcwd()
+    cd(dest)
+    to_raise = None
+    try:
+        yield
+    except Exception as e:
+        to_raise = e
+    finally:
+        cd(prev)
+        if to_raise:
+            raise to_raise
 
 
 def ensure_open_file(file, mode='r', **kwargs):

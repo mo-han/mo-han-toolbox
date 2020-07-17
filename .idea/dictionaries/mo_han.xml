@@ -9,6 +9,7 @@
       <w>bilibili</w>
       <w>bilidl</w>
       <w>bilidltemp</w>
+      <w>chdir</w>
       <w>dedup</w>
       <w>dest</w>
       <w>dhash</w>
@@ -44,6 +45,7 @@
       <w>ndrop</w>
       <w>opencv</w>
       <w>phash</w>
+      <w>pushd</w>
       <w>pyinstaller</w>
       <w>pyreadline</w>
       <w>pyserial</w>
