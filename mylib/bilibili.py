@@ -19,7 +19,7 @@ from lxml import html
 from .cli import SimpleCLIDisplay
 from .misc import safe_print, safe_basename
 from .os_util import ensure_sigint_signal
-from .tricks import modify_and_import, until_return_try
+from .tricks import modify_and_import, until_return_try, range_from_expr
 from .video import concat_videos, merge_m4s
 from .web import cookie_str_from_dict, cookies_dict_from_file, get_html_element_tree, HTMLElementTree
 
@@ -355,8 +355,8 @@ def download_bilibili_video(url: str or int,
     if '://' not in url:
         url = bilibili_url_from_vid(find_bilibili_vid(url) or url)
 
-    cli.print(url)
-    cli.hl()
+    cli.hl(shorter=1)
+    cli.print(url, end='')
     b = YouGetBilibiliX(cookies=cookies, qn_max=qn_max, qn_want=qn_want)
 
     if info:
@@ -375,9 +375,11 @@ def download_bilibili_video(url: str or int,
     else:
         if parts:
             base_url = url
+            parts = range_from_expr(','.join(parts))
             for p in parts:
                 url = base_url + '?p={}'.format(p)
-                cli.hl()
+                cli.print()
+                cli.hl(shorter=1)
                 cli.print(url)
                 b.download_by_url(url, **dl_kwargs)
         else:

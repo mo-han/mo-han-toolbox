@@ -11,12 +11,12 @@ class SimpleCLIDisplay:
         self.output = output
         self.width = constrain_value(width, int, 'x > 0', True, 0)
 
-    def print(self, text: str, **kwargs):
+    def print(self, text: str = '', **kwargs):
         return print(text, file=self.output, **kwargs)
 
-    def horizontal_line(self, char: str = '-', **kwargs):
+    def horizontal_line(self, char: str = '-', shorter: int = 0, **kwargs):
         width = self.width or shutil.get_terminal_size()[0]
-        return self.print(char * width, end='', **kwargs)
+        return self.print(char * (width - shorter), **kwargs)
 
     hl = horizontal_line
 

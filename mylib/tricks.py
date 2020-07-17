@@ -7,12 +7,10 @@ import logging
 import sys
 from collections import defaultdict
 from functools import wraps
-from typing import Dict, Iterable, Callable
+from typing import Dict, Iterable, Callable, Generator
 
 from .misc import LOG_FMT, LOG_DTF
 from .number import int_is_power_of_2
-
-_module_data = {}
 
 Decorator = Callable[[Callable], Callable]
 
@@ -23,6 +21,12 @@ class TypingQueue:
 
     def get(self, *args, **kwargs):
         ...
+
+
+def range_from_expr(expr: str) -> Generator:
+    sections = [[int(n.strip() or 1) for n in e.split('-')] for e in expr.split(',')]
+    for s in sections:
+        yield from range(s[0], s[-1] + 1)
 
 
 def argv_choices(choices: Dict[int or str, Iterable]) -> Decorator:

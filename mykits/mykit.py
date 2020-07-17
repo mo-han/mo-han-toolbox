@@ -265,7 +265,7 @@ bilibili_download.add_argument('-c', '--cookies', metavar='FILE')
 bilibili_download.add_argument('-i', '--info', action='store_true')
 bilibili_download.add_argument('-l', '--playlist', action='store_true')
 bilibili_download.add_argument('-o', '--output', metavar='dir')
-bilibili_download.add_argument('-p', '--parts', nargs='*', type=int, metavar='N')
+bilibili_download.add_argument('-p', '--parts', nargs='*', metavar='N')
 bilibili_download.add_argument('-q', '--qn-want', type=int, metavar='N')
 bilibili_download.add_argument('-Q', '--qn-max', type=int, metavar='N', default=116,
                                help='max qn (quality number), default to 116 (1080P60), while qn of 4K is 120.')
