@@ -107,6 +107,8 @@ cmd_mode.set_defaults(func=cmd_mode_func)
 
 def iwara_dl_func():
     from mylib.iwara import youtube_dl_main_x_iwara
+    import sys
+    sys.argv[0] = ' '.join(sys.argv[:2]) + ' --'
     youtube_dl_main_x_iwara(rt_data.args.argv)
 
 
@@ -155,6 +157,8 @@ def run_from_lines_func():
     else:
         lines = str(clipboard.get()).splitlines()
     for line in lines:
+        if not line:
+            continue
         command = cmd_fmt.format(line.strip())
         print('#', command)
         if not dry_run:
