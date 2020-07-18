@@ -1,3 +1,4 @@
+ffmpeg-python
 gallery-dl
 gooey
 imagehash
@@ -8,7 +9,7 @@ ndrop
 opencv-python
 pillow
 pure-python-adb
-pyautogui #pyautogui==0.9.39
+pyautogui  # pyautogui==0.9.39
 pyperclip
 pyreadline
 pyserial
