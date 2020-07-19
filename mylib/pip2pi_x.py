@@ -5,17 +5,19 @@ from .tricks import modify_and_import
 
 def code_modify_pip2pi(x: str) -> str:
     x = x.replace("""
-    def add_index_options(self):
+        self.add_option(
+            '-S', '--no-symlink', dest="use_symlink", action="store_false")
 """, """
-    def add_index_options(self):
         self.add_option(
             '-A', '--absolute-symlink', dest='absolute_symlink',
             default=False, action='store_true',
             help='Use absolute path symlink (default is relative path).'
         )
+        self.add_option(
+            '-S', '--no-symlink', dest="use_symlink", action="store_false")
 """)
     x = x.replace("""
-        try_symlink(option, symlink_source, symlink_target)
+        symlink_source = os.path.join("../../", pkg_basename)
 """, """
         if option.absolute_symlink:
             symlink_source = os.path.abspath(os.path.join("../../", pkg_basename))

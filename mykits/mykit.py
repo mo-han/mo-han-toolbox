@@ -107,6 +107,9 @@ cmd_mode.set_defaults(func=cmd_mode_func)
 
 def pip2pi_func():
     from mylib.pip2pi_x import libpip2pi_commands_x
+    import sys
+    argv0 = ' '.join(sys.argv[:2]) + ' --'
+    sys.argv = [argv0] + rt_data.args.argv
     libpip2pi_commands_x.pip2pi(['pip2pi'] + rt_data.args.argv)
 
 
@@ -117,6 +120,9 @@ pip2pi.add_argument('argv', nargs='*')
 
 def dir2pi_func():
     from mylib.pip2pi_x import libpip2pi_commands_x
+    import sys
+    argv0 = ' '.join(sys.argv[:2]) + ' --'
+    sys.argv = [argv0] + rt_data.args.argv
     libpip2pi_commands_x.dir2pi(['dir2pi'] + rt_data.args.argv)
 
 
