@@ -28,13 +28,13 @@ class MyKitCmd(cmd.Cmd):
 
     def precmd(self, line):
         if line:
-            cli_draw.hl()
+            cli_draw.hl(shorter=1)
         self._done = False
         return line
 
     def postcmd(self, stop, line):
         if self._done:
-            cli_draw.hl()
+            cli_draw.hl(shorter=1)
         return self._stop
 
     def emptyline(self):
