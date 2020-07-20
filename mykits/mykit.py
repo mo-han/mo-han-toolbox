@@ -105,6 +105,32 @@ cmd_mode = add_sub_parser('cmd', ['cli'], 'command line interactive mode')
 cmd_mode.set_defaults(func=cmd_mode_func)
 
 
+def pip2pi_func():
+    from mylib.pip2pi_x import libpip2pi_commands_x
+    import sys
+    argv0 = ' '.join(sys.argv[:2]) + ' --'
+    sys.argv = [argv0] + rt_data.args.argv
+    libpip2pi_commands_x.pip2pi(['pip2pi'] + rt_data.args.argv)
+
+
+pip2pi = add_sub_parser('pip2pi', [], 'modified pip2pi (from pip2pi)')
+pip2pi.set_defaults(func=pip2pi_func)
+pip2pi.add_argument('argv', nargs='*')
+
+
+def dir2pi_func():
+    from mylib.pip2pi_x import libpip2pi_commands_x
+    import sys
+    argv0 = ' '.join(sys.argv[:2]) + ' --'
+    sys.argv = [argv0] + rt_data.args.argv
+    libpip2pi_commands_x.dir2pi(['dir2pi'] + rt_data.args.argv)
+
+
+dir2pi = add_sub_parser('dir2pi', [], 'modified dir2pi (from pip2pi)')
+dir2pi.set_defaults(func=dir2pi_func)
+dir2pi.add_argument('argv', nargs='*')
+
+
 def iwara_dl_func():
     from mylib.iwara import youtube_dl_main_x_iwara
     import sys
