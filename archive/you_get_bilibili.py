@@ -247,7 +247,7 @@ class Bilibili(VideoExtractor):
                     api_url = self.bilibili_interface_api(cid, qn=qn)
                     api_content = get_content(api_url, headers=self.bilibili_headers(referer=self.url))
                     api_playinfo_data = json.loads(api_content)
-                    if api_playinfo_data.get('quality'):
+                    if api_playinfo_data.get_config('quality'):
                         playinfos.append({'code': 0, 'message': '0', 'ttl': 1, 'data': api_playinfo_data})
             if not playinfos:
                 log.w(message)
@@ -514,7 +514,7 @@ class Bilibili(VideoExtractor):
                 api_url = self.bilibili_interface_api(cid, qn=qn)
                 api_content = get_content(api_url, headers=self.bilibili_headers())
                 api_playinfo_data = json.loads(api_content)
-                if api_playinfo_data.get('quality'):
+                if api_playinfo_data.get_config('quality'):
                     playinfos.append({'code': 0, 'message': '0', 'ttl': 1, 'data': api_playinfo_data})
         if not playinfos:
             log.w(message)
