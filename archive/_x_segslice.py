@@ -69,11 +69,11 @@ class Segment:
         return self.formatter.mark
 
     @property
-    def form(self):
+    def repr(self):
         return self._form
 
 
-class BaseSegmentList:
+class BaseSegments:
     def __init__(self, whole=None, segments: list = None):
         if whole:
             self._whole = whole
@@ -93,9 +93,9 @@ class BaseSegmentList:
 
     def reunion(self):
         segments = self.segments
-        whole = segments[0].form
+        whole = segments[0].repr
         for e in segments[1:]:
-            whole += e.form
+            whole += e.repr
         self.whole = whole
 
     @property
@@ -120,8 +120,13 @@ class BaseSegmentList:
         self._segments = new
         self.reunion()
 
+    def __repr__(self):
+        head = super(BaseSegments, self).__repr__()
+        body = '\n'.join(seg.repr for seg in self.segments)
+        return '{}\n{}'.format(head, body)
 
-class BracketedSegmentList(BaseSegmentList):
+
+class BracketedSegments(BaseSegments):
     def __init__(self, brackets: tuple, whole=None, segments: list = None):
         left, right = brackets
 
@@ -131,7 +136,7 @@ class BracketedSegmentList(BaseSegmentList):
         self._left = left
         self._right = right
         self._formatter = Formatter(fmt_func, left + right)
-        super(BracketedSegmentList, self).__init__(whole=whole, segments=segments)
+        super(BracketedSegments, self).__init__(whole=whole, segments=segments)
 
     @property
     def left_mark(self):
