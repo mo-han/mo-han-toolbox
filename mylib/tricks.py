@@ -2,6 +2,7 @@
 # encoding=utf8
 
 import argparse
+import hashlib
 import importlib.util
 import logging
 import sys
@@ -391,3 +392,7 @@ def until_return_try(schedule: Iterable[dict], unified_exception=Exception):
             return task['callable'](*args, **kwargs)
         except exception:
             pass
+
+
+def hex_hash(x: bytes, algo: str = 'md5') -> str:
+    return getattr(hashlib, algo)(x).hexdigest()

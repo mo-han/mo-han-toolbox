@@ -21,6 +21,7 @@
       <w>errorlevel</w>
       <w>exhentai</w>
       <w>ffmpeg</w>
+      <w>filetype</w>
       <w>fname</w>
       <w>getch</w>
       <w>getdata</w>
@@ -45,6 +46,7 @@
       <w>ndrop</w>
       <w>opencv</w>
       <w>phash</w>
+      <w>proc</w>
       <w>pushd</w>
       <w>pyinstaller</w>
       <w>pyreadline</w>
@@ -55,6 +57,7 @@
       <w>scal</w>
       <w>scpi</w>
       <w>setdata</w>
+      <w>tagfile</w>
       <w>taglist</w>
       <w>tcpserver</w>
       <w>testbrowser</w>

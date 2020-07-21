@@ -182,7 +182,7 @@ def run_from_lines_func():
         with open(file, 'r') as fd:
             lines = fd.readlines()
     else:
-        lines = str(clipboard.get_config()).splitlines()
+        lines = str(clipboard.get()).splitlines()
     for line in lines:
         if not line:
             continue

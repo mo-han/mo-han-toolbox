@@ -131,3 +131,4 @@ def write_json_file(file, data, **kwargs):
 
 def check_file_ext(fp: str, ext_list: Iterable):
     return os.path.isfile(fp) and os.path.splitext(fp)[-1].lower() in ext_list
+
