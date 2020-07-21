@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # encoding=utf8
 import os
+import re
 import subprocess
 import hashlib
 import filetype
 
-from .os_util import pushd_context
+from .os_util import pushd_context, read_json_file
 from .tricks import get_logger, AttrTree, hex_hash
 
 from typing import Iterable
@@ -64,38 +65,41 @@ def segment(input_path: str, output_path: str,
     subprocess.run(cmd)
 
 
-class VideoSegmentsContainer:
-    tag_file_filename = 'VIDEO_SEGMENTS_CONTAINER.TAG'
-    tag_file_signature = 'Signature: ' + hex_hash(tag_file_filename.encode())
-    _cls_logger = get_logger('video-seg')
+class AVSegmentsContainer:
+    tag_filename = 'AV_SEGMENTS_CONTAINER.TAG'
+    tag_signature = 'Signature: ' + hex_hash(tag_filename.encode())
+    config_filename = 'config.json'
+    
+    _nickname = 'avsegcon'
+    _cls_logger = get_logger(_nickname)
 
     def __init__(self, path: str, work_dir: str = None, logger=_cls_logger):
         if not os.path.exists(path):
             raise ValueError("path not exist: '{}'".format(path))
-        if os.path.isfile(path) and filetype.guess(path).mime.startswith('video'):
-            path = os.path.abspath(path)
-            d, b = os.path.split(path)
-            container_name = 'video-seg'
+        if os.path.isfile(path):
+            if filetype.guess(path).mime.startswith('video'):
+                path = os.path.abspath(path)
+                d, b = os.path.split(path)
+                root_base = '.{}-{}-{}'.format(self._nickname, re.sub('\W+', '_', b), hex_hash(b.encode())[:8])
+                work_dir = work_dir or d
+                path = root = os.path.join(work_dir, root_base)
+            else:
+                raise ValueError("non-video file: '{}'".format(path))
+        if os.path.isdir(path):
+            with pushd_context(path):
+                tag_file = self.tag_filename
+                if os.path.isfile(tag_file):
+                    with open(tag_file) as f:
+                        sig = f.readline().rstrip('\r\n')
+                    if sig == self.tag_signature:
+                        j = read_json_file()
+
         self.__data = AttrTree()
         self.data.path = os.path.abspath(path)
 
     @property
     def data(self):
         return self.__data
-
-    @property
-    def path_is_video_segments_container(self):
-        path = self.data.path
-        if not os.path.isdir(path):
-            return False
-        with pushd_context(path):
-            tag_file = self.tag_file_filename
-            if os.path.isfile(tag_file):
-                with open(tag_file) as f:
-                    sig = f.readline()
-                    return sig == self.tag_file_signature.rstrip('\r\n')
-            else:
-                return False
 
     def write_source_hash(self):
         ...
