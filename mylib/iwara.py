@@ -15,16 +15,19 @@ def find_url_in_text(text: str) -> list:
     return urls
 
 
-class IwaraXFromYoutubeDL(youtube_dl.extractor.iwara.IwaraIE, metaclass=ABCMeta):
+class IwaraXYTDL(youtube_dl.extractor.iwara.IwaraIE, metaclass=ABCMeta):
     def _real_extract(self, url):
-        html = get_html_element_tree(url)
-        uploader = html.xpath('//div[@class="node-info"]//div[@class="submitted"]//a[@class="username"]')[0].text
-        data = super(IwaraXFromYoutubeDL, self)._real_extract(url)
-        data['uploader'] = uploader
-        # print('#', 'uploader:', uploader)
+        data = super(IwaraXYTDL, self)._real_extract(url)
+        try:
+            html = get_html_element_tree(url)
+            uploader = html.xpath('//div[@class="node-info"]//div[@class="submitted"]//a[@class="username"]')[0].text
+            data['uploader'] = uploader
+            # print('#', 'uploader:', uploader)
+        except IndexError:
+            pass
         return data
 
 
 def youtube_dl_main_x_iwara(argv=None):
-    youtube_dl.extractor.IwaraIE = IwaraXFromYoutubeDL
+    youtube_dl.extractor.IwaraIE = IwaraXYTDL
     youtube_dl.main(argv)
