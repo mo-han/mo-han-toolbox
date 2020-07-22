@@ -68,6 +68,10 @@ def segment(input_path: str, output_path: str = None,
     subprocess.run(cmd)
 
 
+def metadata_file(input_path:str, output_path:str):
+    cmd = cmd_header()
+
+
 class AVSegmentsContainer:
     nickname = 'avsegcon'
     logger = get_logger(nickname)
@@ -75,6 +79,7 @@ class AVSegmentsContainer:
     tag_signature = 'Signature: ' + hex_hash(tag_filename.encode())
     data_filename = 'data.json'
     param_filename = 'param.txt'
+    metadata_filename = 'metadata.txt'
     source_segments_folder = 'i'
 
     class PathError(Exception):
