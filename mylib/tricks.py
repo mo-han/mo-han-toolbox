@@ -249,11 +249,19 @@ def default_dict_tree():
 class AttrTree:
     __exclude__ = ['__data__', '__index__']
 
-    def __init__(self, data: dict = None, **kwargs):
-        if data:
-            self.__dict__.update(data)
+    def __init__(self, dict_tree_data: dict = None, **kwargs):
+        if dict_tree_data:
+            for k, v in dict_tree_data.items():
+                if isinstance(v, dict):
+                    self.__dict__[k] = AttrTree(dict_tree_data=v)
+                else:
+                    self.__dict__[k] = v
         if kwargs:
-            self.__dict__.update(kwargs)
+            for k, v in kwargs.items():
+                if isinstance(v, dict):
+                    self.__dict__[k] = AttrTree(dict_tree_data=v)
+                else:
+                    self.__dict__[k] = v
         self.__data__ = {}
         for k in self:
             self.__update_data__(k, self[k])
@@ -276,8 +284,8 @@ class AttrTree:
         for k in self.__dict__:
             v = self[k]
             if isinstance(v, AttrTree):
-                for ik in v.__map__:
-                    tmp['{}.{}'.format(k, ik)] = v.__map__[ik]
+                for vk in v.__map__:
+                    tmp['{}.{}'.format(k, vk)] = v.__map__[vk]
             elif k not in self.__exclude__:
                 tmp[k] = v
         return tmp

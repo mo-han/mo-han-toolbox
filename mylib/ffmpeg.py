@@ -6,7 +6,7 @@ import subprocess
 import hashlib
 import filetype
 
-from .os_util import pushd_context, read_json_file
+from .os_util import pushd_context, read_json_file, write_json_file
 from .tricks import get_logger, AttrTree, hex_hash
 
 from typing import Iterable
@@ -49,11 +49,14 @@ def concat(input_paths: Iterable[str], output_path: str,
     p.communicate(concat_list.encode())
 
 
-def segment(input_path: str, output_path: str,
+def segment(input_path: str, output_path: str = None,
             *output_opts,
             copy: bool = True, map_all_streams: bool = True,
             banner: bool = False, loglevel: str = 'warning',
             **output_kwargs):
+    if not output_path:
+        _, ext = os.path.splitext(input_path)
+        output_path = '%d.' + ext
     cmd = cmd_header(banner, loglevel)
     cmd_append(cmd, i=input_path, f='segment')
     if map_all_streams:
@@ -66,42 +69,63 @@ def segment(input_path: str, output_path: str,
 
 
 class AVSegmentsContainer:
+    nickname = 'avsegcon'
+    logger = get_logger(nickname)
     tag_filename = 'AV_SEGMENTS_CONTAINER.TAG'
     tag_signature = 'Signature: ' + hex_hash(tag_filename.encode())
-    config_filename = 'config.json'
-    
-    _nickname = 'avsegcon'
-    _cls_logger = get_logger(_nickname)
+    data_filename = 'data.json'
+    param_filename = 'param.txt'
+    source_segments_folder = 'i'
 
-    def __init__(self, path: str, work_dir: str = None, logger=_cls_logger):
+    class PathError(Exception):
+        pass
+
+    def __init__(self, path: str, work_dir: str = None):
+        path = os.path.abspath(path)
         if not os.path.exists(path):
-            raise ValueError("path not exist: '{}'".format(path))
+            raise self.PathError("path not exist: '{}'".format(path))
         if os.path.isfile(path):
+            input_path = path
             if filetype.guess(path).mime.startswith('video'):
-                path = os.path.abspath(path)
                 d, b = os.path.split(path)
-                root_base = '.{}-{}-{}'.format(self._nickname, re.sub('\W+', '_', b), hex_hash(b.encode())[:8])
+                root_base = '.{}-{}-{}'.format(self.nickname, re.sub(r'\W+', '_', b), hex_hash(b.encode())[:8])
                 work_dir = work_dir or d
-                path = root = os.path.join(work_dir, root_base)
+                path = self.root = os.path.join(work_dir, root_base)
+                if not os.path.isdir(path):
+                    try:
+                        os.makedirs(path, exist_ok=True)
+                    except FileExistsError:
+                        raise self.PathError("invalid container path used by file: '{}'".format(path))
+                    self.write_tag_file()
+                    with pushd_context(path):
+                        os.makedirs(self.source_segments_folder)
+                        with pushd_context(self.source_segments_folder):
+                            segment(input_path)
             else:
-                raise ValueError("non-video file: '{}'".format(path))
-        if os.path.isdir(path):
-            with pushd_context(path):
-                tag_file = self.tag_filename
-                if os.path.isfile(tag_file):
-                    with open(tag_file) as f:
-                        sig = f.readline().rstrip('\r\n')
-                    if sig == self.tag_signature:
-                        j = read_json_file()
+                raise self.PathError("non-video file: '{}'".format(path))
 
-        self.__data = AttrTree()
-        self.data.path = os.path.abspath(path)
+
+    def write_tag_file(self):
+        with pushd_context(self.root):
+            with open(self.tag_filename, 'w') as f:
+                f.write(self.tag_signature)
+
+    def read_tag_file(self) -> str or None:
+        with pushd_context(self.root):
+            try:
+                with open(self.tag_filename) as f:
+                    return f.readline().rstrip('\r\n')
+            except FileNotFoundError:
+                return None
+
+    def write_data_file(self):
+        with pushd_context(self.root):
+            write_json_file(self.data_filename, self.data.__data__, indent=0)
+
+    def read_data_file(self) -> dict or None:
+        with pushd_context(self.root):
+            return read_json_file(self.data_filename) or None
 
     @property
     def data(self):
         return self.__data
-
-    def write_source_hash(self):
-        ...
-
-    def chdir_root(self):

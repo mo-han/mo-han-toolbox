@@ -115,7 +115,7 @@ def ensure_open_file(file, mode='r', **kwargs):
     return open(file, mode, **kwargs)
 
 
-def read_json_file(file, default=None, **kwargs):
+def read_json_file(file, default=None, **kwargs) -> dict:
     with ensure_open_file(file, 'r') as jf:
         try:
             d = json.load(jf, **kwargs)
