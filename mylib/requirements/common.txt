@@ -1,5 +1,5 @@
 ffmpeg-python
-filetype
+filetype  # MIT
 gallery-dl
 gooey
 imagehash

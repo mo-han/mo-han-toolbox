@@ -194,16 +194,14 @@ class ArgParseCompactHelpFormatter(argparse.HelpFormatter):
         return ', '.join(action.option_strings) + '  ' + args_string
 
 
-def context_with_self(func):
+def decorator_self_context(func):
     """decorator: wrap a class method inside a `with self: ...` context"""
 
     def decorated_func(self, *args, **kwargs):
         with self:
-            r = func(self, *args, **kwargs)
-        return r
+            return func(self, *args, **kwargs)
 
     return decorated_func
-
 
 def getitem_default(x, index_or_key, default=None):
     try:

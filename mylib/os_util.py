@@ -105,7 +105,7 @@ def pushd_context(dest: str, ensure_dest: bool = False):
 
 def ensure_open_file(file, mode='r', **kwargs):
     parent, basename = os.path.split(file)
-    if not os.path.isdir(parent):
+    if parent and not os.path.isdir(parent):
         os.makedirs(parent, exist_ok=True)
     if not os.path.isfile(file):
         if os.path.exists(file):

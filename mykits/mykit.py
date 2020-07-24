@@ -105,6 +105,40 @@ cmd_mode = add_sub_parser('cmd', ['cli'], 'command line interactive mode')
 cmd_mode.set_defaults(func=cmd_mode_func)
 
 
+def ffprobe_func():
+    from ffmpeg import probe
+    from pprint import pprint
+    pprint(probe(rt_data.args.file))
+
+
+ffprobe = add_sub_parser('ffprobe', [], 'json format ffprobe on a file')
+ffprobe.set_defaults(func=ffprobe_func)
+ffprobe.add_argument('file')
+
+
+def file_type_func():
+    from filetype import guess
+    files = rt_data.args.file
+    if rt_data.args.print_no_file:
+        fmt = '{type}'
+    else:
+        fmt = '{type} ({file})'
+    if not files:
+        from mylib.os_util import clipboard
+        files = clipboard.get_path()
+    for f in files:
+        try:
+            print(fmt.format(type=guess(f).mime, file=f))
+        except AttributeError:
+            print('N/A')
+
+
+file_type = add_sub_parser('filetype', ['ftype', 'ft'], 'get file type by path')
+file_type.set_defaults(func=file_type_func)
+file_type.add_argument('file', nargs='*')
+file_type.add_argument('-P', '--print-no-path', action='store_true')
+
+
 def pip2pi_func():
     from mylib.pip2pi_x import libpip2pi_commands_x
     import sys
