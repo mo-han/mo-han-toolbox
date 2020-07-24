@@ -203,6 +203,18 @@ def decorator_self_context(func):
 
     return decorated_func
 
+
+def decorator_factory_with_context(context_obj):
+    def decorator_with_context(func):
+        def decorated_func(*args, **kwargs):
+            with context_obj:
+                return func(*args, **kwargs)
+
+        return decorated_func
+
+    return decorator_with_context
+
+
 def getitem_default(x, index_or_key, default=None):
     try:
         return x[index_or_key]
