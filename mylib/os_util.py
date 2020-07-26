@@ -8,6 +8,7 @@ import signal
 import sys
 import tempfile
 from contextlib import contextmanager
+from io import FileIO
 from typing import Iterable, Callable
 
 if os.name == 'nt':
@@ -136,12 +137,14 @@ def check_file_ext(fp: str, ext_list: Iterable):
 
 def fs_find_gen(root: str = None, pattern: str or Callable = None, regex: bool = False, folder: bool = False):
     root = root or '.'
+
     if folder:
         def pick(parent, folder_list, file_list):
             return parent, folder_list
     else:
         def pick(parent, folder_list, file_list):
             return parent, file_list
+
     if pattern is None:
         def match(fname):
             return True
@@ -165,3 +168,36 @@ def fs_find_gen(root: str = None, pattern: str or Callable = None, regex: bool =
         for fn in fn_list:
             if match(fn):
                 yield os.path.join(par, fn)
+
+
+class FileSlice:
+    io = None
+    file_size = None
+
+    def __init__(self, name, *args, **kwargs):
+        """refer to doc string of io.FileIO"""
+        self.io = FileIO(name, *args, **kwargs)
+        self.file_size = os.path.getsize(name)
+
+    def __len__(self):
+        return self.file_size
+
+    def __getitem__(self, item: int or slice):
+        if isinstance(item, int):
+            if item < 0:
+                item = len(self) + item
+            self.io.seek(item)
+            return self.io.read(1)
+        elif isinstance(item, slice):
+            start, stop, step = item.start, item.stop, item.step
+            if not start:
+                start = 0
+            if not stop:
+                stop = len(self)
+            if not step or step == 1:
+                self.io.seek(start)
+                return self.io.read(stop - start)
+            else:
+                return [self[i] for i in range(*item.indices(len(self)))]
+        else:
+            raise TypeError("'{}' is not int or slice".format(item))
