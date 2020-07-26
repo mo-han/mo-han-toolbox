@@ -5,8 +5,8 @@ import re
 import subprocess
 from typing import Iterable
 
-import filetype
 import ffmpeg
+import filetype
 
 from .os_util import pushd_context, write_json_file, read_json_file
 from .tricks import get_logger, hex_hash
@@ -151,11 +151,17 @@ class VideoSegmentsContainer:
             os.makedirs(self.source_segments_folder)
             with pushd_context(self.source_segments_folder):
                 self.cmd.segment(self.source_path)
+            self.write_metadata_file()
+            self.write_data()
+
+    def write_metadata_file(self):
+        with pushd_context(self.root):
             self.cmd.metadata_file(self.source_path, self.metadata_file)
             with open(self.metadata_file) as f:
                 meta_lines = f.readlines()
-            filter()
-            self.write_data()
+            meta_lines = [l for l in meta_lines if not l.startswith('encoder=')]
+            with open(self.metadata_file, 'w') as f:
+                f.writelines(meta_lines)
 
     def tag(self):
         with pushd_context(self.root):
