@@ -57,6 +57,7 @@ def rename_dialog(src: str):
     substitute = 'substitute'
     save_replace = 'save_replace'
     save_pattern = 'save_pattern'
+    add_root = 'add_root'
     title = 'Rename - {}'.format(src)
     h = .7
 
@@ -71,6 +72,7 @@ def rename_dialog(src: str):
         [sg.T(src, key='src')],
         [sg.HorizontalSeparator()],
         [sg.I(old_root, key=root),
+         sg.B('+', key=add_root, size=(3, h)),
          sg.FolderBrowse('...', target=root, initial_folder=old_root, size=(6, h))],
         [sg.I(old_fn, key=fname, focus=True),
          sg.I(old_ext, key=ext, size=(6, h))],
@@ -122,6 +124,8 @@ def rename_dialog(src: str):
 
         if event == ske.esc:
             loop = False
+        elif event == add_root:
+            os.makedirs(data[root], exist_ok=True)
         elif event == substitute:
             data[fname], data[ext] = os.path.splitext(re_sub() or data[fname] + data[ext])
             window[fname].update(data[fname])
