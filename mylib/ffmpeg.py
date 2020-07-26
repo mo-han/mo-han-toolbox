@@ -12,7 +12,7 @@ from .os_util import pushd_context, write_json_file, read_json_file
 from .tricks import get_logger, hex_hash
 
 
-class RunCommand:
+class UsefulCommand:
     exe = 'ffmpeg'
     head = [exe]
     body = []
@@ -90,7 +90,7 @@ class RunCommand:
 class VideoSegmentsContainer:
     nickname = 'vsgcon'
     logger = get_logger(nickname)
-    cmd = RunCommand(banner=False, loglevel='warning')
+    cmd = UsefulCommand(banner=False, loglevel='warning')
     tag_file = 'VIDEO_SEGMENTS_CONTAINER.TAG'
     tag_sig = 'Signature: ' + hex_hash(tag_file.encode())
     data_file = 'data.json'
