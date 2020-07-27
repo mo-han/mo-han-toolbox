@@ -29,7 +29,7 @@ HASH_FUNC = {
 IMAGE_FILE_EXT_COMMON = ['.webp', '.jpg', '.bmp', '.jpeg', '.png']
 IMAGE_FILE_EXT_ANIMATION = ['.gif', '.apng']
 DEFAULT_IMAGE_HASHTYPE = DHASH
-DEFAULT_IMAGE_HASHSIZE = 16
+DEFAULT_IMAGE_HASHSIZE = 8
 IMAGEHASH_FILENAME = 'imagehash.json'
 SIMILAR_IMAGE_FOLDER = '__similar__'
 
