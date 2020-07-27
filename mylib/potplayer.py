@@ -76,7 +76,7 @@ class PotPlayerKit:
             if time() - t0 > timeout:
                 raise TimeoutError
             self.gasp()
-            data = clipboard.get_config() or ''
+            data = clipboard.get() or ''
             lines = data.splitlines()
             line0 = getitem_default(lines, 0)
             line1 = getitem_default(lines, 1)

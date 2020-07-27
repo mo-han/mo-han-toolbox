@@ -159,11 +159,20 @@ class VideoSegmentsContainer:
                     many = ffmpeg.probe(f)
                     for s in many['streams']:
                         if s['codec_type'] == 'video' and s['disposition']['default']:
-                            few['video_bit_rate'] = s['bit_rate']
-                            few['video_codec_name'] = s['codec_name']
-                            few['video_height'] = s['height']
-                            few['video_width'] = s['width']
-                            few['video_pix_fmt'] = s['pix_fmt']
+                            try:
+                                few['bit_rate'] = s['bit_rate']
+                            except KeyError:
+                                from pymediainfo import MediaInfo
+                                for track in MediaInfo(f).tracks:
+                                    if track.track_type != 'Video':
+                                        continue
+                                    if not hasattr(track, 'default') or track.default == 'Yes':
+                                        few['bit_rate'] = track.bit_rate
+                            few['bit_depth'] = s['bits_per_raw_sample']
+                            few['codec_name'] = s['codec_name']
+                            few['height'] = s['height']
+                            few['width'] = s['width']
+                            few['pix_fmt'] = s['pix_fmt']
                             break
                     d['source'][f] = few
             write_json_file(self.data_file, d, indent=0)
