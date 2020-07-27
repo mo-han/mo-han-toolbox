@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # encoding=utf8
+import fnmatch
 import json
 import os
 import shutil
@@ -7,7 +8,8 @@ import signal
 import sys
 import tempfile
 from contextlib import contextmanager
-from typing import Iterable
+from io import FileIO
+from typing import Iterable, Callable
 
 if os.name == 'nt':
     from .nt_util import *
@@ -47,16 +49,16 @@ def legal_fs_name(x: str, repl: str or dict = None) -> str:
     return legal
 
 
-def rename_helper(old_path: str, new: str, move_to: str = None, keep_ext: bool = True):
-    old_root, old_basename = os.path.split(old_path)
+def fs_rename(src_path: str, dst_name: str, move_to: str = None, keep_ext: bool = True):
+    old_root, old_basename = os.path.split(src_path)
     _, old_ext = os.path.splitext(old_basename)
     if move_to:
-        new_path = os.path.join(move_to, new)
+        new_path = os.path.join(move_to, dst_name)
     else:
-        new_path = os.path.join(old_root, new)
+        new_path = os.path.join(old_root, dst_name)
     if keep_ext:
         new_path = new_path + old_ext
-    shutil.move(old_path, new_path)
+    shutil.move(src_path, new_path)
 
 
 def ensure_sigint_signal():
@@ -132,3 +134,70 @@ def write_json_file(file, data, **kwargs):
 def check_file_ext(fp: str, ext_list: Iterable):
     return os.path.isfile(fp) and os.path.splitext(fp)[-1].lower() in ext_list
 
+
+def fs_find_gen(root: str = None, pattern: str or Callable = None, regex: bool = False, folder: bool = False):
+    root = root or '.'
+
+    if folder:
+        def pick(parent, folder_list, file_list):
+            return parent, folder_list
+    else:
+        def pick(parent, folder_list, file_list):
+            return parent, file_list
+
+    if pattern is None:
+        def match(fname):
+            return True
+    elif isinstance(pattern, str):
+        if regex:
+            def match(fname):
+                if re.search(pattern, fn):
+                    return True
+                else:
+                    return False
+        else:
+            def match(fname):
+                return fnmatch.fnmatch(fn, pattern)
+    elif isinstance(pattern, Callable):
+        match = pattern
+    else:
+        raise ValueError("invalid pattern: '{}', should be `str` or `function(fname)`")
+
+    for t3e in os.walk(root):
+        par, fn_list = pick(*t3e)
+        for fn in fn_list:
+            if match(fn):
+                yield os.path.join(par, fn)
+
+
+class FileSlice:
+    io = None
+    file_size = None
+
+    def __init__(self, name, *args, **kwargs):
+        """refer to doc string of io.FileIO"""
+        self.io = FileIO(name, *args, **kwargs)
+        self.file_size = os.path.getsize(name)
+
+    def __len__(self):
+        return self.file_size
+
+    def __getitem__(self, item: int or slice):
+        if isinstance(item, int):
+            if item < 0:
+                item = len(self) + item
+            self.io.seek(item)
+            return self.io.read(1)
+        elif isinstance(item, slice):
+            start, stop, step = item.start, item.stop, item.step
+            if not start:
+                start = 0
+            if not stop:
+                stop = len(self)
+            if not step or step == 1:
+                self.io.seek(start)
+                return self.io.read(stop - start)
+            else:
+                return [self[i] for i in range(*item.indices(len(self)))]
+        else:
+            raise TypeError("'{}' is not int or slice".format(item))

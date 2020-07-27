@@ -1,5 +1,5 @@
 ffmpeg-python
-filetype  # MIT
+filetype  #MIT
 gallery-dl
 gooey
 imagehash
@@ -11,6 +11,7 @@ opencv-python
 pillow
 pure-python-adb
 pyautogui  # pyautogui==0.9.39
+pymediainfo  #MIT
 pyperclip
 pyreadline
 pyserial

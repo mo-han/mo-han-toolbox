@@ -8,7 +8,7 @@ import mouse
 from .gui import rename_dialog
 from .tricks import getitem_default
 from .uia import pywinauto_import
-from .os_util import clipboard, rename_helper
+from .os_util import clipboard, fs_rename
 
 pywinauto = pywinauto_import()
 App = pywinauto.Application
@@ -135,7 +135,7 @@ class PotPlayerKit:
     def rename_file(self, new: str, use_cache: bool = False, move_to: str = None, keep_ext: bool = True):
         fileinfo = self.cache['fileinfo'] if use_cache else self.get_fileinfo()
         src = fileinfo['path']
-        rename_helper(src, new, move_to=move_to, keep_ext=keep_ext)
+        fs_rename(src, new, move_to=move_to, keep_ext=keep_ext)
 
     def rename_file_gui(self, alt_tab: bool = False):
         try:
