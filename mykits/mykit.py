@@ -44,7 +44,7 @@ class MyKitCmd(cmd.Cmd):
     def default(self, line):
         try:
             argv_l = shlex.split(line)
-            args = ap.parse_args(argv_l)
+            rtd.args = args = ap.parse_args(argv_l)
             func = args.func
             if func not in [cmd_mode_func, gui_mode]:
                 self._done = func
@@ -72,8 +72,8 @@ class MyKitCmd(cmd.Cmd):
 
 
 def main():
-    from mylib.os_util import ensure_sigint_signal
-    ensure_sigint_signal()
+    # from mylib.os_util import ensure_sigint_signal
+    # ensure_sigint_signal()
     rtd.args = args = ap.parse_args()
     try:
         func = args.func

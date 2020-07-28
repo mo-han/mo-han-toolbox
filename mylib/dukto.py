@@ -17,7 +17,7 @@ def code_modify_ndrop_dukto_udp_pause(x: str):
 class DuktoServer(Transport):
 ''', '''
 class DuktoServer(Transport):
-    udp_pause = 0.001
+    udp_pause = 0.01
 ''')
     start = x.find('''def send_broadcast(self, data, port):''')
     x = x[:start] + x[start:].replace(
@@ -103,10 +103,10 @@ def copy_recv_text(file_path: str = None):
         def copy(text):
             with ensure_open_file(file_path, 'a') as f:
                 f.write(text + '\n')
-                ndrop.netdrop.logger.debug("copy text to file '{}'".format(file_path))
+                ndrop.netdrop.logger.info("Copy TEXT to file '{}'".format(file_path))
     else:
         def copy(text):
             clipboard.set(text)
-            ndrop.netdrop.logger.debug('copy text to clipboard')
+            ndrop.netdrop.logger.info('Copy TEXT to clipboard')
     while 1:
         copy(queue.get())
