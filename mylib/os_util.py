@@ -110,7 +110,13 @@ def ensure_open_file(file, mode='r', **kwargs):
     if parent and not os.path.isdir(parent):
         os.makedirs(parent, exist_ok=True)
     if not os.path.isfile(file):
-        open(file, 'a').close()
+        try:
+            open(file, 'a').close()
+        except PermissionError as e:
+            if os.path.isdir(file):
+                raise FileExistsError("a folder use path this '{}'".format(file))
+            else:
+                raise e
     return open(file, mode, **kwargs)
 
 
