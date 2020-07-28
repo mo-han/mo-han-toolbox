@@ -170,34 +170,46 @@ def fs_find_gen(root: str = None, pattern: str or Callable = None, regex: bool =
                 yield os.path.join(par, fn)
 
 
-class FileSlice:
-    io = None
+class SliceFileIO(FileIO):
     file_size = None
 
-    def __init__(self, name, *args, **kwargs):
+    def __init__(self, file, mode='r', *args, **kwargs):
         """refer to doc string of io.FileIO"""
-        self.io = FileIO(name, *args, **kwargs)
-        self.file_size = os.path.getsize(name)
+        self.file_size = os.path.getsize(file)
+        super(SliceFileIO, self).__init__(file, mode=mode, *args, **kwargs)
 
     def __len__(self):
         return self.file_size
 
-    def __getitem__(self, item: int or slice):
-        if isinstance(item, int):
-            if item < 0:
-                item = len(self) + item
-            self.io.seek(item)
-            return self.io.read(1)
-        elif isinstance(item, slice):
-            start, stop, step = item.start, item.stop, item.step
+    def __getitem__(self, key: int or slice):
+        if isinstance(key, int):
+            if key < 0:
+                key = len(self) + key
+            self.seek(key)
+            return self.read(1)
+        elif isinstance(key, slice):
+            start, stop, step = key.start, key.stop, key.step
             if not start:
                 start = 0
             if not stop:
                 stop = len(self)
             if not step or step == 1:
-                self.io.seek(start)
-                return self.io.read(stop - start)
+                self.seek(start)
+                return self.read(stop - start)
             else:
-                return [self[i] for i in range(*item.indices(len(self)))]
+                return [self[i] for i in range(*key.indices(len(self)))]
         else:
-            raise TypeError("'{}' is not int or slice".format(item))
+            raise TypeError("'{}' is not int or slice".format(key))
+
+    def __setitem__(self, key: int or slice, value: bytes):
+        if isinstance(key, int):
+            if len(value) != 1:
+                raise ValueError("must write one and only one byte")
+            if key < 0:
+                key = len(self) + key
+            self.seek(key)
+            return self.write(value)
+        elif isinstance(key, slice):
+            raise NotImplementedError
+        else:
+            raise TypeError("'{}' is not int or slice".format(key))

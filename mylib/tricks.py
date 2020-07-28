@@ -256,20 +256,21 @@ def default_dict_tree():
     return defaultdict(default_dict_tree)
 
 
-class AttrTree:
+class Attree:
+    """Attribute Tree"""
     __exclude__ = ['__data__', '__index__']
 
     def __init__(self, dict_tree_data: dict = None, **kwargs):
         if dict_tree_data:
             for k, v in dict_tree_data.items():
                 if isinstance(v, dict):
-                    self.__dict__[k] = AttrTree(dict_tree_data=v)
+                    self.__dict__[k] = Attree(dict_tree_data=v)
                 else:
                     self.__dict__[k] = v
         if kwargs:
             for k, v in kwargs.items():
                 if isinstance(v, dict):
-                    self.__dict__[k] = AttrTree(dict_tree_data=v)
+                    self.__dict__[k] = Attree(dict_tree_data=v)
                 else:
                     self.__dict__[k] = v
         self.__data__ = {}
@@ -283,7 +284,7 @@ class AttrTree:
     __call__ = __query__
 
     def __update_data__(self, key, value):
-        if isinstance(value, AttrTree):
+        if isinstance(value, Attree):
             self.__data__[key] = value.__data__
         elif key not in self.__exclude__:
             self.__data__[key] = value
@@ -293,7 +294,7 @@ class AttrTree:
         tmp = {}
         for k in self.__dict__:
             v = self[k]
-            if isinstance(v, AttrTree):
+            if isinstance(v, Attree):
                 for vk in v.__map__:
                     tmp['{}.{}'.format(k, vk)] = v.__map__[vk]
             elif k not in self.__exclude__:
@@ -317,7 +318,7 @@ class AttrTree:
         try:
             target = self.__dict__[key]
         except KeyError:
-            target = self.__dict__[key] = AttrTree()
+            target = self.__dict__[key] = Attree()
             self.__update_data__(key, target)
         if sub_path:
             return target[sub_path]
@@ -332,7 +333,7 @@ class AttrTree:
             if self_key in self:
                 self[self_key][sub_path] = value
             else:
-                target = self.__dict__[self_key] = AttrTree()
+                target = self.__dict__[self_key] = Attree()
                 self.__update_data__(self_key, target)
                 target[sub_path] = value
         else:
@@ -372,7 +373,7 @@ class AttrTree:
         half = len(table) // 2
         p1, p2, p3, p4 = 6, half - 3, half + 3, -6
         max_ = 3 * (6 + 1)
-        lines = [super(AttrTree, self).__repr__()]
+        lines = [super(Attree, self).__repr__()]
         if len(table) >= max_:
             lines.extend(['{}={}'.format(k, v) for k, v in table[:p1]])
             lines.append('...')

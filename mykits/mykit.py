@@ -2,15 +2,16 @@
 # encoding=utf8
 """This tool heavily depends on `mylib` package, make sure `mylib` folder is in the same path with this tool."""
 
-from argparse import ArgumentParser
 import cmd
 import glob
 import shlex
+import sys
+from argparse import ArgumentParser, REMAINDER
 
 from mylib.cli import SimpleCLIDisplay
-from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, AttrTree
+from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, Attree
 
-rt_data = AttrTree()
+rtd = Attree()  # runtime data
 cli_draw = SimpleCLIDisplay()
 common_parser_kwargs = {'formatter_class': ArgParseCompactHelpFormatter}
 ap = ArgumentParser(**common_parser_kwargs)
@@ -73,7 +74,7 @@ class MyKitCmd(cmd.Cmd):
 def main():
     from mylib.os_util import ensure_sigint_signal
     ensure_sigint_signal()
-    rt_data.args = args = ap.parse_args()
+    rtd.args = args = ap.parse_args()
     try:
         func = args.func
     except AttributeError:
@@ -108,18 +109,22 @@ cmd_mode.set_defaults(func=cmd_mode_func)
 def ffprobe_func():
     from ffmpeg import probe
     from pprint import pprint
-    pprint(probe(rt_data.args.file))
+    file = rtd.args.file
+    if not file:
+        from mylib.os_util import clipboard as cb
+        file = cb.get_path()[0]
+    pprint(probe(file))
 
 
 ffprobe = add_sub_parser('ffprobe', [], 'json format ffprobe on a file')
 ffprobe.set_defaults(func=ffprobe_func)
-ffprobe.add_argument('file')
+ffprobe.add_argument('file', nargs='?')
 
 
 def file_type_func():
     from filetype import guess
-    files = rt_data.args.file
-    if rt_data.args.print_no_file:
+    files = rtd.args.file
+    if rtd.args.print_no_file:
         fmt = '{type}'
     else:
         fmt = '{type} ({file})'
@@ -143,8 +148,8 @@ def pip2pi_func():
     from mylib.pip2pi_x import libpip2pi_commands_x
     import sys
     argv0 = ' '.join(sys.argv[:2]) + ' --'
-    sys.argv = [argv0] + rt_data.args.argv
-    libpip2pi_commands_x.pip2pi(['pip2pi'] + rt_data.args.argv)
+    sys.argv = [argv0] + rtd.args.argv
+    libpip2pi_commands_x.pip2pi(['pip2pi'] + rtd.args.argv)
 
 
 pip2pi = add_sub_parser('pip2pi', [], 'modified pip2pi (from pip2pi)')
@@ -156,8 +161,8 @@ def dir2pi_func():
     from mylib.pip2pi_x import libpip2pi_commands_x
     import sys
     argv0 = ' '.join(sys.argv[:2]) + ' --'
-    sys.argv = [argv0] + rt_data.args.argv
-    libpip2pi_commands_x.dir2pi(['dir2pi'] + rt_data.args.argv)
+    sys.argv = [argv0] + rtd.args.argv
+    libpip2pi_commands_x.dir2pi(['dir2pi'] + rtd.args.argv)
 
 
 dir2pi = add_sub_parser('dir2pi', [], 'modified dir2pi (from pip2pi)')
@@ -169,7 +174,7 @@ def iwara_dl_func():
     from mylib.iwara import youtube_dl_main_x_iwara
     import sys
     argv0 = ' '.join(sys.argv[:2]) + ' --'
-    sys.argv = [argv0] + rt_data.args.argv
+    sys.argv = [argv0] + rtd.args.argv
     youtube_dl_main_x_iwara()
 
 
@@ -180,7 +185,7 @@ iwara_dl.add_argument('argv', nargs='*', help='argument(s) propagated to youtube
 
 def rename_func():
     from mylib.os_util import regex_move_path
-    args = rt_data.args
+    args = rtd.args
     source = args.source
     pattern = args.pattern
     replace = args.replace
@@ -205,7 +210,7 @@ rename.add_argument('replace')
 def run_from_lines_func():
     import os
     from mylib.os_util import clipboard
-    args = rt_data.args
+    args = rtd.args
     file = args.file
     dry_run = args.dry_run
     cmd_fmt = ' '.join(args.command) or input('< ')
@@ -235,27 +240,34 @@ run_from_lines.add_argument('command', nargs='*', help='format command from this
 run_from_lines.add_argument('-D', '--dry-run', action='store_true')
 
 
-def dukto_to_clipboard_func():
-    from mylib.dukto import run, recv_text_into_clipboard, config
+def dukto_x_func():
+    from mylib.dukto import run, copy_recv_text, config_at
     from threading import Thread
     from queue import Queue
-    config(server_text_queue=Queue())
-    t = Thread(target=recv_text_into_clipboard)
+    config_at.server.text.queue = Queue()
+    t = Thread(target=copy_recv_text, args=(rtd.args.copy_recv_text_to,))
     t.daemon = True
+    ndrop_args = rtd.args.ndrop_args
+    while ndrop_args and ndrop_args[0] == '--':
+        ndrop_args.pop(0)
+    sys.argv[0] = 'mykit dukto-x'
+    sys.argv[1:] = ndrop_args
     t.start()
     run()
 
 
-dukto_to_clipboard = add_sub_parser('dukto.to.clipboard', ['dukto.cb', 'duktocb'],
-                                    'start a dukto service and put received text into clipboard')
-dukto_to_clipboard.set_defaults(func=dukto_to_clipboard_func)
+dukto_x = add_sub_parser('dukto-x', ['dukto'],
+                         'extended dukto server, remainder arguments conform to ndrop')
+dukto_x.set_defaults(func=dukto_x_func)
+dukto_x.add_argument('-t', '--copy-recv-text-to', metavar='file', nargs='?')
+dukto_x.add_argument('ndrop_args', metavar='[--] arguments for ndrop', nargs=REMAINDER)
 
 
 def url_from_clipboard():
     import pyperclip
     from mylib.text import regex_find
     from mylib.web import decode_html_char_ref
-    args = rt_data.args
+    args = rtd.args
     pattern = args.pattern
     t = pyperclip.paste()
     if pattern == 'ed2k':
@@ -300,7 +312,7 @@ clipboard_rename.set_defaults(func=clipboard_rename_func)
 
 def potplayer_rename_func():
     from mylib.potplayer import PotPlayerKit
-    args = rt_data.args
+    args = rtd.args
     PotPlayerKit().rename_file_gui(alt_tab=args.no_keep_front)
 
 
@@ -311,7 +323,7 @@ potplayer_rename.add_argument('-F', '--no-keep-front', action='store_true', help
 
 def bilibili_download_func():
     from mylib.bilibili import download_bilibili_video
-    args = rt_data.args
+    args = rtd.args
     if args.verbose:
         print(args)
     download_bilibili_video(**vars(args))
@@ -338,7 +350,7 @@ bilibili_download.add_argument('-A', '--no-moderate-audio', dest='moderate_audio
 
 def json_key_func():
     from json import load
-    args = rt_data.args
+    args = rtd.args
     with open(args.file) as f:
         d = load(f)
     print(d[args.key])
@@ -352,7 +364,7 @@ json_key.add_argument('key', help='query key')
 
 def update_json_file():
     from json import load, dump
-    args = rt_data.args
+    args = rtd.args
     old, new = args.old, args.new
     with open(old) as f:
         d = load(f)
@@ -370,7 +382,7 @@ json_update.add_argument('new', help='JSON file with new data')
 
 def view_similar_images():
     from mylib.picture import view_similar_images_auto
-    args = rt_data.args
+    args = rtd.args
     kwargs = {
         'thresholds': args.thresholds,
         'hashtype': args.hashtype,
@@ -400,7 +412,7 @@ img_sim_view.add_argument(
 
 def move_ehviewer_images():
     from mylib.ehentai import tidy_ehviewer_images
-    args = rt_data.args
+    args = rtd.args
     tidy_ehviewer_images(dry_run=args.dry_run)
 
 
