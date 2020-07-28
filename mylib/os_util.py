@@ -110,10 +110,7 @@ def ensure_open_file(file, mode='r', **kwargs):
     if parent and not os.path.isdir(parent):
         os.makedirs(parent, exist_ok=True)
     if not os.path.isfile(file):
-        if os.path.exists(file):
-            raise ValueError("non-file already exists: {}".format(file))
-        else:
-            open(file, 'w').close()
+        open(file, 'a').close()
     return open(file, mode, **kwargs)
 
 

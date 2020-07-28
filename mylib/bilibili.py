@@ -167,9 +167,9 @@ you_get.util.strings.legitimize = you_get.util.fs.legitimize
 # 那些从`you_get.util.strings`导入`legitimize`函数的模块会自动导入已被替换的修改版
 # 综上所述，下面这行可以注释掉了（已经注释掉了）
 # you_get.extractor.get_filename = you_get.common.get_filename = you_get.util.strings.get_filename
-you_get_filename = you_get.util.strings.get_filename
 # 下面则是将B站下载模块替换成修改版，所用的源码替换函数是`code_modify_you_get_bilibili`
 you_get.extractors.bilibili = modify_and_import('you_get.extractors.bilibili', code_modify_you_get_bilibili)
+you_get_filename = you_get.util.strings.get_filename
 
 
 # 搜寻av、BV、AV、bv开头的字符串或者整形数，将之变成B站视频的av号或者BV号
