@@ -30,22 +30,22 @@ def range_from_expr(expr: str) -> Generator:
         yield from range(s[0], s[-1] + 1)
 
 
-def argv_choices(choices: Dict[int or str, Iterable]) -> Decorator:
+def decorator_factory_args_choices(choices: Dict[int or str, Iterable]) -> Decorator:
     """decorator factory: force arguments of a func limited inside the given choices
 
-    :param choices: a dict which describes the value choices of arguments.
-            the key of the dict must be either the index of args or the key_str of kwargs,
-            while the value of the dict must be an iterable."""
+    :param choices: a dict which describes the choices of arguments
+        the key of the dict must be either the index of args or the key(str) of kwargs
+        the value of the dict must be an iterable."""
     err_fmt = "value of '{}' is not a valid choice in {}"
 
     def decorator(func):
         @wraps(func)
         def decorated_func(*args, **kwargs):
-            for argv_index in range(len(args)):
-                param_name = func.__code__.co_varnames[argv_index]
-                if argv_index in choices and args[argv_index] not in choices[argv_index]:
-                    raise ValueError(err_fmt.format(param_name, choices[argv_index]))
-                elif param_name in choices and args[argv_index] not in choices[param_name]:
+            for arg_index in range(len(args)):
+                param_name = func.__code__.co_varnames[arg_index]
+                if arg_index in choices and args[arg_index] not in choices[arg_index]:
+                    raise ValueError(err_fmt.format(param_name, choices[arg_index]))
+                elif param_name in choices and args[arg_index] not in choices[param_name]:
                     raise ValueError(err_fmt.format(param_name, choices[param_name]))
             for param_name in kwargs:
                 if param_name in choices and kwargs[param_name] not in choices[param_name]:
@@ -58,10 +58,10 @@ def argv_choices(choices: Dict[int or str, Iterable]) -> Decorator:
     return decorator
 
 
-def with_exception_retry(exceptions: Exception or Iterable[Exception], max_retries: int = 3,
-                         enable_default=False, default=None,
-                         exception_predicate: Callable[[Exception], bool] = None,
-                         exception_queue: TypingQueue = None) -> Decorator:
+def context_exception_retry(exceptions: Exception or Iterable[Exception], max_retries: int = 3,
+                            enable_default=False, default=None,
+                            exception_predicate: Callable[[Exception], bool] = None,
+                            exception_queue: TypingQueue = None) -> Decorator:
     """decorator factory: force a func re-running for several times on exception(s)"""
     predicate = exception_predicate or (lambda e: True)
     max_retries = int(max_retries)
@@ -204,7 +204,7 @@ def decorator_self_context(func):
     return decorated_func
 
 
-def decorator_factory_with_context(context_obj):
+def decorator_factory_with_context(context_obj) -> Decorator:
     def decorator_with_context(func):
         def decorated_func(*args, **kwargs):
             with context_obj:
@@ -260,17 +260,17 @@ class Attree:
     """Attribute Tree"""
     __exclude__ = ['__data__', '__index__']
 
-    def __init__(self, dict_tree_data: dict = None, **kwargs):
-        if dict_tree_data:
-            for k, v in dict_tree_data.items():
+    def __init__(self, tree_data: dict = None, **kwargs):
+        if tree_data:
+            for k, v in tree_data.items():
                 if isinstance(v, dict):
-                    self.__dict__[k] = Attree(dict_tree_data=v)
+                    self.__dict__[k] = Attree(tree_data=v)
                 else:
                     self.__dict__[k] = v
         if kwargs:
             for k, v in kwargs.items():
                 if isinstance(v, dict):
-                    self.__dict__[k] = Attree(dict_tree_data=v)
+                    self.__dict__[k] = Attree(tree_data=v)
                 else:
                     self.__dict__[k] = v
         self.__data__ = {}
@@ -413,5 +413,5 @@ def until_return_try(schedule: Iterable[dict], unified_exception=Exception):
             pass
 
 
-def hex_hash(x: bytes, algo: str = 'md5') -> str:
-    return getattr(hashlib, algo)(x).hexdigest()
+def hex_hash(x: bytes, algorithm: str = 'md5') -> str:
+    return getattr(hashlib, algorithm.replace('-', '_'))(x).hexdigest()

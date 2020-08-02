@@ -16,6 +16,7 @@ pyperclip
 pyreadline
 pyserial
 pysimpleguiqt
+pywinauto<0.6.7
 requests
 selenium<3.8  # phantomjs
 splinter<0.8  # phantomjs

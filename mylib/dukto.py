@@ -97,16 +97,14 @@ def run(**kwargs):
     ndrop.__main__.run()
 
 
-def copy_recv_text(file_path: str = None):
+def copy_recv_text(file: str = None, use_clipboard: bool = False):
     queue = config_at.server.text.queue
-    if file_path:
-        def copy(text):
-            with ensure_open_file(file_path, 'a') as f:
+    while 1:
+        text = queue.get()
+        if file:
+            with ensure_open_file(file, 'a') as f:
                 f.write(text + '\n')
-                ndrop.netdrop.logger.info("Copy TEXT to file '{}'".format(file_path))
-    else:
-        def copy(text):
+                ndrop.netdrop.logger.info("Copy TEXT to file '{}'".format(file))
+        if use_clipboard:
             clipboard.set(text)
             ndrop.netdrop.logger.info('Copy TEXT to clipboard')
-    while 1:
-        copy(queue.get())

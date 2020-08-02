@@ -114,7 +114,7 @@ def ensure_open_file(file, mode='r', **kwargs):
             open(file, 'a').close()
         except PermissionError as e:
             if os.path.isdir(file):
-                raise FileExistsError("a folder use path this '{}'".format(file))
+                raise FileExistsError("path used by directory '{}'".format(file))
             else:
                 raise e
     return open(file, mode, **kwargs)
@@ -173,13 +173,13 @@ def fs_find_gen(root: str = None, pattern: str or Callable = None, regex: bool =
                 yield os.path.join(par, fn)
 
 
-class SliceFileIO(FileIO):
+class SlicedFileIO(FileIO):
     file_size = None
 
     def __init__(self, file, mode='r', *args, **kwargs):
         """refer to doc string of io.FileIO"""
         self.file_size = os.path.getsize(file)
-        super(SliceFileIO, self).__init__(file, mode=mode, *args, **kwargs)
+        super(SlicedFileIO, self).__init__(file, mode=mode, *args, **kwargs)
 
     def __len__(self):
         return self.file_size

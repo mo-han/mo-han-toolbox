@@ -11,3 +11,4 @@ test/
 test.*
 *.exe
 *.log
+dukto.txt

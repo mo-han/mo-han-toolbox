@@ -245,7 +245,8 @@ def dukto_x_func():
     from threading import Thread
     from queue import Queue
     config_at.server.text.queue = Queue()
-    t = Thread(target=copy_recv_text, args=(rtd.args.copy_recv_text_to,))
+    args = rtd.args
+    t = Thread(target=copy_recv_text, args=(args.file, args.clipboard))
     t.daemon = True
     ndrop_args = rtd.args.ndrop_args
     while ndrop_args and ndrop_args[0] == '--':
@@ -259,7 +260,8 @@ def dukto_x_func():
 dukto_x = add_sub_parser('dukto-x', ['dukto'],
                          'extended dukto server, remainder arguments conform to ndrop')
 dukto_x.set_defaults(func=dukto_x_func)
-dukto_x.add_argument('-t', '--copy-recv-text-to', metavar='file', nargs='?')
+dukto_x.add_argument('-f', '--copy-text-to-file', metavar='file', dest='file')
+dukto_x.add_argument('-c', '--copy-text-to-clipboard', action='store_true', dest='clipboard')
 dukto_x.add_argument('ndrop_args', metavar='[--] arguments for ndrop', nargs=REMAINDER)
 
 
