@@ -446,16 +446,17 @@ class BilibiliAppCacheEntry:
         h = html.document_fromstring(r.text)
         return h.xpath('//meta[@name="author"]')[0].attrib['content']
 
-    # def get_uploader(self):
-    #     url = 'https://www.bilibili.com/video/av{}/'.format(self.id)
-    #     self.browser.visit(url)
-    #     meta_author = self.browser.find_by_xpath('//meta[@name="author"]').first.outer_html
-    #     author = meta_author.split('content="')[-1].split('"')[0]
-    #     if author:
-    #         return author
-    #     else:
-    #         # raise BilibiliError('No author found.')
-    #         return ''
+    def get_bvid(self):
+        url = 'https://api.bilibili.com/x/web-interface/archive/stat?aid={}'.format(self.id)
+        param = {}
+        if self.cookies:
+            param['cookies'] = self.cookies
+        r = requests.get(url, **param)
+        j = r.json()
+        if j['code'] == 0 and j['data']:
+            return j['data']['bvid']
+        else:
+            return None
 
     def extract_part(self):
         print('+ {}'.format(self.folder))
@@ -483,7 +484,12 @@ class BilibiliAppCacheEntry:
         # except BilibiliError:
         #     uploader = ''
         uploader = '[{}]'.format(self.get_uploader() or 'NA')
-        output = os.path.join(self.work_dir, '{} [av{}]{}'.format(title, self.id, uploader))
+        bvid = self.get_bvid()
+        if bvid:
+            bv_label = '[{}]'.format(bvid)
+        else:
+            bv_label = ''
+        output = os.path.join(self.work_dir, '{} {}[av{}]{}'.format(title, bv_label, self.id, uploader))
         if len(self.part_list) >= 2:
             part_title = safe_basename(self._current_meta['page_data']['part'])
             output += '{}-{}.mp4'.format(self._current_part, part_title)
