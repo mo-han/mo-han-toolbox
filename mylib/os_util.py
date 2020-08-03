@@ -154,13 +154,13 @@ def fs_find_gen(root: str = None, pattern: str or Callable = None, regex: bool =
     elif isinstance(pattern, str):
         if regex:
             def match(fname):
-                if re.search(pattern, fn):
+                if re.search(pattern, fname):
                     return True
                 else:
                     return False
         else:
             def match(fname):
-                return fnmatch.fnmatch(fn, pattern)
+                return fnmatch.fnmatch(fname, pattern)
     elif isinstance(pattern, Callable):
         match = pattern
     else:

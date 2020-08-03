@@ -10,9 +10,16 @@ from .tricks import modify_and_import, Attree
 
 config_at = Attree()
 config_at.server.text.queue = None
+config_at.server.echo = False
 
 
-def code_modify_ndrop_dukto_udp_pause(x: str):
+def echo_after_recv(client_address):
+    if config_at.server.echo:
+        client = ndrop.netdrop.NetDropClient(client_address[0], mode='dukto')
+        client.send_text('# DUKTO.ECHO.RECV')
+
+
+def code_modify_ndrop_dukto(x: str):
     x = x.replace('''
 class DuktoServer(Transport):
 ''', '''
@@ -22,16 +29,28 @@ class DuktoServer(Transport):
     start = x.find('''def send_broadcast(self, data, port):''')
     x = x[:start] + x[start:].replace(
         '''.sendto(data, (broadcast, port))''',
-        '''.sendto(data, (broadcast, port));''' +
-        '''logger.debug('Pause {}s after UDP to {}:{}'.format(self.udp_pause, broadcast, port));''' +
+        '''.sendto(data, (broadcast, port));'''
+        '''logger.debug('Pause {}s after UDP to {}:{}'.format(self.udp_pause, broadcast, port));'''
         '''time.sleep(self.udp_pause)'''
     )
     start = x.find('''def say_hello(self, dest):''')
     x = x[:start] + x[start:].replace(
         '''.sendto(data, dest)''',
-        '''.sendto(data, dest);''' +
-        '''logger.debug('Pause {}s after UDP to {}:{}'.format(self.udp_pause, *dest));''' +
+        '''.sendto(data, dest);'''
+        '''logger.debug('Pause {}s after UDP to {}:{}'.format(self.udp_pause, *dest));'''
         '''time.sleep(self.udp_pause)'''
+    )
+    start = x.find('class TCPHandler(socketserver.BaseRequestHandler):')
+    x = x[:start] + x[start:].replace(
+        'self._packet.unpack_tcp(self.server.agent, self._recv_buff)',
+        'self._packet.client_address = self.client_address;'
+        'self._packet.unpack_tcp(self.server.agent, self._recv_buff)'
+    )
+    start = x.find('def unpack_tcp(self, agent, data):')
+    x = x[:start] + x[start:].replace(
+        'agent.recv_finish_file(self._filename)',
+        'agent.recv_finish_file(self._filename);'
+        'echo_after_recv(self.client_address)'
     )
     return x
 
@@ -42,11 +61,11 @@ class NetDropServerX(ndrop.netdrop.NetDropServer):
         data = self._file_io.getvalue()
         text = data.decode('utf-8')
         logger.info('TEXT: %s' % text)
+        self._file_io.close()
+        self._file_io = None
         queue = config_at.server.text.queue
         if queue:
             queue.put(text)
-        self._file_io.close()
-        self._file_io = None
 
     def get_nodes(self):
         nodes = []
@@ -85,7 +104,8 @@ def get_system_symbol(system):
     return symbols.get(system.lower(), system)
 
 
-ndrop.netdrop.dukto = modify_and_import('ndrop.dukto', code_modify_ndrop_dukto_udp_pause)
+ndrop.netdrop.dukto = modify_and_import('ndrop.dukto', code_modify_ndrop_dukto)
+ndrop.netdrop.dukto.echo_after_recv = echo_after_recv
 ndrop.netdrop.dukto.get_system_symbol = ndrop.netdrop.nitroshare.get_system_symbol = get_system_symbol
 ndrop.__main__.NetDropServer = NetDropServerX
 ndrop.__main__.NetDropShell = NetDropShellX
