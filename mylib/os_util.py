@@ -3,13 +3,14 @@
 import fnmatch
 import json
 import os
+import shlex
 import shutil
 import signal
 import sys
 import tempfile
 from contextlib import contextmanager
 from io import FileIO
-from typing import Iterable, Callable
+from typing import Iterable, Callable, Generator
 
 if os.name == 'nt':
     from .nt_util import *
@@ -49,16 +50,16 @@ def legal_fs_name(x: str, repl: str or dict = None) -> str:
     return legal
 
 
-def fs_rename(src_path: str, dst_name: str, move_to: str = None, keep_ext: bool = True):
-    old_root, old_basename = os.path.split(src_path)
-    _, old_ext = os.path.splitext(old_basename)
+def fs_rename(src_path: str, dst_name: str, move_to: str = None, add_src_ext: bool = True):
+    src_root, src_basename = os.path.split(src_path)
+    _, src_ext = os.path.splitext(src_basename)
     if move_to:
-        new_path = os.path.join(move_to, dst_name)
+        dst_path = os.path.join(move_to, dst_name)
     else:
-        new_path = os.path.join(old_root, dst_name)
-    if keep_ext:
-        new_path = new_path + old_ext
-    shutil.move(src_path, new_path)
+        dst_path = os.path.join(src_root, dst_name)
+    if add_src_ext:
+        dst_path = dst_path + src_ext
+    shutil.move(src_path, dst_path)
 
 
 def ensure_sigint_signal():
@@ -80,6 +81,17 @@ def real_join_path(path, *paths, expanduser: bool = True, expandvars: bool = Tru
     return os.path.realpath(os.path.join(path, *paths))
 
 
+def relative_join_path(path, *paths, start_path: str = None, expanduser: bool = True, expandvars: bool = True):
+    """relpath(join(...))"""
+    if expanduser:
+        path = os.path.expanduser(path)
+        paths = [os.path.expanduser(p) for p in paths]
+    if expandvars:
+        path = os.path.expandvars(path)
+        paths = [os.path.expandvars(p) for p in paths]
+    return os.path.relpath(os.path.join(path, *paths), start=start_path)
+
+
 def ensure_chdir(dest: str):
     if not os.path.isdir(dest):
         os.makedirs(dest, exist_ok=True)
@@ -94,34 +106,44 @@ def pushd_context(dest: str, ensure_dest: bool = False):
         cd = os.chdir
     prev = os.getcwd()
     cd(dest)
-    to_raise = None
+    saved_error = None
     try:
         yield
     except Exception as e:
-        to_raise = e
+        saved_error = e
     finally:
         cd(prev)
-        if to_raise:
-            raise to_raise
+        if saved_error:
+            raise saved_error
 
 
-def ensure_open_file(file, mode='r', **kwargs):
-    parent, basename = os.path.split(file)
+def ensure_open_file(filepath, mode='r', **kwargs):
+    parent, basename = os.path.split(filepath)
     if parent and not os.path.isdir(parent):
         os.makedirs(parent, exist_ok=True)
-    if not os.path.isfile(file):
+    if not os.path.isfile(filepath):
         try:
-            open(file, 'a').close()
+            open(filepath, 'a').close()
         except PermissionError as e:
-            if os.path.isdir(file):
-                raise FileExistsError("path used by directory '{}'".format(file))
+            if os.path.isdir(filepath):
+                raise FileExistsError("path used by directory '{}'".format(filepath))
             else:
                 raise e
-    return open(file, mode, **kwargs)
+    return open(filepath, mode, **kwargs)
 
 
-def read_json_file(file, default=None, **kwargs) -> dict:
-    with ensure_open_file(file, 'r') as jf:
+def touch(filepath):
+    try:
+        os.utime(filepath)
+    except OSError:
+        open(filepath, 'a').close()
+
+
+def read_json_file(file, default=None, utf8: bool = True, **kwargs) -> dict:
+    file_kwargs = {}
+    if utf8:
+        file_kwargs['encoding'] = 'utf8'
+    with ensure_open_file(file, 'r', **file_kwargs) as jf:
         try:
             d = json.load(jf, **kwargs)
         except json.decoder.JSONDecodeError:
@@ -129,24 +151,39 @@ def read_json_file(file, default=None, **kwargs) -> dict:
     return d
 
 
-def write_json_file(file, data, **kwargs):
-    with ensure_open_file(file, 'w') as jf:
-        json.dump(data, jf, **kwargs)
+def write_json_file(file, data, utf8: bool = True, **kwargs):
+    file_kwargs = {}
+    if utf8:
+        file_kwargs['encoding'] = 'utf8'
+    with ensure_open_file(file, 'w', **file_kwargs) as jf:
+        json.dump(data, jf, ensure_ascii=not utf8, **kwargs)
 
 
 def check_file_ext(fp: str, ext_list: Iterable):
     return os.path.isfile(fp) and os.path.splitext(fp)[-1].lower() in ext_list
 
 
-def fs_find_gen(root: str = None, pattern: str or Callable = None, regex: bool = False, folder: bool = False):
-    root = root or '.'
-
-    if folder:
-        def pick(parent, folder_list, file_list):
+def fs_find_iter(pattern: str or Callable = None, root: str = '.',
+                 regex: bool = False, find_dir_instead_of_file: bool = False,
+                 recursive: bool = True, strip_root: bool = True) -> Generator:
+    if find_dir_instead_of_file:
+        def pick_os_walk_tuple(parent, folder_list, file_list):
             return parent, folder_list
+
+        def check(x):
+            return os.path.isdir(x)
     else:
-        def pick(parent, folder_list, file_list):
+        def pick_os_walk_tuple(parent, folder_list, file_list):
             return parent, file_list
+
+        def check(x):
+            return os.path.isfile(x)
+
+    if strip_root:
+        def join_path(path, *paths):
+            return relative_join_path(path, *paths, start_path=root)
+    else:
+        join_path = os.path.join
 
     if pattern is None:
         def match(fname):
@@ -166,11 +203,17 @@ def fs_find_gen(root: str = None, pattern: str or Callable = None, regex: bool =
     else:
         raise ValueError("invalid pattern: '{}', should be `str` or `function(fname)`")
 
-    for t3e in os.walk(root):
-        par, fn_list = pick(*t3e)
-        for fn in fn_list:
-            if match(fn):
-                yield os.path.join(par, fn)
+    if recursive:
+        for t3e in os.walk(root):
+            par, fn_list = pick_os_walk_tuple(*t3e)
+            for fn in fn_list:
+                if match(fn):
+                    yield join_path(par, fn)
+    else:
+        for basename in os.listdir(root):
+            path = join_path(root, basename)
+            if check(path) and match(basename):
+                yield path
 
 
 class SlicedFileIO(FileIO):
@@ -216,3 +259,21 @@ class SlicedFileIO(FileIO):
             raise NotImplementedError
         else:
             raise TypeError("'{}' is not int or slice".format(key))
+
+
+def shlex_join(split):
+    try:
+        return shlex.join(split)
+    except AttributeError:
+        return ' '.join([shlex.quote(s) for s in split])
+
+
+def shlex_double_quotes_join(split):
+    def quote_one(s):
+        t = shlex.quote(s)
+        if t.startswith("'") and t.endswith("'"):
+            return '"{}"'.format(s)
+        else:
+            return s
+
+    return ' '.join([quote_one(s) for s in split])

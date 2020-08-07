@@ -2,7 +2,7 @@
 # encoding=utf8
 
 import re
-from typing import Iterable
+from typing import Iterable, Iterator
 from .tricks import dedup_list, decorator_factory_args_choices
 
 
@@ -18,7 +18,7 @@ def regex_find(pattern, source, dedup: bool = False):
 
 
 @decorator_factory_args_choices({'logic': ('and', '&', 'AND', 'or', '|', 'OR')})
-def simple_partial_query(pattern_list: Iterable[str], source_pool: Iterable[str],
+def simple_partial_query(pattern_list: Iterable[str], source_pool: Iterator[str],
                          logic: str = 'and',
                          ignore_case: bool = True, enable_regex: bool = False):
     if not enable_regex:

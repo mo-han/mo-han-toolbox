@@ -6,9 +6,9 @@ import ndrop.netdrop
 import ndrop.shell
 
 from .os_util import clipboard, ensure_open_file
-from .tricks import modify_and_import, Attree
+from .tricks import modify_and_import, Attreebute
 
-config_at = Attree()
+config_at = Attreebute()
 config_at.server.text.queue = None
 config_at.server.echo = False
 

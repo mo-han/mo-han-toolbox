@@ -8,7 +8,7 @@ import logging
 import sys
 from collections import defaultdict
 from functools import wraps
-from typing import Dict, Iterable, Callable, Generator
+from typing import Dict, Iterable, Callable, Generator, Tuple
 
 from .misc import LOG_FMT, LOG_DTF
 from .number import int_is_power_of_2
@@ -256,26 +256,37 @@ def default_dict_tree():
     return defaultdict(default_dict_tree)
 
 
-class Attree:
+class Attreebute:
     """Attribute Tree"""
     __exclude__ = ['__data__', '__index__']
 
-    def __init__(self, tree_data: dict = None, **kwargs):
-        if tree_data:
-            for k, v in tree_data.items():
-                if isinstance(v, dict):
-                    self.__dict__[k] = Attree(tree_data=v)
-                else:
-                    self.__dict__[k] = v
-        if kwargs:
-            for k, v in kwargs.items():
-                if isinstance(v, dict):
-                    self.__dict__[k] = Attree(tree_data=v)
-                else:
-                    self.__dict__[k] = v
+    def __init__(self, tree_data: dict = None, json_filepath: str = None, **kwargs):
         self.__data__ = {}
-        for k in self:
+        if tree_data:
+            self.__from_dict__(tree_data)
+        if json_filepath:
+            self.__from_json__(json_filepath)
+        if kwargs:
+            self.__from_dict__(kwargs)
+
+    def __from_dict__(self, tree_data: dict):
+        for k, v in tree_data.items():
+            if isinstance(v, dict):
+                self.__dict__[k] = Attreebute(tree_data=v)
+            else:
+                self.__dict__[k] = v
             self.__update_data__(k, self[k])
+
+    def __from_json__(self, json_filepath: str):
+        from mylib.os_util import read_json_file
+        self.__from_dict__(read_json_file(json_filepath))
+
+    def __to_dict__(self):
+        return self.__data__
+
+    def __to_json__(self, json_filepath: str):
+        from mylib.os_util import write_json_file
+        write_json_file(json_filepath, self.__data__, indent=4)
 
     def __query__(self, *args, **kwargs):
         if not args and not kwargs:
@@ -284,7 +295,7 @@ class Attree:
     __call__ = __query__
 
     def __update_data__(self, key, value):
-        if isinstance(value, Attree):
+        if isinstance(value, Attreebute):
             self.__data__[key] = value.__data__
         elif key not in self.__exclude__:
             self.__data__[key] = value
@@ -294,7 +305,7 @@ class Attree:
         tmp = {}
         for k in self.__dict__:
             v = self[k]
-            if isinstance(v, Attree):
+            if isinstance(v, Attreebute):
                 for vk in v.__map__:
                     tmp['{}.{}'.format(k, vk)] = v.__map__[vk]
             elif k not in self.__exclude__:
@@ -318,7 +329,7 @@ class Attree:
         try:
             target = self.__dict__[key]
         except KeyError:
-            target = self.__dict__[key] = Attree()
+            target = self.__dict__[key] = Attreebute()
             self.__update_data__(key, target)
         if sub_path:
             return target[sub_path]
@@ -333,7 +344,7 @@ class Attree:
             if self_key in self:
                 self[self_key][sub_path] = value
             else:
-                target = self.__dict__[self_key] = Attree()
+                target = self.__dict__[self_key] = Attreebute()
                 self.__update_data__(self_key, target)
                 target[sub_path] = value
         else:
@@ -371,15 +382,15 @@ class Attree:
     def __repr__(self):
         table = self.__table__
         half = len(table) // 2
-        p1, p2, p3, p4 = 6, half - 3, half + 3, -6
+        head_end, mid_begin, mid_end, tail_begin = 6, half - 3, half + 3, -6
         max_ = 3 * (6 + 1)
-        lines = [super(Attree, self).__repr__()]
+        lines = [super(Attreebute, self).__repr__()]
         if len(table) >= max_:
-            lines.extend(['{}={}'.format(k, v) for k, v in table[:p1]])
+            lines.extend(['{}={}'.format(k, v) for k, v in table[:head_end]])
             lines.append('...')
-            lines.extend(['{}={}'.format(k, v) for k, v in table[p2:p3]])
+            lines.extend(['{}={}'.format(k, v) for k, v in table[mid_begin:mid_end]])
             lines.append('...')
-            lines.extend(['{}={}'.format(k, v) for k, v in table[p4:]])
+            lines.extend(['{}={}'.format(k, v) for k, v in table[tail_begin:]])
         else:
             lines.extend(['{}={}'.format(k, v) for k, v in table])
         return '\n'.join(lines)
@@ -413,5 +424,62 @@ def until_return_try(schedule: Iterable[dict], unified_exception=Exception):
             pass
 
 
-def hex_hash(x: bytes, algorithm: str = 'md5') -> str:
-    return getattr(hashlib, algorithm.replace('-', '_'))(x).hexdigest()
+def hex_hash(data: bytes, algorithm: str = 'md5') -> str:
+    return getattr(hashlib, algorithm.replace('-', '_'))(data).hexdigest()
+
+
+def get_args_kwargs(*args, **kwargs) -> Tuple[list, dict]:
+    return list(args), kwargs
+
+
+class WrappedList(list):
+    pass
+
+
+def seconds_from_colon_time(t: str) -> float:
+    def greater_0(x):
+        return x >= 0
+
+    def less_60(x):
+        return x < 60
+
+    def less_24(x):
+        return x < 24
+
+    t_value_error = ValueError(t)
+    parts = t.split(':')
+    last = parts[-1]
+    before_last = parts[:-1]
+    after_1st = parts[1:]
+    after_2nd = parts[2:]
+    n = len(parts)
+
+    if 4 < n < 1:
+        raise t_value_error
+    try:
+        float(last)
+        [int(p) for p in before_last]
+    except ValueError:
+        raise t_value_error
+    if not all([greater_0(float(x)) for x in after_1st]):
+        raise t_value_error
+    sign = -1 if t.startswith('-') else 1
+
+    if n == 1:
+        total = float(t)
+    elif n == 4:
+        if not all([less_60(float(x)) for x in after_2nd]):
+            raise t_value_error
+        d, h, m = [abs(int(x)) for x in before_last]
+        if not less_24(h):
+            raise t_value_error
+        s = float(last)
+        total = (d * 24 + h) * 3600 + m * 60 + s
+    else:
+        if not all([less_60(float(x)) for x in after_1st]):
+            raise t_value_error
+        total = 0
+        for x in parts:
+            total = total * 60 + abs(float(x))
+
+    return total if total == 0 else total * sign

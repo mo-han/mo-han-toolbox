@@ -135,7 +135,7 @@ class PotPlayerKit:
     def rename_file(self, new: str, use_cache: bool = False, move_to: str = None, keep_ext: bool = True):
         fileinfo = self.cache['fileinfo'] if use_cache else self.get_fileinfo()
         src = fileinfo['path']
-        fs_rename(src, new, move_to=move_to, keep_ext=keep_ext)
+        fs_rename(src, new, move_to=move_to, add_src_ext=keep_ext)
 
     def rename_file_gui(self, alt_tab: bool = False):
         try:
