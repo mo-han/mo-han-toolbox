@@ -11,8 +11,9 @@ import ffmpeg
 import filetype
 
 from .os_util import pushd_context, write_json_file, read_json_file, SlicedFileIO, ensure_open_file, fs_find_iter, \
-    fs_rename, touch, shlex_join, shlex_double_quotes_join
-from .tricks import get_logger, hex_hash, decorator_factory_args_choices, remove_from_list, seconds_from_colon_time
+    fs_rename, touch, shlex_double_quotes_join
+from .tricks import get_logger, hex_hash, decorator_factory_args_choices, remove_from_list, seconds_from_colon_time, \
+    dedup_list
 
 TXT_SEGMENT = 'segment'
 TXT_NON_SEGMENT = 'non segment'
@@ -194,7 +195,8 @@ class FFmpegCommandCaller:
             return (p.stdout or b'').decode(), (p.stderr or b'').decode()
 
     @decorator_choose_map_preset
-    def concat(self, input_paths: Iterable[str] or Iterator[str], output_path: str, *output_opts,
+    def concat(self, input_paths: Iterable[str] or Iterator[str], output_path: str,
+               output_args: Iterable[str] or Iterator[str] = None, *,
                input_as_file: bool = False, extra_inputs: Iterable or Iterator = (),
                copy: bool = True, map_preset: str = None, **output_kwargs):
         self.reset_args()
@@ -216,7 +218,9 @@ class FFmpegCommandCaller:
             self.add_args(c='copy')
             self.add_args(map=range(input_count))
         self.set_map_preset(map_preset)
-        self.add_args(*output_opts, **output_kwargs)
+        if output_args:
+            self.add_args(*output_args)
+        self.add_args(**output_kwargs)
         self.add_args(output_path)
         if concat_list:
             return self.proc_comm(concat_list.encode())
@@ -224,7 +228,8 @@ class FFmpegCommandCaller:
             return self.proc_run()
 
     @decorator_choose_map_preset
-    def segment(self, input_path: str, output_path: str = None, *output_opts,
+    def segment(self, input_path: str, output_path: str = None,
+                output_args: Iterable[str] or Iterator[str] = None, *,
                 copy: bool = True, map_preset: str = None, **output_kwargs):
         self.reset_args()
         if not output_path:
@@ -233,7 +238,9 @@ class FFmpegCommandCaller:
         if copy:
             self.add_args(c='copy')
         self.set_map_preset(map_preset)
-        self.add_args(*output_opts, **output_kwargs)
+        if output_args:
+            self.add_args(*output_args)
+        self.add_args(**output_kwargs)
         self.add_args(output_path)
         return self.proc_run()
 
@@ -245,27 +252,23 @@ class FFmpegCommandCaller:
 
     @decorator_choose_map_preset
     def convert(self, input_paths: Iterable[str] or Iterator[str], output_path: str,
-                *output_opts,
-                start: float or int or str = 0, end: float or int or str = None,
+                output_args: Iterable[str] or Iterator[str] = None, *,
+                start: float or int or str = 0, end: float or int or str = 0,
                 copy: bool = False, map_preset: str = None,
                 **output_kwargs):
         if isinstance(start, str):
             start = seconds_from_colon_time(start)
         if isinstance(end, str):
             end = seconds_from_colon_time(end)
-        print(start, end)
         if start < 0:
             start = max([get_real_duration(f) for f in input_paths]) + start
         if end < 0:
             end = max([get_real_duration(f) for f in input_paths]) + end
         self.reset_args()
-        print(start, end)
 
         if start:
             self.add_args(ss=start)
-
         self.add_args(i=input_paths)
-
         if end:
             self.add_args(t=end - start if start else end)
 
@@ -274,10 +277,10 @@ class FFmpegCommandCaller:
             self.add_args(c='copy')
 
         self.set_map_preset(map_preset)
-
-        self.add_args(*output_opts, **output_kwargs)
+        if output_args:
+            self.add_args(*output_args)
+        self.add_args(**output_kwargs)
         self.add_args(output_path)
-
         return self.proc_run()
 
 
@@ -289,10 +292,12 @@ class VideoSegmentsContainer:
     tag_sig = 'Signature: ' + hex_hash(tag_file.encode())
     picture_file = 'p.mp4'
     non_visual_file = 'nv.mkv'
+    test_json = 'test.json'
     metadata_file = 'metadata.txt'
     concat_list_file = 'concat.txt'
-    done_suffix = '.done'
-    lock_suffix = '.lock'
+    suffix_done = '.DONE'
+    suffix_lock = '.LOCK'
+    suffix_delete = '.DELETE'
     segment_filename_regex_pattern = r'^\d+\.[^.]+'
     input_filename_prefix = 'i='
     input_json = 'i.json'
@@ -310,6 +315,15 @@ class VideoSegmentsContainer:
         pass
 
     class ContainerError(Exception):
+        pass
+
+    class SegmentLockedError(Exception):
+        pass
+
+    class SegmentNotDoneError(Exception):
+        pass
+
+    class SegmentDeleteRequest(Exception):
         pass
 
     def __repr__(self):
@@ -363,7 +377,7 @@ class VideoSegmentsContainer:
         with pushd_context(self.root):
             prefix = self.input_filename_prefix
             for f in fs_find_iter(pattern=prefix + '*', recursive=False, strip_root=True):
-                fs_rename(f, prefix + fn, add_src_ext=False)
+                fs_rename(f, prefix + fn, append_src_ext=False)
                 break
             else:
                 ensure_open_file(prefix + fn)
@@ -397,12 +411,12 @@ class VideoSegmentsContainer:
                 with pushd_context(seg_folder):
                     self.ffmpeg_cmd.segment(i_file, segment_output, map='0:{}'.format(index))
             try:
-                self.ffmpeg_cmd.extract(i_file, self.input_picture, map_preset=TXT_ONLY_PICTURE)
+                self.ffmpeg_cmd.convert(i_file, self.input_picture, copy=True, map_preset=TXT_ONLY_PICTURE)
                 d[TXT_NON_SEGMENT][self.picture_file] = {}
             except self.ffmpeg_cmd.FFmpegError:
                 pass
             try:
-                self.ffmpeg_cmd.extract(i_file, self.input_non_visual, map_preset=TXT_ALL, map='-0:v')
+                self.ffmpeg_cmd.convert(i_file, self.input_non_visual, copy=True, map_preset=TXT_ALL, map='-0:v')
                 d[TXT_NON_SEGMENT][self.non_visual_file] = {}
             except self.ffmpeg_cmd.FFmpegError:
                 pass
@@ -534,81 +548,158 @@ class VideoSegmentsContainer:
     def output(self):
         if not self.read_output_json():
             raise self.ContainerError('no output config')
-        if self.get_locked_segments_no_prefix() or \
-                len(self.get_done_segments_no_prefix()) != len(self.get_all_segments_no_prefix()):
+        if self.get_lock_segments() or \
+                len(self.get_done_segments()) != len(self.get_all_segments()):
             raise self.ContainerError('not all segments converted')
 
-    def check_file_has_lock(self, filepath):
-        return os.path.isfile(filepath + self.lock_suffix)
+    def file_has_lock(self, filepath):
+        return os.path.isfile(filepath + self.suffix_lock)
 
-    def check_file_has_done(self, filepath):
-        return os.path.isfile(filepath + self.done_suffix)
+    def file_has_done(self, filepath):
+        return os.path.isfile(filepath + self.suffix_done)
 
-    def get_all_segments_no_prefix(self):
+    def file_has_delete(self, filepath):
+        return os.path.isfile(filepath + self.suffix_delete)
+
+    def get_all_segments(self):
         segments = []
-        for i, d in self.input_data[TXT_SEGMENT]:
-            segments.extend(os.path.join(i, f) for f in d)
+        for i, d in self.input_data[TXT_SEGMENT].items():
+            segments.extend((i, f) for f in d)
         return segments
 
-    def get_untouched_segments_no_prefix(self):
-        all_segments = self.get_all_segments_no_prefix()
-        lock_segments = self.get_locked_segments_no_prefix()
-        done_segments = self.get_done_segments_no_prefix()
+    def get_untouched_segments(self):
+        all_segments = self.get_all_segments()
+        lock_segments = self.get_lock_segments()
+        done_segments = self.get_done_segments()
         return remove_from_list(remove_from_list(all_segments, lock_segments), done_segments)
 
-    def get_locked_segments_no_prefix(self):
+    def get_lock_segments(self):
         segments = []
         prefix = self.output_prefix
         with pushd_context(self.root):
             for index in self.input_data[TXT_SEGMENT]:
                 with pushd_context(prefix + index):
-                    segments.extend([os.path.join(index, f.rstrip(self.lock_suffix)) for f in
-                                     fs_find_iter('*' + self.lock_suffix)])
+                    segments.extend([(index, f.rstrip(self.suffix_lock)) for f in
+                                     fs_find_iter('*' + self.suffix_lock)])
         return segments
 
-    def get_done_segments_no_prefix(self):
+    def get_done_segments(self):
         segments = []
         prefix = self.output_prefix
         with pushd_context(self.root):
             for index in self.input_data[TXT_SEGMENT]:
                 with pushd_context(prefix + index):
-                    segments.extend([os.path.join(index, f.rstrip(self.lock_suffix)) for f in
-                                     fs_find_iter('*' + self.done_suffix)])
+                    segments.extend([(index, f.rstrip(self.suffix_done)) for f in
+                                     fs_find_iter('*' + self.suffix_done)])
         return segments
 
-    def output_segments_no_prefix(self):
-        segments_no_prefix = self.get_untouched_segments_no_prefix()
-        while segments_no_prefix:
-            seg_path_no_prefix = random.choice(segments_no_prefix)
-            self.convert_single_video_segment(seg_path_no_prefix)
-            segments_no_prefix = self.get_untouched_segments_no_prefix()
+    def output_segments(self):
+        segments = self.get_untouched_segments()
+        while segments:
+            stream_id, segment_file = random.choice(segments)
+            self.convert_one_segment(stream_id, segment_file)
+            segments = self.get_untouched_segments()
 
-    @staticmethod
-    def random_sleep():
-        sleep(random.uniform(0.3, 0.7))
+    def nap(self):
+        t = round(random.uniform(0.2, 0.4), 3)
+        self.logger.debug('sleep {}s'.format(t))
+        sleep(t)
 
-    def convert_single_video_segment(self, segment_path_no_prefix):
+    def file_tag_lock(self, filepath):
+        if self.file_has_lock(filepath) or self.file_has_done(filepath):
+            return
+        else:
+            touch(filepath + self.suffix_lock)
+
+    def file_tag_unlock(self, filepath):
+        if self.file_has_lock(filepath):
+            os.remove(filepath + self.suffix_lock)
+
+    def file_tag_done(self, filepath):
+        if self.file_has_done(filepath):
+            return
+        if self.file_has_lock(filepath):
+            fs_rename(filepath + self.suffix_lock, filepath + self.suffix_done,
+                      in_src_parent=False, append_src_ext=False)
+
+    def file_tag_delete(self, filepath):
+        touch(filepath + self.suffix_delete)
+
+    def convert_one_segment(self, stream_id, segment_file, overwrite=False) -> dict:
+        segment_path_no_prefix = os.path.join(stream_id, segment_file)
         i_seg = self.input_prefix + segment_path_no_prefix
         o_seg = self.output_prefix + segment_path_no_prefix
-        o_seg_lock = o_seg + self.lock_suffix
-        o_seg_done = o_seg + self.done_suffix
         args = self.output_data[TXT_SEGMENT]
         with pushd_context(self.root):
-            self.random_sleep()
-            if self.check_file_has_lock(o_seg) or self.check_file_has_done(o_seg):
-                return
-            else:
-                touch(o_seg_lock)
+            self.nap()
+            if self.file_has_lock(o_seg):
+                raise self.SegmentLockedError
+            if not overwrite and self.file_has_done(o_seg):
+                return self.get_done_segment_info(filepath=o_seg)
+            self.file_tag_lock(o_seg)
             try:
-                self.ffmpeg_cmd.convert([i_seg], o_seg, *args)
-                touch(o_seg_done)
                 saved_error = None
+                self.ffmpeg_cmd.convert([i_seg], o_seg, args)
+                self.nap()
+                if self.file_has_delete(o_seg):
+                    self.logger.info('delete {}'.format(o_seg))
+                    os.remove(o_seg)
+                    raise self.SegmentDeleteRequest
+                else:
+                    self.file_tag_done(o_seg)
+                    return self.get_done_segment_info(filepath=o_seg)
             except Exception as e:
                 saved_error = e
             finally:
-                os.remove(o_seg_lock)
+                self.file_tag_unlock(o_seg)
                 if saved_error:
                     raise saved_error
 
-    def convert_test_compression_ratio(self):
-        pass
+    def get_done_segment_info(self, stream_id=None, segment_filename=None, filepath=None) -> dict:
+        if filepath:
+            o_seg = filepath
+        else:
+            o_seg = os.path.join(self.output_prefix + stream_id, segment_filename)
+        with pushd_context(self.root):
+            if not self.file_has_done(o_seg):
+                raise self.SegmentNotDoneError
+            return excerpt_single_video_stream(o_seg)
+
+    def test_compression_ratio(self, overwrite=False):
+        d = {}
+        segments = self.input_data[TXT_SEGMENT]
+        for stream_id in segments:
+            d[stream_id] = {}
+            seg_list_by_rate = sorted(segments[stream_id].keys(),
+                                      key=lambda x: segments[stream_id][x]['bit_rate'])
+            for seg in dedup_list(
+                    [seg_list_by_rate[0], seg_list_by_rate[len(seg_list_by_rate) // 2], seg_list_by_rate[-1]]):
+                seg_d = {'input': self.input_data[TXT_SEGMENT][stream_id][seg],
+                         'output': self.convert_one_segment(stream_id, seg, overwrite=overwrite)}
+                d[stream_id][seg] = seg_d
+                seg_d['ratio'] = round(seg_d['output']['bit_rate'] / seg_d['input']['bit_rate'], 3)
+        with pushd_context(self.root):
+            write_json_file(self.test_json, d, indent=4)
+        return d
+
+    def del_output_segments(self):
+        with pushd_context(self.root):
+            segments = self.get_lock_segments() + self.get_done_segments()
+            while segments:
+                for i, seg in segments:
+                    o_seg = os.path.join(self.output_prefix + i, seg)
+                    if not os.path.isfile(o_seg):
+                        continue
+                    elif self.file_has_done(o_seg):
+                        self.logger.info('delete done segment {}'.format(o_seg))
+                        os.remove(o_seg)
+                        os.remove(o_seg + self.suffix_done)
+                    elif self.file_has_lock(o_seg):
+                        self.logger.info('request delete locked segment {}'.format(o_seg))
+                        touch(o_seg + self.suffix_delete)
+                    else:
+                        self.logger.info('delete stub segment{}'.format(o_seg))
+                        os.remove(o_seg)
+                        if self.file_has_delete(o_seg):
+                            os.remove(o_seg + self.suffix_delete)
+                segments = self.get_lock_segments() + self.get_done_segments()

@@ -50,14 +50,17 @@ def legal_fs_name(x: str, repl: str or dict = None) -> str:
     return legal
 
 
-def fs_rename(src_path: str, dst_name: str, move_to: str = None, add_src_ext: bool = True):
+def fs_rename(src_path: str, dst_name_or_path: str, move_to: str = None,
+              in_src_parent: bool = True, append_src_ext: bool = True):
     src_root, src_basename = os.path.split(src_path)
     _, src_ext = os.path.splitext(src_basename)
     if move_to:
-        dst_path = os.path.join(move_to, dst_name)
+        dst_path = os.path.join(move_to, dst_name_or_path)
+    elif in_src_parent:
+        dst_path = os.path.join(src_root, dst_name_or_path)
     else:
-        dst_path = os.path.join(src_root, dst_name)
-    if add_src_ext:
+        dst_path = dst_name_or_path
+    if append_src_ext:
         dst_path = dst_path + src_ext
     shutil.move(src_path, dst_path)
 
@@ -99,13 +102,13 @@ def ensure_chdir(dest: str):
 
 
 @contextmanager
-def pushd_context(dest: str, ensure_dest: bool = False):
-    if ensure_dest:
+def pushd_context(dst: str, ensure_dst: bool = False):
+    if ensure_dst:
         cd = ensure_chdir
     else:
         cd = os.chdir
     prev = os.getcwd()
-    cd(dest)
+    cd(dst)
     saved_error = None
     try:
         yield
