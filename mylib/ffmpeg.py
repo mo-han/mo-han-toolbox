@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # encoding=utf8
+import json
 import os
 import random
 import shutil
@@ -66,7 +67,7 @@ def excerpt_single_video_stream(filepath: str) -> dict:
             d['start_time'] = start_time = float(single_stream.get('start_time', whole_file['start_time']))
             duration = float(single_stream.get('duration', whole_file['duration']))
             d['duration'] = round((duration - start_time) * 1000000) / 1000000
-            d['bit_rate'] = int(d['size'] // d['duration'])
+            d['bit_rate'] = int(8 * d['size'] // d['duration'])
             d['codec_name'] = single_stream['codec_name']
             d['height'] = single_stream['height']
             d['with'] = single_stream['width']
@@ -126,28 +127,25 @@ class FFmpegCommandCaller:
     exe = 'ffmpeg'
     head = FFmpegArgumentList(exe)
     body = FFmpegArgumentList()
-    to_pipe = False
+    capture_stdout_stderr = False
 
     class FFmpegError(Exception):
         pass
 
     def __init__(self, banner: bool = True, loglevel: str = None, overwrite: bool = None, to_pipe: bool = False):
-        self.to_pipe = to_pipe
+        self.capture_stdout_stderr = to_pipe
         self.set_head(banner=banner, loglevel=loglevel, overwrite=overwrite)
 
     @property
     def cmd(self):
         return self.head + self.body
 
-    def set_head(self, banner: bool = False, loglevel: str = None, verbose: str = None,
-                 threads: int = None, overwrite: bool = None):
+    def set_head(self, banner: bool = False, loglevel: str = None, threads: int = None, overwrite: bool = None):
         h = FFmpegArgumentList(self.exe)
         if not banner:
             h.add('-hide_banner')
         if loglevel:
             h.add(loglevel=loglevel)
-        if verbose:
-            h.add(v=verbose)
         if overwrite is True:
             h.add('-y')
         elif overwrite is False:
@@ -167,41 +165,57 @@ class FFmpegCommandCaller:
             return
         self.add_args(map=STREAM_MAP_PRESET_TABLE[map_preset])
 
-    def proc_comm(self, input_bytes: bytes) -> tuple:
+    def proc_comm(self, input_bytes: bytes) -> bytes:
         cmd = self.cmd
         self.logger.info(shlex_double_quotes_join(cmd))
-        if self.to_pipe:
+        if self.capture_stdout_stderr:
             p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         else:
             p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
         out, err = p.communicate(input_bytes)
         code = p.returncode
         if code:
-            raise self.FFmpegError(code, (out or b'NOT CAPTURED').decode(), (err or b'NOT CAPTURED').decode())
+            raise self.FFmpegError(code, (err or b'NOT CAPTURED').decode())
         else:
-            return (out or b'').decode(), (err or b'').decode()
+            if err:
+                self.logger.debug(err.decode())
+            return out or b''
 
-    def proc_run(self) -> tuple:
+    def proc_run(self) -> bytes:
         cmd = self.cmd
         self.logger.info(shlex_double_quotes_join(cmd))
-        if self.to_pipe:
+        if self.capture_stdout_stderr:
             p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         else:
             p = subprocess.run(cmd)
         code = p.returncode
         if code:
-            raise self.FFmpegError(code, (p.stdout or b'').decode(), (p.stderr or b'').decode())
+            raise self.FFmpegError(code, (p.stderr or b'NOT CAPTURED').decode())
         else:
-            return (p.stdout or b'').decode(), (p.stderr or b'').decode()
+            if p.stderr:
+                self.logger.debug(p.stderr.decode())
+            return p.stdout or b''
 
     @decorator_choose_map_preset
     def concat(self, input_paths: Iterable[str] or Iterator[str], output_path: str,
                output_args: Iterable[str] or Iterator[str] = None, *,
-               input_as_file: bool = False, extra_inputs: Iterable or Iterator = (),
-               copy: bool = True, map_preset: str = None, **output_kwargs):
+               concat_demuxer: bool = False, extra_inputs: Iterable or Iterator = (),
+               start: float or int or str = 0, end: float or int or str = 0,
+               copy: bool = True, map_preset: str = None, metadata_file: str = None,
+               **output_kwargs):
+        if isinstance(start, str):
+            start = seconds_from_colon_time(start)
+        if isinstance(end, str):
+            end = seconds_from_colon_time(end)
+        if start < 0:
+            start = max([get_real_duration(f) for f in input_paths]) + start
+        if end < 0:
+            end = max([get_real_duration(f) for f in input_paths]) + end
         self.reset_args()
+        if start:
+            self.add_args(ss=start)
         input_count = 0
-        if input_as_file:
+        if concat_demuxer:
             concat_list = None
             self.add_args(safe=0, protocol_whitelist='file')
             for file in input_paths:
@@ -214,9 +228,14 @@ class FFmpegCommandCaller:
         if extra_inputs:
             input_count += len(extra_inputs)
             self.add_args(i=extra_inputs)
+        if metadata_file:
+            self.add_args(i=metadata_file, map_metadata=input_count)
+        if end:
+            self.add_args(t=end - start if start else end)
         if copy:
             self.add_args(c='copy')
-            self.add_args(map=range(input_count))
+            if not map_preset:
+                self.add_args(map=range(input_count))
         self.set_map_preset(map_preset)
         if output_args:
             self.add_args(*output_args)
@@ -254,7 +273,7 @@ class FFmpegCommandCaller:
     def convert(self, input_paths: Iterable[str] or Iterator[str], output_path: str,
                 output_args: Iterable[str] or Iterator[str] = None, *,
                 start: float or int or str = 0, end: float or int or str = 0,
-                copy: bool = False, map_preset: str = None,
+                copy: bool = False, map_preset: str = None, metadata_file: str = None,
                 **output_kwargs):
         if isinstance(start, str):
             start = seconds_from_colon_time(start)
@@ -269,13 +288,15 @@ class FFmpegCommandCaller:
         if start:
             self.add_args(ss=start)
         self.add_args(i=input_paths)
+        if metadata_file:
+            self.add_args(i=metadata_file, map_metadata=len(input_paths))
         if end:
             self.add_args(t=end - start if start else end)
 
         if copy:
-            self.add_args(map=range(len(input_paths)))
             self.add_args(c='copy')
-
+            if not map_preset:
+                self.add_args(map=len(input_paths) - 1)
         self.set_map_preset(map_preset)
         if output_args:
             self.add_args(*output_args)
@@ -292,7 +313,7 @@ class VideoSegmentsContainer:
     tag_sig = 'Signature: ' + hex_hash(tag_file.encode())
     picture_file = 'p.mp4'
     non_visual_file = 'nv.mkv'
-    test_json = 'test.json'
+    test_json = 't.json'
     metadata_file = 'metadata.txt'
     concat_list_file = 'concat.txt'
     suffix_done = '.DONE'
@@ -326,16 +347,16 @@ class VideoSegmentsContainer:
     class SegmentDeleteRequest(Exception):
         pass
 
+    class SegmentsIncomplete(Exception):
+        pass
+
     def __repr__(self):
         return "{} at '{}' from '{}'".format(VideoSegmentsContainer.__name__, self.root, self.input_filepath)
 
-    def __init__(self, path: str, work_dir: str = None, map_video='V:0'):
+    def __init__(self, path: str, work_dir: str = None):
         path = os.path.abspath(path)
         if not os.path.exists(path):
             raise self.PathError("path not exist: '{}'".format(path))
-        ss = map_video
-        if len(ss) < 3:
-            raise NotImplemented(map_video=ss)
 
         if os.path.isfile(path):
             self.input_filepath = path
@@ -356,15 +377,15 @@ class VideoSegmentsContainer:
                 os.makedirs(path, exist_ok=True)
             except FileExistsError:
                 raise self.PathError("invalid folder path used by file: '{}'".format(path))
-            self.tag()
-            self.split_video(ss)
+            self.tag_container_folder()
+            self.split()
 
         if os.path.isdir(path):
             self.root = path
-            if not self.is_tagged():
+            if not self.container_is_tagged():
                 raise self.ContainerError("non-container folder: '{}'".format(path))
             if not self.is_split():
-                self.split_video(ss)
+                self.split()
             self.read_input_json()
             if TXT_FILENAME not in self.input_data:
                 self.read_filename()
@@ -388,22 +409,23 @@ class VideoSegmentsContainer:
             for f in fs_find_iter(pattern=prefix + '*', recursive=False, strip_root=True):
                 filename = f.lstrip(prefix)
                 self.input_data[TXT_FILENAME] = filename
-                break
+                return filename
             else:
                 raise self.ContainerError('no filename found')
 
-    def split_video(self, select_streams='V:0'):
+    def split(self):
         i_file = self.input_filepath
         if not i_file:
-            raise self.PathError('no source i_file path')
+            raise self.ContainerError('no input filepath')
         d = self.input_data or {TXT_SEGMENT: {}, TXT_NON_SEGMENT: {}}
 
         with pushd_context(self.root):
-            for stream in ffmpeg.probe(i_file, select_streams=select_streams)['streams']:
+            for stream in ffmpeg.probe(i_file, select_streams='V')['streams']:
                 index = stream['index']
-                codec = stream['codec_name']
-                suitable_filext = CODEC_NAME_TO_FILEXT_TABLE.get(codec)
-                segment_output = '%d' + suitable_filext if suitable_filext else None
+                # codec = stream['codec_name']
+                # suitable_filext = CODEC_NAME_TO_FILEXT_TABLE.get(codec)
+                # segment_output = '%d' + suitable_filext if suitable_filext else None
+                segment_output = '%d.mkv'
                 index = str(index)
                 d[TXT_SEGMENT][index] = {}
                 seg_folder = self.input_prefix + index
@@ -411,12 +433,12 @@ class VideoSegmentsContainer:
                 with pushd_context(seg_folder):
                     self.ffmpeg_cmd.segment(i_file, segment_output, map='0:{}'.format(index))
             try:
-                self.ffmpeg_cmd.convert(i_file, self.input_picture, copy=True, map_preset=TXT_ONLY_PICTURE)
+                self.ffmpeg_cmd.convert([i_file], self.input_picture, copy=True, map_preset=TXT_ONLY_PICTURE)
                 d[TXT_NON_SEGMENT][self.picture_file] = {}
             except self.ffmpeg_cmd.FFmpegError:
                 pass
             try:
-                self.ffmpeg_cmd.convert(i_file, self.input_non_visual, copy=True, map_preset=TXT_ALL, map='-0:v')
+                self.ffmpeg_cmd.convert([i_file], self.input_non_visual, copy=True, map_preset=TXT_ALL, map='-0:v')
                 d[TXT_NON_SEGMENT][self.non_visual_file] = {}
             except self.ffmpeg_cmd.FFmpegError:
                 pass
@@ -472,12 +494,12 @@ class VideoSegmentsContainer:
         with pushd_context(self.root):
             write_json_file(self.output_json, self.output_data, indent=4)
 
-    def tag(self):
+    def tag_container_folder(self):
         with pushd_context(self.root):
             with open(self.tag_file, 'w') as f:
                 f.write(self.tag_sig)
 
-    def is_tagged(self) -> bool:
+    def container_is_tagged(self) -> bool:
         with pushd_context(self.root):
             try:
                 with open(self.tag_file) as f:
@@ -488,15 +510,17 @@ class VideoSegmentsContainer:
     def is_split(self) -> bool:
         return bool(self.read_input_json())
 
-    def remove(self):
+    def purge(self):
         shutil.rmtree(self.root)
+        self.__dict__ = {}
 
-    def set_output_args(self,
-                        video_args: FFmpegArgumentList = None,
-                        other_args: FFmpegArgumentList = None,
-                        more_args: FFmpegArgumentList = None,
-                        non_visual_map: List[str] = None,
-                        filename: str = None):
+    def config(self,
+               video_args: FFmpegArgumentList = None,
+               other_args: FFmpegArgumentList = None,
+               more_args: FFmpegArgumentList = None,
+               non_visual_map: List[str] = None,
+               filename: str = None,
+               **kwargs):
         video_args = video_args or FFmpegArgumentList()
         other_args = other_args or FFmpegArgumentList()
         more_args = more_args or FFmpegArgumentList()
@@ -504,14 +528,13 @@ class VideoSegmentsContainer:
         videos = self.input_data[TXT_SEGMENT].keys()
         others = self.input_data[TXT_NON_SEGMENT].keys()
         d = self.output_data or {}
-        prefix = self.output_prefix
 
         d[TXT_SEGMENT] = video_args
         input_count = 0
         d[TXT_VIDEO] = []
         for index in videos:
             d[TXT_VIDEO].append(
-                (os.path.join(prefix + index, self.concat_list_file), FFmpegArgumentList(map=input_count)))
+                (os.path.join(self.output_prefix + index, self.concat_list_file), FFmpegArgumentList(map=input_count)))
             input_count += 1
         d[TXT_OTHER] = []
         for o in others:
@@ -522,12 +545,13 @@ class VideoSegmentsContainer:
                 if not non_visual_map:
                     args.add(map=input_count)
                 args += other_args
-                d[TXT_OTHER].append((prefix + o, args))
+                d[TXT_OTHER].append((self.input_prefix + o, args))
             else:
-                d[TXT_OTHER].append((prefix + o, FFmpegArgumentList(map=input_count) + other_args))
+                d[TXT_OTHER].append((self.input_prefix + o, FFmpegArgumentList(map=input_count) + other_args))
             input_count += 1
         d[TXT_MORE] = FFmpegArgumentList(vcodec='copy') + more_args
         d[TXT_FILENAME] = filename or self.input_data[TXT_FILENAME]
+        d['kwargs'] = kwargs
 
         self.output_data = d
         self.write_output_json()
@@ -540,17 +564,33 @@ class VideoSegmentsContainer:
                 folder = self.output_prefix + index
                 os.makedirs(folder, exist_ok=True)
                 with pushd_context(folder):
-                    lines = ['file {}'.format(os.path.join(folder, seg)) for seg in
+                    lines = ["file '{}'".format(os.path.join(folder, seg)) for seg in
                              sorted(d[index].keys(), key=lambda x: int(os.path.splitext(x)[0]))]
                     with ensure_open_file(self.concat_list_file, 'w') as f:
                         f.write('\n'.join(lines))
 
-    def output(self):
+    def merge(self):
         if not self.read_output_json():
             raise self.ContainerError('no output config')
         if self.get_lock_segments() or \
                 len(self.get_done_segments()) != len(self.get_all_segments()):
-            raise self.ContainerError('not all segments converted')
+            raise self.SegmentsIncomplete
+        d = self.output_data
+        concat_list = []
+        extra_input_list = []
+        output_args = []
+        for i, args in d[TXT_VIDEO]:
+            concat_list.append(i)
+            output_args.extend(args)
+        for i, args in d[TXT_OTHER]:
+            extra_input_list.append(i)
+            output_args.extend(args)
+        output_args.extend(d[TXT_MORE])
+        with pushd_context(self.root):
+            self.ffmpeg_cmd.concat(concat_list, d[TXT_FILENAME], output_args,
+                                   concat_demuxer=True, extra_inputs=extra_input_list, copy=False,
+                                   metadata_file=self.metadata_file,
+                                   **d['kwargs'])
 
     def file_has_lock(self, filepath):
         return os.path.isfile(filepath + self.suffix_lock)
@@ -593,7 +633,7 @@ class VideoSegmentsContainer:
                                      fs_find_iter('*' + self.suffix_done)])
         return segments
 
-    def output_segments(self):
+    def convert(self):
         segments = self.get_untouched_segments()
         while segments:
             stream_id, segment_file = random.choice(segments)
@@ -665,24 +705,49 @@ class VideoSegmentsContainer:
                 raise self.SegmentNotDoneError
             return excerpt_single_video_stream(o_seg)
 
-    def test_compression_ratio(self, overwrite=False):
+    def estimate(self, overwrite_existing_segment=False) -> dict:
         d = {}
         segments = self.input_data[TXT_SEGMENT]
         for stream_id in segments:
-            d[stream_id] = {}
-            seg_list_by_rate = sorted(segments[stream_id].keys(),
-                                      key=lambda x: segments[stream_id][x]['bit_rate'])
-            for seg in dedup_list(
-                    [seg_list_by_rate[0], seg_list_by_rate[len(seg_list_by_rate) // 2], seg_list_by_rate[-1]]):
-                seg_d = {'input': self.input_data[TXT_SEGMENT][stream_id][seg],
-                         'output': self.convert_one_segment(stream_id, seg, overwrite=overwrite)}
-                d[stream_id][seg] = seg_d
-                seg_d['ratio'] = round(seg_d['output']['bit_rate'] / seg_d['input']['bit_rate'], 3)
+            d[stream_id] = sd = {}
+            seg_list_by_rate = sorted(segments[stream_id].items(), key=lambda x: x[-1]['bit_rate'])
+            min_rate_seg_f, min_rate_seg_d = seg_list_by_rate[0]
+            max_rate_seg_f, max_rate_seg_d = seg_list_by_rate[-1]
+            sd['min'] = {'file': min_rate_seg_f, 'input': min_rate_seg_d,
+                         'output': self.convert_one_segment(stream_id, min_rate_seg_f,
+                                                            overwrite=overwrite_existing_segment)}
+            sd['max'] = {'file': max_rate_seg_f, 'input': max_rate_seg_d,
+                         'output': self.convert_one_segment(stream_id, max_rate_seg_f,
+                                                            overwrite=overwrite_existing_segment)}
+            sd['min']['ratio'] = round(sd['min']['output']['bit_rate'] / sd['min']['input']['bit_rate'], 3)
+            sd['max']['ratio'] = round(sd['max']['output']['bit_rate'] / sd['max']['input']['bit_rate'], 3)
+
+            k = (sd['max']['output']['bit_rate'] - sd['min']['output']['bit_rate']) / (
+                    sd['max']['input']['bit_rate'] - sd['min']['input']['bit_rate'])
+
+            def linear_estimate(input_bit_rate):
+                return k * (input_bit_rate - sd['min']['input']['bit_rate']) + sd['min']['output']['bit_rate']
+
+            total_duration = 0
+            total_input_size = 0
+            estimated_output_size = 0
+            for seg_d in segments[stream_id].values():
+                estimated_bit_rate = linear_estimate(seg_d['bit_rate'])
+                duration = seg_d['duration']
+                total_duration += duration
+                total_input_size += seg_d['size']
+                estimated_output_size += duration * estimated_bit_rate // 8
+            sd['estimate'] = {'type': 'linear',
+                              'size': int(estimated_output_size),
+                              'duration': total_duration,
+                              'bit_rate': 8 * estimated_output_size // total_duration,
+                              'ratio': round(estimated_output_size / total_input_size, 3)}
+
         with pushd_context(self.root):
             write_json_file(self.test_json, d, indent=4)
-        return d
+        return {k: v['estimate']['ratio'] for k, v in d.items()}
 
-    def del_output_segments(self):
+    def clear(self):
         with pushd_context(self.root):
             segments = self.get_lock_segments() + self.get_done_segments()
             while segments:

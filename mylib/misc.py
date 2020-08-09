@@ -6,9 +6,10 @@ import sys
 
 # logging format
 LOG_FMT_MESSAGE_ONLY = '%(message)s'
-LOG_FMT_SINGLE_LEVEL_SHORT_TIME_NAME = '[%(levelname).1s][%(asctime).19s][%(name)s] %(message)s'
-LOG_FMT_SINGLE_LEVEL_TIME_NAME = '[%(levelname).1s][%(asctime)s][%(name)s] %(message)s'
-LOG_FMT = LOG_FMT_SINGLE_LEVEL_TIME_NAME
+LOG_FMT_1LEVEL_NO_TIME = '[%(levelname).1s][%(name)s] %(message)s'
+LOG_FMT_1LEVEL_DATE_TIME = '[%(levelname).1s][%(asctime).19s][%(name)s] %(message)s'
+LOG_FMT_1LEVEL_DATE_TIME_ZONE = '[%(levelname).1s][%(asctime)s][%(name)s] %(message)s'
+LOG_FMT = LOG_FMT_1LEVEL_NO_TIME
 # logging datetime format
 LOG_DTF_SEC = '%Y-%m-%dT%H:%M:%S'
 LOG_DTF_SEC_ZONE = '%Y-%m-%dT%H:%M:%S%z'
