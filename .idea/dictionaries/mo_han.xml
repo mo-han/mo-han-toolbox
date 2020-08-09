@@ -11,6 +11,7 @@
       <w>bilidltemp</w>
       <w>chdir</w>
       <w>dedup</w>
+      <w>demuxer</w>
       <w>dest</w>
       <w>dhash</w>
       <w>dryrun</w>
@@ -20,10 +21,12 @@
       <w>emptyline</w>
       <w>errorlevel</w>
       <w>exhentai</w>
+      <w>extname</w>
       <w>ffmetadata</w>
       <w>ffmpeg</w>
       <w>ffprobe</w>
       <w>filetype</w>
+      <w>filext</w>
       <w>fname</w>
       <w>getch</w>
       <w>getdata</w>
@@ -45,6 +48,7 @@
       <w>levelname</w>
       <w>logmsg</w>
       <w>manga</w>
+      <w>mjpeg</w>
       <w>ndrop</w>
       <w>opencv</w>
       <w>phash</w>

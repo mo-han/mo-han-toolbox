@@ -9,9 +9,9 @@ import sys
 from argparse import ArgumentParser, REMAINDER
 
 from mylib.cli import SimpleCLIDisplay
-from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, Attree
+from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, Attreebute
 
-rtd = Attree()  # runtime data
+rtd = Attreebute()  # runtime data
 cli_draw = SimpleCLIDisplay()
 common_parser_kwargs = {'formatter_class': ArgParseCompactHelpFormatter}
 ap = ArgumentParser(**common_parser_kwargs)
@@ -110,14 +110,19 @@ def ffprobe_func():
     from ffmpeg import probe
     from pprint import pprint
     file = rtd.args.file
+    ss = rtd.args.select_streams
     if not file:
         from mylib.os_util import clipboard as cb
         file = cb.get_path()[0]
-    pprint(probe(file))
+    if ss:
+        pprint(probe(file, select_streams=ss))
+    else:
+        pprint(probe(file))
 
 
 ffprobe = add_sub_parser('ffprobe', [], 'json format ffprobe on a file')
 ffprobe.set_defaults(func=ffprobe_func)
+ffprobe.add_argument('-s', '--select-streams')
 ffprobe.add_argument('file', nargs='?')
 
 
@@ -244,8 +249,10 @@ def dukto_x_func():
     from mylib.dukto import run, copy_recv_text, config_at
     from threading import Thread
     from queue import Queue
+    args = rtd.args
     config_at.server.text.queue = Queue()
-    t = Thread(target=copy_recv_text, args=(rtd.args.copy_recv_text_to,))
+    config_at.server.echo = args.echo
+    t = Thread(target=copy_recv_text, args=(args.file, args.clipboard))
     t.daemon = True
     ndrop_args = rtd.args.ndrop_args
     while ndrop_args and ndrop_args[0] == '--':
@@ -259,7 +266,9 @@ def dukto_x_func():
 dukto_x = add_sub_parser('dukto-x', ['dukto'],
                          'extended dukto server, remainder arguments conform to ndrop')
 dukto_x.set_defaults(func=dukto_x_func)
-dukto_x.add_argument('-t', '--copy-recv-text-to', metavar='file', nargs='?')
+dukto_x.add_argument('-f', '--copy-text-to-file', metavar='file', dest='file')
+dukto_x.add_argument('-c', '--copy-text-to-clipboard', action='store_true', dest='clipboard')
+dukto_x.add_argument('-e', '--echo', action='store_true')
 dukto_x.add_argument('ndrop_args', metavar='[--] arguments for ndrop', nargs=REMAINDER)
 
 
