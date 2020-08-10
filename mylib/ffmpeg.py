@@ -198,10 +198,10 @@ class FFmpegCommandCaller:
 
     @decorator_choose_map_preset
     def concat(self, input_paths: Iterable[str] or Iterator[str], output_path: str,
-               output_args: Iterable[str] or Iterator[str] = None, *,
+               output_args: Iterable[str] or Iterator[str] = (), *,
                concat_demuxer: bool = False, extra_inputs: Iterable or Iterator = (),
                start: float or int or str = 0, end: float or int or str = 0,
-               copy: bool = True, map_preset: str = None, metadata_file: str = None,
+               copy_all: bool = True, map_preset: str = None, metadata_file: str = None,
                **output_kwargs):
         if isinstance(start, str):
             start = seconds_from_colon_time(start)
@@ -217,10 +217,9 @@ class FFmpegCommandCaller:
         input_count = 0
         if concat_demuxer:
             concat_list = None
-            self.add_args(safe=0, protocol_whitelist='file')
             for file in input_paths:
                 input_count += 1
-                self.add_args(f='concat', i=file)
+                self.add_args(safe=0, protocol_whitelist='file', f='concat', i=file)
         else:
             input_count += 1
             concat_list = '\n'.join(['file \'{}\''.format(e) for e in input_paths])
@@ -232,14 +231,12 @@ class FFmpegCommandCaller:
             self.add_args(i=metadata_file, map_metadata=input_count)
         if end:
             self.add_args(t=end - start if start else end)
-        if copy:
+        if copy_all:
             self.add_args(c='copy')
             if not map_preset:
                 self.add_args(map=range(input_count))
         self.set_map_preset(map_preset)
-        if output_args:
-            self.add_args(*output_args)
-        self.add_args(**output_kwargs)
+        self.add_args(*output_args, **output_kwargs)
         self.add_args(output_path)
         if concat_list:
             return self.proc_comm(concat_list.encode())
@@ -248,7 +245,7 @@ class FFmpegCommandCaller:
 
     @decorator_choose_map_preset
     def segment(self, input_path: str, output_path: str = None,
-                output_args: Iterable[str] or Iterator[str] = None, *,
+                output_args: Iterable[str] or Iterator[str] = (), *,
                 copy: bool = True, map_preset: str = None, **output_kwargs):
         self.reset_args()
         if not output_path:
@@ -257,9 +254,7 @@ class FFmpegCommandCaller:
         if copy:
             self.add_args(c='copy')
         self.set_map_preset(map_preset)
-        if output_args:
-            self.add_args(*output_args)
-        self.add_args(**output_kwargs)
+        self.add_args(*output_args, **output_kwargs)
         self.add_args(output_path)
         return self.proc_run()
 
@@ -271,9 +266,9 @@ class FFmpegCommandCaller:
 
     @decorator_choose_map_preset
     def convert(self, input_paths: Iterable[str] or Iterator[str], output_path: str,
-                output_args: Iterable[str] or Iterator[str] = None, *,
+                output_args: Iterable[str] or Iterator[str] = (), *,
                 start: float or int or str = 0, end: float or int or str = 0,
-                copy: bool = False, map_preset: str = None, metadata_file: str = None,
+                copy_all: bool = False, map_preset: str = None, metadata_file: str = None,
                 **output_kwargs):
         if isinstance(start, str):
             start = seconds_from_colon_time(start)
@@ -293,14 +288,12 @@ class FFmpegCommandCaller:
         if end:
             self.add_args(t=end - start if start else end)
 
-        if copy:
+        if copy_all:
             self.add_args(c='copy')
             if not map_preset:
                 self.add_args(map=len(input_paths) - 1)
         self.set_map_preset(map_preset)
-        if output_args:
-            self.add_args(*output_args)
-        self.add_args(**output_kwargs)
+        self.add_args(*output_args, **output_kwargs)
         self.add_args(output_path)
         return self.proc_run()
 
@@ -353,8 +346,9 @@ class VideoSegmentsContainer:
     def __repr__(self):
         return "{} at '{}' from '{}'".format(VideoSegmentsContainer.__name__, self.root, self.input_filepath)
 
-    def __init__(self, path: str, work_dir: str = None):
+    def __init__(self, path: str, work_dir: str = None, single_video_stream: bool = True):
         path = os.path.abspath(path)
+        select_streams = 'V:0' if single_video_stream else 'V'
         if not os.path.exists(path):
             raise self.PathError("path not exist: '{}'".format(path))
 
@@ -378,14 +372,14 @@ class VideoSegmentsContainer:
             except FileExistsError:
                 raise self.PathError("invalid folder path used by file: '{}'".format(path))
             self.tag_container_folder()
-            self.split()
+            self.split(select_streams=select_streams)
 
         if os.path.isdir(path):
             self.root = path
             if not self.container_is_tagged():
                 raise self.ContainerError("non-container folder: '{}'".format(path))
             if not self.is_split():
-                self.split()
+                self.split(select_streams=select_streams)
             self.read_input_json()
             if TXT_FILENAME not in self.input_data:
                 self.read_filename()
@@ -413,14 +407,14 @@ class VideoSegmentsContainer:
             else:
                 raise self.ContainerError('no filename found')
 
-    def split(self):
+    def split(self, select_streams='V:0'):
         i_file = self.input_filepath
         if not i_file:
             raise self.ContainerError('no input filepath')
         d = self.input_data or {TXT_SEGMENT: {}, TXT_NON_SEGMENT: {}}
 
         with pushd_context(self.root):
-            for stream in ffmpeg.probe(i_file, select_streams='V')['streams']:
+            for stream in ffmpeg.probe(i_file, select_streams=select_streams)['streams']:
                 index = stream['index']
                 # codec = stream['codec_name']
                 # suitable_filext = CODEC_NAME_TO_FILEXT_TABLE.get(codec)
@@ -433,12 +427,12 @@ class VideoSegmentsContainer:
                 with pushd_context(seg_folder):
                     self.ffmpeg_cmd.segment(i_file, segment_output, map='0:{}'.format(index))
             try:
-                self.ffmpeg_cmd.convert([i_file], self.input_picture, copy=True, map_preset=TXT_ONLY_PICTURE)
+                self.ffmpeg_cmd.convert([i_file], self.input_picture, copy_all=True, map_preset=TXT_ONLY_PICTURE)
                 d[TXT_NON_SEGMENT][self.picture_file] = {}
             except self.ffmpeg_cmd.FFmpegError:
                 pass
             try:
-                self.ffmpeg_cmd.convert([i_file], self.input_non_visual, copy=True, map_preset=TXT_ALL, map='-0:v')
+                self.ffmpeg_cmd.convert([i_file], self.input_non_visual, copy_all=True, map_preset=TXT_ALL, map='-0:v')
                 d[TXT_NON_SEGMENT][self.non_visual_file] = {}
             except self.ffmpeg_cmd.FFmpegError:
                 pass
@@ -518,37 +512,50 @@ class VideoSegmentsContainer:
                video_args: FFmpegArgumentList = None,
                other_args: FFmpegArgumentList = None,
                more_args: FFmpegArgumentList = None,
-               non_visual_map: List[str] = None,
+               non_visual_map: Iterable[str] or Iterator[str] = (),
                filename: str = None,
                **kwargs):
         video_args = video_args or FFmpegArgumentList()
         other_args = other_args or FFmpegArgumentList()
         more_args = more_args or FFmpegArgumentList()
-        non_visual_map = non_visual_map or []
         videos = self.input_data[TXT_SEGMENT].keys()
         others = self.input_data[TXT_NON_SEGMENT].keys()
+        need_map = True if len(videos) > 1 or self.picture_file in others else False
         d = self.output_data or {}
-
-        d[TXT_SEGMENT] = video_args
         input_count = 0
+
         d[TXT_VIDEO] = []
         for index in videos:
-            d[TXT_VIDEO].append(
-                (os.path.join(self.output_prefix + index, self.concat_list_file), FFmpegArgumentList(map=input_count)))
+            args = FFmpegArgumentList()
+            if need_map:
+                args.add(map=input_count)
+            i_args = os.path.join(self.output_prefix + index, self.concat_list_file), args
+            d[TXT_VIDEO].append(i_args)
             input_count += 1
+
         d[TXT_OTHER] = []
         for o in others:
+            args = FFmpegArgumentList()
             if o == self.non_visual_file:
-                args = FFmpegArgumentList()
-                for m in non_visual_map:
-                    args.add(map='{}:{}'.format(input_count, m))
-                if not non_visual_map:
+                if non_visual_map:
+                    for m in non_visual_map:
+                        if m.startswith('-'):
+                            args.add(map='-{}:{}'.format(input_count, m.lstrip('-')))
+                        else:
+                            args.add(map='{}:{}'.format(input_count, m))
+                elif need_map:
                     args.add(map=input_count)
                 args += other_args
-                d[TXT_OTHER].append((self.input_prefix + o, args))
+                i_args = self.input_prefix + o, args
+                d[TXT_OTHER].append(i_args)
             else:
-                d[TXT_OTHER].append((self.input_prefix + o, FFmpegArgumentList(map=input_count) + other_args))
+                if need_map:
+                    args.add(map=input_count)
+                i_args = self.input_prefix + o, args
+                d[TXT_OTHER].append(i_args)
             input_count += 1
+
+        d[TXT_SEGMENT] = video_args
         d[TXT_MORE] = FFmpegArgumentList(vcodec='copy') + more_args
         d[TXT_FILENAME] = filename or self.input_data[TXT_FILENAME]
         d['kwargs'] = kwargs
@@ -556,18 +563,6 @@ class VideoSegmentsContainer:
         self.output_data = d
         self.write_output_json()
         self.write_output_concat_list_file()
-
-    def write_output_concat_list_file(self):
-        with pushd_context(self.root):
-            d = self.input_data[TXT_SEGMENT]
-            for index in d:
-                folder = self.output_prefix + index
-                os.makedirs(folder, exist_ok=True)
-                with pushd_context(folder):
-                    lines = ["file '{}'".format(os.path.join(folder, seg)) for seg in
-                             sorted(d[index].keys(), key=lambda x: int(os.path.splitext(x)[0]))]
-                    with ensure_open_file(self.concat_list_file, 'w') as f:
-                        f.write('\n'.join(lines))
 
     def merge(self):
         if not self.read_output_json():
@@ -588,9 +583,21 @@ class VideoSegmentsContainer:
         output_args.extend(d[TXT_MORE])
         with pushd_context(self.root):
             self.ffmpeg_cmd.concat(concat_list, d[TXT_FILENAME], output_args,
-                                   concat_demuxer=True, extra_inputs=extra_input_list, copy=False,
+                                   concat_demuxer=True, extra_inputs=extra_input_list, copy_all=False,
                                    metadata_file=self.metadata_file,
                                    **d['kwargs'])
+
+    def write_output_concat_list_file(self):
+        with pushd_context(self.root):
+            d = self.input_data[TXT_SEGMENT]
+            for index in d:
+                folder = self.output_prefix + index
+                os.makedirs(folder, exist_ok=True)
+                with pushd_context(folder):
+                    lines = ["file '{}'".format(os.path.join(folder, seg)) for seg in
+                             sorted(d[index].keys(), key=lambda x: int(os.path.splitext(x)[0]))]
+                    with ensure_open_file(self.concat_list_file, 'w') as f:
+                        f.write('\n'.join(lines))
 
     def file_has_lock(self, filepath):
         return os.path.isfile(filepath + self.suffix_lock)
