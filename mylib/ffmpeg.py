@@ -360,7 +360,7 @@ class VideoSegmentsContainer:
                 with SlicedFileIO(path) as f_cut:
                     fl_middle = len(f_cut) // 2
                     root_base = '.{}-{}'.format(self.nickname, hex_hash(
-                        f_cut[:4096] + f_cut[fl_middle - 2048:fl_middle + 2048] + f_cut[:-4096])[:7])
+                        f_cut[:4096] + f_cut[fl_middle - 2048:fl_middle + 2048] + f_cut[:-4096])[:8])
                 work_dir = work_dir or d
                 path = self.root = os.path.join(work_dir, root_base)  # file path -> dir path
             else:

@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 """Library for website operation"""
 
-import os
-import requests
-import lxml.html
 import http.cookiejar
+import os
 import re
+
+import lxml.html
+import requests
 
 USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'
 
@@ -67,12 +68,42 @@ def get_phantomjs_splinter(proxy=None, show_image=False, window_size=(1024, 1024
     return b
 
 
-def get_firefox_splinter(**kwargs):
+def get_firefox_splinter(headless=True, proxy: str = None, **kwargs):
     import splinter
     from .os_util import TEMPDIR
-    config = {'service_log_path': os.path.join(TEMPDIR, 'geckodriver.log')}
+    config = {'service_log_path': os.path.join(TEMPDIR, 'geckodriver.log'),
+              'headless': headless}
     config.update(kwargs)
-    return splinter.Browser(driver_name='firefox', **config)
+    profile_dict = {}
+    if proxy:
+        from urllib.parse import urlparse
+        prefix = 'network.proxy.'
+        profile_dict[prefix + 'type'] = 1
+        proxy_parse = urlparse(proxy)
+        scheme = proxy_parse.scheme
+        netloc = proxy_parse.netloc
+        try:
+            host, port = netloc.split(':')
+            port = int(port)
+        except ValueError:
+            raise ValueError(proxy)
+        if scheme in ('http', 'https', ''):
+            profile_dict[prefix + 'http'] = host
+            profile_dict[prefix + 'http_port'] = port
+            profile_dict[prefix + 'https'] = host
+            profile_dict[prefix + 'https_port'] = port
+        elif scheme.startswith('socks'):
+            profile_dict[prefix + 'socks'] = host
+            profile_dict[prefix + 'socks_port'] = port
+        else:
+            raise ValueError(proxy)
+    browser = splinter.Browser(driver_name='firefox', profile_preferences=profile_dict, **config)
+    return browser
+
+
+def get_zope_splinter(**kwargs):
+    import splinter
+    return splinter.Browser(driver_name='zope.testbrowser', **kwargs)
 
 
 get_browser = {
