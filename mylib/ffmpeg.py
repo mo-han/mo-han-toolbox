@@ -667,7 +667,7 @@ class VideoSegmentsContainer:
             return
         if self.file_has_lock(filepath):
             fs_rename(filepath + self.suffix_lock, filepath + self.suffix_done,
-                      in_src_parent=False, append_src_ext=False)
+                      stay_in_src_dir=False, append_src_ext=False)
 
     def file_tag_delete(self, filepath):
         touch(filepath + self.suffix_delete)

@@ -3,11 +3,15 @@
 """Library for website operation"""
 
 import http.cookiejar
+import json
 import os
 import re
+from typing import List
 
 import lxml.html
-import requests
+import requests.utils
+
+from mylib.tricks import JSONType
 
 USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'
 
@@ -32,8 +36,76 @@ def get_html_element_tree(url, **kwargs) -> HTMLElementTree:
         raise ConnectionError(r.status_code, r.reason)
 
 
-def cookies_dict_from_file(file_path: str) -> dict:
-    cj = http.cookiejar.MozillaCookieJar(file_path)
+def convert_cookies_json_to_netscape(json_data_or_filepath: JSONType or str, disable_filepath: bool = False) -> str:
+    from .os_util import read_json_file
+    if not disable_filepath and os.path.isfile(json_data_or_filepath):
+        json_data = read_json_file(json_data_or_filepath)
+    else:
+        json_data = json_data_or_filepath
+    cookies = ensure_json_cookies(json_data)
+    tab = '\t'
+    false_ = 'FALSE' + tab
+    true_ = 'TRUE' + tab
+    lines = ['# Netscape HTTP Cookie File']
+    for c in cookies:
+        http_only_prefix = '#HttpOnly_' if c['httpOnly'] else ''
+        line = http_only_prefix + c['domain'] + tab
+        if c['hostOnly']:
+            line += false_
+        else:
+            line += true_
+        line += c['path'] + tab
+        if c['secure']:
+            line += true_
+        else:
+            line += false_
+        line += '{}\t{}\t{}'.format(c['expirationDate'], c['name'], c['value'])
+        lines.append(line)
+    return '\n'.join(lines)
+
+
+def convert_cookies_file_json_to_netscape(src, dst=None) -> str:
+    from .os_util import fs_rename, ensure_open_file
+    if not os.path.isfile(src):
+        raise FileNotFoundError(src)
+    dst = dst or src + '.txt'
+    with ensure_open_file(dst, 'w') as f:
+        f.write(convert_cookies_json_to_netscape(src))
+        return dst
+
+
+def ensure_json_cookies(json_data) -> list:
+    if isinstance(json_data, list):
+        cookies = json_data
+    elif isinstance(json_data, dict):
+        if 'cookies' in json_data:
+            if isinstance(json_data['cookies'], list):
+                cookies = json_data['cookies']
+            else:
+                raise TypeError("{}['cookies'] is not list".format(json_data))
+        else:
+            raise TypeError("dict '{}' has no 'cookies'".format(json_data))
+    else:
+        raise TypeError("'{}' is not list or dict".format(json_data))
+    return cookies
+
+
+def cookies_dict_from_json(json_data_or_filepath: JSONType or str, disable_filepath: bool = False) -> dict:
+    from .os_util import read_json_file
+    if not disable_filepath and os.path.isfile(json_data_or_filepath):
+        json_data = read_json_file(json_data_or_filepath)
+    else:
+        json_data = json_data_or_filepath
+    d = {}
+    cookies = ensure_json_cookies(json_data)
+    for c in cookies:
+        d[c['name']] = c['value']
+    return d
+
+
+def cookies_dict_from_netscape_file(filepath: str) -> dict:
+    from .os_util import read_json_file
+    cj = http.cookiejar.MozillaCookieJar(filepath)
     cj.load()
     return requests.utils.dict_from_cookiejar(cj)
 

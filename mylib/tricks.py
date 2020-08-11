@@ -8,7 +8,7 @@ import logging
 import sys
 from collections import defaultdict
 from functools import wraps
-from typing import Dict, Iterable, Callable, Generator, Tuple
+from typing import Dict, Iterable, Callable, Generator, Tuple, Union, Mapping, List
 
 from .misc import LOG_FMT, LOG_DTF
 from .number import int_is_power_of_2
@@ -16,12 +16,15 @@ from .number import int_is_power_of_2
 Decorator = Callable[[Callable], Callable]
 
 
-class TypingQueue:
+class QueueType:
     def put(self, *args, **kwargs):
         ...
 
     def get(self, *args, **kwargs):
         ...
+
+
+JSONType = Union[str, int, float, bool, None, Mapping[str, 'JSON'], List['JSON']]
 
 
 def range_from_expr(expr: str) -> Generator:
@@ -61,7 +64,7 @@ def decorator_factory_args_choices(choices: Dict[int or str, Iterable]) -> Decor
 def context_exception_retry(exceptions: Exception or Iterable[Exception], max_retries: int = 3,
                             enable_default=False, default=None,
                             exception_predicate: Callable[[Exception], bool] = None,
-                            exception_queue: TypingQueue = None) -> Decorator:
+                            exception_queue: QueueType = None) -> Decorator:
     """decorator factory: force a func re-running for several times on exception(s)"""
     predicate = exception_predicate or (lambda e: True)
     max_retries = int(max_retries)

@@ -21,7 +21,7 @@ from .misc import safe_print, safe_basename
 from .os_util import ensure_sigint_signal
 from .tricks import modify_and_import, until_return_try, range_from_expr
 from .lamb_av_util import concat_videos, merge_m4s
-from .web import cookie_str_from_dict, cookies_dict_from_file, get_html_element_tree, HTMLElementTree
+from .web import cookie_str_from_dict, cookies_dict_from_netscape_file, get_html_element_tree, HTMLElementTree
 
 BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'
 BILIBILI_EPISODE_URL_PREFIX = 'https://www.bilibili.com/bangumi/play/'
@@ -240,7 +240,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
             c = cookie_str_from_dict(cookies)
         elif isinstance(cookies, str):
             if os.path.isfile(cookies):
-                c = cookie_str_from_dict(cookies_dict_from_file(cookies))
+                c = cookie_str_from_dict(cookies_dict_from_netscape_file(cookies))
             else:
                 c = cookies
         else:

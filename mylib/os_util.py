@@ -50,19 +50,24 @@ def legal_fs_name(x: str, repl: str or dict = None) -> str:
     return legal
 
 
-def fs_rename(src_path: str, dst_name_or_path: str, move_to: str = None,
-              in_src_parent: bool = True, append_src_ext: bool = True):
+def fs_rename(src_path: str, dst_name_or_path: str = None, dst_ext: str = None, *,
+              move_to_dir: str = None, stay_in_src_dir: bool = True, append_src_ext: bool = True) -> str:
     src_root, src_basename = os.path.split(src_path)
-    _, src_ext = os.path.splitext(src_basename)
-    if move_to:
-        dst_path = os.path.join(move_to, dst_name_or_path)
-    elif in_src_parent:
+    src_non_ext, src_ext = os.path.splitext(src_basename)
+    if dst_ext is not None:
+        if dst_name_or_path is None:
+            dst_name_or_path = src_non_ext + dst_ext
+        else:
+            dst_name_or_path += dst_ext
+    if move_to_dir:
+        dst_path = os.path.join(move_to_dir, dst_name_or_path)
+    elif stay_in_src_dir:
         dst_path = os.path.join(src_root, dst_name_or_path)
     else:
         dst_path = dst_name_or_path
     if append_src_ext:
         dst_path = dst_path + src_ext
-    shutil.move(src_path, dst_path)
+    return shutil.move(src_path, dst_path)
 
 
 def ensure_sigint_signal():
