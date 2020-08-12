@@ -16,8 +16,6 @@ if os.name == 'nt':
     from .nt_util import *
 elif os.name == 'posix':
     from .posix_util import *
-else:
-    raise ImportError("Off-design OS: '{}'".format(os.name))
 
 
 def regex_move_path(source: str, pattern: str, replace: str, only_basename: bool = True, dry_run: bool = False):
@@ -285,3 +283,20 @@ def shlex_double_quotes_join(split):
             return s
 
     return ' '.join([quote_one(s) for s in split])
+
+
+def offset_write_file(file, offset: int, data):
+    with open(file, 'r+b') as f:
+        f.seek(offset)
+        f.write(data)
+
+
+def offset_read_file(file, offset: int, length: int = None, end: int = None):
+    if end:
+        length = end - offset
+    with open(file, 'r+b') as f:
+        f.seek(offset)
+        if length:
+            return f.read(length)
+        else:
+            return f.read()

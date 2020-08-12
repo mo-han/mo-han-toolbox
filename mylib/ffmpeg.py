@@ -640,12 +640,15 @@ class VideoSegmentsContainer:
                                      fs_find_iter('*' + self.suffix_done)])
         return segments
 
-    def convert(self):
+    def convert(self, overwrite: bool = False):
         segments = self.get_untouched_segments()
         while segments:
             stream_id, segment_file = random.choice(segments)
-            self.convert_one_segment(stream_id, segment_file)
+            self.convert_one_segment(stream_id, segment_file, overwrite=overwrite)
             segments = self.get_untouched_segments()
+
+    def convert_with_overwrite(self):
+        self.convert(overwrite=True)
 
     def nap(self):
         t = round(random.uniform(0.2, 0.4), 3)
@@ -712,7 +715,10 @@ class VideoSegmentsContainer:
                 raise self.SegmentNotDoneError
             return excerpt_single_video_stream(o_seg)
 
-    def estimate(self, overwrite_existing_segment=False) -> dict:
+    def estimate_with_overwrite(self):
+        return self.estimate(overwrite=True)
+
+    def estimate(self, overwrite=False) -> dict:
         d = {}
         segments = self.input_data[TXT_SEGMENT]
         for stream_id in segments:
@@ -722,10 +728,10 @@ class VideoSegmentsContainer:
             max_rate_seg_f, max_rate_seg_d = seg_list_by_rate[-1]
             sd['min'] = {'file': min_rate_seg_f, 'input': min_rate_seg_d,
                          'output': self.convert_one_segment(stream_id, min_rate_seg_f,
-                                                            overwrite=overwrite_existing_segment)}
+                                                            overwrite=overwrite)}
             sd['max'] = {'file': max_rate_seg_f, 'input': max_rate_seg_d,
                          'output': self.convert_one_segment(stream_id, max_rate_seg_f,
-                                                            overwrite=overwrite_existing_segment)}
+                                                            overwrite=overwrite)}
             sd['min']['ratio'] = round(sd['min']['output']['bit_rate'] / sd['min']['input']['bit_rate'], 3)
             sd['max']['ratio'] = round(sd['max']['output']['bit_rate'] / sd['max']['input']['bit_rate'], 3)
 

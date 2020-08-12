@@ -275,7 +275,7 @@ dukto_x.add_argument('ndrop_args', metavar='[--] arguments for ndrop', nargs=REM
 def url_from_clipboard():
     import pyperclip
     from mylib.text import regex_find
-    from mylib.web import decode_html_char_ref
+    from mylib.web_client import decode_html_char_ref
     args = rtd.args
     pattern = args.pattern
     t = pyperclip.paste()

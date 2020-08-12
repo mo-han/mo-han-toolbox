@@ -22,6 +22,7 @@
       <w>errorlevel</w>
       <w>exhentai</w>
       <w>extname</w>
+      <w>fanbox</w>
       <w>ffmetadata</w>
       <w>ffmpeg</w>
       <w>ffprobe</w>
@@ -52,6 +53,7 @@
       <w>ndrop</w>
       <w>opencv</w>
       <w>phash</w>
+      <w>pixiv</w>
       <w>proc</w>
       <w>pushd</w>
       <w>pyinstaller</w>

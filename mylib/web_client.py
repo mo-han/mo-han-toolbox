@@ -6,6 +6,8 @@ import http.cookiejar
 import json
 import os
 import re
+from concurrent.futures.thread import ThreadPoolExecutor
+from io import StringIO
 from typing import List
 
 import lxml.html
@@ -13,13 +15,21 @@ import requests.utils
 
 from mylib.tricks import JSONType
 
+MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE = '# Netscape HTTP Cookie File'
 USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'
 
 HTMLElementTree = lxml.html.HtmlElement
 
-_headers = {
-    'user-agent': USER_AGENT_FIREFOX_WIN10,
-}
+
+class WebRequestFailure(Exception):
+    code = None
+    desc = None
+    data = None
+
+    def __init__(self, code: int, reason: str = None, data=None):
+        self.code = int(code)
+        self.desc = str(reason)
+        self.data = data
 
 
 def decode_html_char_ref(x: str) -> str:
@@ -27,8 +37,6 @@ def decode_html_char_ref(x: str) -> str:
 
 
 def get_html_element_tree(url, **kwargs) -> HTMLElementTree:
-    if 'headers' in kwargs:
-        kwargs['headers'].update(_headers)
     r = requests.get(url, **kwargs)
     if r.ok:
         return lxml.html.document_fromstring(r.text)
@@ -46,7 +54,7 @@ def convert_cookies_json_to_netscape(json_data_or_filepath: JSONType or str, dis
     tab = '\t'
     false_ = 'FALSE' + tab
     true_ = 'TRUE' + tab
-    lines = ['# Netscape HTTP Cookie File']
+    lines = [MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE]
     for c in cookies:
         http_only_prefix = '#HttpOnly_' if c['httpOnly'] else ''
         line = http_only_prefix + c['domain'] + tab
@@ -103,11 +111,44 @@ def cookies_dict_from_json(json_data_or_filepath: JSONType or str, disable_filep
     return d
 
 
+class CurlCookieJar(http.cookiejar.MozillaCookieJar):
+    """fix MozillaCookieJar ignoring '#HttpOnly_'"""
+
+    def load(self, filename=None, ignore_discard=False, ignore_expires=False):
+        http_only_prefix = '#HttpOnly_'
+        http_only_prefix_len = len(http_only_prefix)
+        if filename is None:
+            if self.filename is not None:
+                filename = self.filename
+            else:
+                # noinspection PyUnresolvedReferences
+                raise ValueError(http.cookiejar.MISSING_FILENAME_TEXT)
+
+        with open(filename) as f:
+            lines = [e[http_only_prefix_len:] if e.startswith(http_only_prefix) else e for e in f.readlines()]
+
+        with StringIO() as f:
+            f.writelines(lines)
+            f.seek(0)
+            # noinspection PyUnresolvedReferences
+            self._really_load(f, filename, ignore_discard, ignore_expires)
+
+
 def cookies_dict_from_netscape_file(filepath: str) -> dict:
     from .os_util import read_json_file
-    cj = http.cookiejar.MozillaCookieJar(filepath)
+    cj = CurlCookieJar(filepath)
     cj.load()
     return requests.utils.dict_from_cookiejar(cj)
+
+
+def cookies_dict_from_file(filepath: str) -> dict:
+    if not os.path.isfile(filepath):
+        raise FileNotFoundError(filepath)
+    if filepath.endswith('.json'):
+        d = cookies_dict_from_json(filepath)
+    else:
+        d = cookies_dict_from_netscape_file(filepath)
+    return d
 
 
 def cookie_str_from_dict(cookies: dict) -> str:
@@ -116,8 +157,22 @@ def cookie_str_from_dict(cookies: dict) -> str:
     return cookie
 
 
-class DownloadFailure(Exception):
-    pass
+def get_headers_of_user_agent(user_agent: str = None, headers: dict = None) -> dict:
+    h = headers or {}
+    h['User-Agent'] = user_agent or USER_AGENT_FIREFOX_WIN10
+    return h
+
+
+def get_headers_of_cookie(cookies_data: dict or str, headers: dict = None) -> dict:
+    h = headers or get_headers_of_user_agent()
+    if isinstance(cookies_data, dict):
+        cookie = cookie_str_from_dict(cookies_data)
+    elif isinstance(cookies_data, str):
+        cookie = cookies_data
+    else:
+        raise TypeError('cookies_data', (dict, str))
+    h['Cookie'] = cookie
+    return h
 
 
 def get_phantomjs_splinter(proxy=None, show_image=False, window_size=(1024, 1024)):
@@ -181,3 +236,7 @@ def get_zope_splinter(**kwargs):
 get_browser = {
     'splinter.phantomjs': get_phantomjs_splinter,
 }
+
+
+class WebDownloadExecutor(ThreadPoolExecutor):
+    pass

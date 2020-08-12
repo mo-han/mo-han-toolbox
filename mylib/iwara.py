@@ -5,7 +5,7 @@ from abc import ABCMeta
 import youtube_dl.extractor.iwara
 
 from .text import regex_find
-from .web import get_html_element_tree
+from .web_client import get_html_element_tree
 
 
 def find_url_in_text(text: str) -> list:
