@@ -1,3 +1,14 @@
+#### [SubscriptableFileIO](mylib/os_util.py#L225)
+
+slice data in FileIO object
+
+```python
+from mylib.os_util import SubscriptableFileIO
+
+with SubscriptableFileIO('filepath') as f:
+    f[-10:] = b'123abc'
+```
+
 #### [bilibili_aocx](mykits/bilibili_aocx.py)
 
 *bilibili APP offline cache extractor*
@@ -15,10 +26,10 @@ main features in current version:
 - find opened PotPlayer window and bring it to foreground
 - get and parse info of the opened media file
 - rename/move the opened media file
-- a [pretty GUI dialog](mylib/gui.py) to rename/move the opened media file
+- a [GUI dialog](mylib/gui.py#L44) to rename/move the opened media file
 
-#### [VoidDuck](https://github.com/mo-han/mo-han-toolbox/blob/a1ba0e07f02ee437480e0a681c4067e95745e59e/lib_misc.py#L29-L41)
+#### [VoidDuck](mylib/tricks.py#L135)
 
 虚空之鸭，万能的鸭鸭，无能的鸭鸭，随你怎么对待它，鸭鸭不反抗，鸭鸭不回答
 
-a void, versatile, useless and quiet duck, called in any way, return nothing, raise nothing
+a void, versatile, useless and quiet duck, called anyhow, no return no raise
