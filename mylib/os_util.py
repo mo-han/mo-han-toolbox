@@ -222,49 +222,82 @@ def fs_find_iter(pattern: str or Callable = None, root: str = '.',
                 yield path
 
 
-class SlicedFileIO(FileIO):
-    file_size = None
-
+class SubscriptableFileIO(FileIO):
     def __init__(self, file, mode='r', *args, **kwargs):
         """refer to doc string of io.FileIO"""
-        self.file_size = os.path.getsize(file)
-        super(SlicedFileIO, self).__init__(file, mode=mode, *args, **kwargs)
+        super(SubscriptableFileIO, self).__init__(file, mode=mode, *args, **kwargs)
+        try:
+            self.file_size = os.path.getsize(file)
+        except TypeError:
+            self.file_size = os.path.getsize(self.name)
 
     def __len__(self):
         return self.file_size
 
     def __getitem__(self, key: int or slice):
+        orig_pos = self.tell()
         if isinstance(key, int):
             if key < 0:
                 key = len(self) + key
             self.seek(key)
-            return self.read(1)
+            r = self.read(1)
         elif isinstance(key, slice):
             start, stop, step = key.start, key.stop, key.step
             if not start:
                 start = 0
+            elif start < 0:
+                start = len(self) + start
             if not stop:
                 stop = len(self)
-            if not step or step == 1:
+            elif stop < 0:
+                stop = len(self) + stop
+            size = stop - start
+            if size <= 0:
+                r = b''
+            elif not step or step == 1:
                 self.seek(start)
-                return self.read(stop - start)
+                r = self.read(size)
             else:
-                return [self[i] for i in range(*key.indices(len(self)))]
+                r = self.read(size)[::step]
         else:
             raise TypeError("'{}' is not int or slice".format(key))
+        self.seek(orig_pos)
+        return r
 
     def __setitem__(self, key: int or slice, value: bytes):
+        orig_pos = self.tell()
         if isinstance(key, int):
             if len(value) != 1:
-                raise ValueError("must write one and only one byte")
+                raise ValueError("overflow write", value)
             if key < 0:
                 key = len(self) + key
             self.seek(key)
-            return self.write(value)
+            r = self.write(value)
         elif isinstance(key, slice):
-            raise NotImplementedError
+            start, stop, step = key.start, key.stop, key.step
+            if not start:
+                start = 0
+            elif start < 0:
+                start = len(self) + start
+            if not stop:
+                stop = len(self)
+            elif stop < 0:
+                stop = len(self) + stop
+            size = stop - start
+            if size <= 0:
+                r = 0
+            elif not step or step == 1:
+                if len(value) <= size:
+                    self.seek(start)
+                    r = self.write(value)
+                else:
+                    raise NotImplementedError('overflow write')
+            else:
+                raise NotImplementedError('non-sequential write')
         else:
             raise TypeError("'{}' is not int or slice".format(key))
+        self.seek(orig_pos)
+        return r
 
 
 def shlex_join(split):
@@ -285,13 +318,13 @@ def shlex_double_quotes_join(split):
     return ' '.join([quote_one(s) for s in split])
 
 
-def offset_write_file(file, offset: int, data):
+def file_offset_write(file, offset: int, data):
     with open(file, 'r+b') as f:
         f.seek(offset)
         f.write(data)
 
 
-def offset_read_file(file, offset: int, length: int = None, end: int = None):
+def file_offset_read(file, offset: int, length: int = None, end: int = None):
     if end:
         length = end - offset
     with open(file, 'r+b') as f:
