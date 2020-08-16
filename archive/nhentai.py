@@ -3,7 +3,8 @@
 import sys
 import logging
 
-from mylib.misc import LOG_FMT_MESSAGE_ONLY, ExitCode
+from mylib.misc import ExitCode
+from mylib.log import LOG_FMT_MESSAGE_ONLY
 from mylib.os_util import ensure_sigint_signal
 from mylib.hentai import NHentaiKit
 

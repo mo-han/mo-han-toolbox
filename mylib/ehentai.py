@@ -8,8 +8,8 @@ from time import sleep
 
 import requests
 
-from .misc import LOG_FMT_MESSAGE_ONLY
-from .tricks import get_logger, VoidDuck, str_ishex
+from .tricks import VoidDuck, str_ishex
+from .log import get_logger, LOG_FMT_MESSAGE_ONLY
 from .web_client import cookies_dict_from_netscape_file, get_html_element_tree
 from .os_util import legal_fs_name
 

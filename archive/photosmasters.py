@@ -13,7 +13,8 @@ import json
 from requests import get, head
 from bs4 import BeautifulSoup
 
-from mylib.misc import ExitCode, rectify_basename, LOG_FMT, LOG_FMT_MESSAGE_ONLY
+from mylib.misc import ExitCode, rectify_basename
+from mylib.log import LOG_FMT_MESSAGE_ONLY, LOG_FMT
 from mylib.os_util import ensure_sigint_signal
 
 DB_FILE = 'db.json'

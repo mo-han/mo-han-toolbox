@@ -51,10 +51,10 @@ def legal_fs_name(x: str, repl: str or dict = None) -> str:
 def fs_rename(src_path: str, dst_name_or_path: str = None, dst_ext: str = None, *,
               move_to_dir: str = None, stay_in_src_dir: bool = True, append_src_ext: bool = True) -> str:
     src_root, src_basename = os.path.split(src_path)
-    src_non_ext, src_ext = os.path.splitext(src_basename)
+    src_before_ext, src_ext = os.path.splitext(src_basename)
     if dst_ext is not None:
         if dst_name_or_path is None:
-            dst_name_or_path = src_non_ext + dst_ext
+            dst_name_or_path = src_before_ext + dst_ext
         else:
             dst_name_or_path += dst_ext
     if move_to_dir:
@@ -138,7 +138,7 @@ def ensure_open_file(filepath, mode='r', **kwargs):
     return open(filepath, mode, **kwargs)
 
 
-def touch(filepath):
+def fs_touch(filepath):
     try:
         os.utime(filepath)
     except OSError:
@@ -223,7 +223,8 @@ def fs_find_iter(pattern: str or Callable = None, root: str = '.',
 
 
 class SubscriptableFileIO(FileIO):
-    def __init__(self, file, mode='r', *args, **kwargs):
+    """slice data in FileIO object"""
+    def __init__(self, file, mode='r+b', *args, **kwargs):
         """refer to doc string of io.FileIO"""
         super(SubscriptableFileIO, self).__init__(file, mode=mode, *args, **kwargs)
         try:

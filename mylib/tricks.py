@@ -4,13 +4,12 @@
 import argparse
 import hashlib
 import importlib.util
-import logging
 import sys
+import inflection
 from collections import defaultdict
 from functools import wraps
 from typing import Dict, Iterable, Callable, Generator, Tuple, Union, Mapping, List
 
-from .misc import LOG_FMT, LOG_DTF
 from .number import int_is_power_of_2
 
 Decorator = Callable[[Callable], Callable]
@@ -61,10 +60,10 @@ def decorator_factory_args_choices(choices: Dict[int or str, Iterable]) -> Decor
     return decorator
 
 
-def context_exception_retry(exceptions: Exception or Iterable[Exception], max_retries: int = 3,
-                            enable_default=False, default=None,
-                            exception_predicate: Callable[[Exception], bool] = None,
-                            exception_queue: QueueType = None) -> Decorator:
+def decorator_factory_exception_retry(exceptions: Exception or Iterable[Exception], max_retries: int = 3,
+                                      enable_default=False, default=None,
+                                      exception_predicate: Callable[[Exception], bool] = None,
+                                      exception_queue: QueueType = None) -> Decorator:
     """decorator factory: force a func re-running for several times on exception(s)"""
     predicate = exception_predicate or (lambda e: True)
     max_retries = int(max_retries)
@@ -173,18 +172,6 @@ def arg_type_range_factory(x_type, x_range_condition: str):
             raise argparse.ArgumentTypeError("'{}' not in range {}".format(x, x_range_condition))
 
     return arg_type_range
-
-
-def get_logger(logger_name: str, level: str = 'INFO', fmt=LOG_FMT, datetime_fmt=LOG_DTF, handlers_l: list = None):
-    formatter = logging.Formatter(fmt=fmt, datefmt=datetime_fmt)
-    logger = logging.getLogger(logger_name)
-    logger.setLevel(level)
-    if not handlers_l:
-        handlers_l = [logging.StreamHandler()]
-    for h in handlers_l:
-        h.setFormatter(formatter)
-        logger.addHandler(h)
-    return logger
 
 
 class ArgParseCompactHelpFormatter(argparse.HelpFormatter):
@@ -486,3 +473,26 @@ def seconds_from_colon_time(t: str) -> float:
             total = total * 60 + abs(float(x))
 
     return total if total == 0 else total * sign
+
+
+class EverythingFineNoError(Exception):
+    pass
+
+
+class SnakeCaseAttributeInflection:
+    def __getattribute__(self, item):
+        if item == '__dict__':
+            return object.__getattribute__(self, item)
+        item_camel = inflection.camelize(item, False)
+        underscore = inflection.underscore
+        if item in self.__dict__:
+            return self.__dict__[item]
+        elif item_camel in self.__dict__ or item in [underscore(k) for k in self.__dict__]:
+            return self.__dict__[item_camel]
+        else:
+            return object.__getattribute__(self, item)
+
+
+def percentage(quotient, digits: int = 1) -> str:
+    fmt = '{:.' + str(digits) + '%}'
+    return fmt.format(quotient)

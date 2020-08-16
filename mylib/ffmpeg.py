@@ -11,10 +11,11 @@ from typing import Iterable, List, Iterator
 import ffmpeg
 import filetype
 
-from .os_util import pushd_context, write_json_file, read_json_file, SlicedFileIO, ensure_open_file, fs_find_iter, \
-    fs_rename, touch, shlex_double_quotes_join
-from .tricks import get_logger, hex_hash, decorator_factory_args_choices, remove_from_list, seconds_from_colon_time, \
+from .os_util import pushd_context, write_json_file, read_json_file, SubscriptableFileIO, ensure_open_file, fs_find_iter, \
+    fs_rename, fs_touch, shlex_double_quotes_join
+from .tricks import hex_hash, decorator_factory_args_choices, remove_from_list, seconds_from_colon_time, \
     dedup_list
+from .log import get_logger
 
 TXT_SEGMENT = 'segment'
 TXT_NON_SEGMENT = 'non segment'
@@ -357,7 +358,7 @@ class VideoSegmentsContainer:
             if filetype.guess(path).mime.startswith('video'):
                 d, b = os.path.split(path)
                 self.input_data = {TXT_FILENAME: b, TXT_SEGMENT: {}, TXT_NON_SEGMENT: {}}
-                with SlicedFileIO(path) as f_cut:
+                with SubscriptableFileIO(path) as f_cut:
                     fl_middle = len(f_cut) // 2
                     root_base = '.{}-{}'.format(self.nickname, hex_hash(
                         f_cut[:4096] + f_cut[fl_middle - 2048:fl_middle + 2048] + f_cut[:-4096])[:8])
@@ -659,7 +660,7 @@ class VideoSegmentsContainer:
         if self.file_has_lock(filepath) or self.file_has_done(filepath):
             return
         else:
-            touch(filepath + self.suffix_lock)
+            fs_touch(filepath + self.suffix_lock)
 
     def file_tag_unlock(self, filepath):
         if self.file_has_lock(filepath):
@@ -673,7 +674,7 @@ class VideoSegmentsContainer:
                       stay_in_src_dir=False, append_src_ext=False)
 
     def file_tag_delete(self, filepath):
-        touch(filepath + self.suffix_delete)
+        fs_touch(filepath + self.suffix_delete)
 
     def convert_one_segment(self, stream_id, segment_file, overwrite=False) -> dict:
         segment_path_no_prefix = os.path.join(stream_id, segment_file)
@@ -774,7 +775,7 @@ class VideoSegmentsContainer:
                         os.remove(o_seg + self.suffix_done)
                     elif self.file_has_lock(o_seg):
                         self.logger.info('request delete locked segment {}'.format(o_seg))
-                        touch(o_seg + self.suffix_delete)
+                        fs_touch(o_seg + self.suffix_delete)
                     else:
                         self.logger.info('delete stub segment{}'.format(o_seg))
                         os.remove(o_seg)

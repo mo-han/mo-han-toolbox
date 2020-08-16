@@ -5,7 +5,7 @@ import re
 import shutil
 from collections import defaultdict
 
-from .tricks import remove_from_list, dedup_list, context_exception_retry, singleton
+from .tricks import remove_from_list, dedup_list, decorator_factory_exception_retry, singleton
 from .os_util import ensure_sigint_signal, real_join_path, write_json_file, read_json_file
 
 
@@ -99,7 +99,7 @@ def rename_dialog(src: str):
     data = {fname: old_fn, ext: old_ext, pattern: tmp_pl[0], replace: tmp_rl[0], root: old_root,
             new_root: '', new_base: ''}
 
-    @context_exception_retry(Exception, 0, enable_default=True, default=None)
+    @decorator_factory_exception_retry(Exception, 0, enable_default=True, default=None)
     def re_sub():
         return re.sub(data[pattern], data[replace], data[fname] + data[ext])
 

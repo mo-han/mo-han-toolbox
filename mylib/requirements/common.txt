@@ -1,8 +1,10 @@
 ffmpeg-python
-filetype  #MIT
+filetype  #license-mit
 gallery-dl
 gooey
+humanize  #license-mit
 imagehash
+inflection  #license-mit
 keyboard
 lxml
 mouse
@@ -11,7 +13,7 @@ opencv-python
 pillow
 pure-python-adb
 pyautogui  # pyautogui==0.9.39
-pymediainfo  #MIT
+pymediainfo  #license-mit
 pyperclip
 pyreadline
 pyserial

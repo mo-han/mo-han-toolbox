@@ -1,6 +1,6 @@
 #### [SubscriptableFileIO](mylib/os_util.py#L225)
 
-slice data in FileIO object
+*slice data in subscriptable FileIO object*
 
 ```python
 from mylib.os_util import SubscriptableFileIO
