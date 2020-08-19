@@ -8,7 +8,7 @@ import sys
 from collections import defaultdict
 from functools import wraps
 from threading import Thread
-from typing import Dict, Iterable, Callable, Generator, Tuple, Union, Mapping, List, Iterator
+from typing import Dict, Iterable, Callable, Generator, Tuple, Union, Mapping, List, Iterator, Any
 
 import inflection
 
@@ -515,9 +515,12 @@ def meta_new_thread(group: None = None, name: str = None, daemon: bool = False) 
     return new_thread
 
 
-def meta_retry(max_retries=0, stop_exceptions=(), continue_exceptions=()) -> Callable:
-    stop_exceptions = stop_exceptions or ()
-    continue_exceptions = continue_exceptions or Exception
+def meta_gen_retry(max_retries=0,
+                   throw_exceptions=(),
+                   swallow_exceptions=(Exception,),
+                   ):
+    throw_exceptions = throw_exceptions or ()
+    swallow_exceptions = swallow_exceptions or Exception
     if max_retries is None:
         max_retries = -1
     max_retries = int(max_retries)
@@ -526,19 +529,18 @@ def meta_retry(max_retries=0, stop_exceptions=(), continue_exceptions=()) -> Cal
     else:
         max_try = max_retries
 
-    def retry(callee: Callable, *args, **kwargs):
+    def retry_gen(callee: Callable, *args, **kwargs) -> Generator[Tuple[int, Exception or Any], None, None]:
         cnt = max_try
         while cnt:
             try:
-                return callee(*args, **kwargs)
-            except stop_exceptions:
+                yield cnt, callee(*args, **kwargs)
+            except throw_exceptions:
                 raise
-            except continue_exceptions as e:
-                last_error = e
+            except swallow_exceptions as e:
                 cnt -= 1
-        raise last_error
+                yield cnt, e
 
-    return retry
+    return retry_gen
 
 
 class CLIArgumentList(list):

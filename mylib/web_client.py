@@ -6,6 +6,8 @@ import http.cookiejar
 import json
 import os
 import re
+import shutil
+import sys
 from concurrent.futures.thread import ThreadPoolExecutor
 from io import StringIO
 from queue import Queue
@@ -17,7 +19,8 @@ import lxml.html
 import requests.utils
 
 from .log import get_logger
-from .tricks import JSONType, meta_new_thread
+from .os_util import SubscriptableFileIO, fs_touch
+from .tricks import JSONType, meta_new_thread, meta_gen_retry
 
 MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE = '# Netscape HTTP Cookie File'
 USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'
@@ -238,8 +241,9 @@ def human_filesize(bytes_n: int):
 
 
 class Download:
-    def __init__(self, response: requests.Response, filepath: str = None, content: bytes = None):
-        content = content or response.content
+    def __init__(self, response: requests.Response, filepath: str = None,
+                 content: bytes = None, no_content: bool = False):
+        content = b'' if no_content else content or response.content
         if not response.ok:
             raise HTTPResponseInspection(response, content)
         self.id = id(response)
@@ -275,17 +279,19 @@ class Download:
 
 
 class HTTPResponseInspection(Exception):
-    def __init__(self, response: requests.Response, content: bytes = None, no_content: bool = False):
+    def __init__(self, response: requests.Response, content: bytes = None, no_content: bool = False, size: int = None):
         http_ver = {10: '1.0', 11: '1.1'}
         content = b'' if no_content else content or response.content
         self.version = http_ver[response.raw.version]
         self.code = int(response.status_code)
         self.reason = str(response.reason)
         self.json = None
-        self.size = size = len(content)
-        if size <= 32:
+        self.size = len(content)
+        if no_content:
+            self.excerpt = 'no content'
+        elif self.size <= 32:
             self.excerpt = content
-        elif size <= 4096:
+        elif self.size <= 4096:
             encoding = response.encoding or response.apparent_encoding
             try:
                 text = str(content, encoding=encoding, errors='replace')
@@ -301,15 +307,18 @@ class HTTPResponseInspection(Exception):
                 self.json = response.json()
             except json.decoder.JSONDecodeError:
                 pass
+        if size is not None:
+            self.size = size
+            self.excerpt = '{} bytes'.format(size)
 
     def __repr__(self):
-        t = '[HTTP/{} {} {}]'.format(self.version, self.code, self.reason)
+        t = 'HTTP/{} {} {}'.format(self.version, self.code, self.reason)
         if self.json:
-            t += ' JSON={}'.format(self.json)
+            t += ', JSON={}'.format(self.json)
         elif self.excerpt:
-            t += ' {}'.format(self.excerpt)
+            t += ', {}'.format(self.excerpt)
         else:
-            t += ' {} bytes'.format(self.size)
+            t += ', {} bytes'.format(self.size)
         return t
 
     __str__ = __repr__
@@ -321,11 +330,11 @@ class HTTPIncomplete(Exception):
         self.recv_size = recv_size
 
 
-class _WebDownloadExecutor(ThreadPoolExecutor):
-    # todo: implement alpha version
+class WebDownloadPool(ThreadPoolExecutor):
     tmpfile_suffix = '.download'
 
-    def __init__(self, threads: int = 5, timeout: int = 30, name: str = None):
+    def __init__(self, threads_n: int = 5, timeout: int = 30, name: str = None):
+        self._max_workers: int or None = None
         self.timeout = timeout
         self.name = name or self.__class__.__name__
         self.logger = get_logger('.'.join((__name__, self.name)))
@@ -334,23 +343,26 @@ class _WebDownloadExecutor(ThreadPoolExecutor):
         self.recv_size_queue = Queue()
         self.bytes_per_sec = 0
         self.emergency_queue = Queue()
-        self.auto_logging_interval = 5
-        self.auto_logging_enable = False
+        self.show_status_interval = 2
+        self.show_status_enable = True
         meta_new_thread(daemon=True)(self.calc_download_speed).start()
         meta_new_thread(daemon=True)(self.auto_logging).start()
-        super().__init__(max_workers=threads)
+        super().__init__(max_workers=threads_n)
 
     def auto_logging(self):
         eq = self.emergency_queue
         while True:
-            if self.auto_logging_enable:
-                self.logger.info('[DS:{}]'.format(self.download_speed))
+            if self.show_status_enable:
+                status_msg = '< {} | Threads {} | Speed {} >'.format(self.name, self._max_workers, self.download_speed)
+                status_width = len(status_msg)
+                preamble = shutil.get_terminal_size()[0] - status_width - 1
+                print(' ' * preamble + status_msg, end='\r', file=sys.stderr)
             if not eq.empty():
                 e = eq.get()
                 if isinstance(e, Exception):
                     self.shutdown(wait=False)
                     raise e
-            sleep(self.auto_logging_interval)
+            sleep(self.show_status_interval)
 
     @property
     def download_speed(self):
@@ -371,7 +383,7 @@ class _WebDownloadExecutor(ThreadPoolExecutor):
                 self.bytes_per_sec = sum(nl) // (tl[-1] - tl[0])
             except ZeroDivisionError:
                 self.bytes_per_sec = 0
-            while time() - tl[0] > self.auto_logging_interval:
+            while time() - tl[0] > self.show_status_interval:
                 tl.pop(0)
                 nl.pop(0)
 
@@ -382,7 +394,7 @@ class _WebDownloadExecutor(ThreadPoolExecutor):
         self.logger.debug('HEAD: split={}, size={}'.format(split, size))
         return {'split': split, 'size': size}
 
-    def download_data(self, url, file, start=0, stop=0, **kwargs_for_requests) -> Download:
+    def request_data(self, url, filepath, start=0, stop=0, **kwargs_for_requests) -> Download:
         kwargs = make_kwargs_for_lib_requests(**kwargs_for_requests)
         if stop:
             kwargs['headers']['Range'] = 'bytes={}-{}'.format(start, stop - 1)
@@ -391,10 +403,51 @@ class _WebDownloadExecutor(ThreadPoolExecutor):
         elif start < 0:
             kwargs['headers']['Range'] = 'bytes={}'.format(start)
         r = requests.get(url, stream=True, timeout=self.timeout, **kwargs)
-        ...
+        self.logger.debug(HTTPResponseInspection(r, no_content=True))
+        content = b''
+        for chunk in r.iter_content(chunk_size=requests.models.CONTENT_CHUNK_SIZE):
+            self.recv_size_queue.put((time(), len(chunk)))
+            content += chunk
+        self.logger.debug(HTTPResponseInspection(r, content=content))
+        d = Download(r, filepath, content=content)
+        return d
 
-    def write_file(self, ):
-        ...
+    def write_file(self, dl_obj: Download):
+        url = dl_obj.url
+        file = dl_obj.file
+        start = dl_obj.start
+        stop = dl_obj.stop
+        size = dl_obj.size
+        total = dl_obj.total_size
+        with SubscriptableFileIO(file) as f:
+            if len(f) != total:
+                f.truncate(total)
+            f[start: stop] = dl_obj.data
+            self.logger.debug('write {} ({}) <- {}'.format(file, human_filesize(size), url))
+
+    def download(self, url, filepath, retry, **kwargs_for_requests):
+        if os.path.isfile(filepath):
+            self.logger.info('# {}'.format(filepath))
+            return
+        tmpfile = filepath + self.tmpfile_suffix
+        fs_touch(tmpfile)
+        self.logger.info('+ {} <- {} (retry={})'.format(filepath, url, retry))
+        for cnt, x in meta_gen_retry(retry)(self.request_data, url, tmpfile, **kwargs_for_requests):
+            if isinstance(x, Exception):
+                self.logger.warning('! <{}> {}'.format(type(x).__name__, x))
+                if cnt:
+                    self.logger.info('++ retry ({}) {} <- {}'.format(cnt, filepath, url))
+            else:
+                dl_obj = x
+                break
+        else:
+            return
+        self.write_file(dl_obj)
+        os.rename(tmpfile, filepath)
+        self.logger.debug('* {} ({})'.format(filepath, human_filesize(dl_obj.size)))
+
+    def submit_download(self, url, filepath, retry, **kwargs_for_requests):
+        self.submit(self.download, url, filepath, retry, **kwargs_for_requests)
 
 
 def parse_https_url(url: str, allow_fragments=True):

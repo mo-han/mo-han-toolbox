@@ -16,8 +16,8 @@ LOG_FMT = LOG_FMT_1LEVEL_NO_TIME
 LOG_DTF = LOG_DTF_SEC_ZONE
 
 
-def get_logger(logger_name: str, level: str = 'INFO', fmt=LOG_FMT, datetime_fmt=LOG_DTF, handlers_l: list = None):
-    formatter = logging.Formatter(fmt=fmt, datefmt=datetime_fmt)
+def get_logger(logger_name: str, level: str = 'INFO', fmt=LOG_FMT, datefmt=LOG_DTF, handlers_l: list = None):
+    formatter = logging.Formatter(fmt=fmt, datefmt=datefmt)
     logger = logging.getLogger(logger_name)
     logger.setLevel(level)
     if not handlers_l:
@@ -26,3 +26,9 @@ def get_logger(logger_name: str, level: str = 'INFO', fmt=LOG_FMT, datetime_fmt=
         h.setFormatter(formatter)
         logger.addHandler(h)
     return logger
+
+
+def set_logger_format(logger: logging.Logger, fmt, datefmt):
+    formatter = logging.Formatter(fmt=fmt, datefmt=datefmt)
+    for h in logger.handlers:
+        h.setFormatter(formatter)

@@ -11,7 +11,8 @@ from typing import Iterable, List, Iterator
 import ffmpeg
 import filetype
 
-from .os_util import pushd_context, write_json_file, read_json_file, SubscriptableFileIO, ensure_open_file, fs_find_iter, \
+from .os_util import pushd_context, write_json_file, read_json_file, SubscriptableFileIO, ensure_open_file, \
+    fs_find_iter, \
     fs_rename, fs_touch, shlex_double_quotes_join
 from .tricks import hex_hash, decorator_factory_args_choices, remove_from_list, seconds_from_colon_time, \
     dedup_list
@@ -299,11 +300,11 @@ class FFmpegCommandCaller:
         return self.proc_run()
 
 
-class VideoSegmentsContainer:
-    nickname = 'video_seg_con'
-    logger = get_logger(nickname)
+class FFmpegSegmentsContainer:
+    nickname = 'ffsegcon'
+    logger = get_logger('.'.join((__name__, nickname)))
     ffmpeg_cmd = FFmpegCommandCaller(banner=False, loglevel='warning', overwrite=True)
-    tag_file = 'VIDEO_SEGMENTS_CONTAINER.TAG'
+    tag_file = 'FFMPEG_SEGMENTS_CONTAINER.TAG'
     tag_sig = 'Signature: ' + hex_hash(tag_file.encode())
     picture_file = 'p.mp4'
     non_visual_file = 'nv.mkv'
@@ -341,11 +342,11 @@ class VideoSegmentsContainer:
     class SegmentDeleteRequest(Exception):
         pass
 
-    class SegmentsIncomplete(Exception):
+    class SegmentMissing(Exception):
         pass
 
     def __repr__(self):
-        return "{} at '{}' from '{}'".format(VideoSegmentsContainer.__name__, self.root, self.input_filepath)
+        return "{} at '{}' from '{}'".format(FFmpegSegmentsContainer.__name__, self.root, self.input_filepath)
 
     def __init__(self, path: str, work_dir: str = None, single_video_stream: bool = True):
         path = os.path.abspath(path)
@@ -570,7 +571,7 @@ class VideoSegmentsContainer:
             raise self.ContainerError('no output config')
         if self.get_lock_segments() or \
                 len(self.get_done_segments()) != len(self.get_all_segments()):
-            raise self.SegmentsIncomplete
+            raise self.SegmentMissing
         d = self.output_data
         concat_list = []
         extra_input_list = []
@@ -648,7 +649,7 @@ class VideoSegmentsContainer:
             self.convert_one_segment(stream_id, segment_file, overwrite=overwrite)
             segments = self.get_untouched_segments()
 
-    def convert_with_overwrite(self):
+    def convert_overwrite(self):
         self.convert(overwrite=True)
 
     def nap(self):
@@ -716,7 +717,7 @@ class VideoSegmentsContainer:
                 raise self.SegmentNotDoneError
             return excerpt_single_video_stream(o_seg)
 
-    def estimate_with_overwrite(self):
+    def estimate_overwrite(self):
         return self.estimate(overwrite=True)
 
     def estimate(self, overwrite=False) -> dict:

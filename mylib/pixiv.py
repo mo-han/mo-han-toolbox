@@ -6,7 +6,7 @@ import requests
 
 from .log import get_logger
 from .os_util import pushd_context, ensure_open_file, write_json_file
-from .web_client import HTTPResponseInspection, parse_https_url, make_kwargs_for_lib_requests, WebDownloadExecutor
+from .web_client import HTTPResponseInspection, parse_https_url, make_kwargs_for_lib_requests, WebDownloadPool
 from .tricks import AttributeInflection, width_of_int, Attreebute
 
 FANBOX_DOMAIN = 'fanbox.cc'
@@ -100,9 +100,9 @@ def pixiv_fanbox_creator_folder(creator_data: dict):
 
 def download_pixiv_fanbox_post(post_or_id: PixivFanboxPost or dict or str or int, root_dir='.',
                                fanbox_api: PixivFanboxAPI = None,
-                               download_pool: WebDownloadExecutor = None,
-                               split=512 * 1024, retry=-1, **kwargs_for_requests):
-    download_pool = download_pool or WebDownloadExecutor()
+                               download_pool: WebDownloadPool = None,
+                               retry=-1, **kwargs_for_requests):
+    download_pool = download_pool or WebDownloadPool()
     fanbox_api = fanbox_api or PixivFanboxAPI(**kwargs_for_requests)
     if isinstance(post_or_id, PixivFanboxPost):
         post = post_or_id
@@ -126,22 +126,20 @@ def download_pixiv_fanbox_post(post_or_id: PixivFanboxPost or dict or str or int
         n += 1
         file = '{}-{}.{}'.format(str(n).zfill(n_width), image.id, image.extension)
         filepath = os.path.join(root_dir, creator_folder, post_folder, file)
-        download_pool.submit_download(image.original_url, filepath,
-                                      split=split, retry=retry,
-                                      **kwargs_for_requests)
+        download_pool.submit_download(image.original_url, filepath, retry, **kwargs_for_requests)
 
 
 def download_pixiv_fanbox_creator(creator_id, root_dir='.',
                                   fanbox_api: PixivFanboxAPI = None,
-                                  download_pool: WebDownloadExecutor = None,
-                                  split=512 * 1024, retry=-1, **kwargs_for_requests):
-    download_params = {'split': split, 'retry': retry, **kwargs_for_requests}
+                                  download_pool: WebDownloadPool = None,
+                                  retry=-1, **kwargs_for_requests):
+    download_params = {'retry': retry, **kwargs_for_requests}
     fanbox_api = fanbox_api or PixivFanboxAPI(**kwargs_for_requests)
-    download_pool = download_pool or WebDownloadExecutor()
+    download_pool = download_pool or WebDownloadPool()
     info = fanbox_api.get_creator_info(creator_id)
     info['plans'] = fanbox_api.list_sponsor_plan_of_creator(creator_id)
     profile_images = [i for i in info['profileItems'] if i['type'] == 'image']
-    creator_folder = pixiv_fanbox_creator_folder(**info)
+    creator_folder = pixiv_fanbox_creator_folder(info)
     os.makedirs(os.path.join(root_dir, creator_folder), exist_ok=True)
 
     write_json_file(os.path.join(root_dir, creator_folder, 'info.json'), info, indent=4)
