@@ -288,7 +288,7 @@ class HTTPResponseInspection(Exception):
         self.json = None
         self.size = len(content)
         if no_content:
-            self.excerpt = 'no content'
+            self.excerpt = None
         elif self.size <= 32:
             self.excerpt = content
         elif self.size <= 4096:
@@ -335,6 +335,7 @@ class WebDownloadPool(ThreadPoolExecutor):
 
     def __init__(self, threads_n: int = 5, timeout: int = 30, name: str = None):
         self._max_workers: int or None = None
+        self.schedule_queue = Queue()
         self.timeout = timeout
         self.name = name or self.__class__.__name__
         self.logger = get_logger('.'.join((__name__, self.name)))
@@ -345,15 +346,22 @@ class WebDownloadPool(ThreadPoolExecutor):
         self.emergency_queue = Queue()
         self.show_status_interval = 2
         self.show_status_enable = True
-        meta_new_thread(daemon=True)(self.calc_download_speed).start()
-        meta_new_thread(daemon=True)(self.auto_logging).start()
+        meta_new_thread(daemon=True)(self.calc_speed).start()
+        meta_new_thread(daemon=True)(self.logging).start()
+        meta_new_thread(daemon=True)(self.schedule).start()
         super().__init__(max_workers=threads_n)
 
-    def auto_logging(self):
+    def schedule(self):
+        q = self.schedule_queue
+        while True:
+            url, filepath, retry, kwargs_for_requests = q.get()
+            self.submit(self.download, url, filepath, retry, **kwargs_for_requests)
+
+    def logging(self):
         eq = self.emergency_queue
         while True:
             if self.show_status_enable:
-                status_msg = '< {} | Threads {} | Speed {} >'.format(self.name, self._max_workers, self.download_speed)
+                status_msg = '| {} | Threads {} | Speed {:>10} |'.format(self.name, self._max_workers, self.speed)
                 status_width = len(status_msg)
                 preamble = shutil.get_terminal_size()[0] - status_width - 1
                 print(' ' * preamble + status_msg, end='\r', file=sys.stderr)
@@ -365,10 +373,10 @@ class WebDownloadPool(ThreadPoolExecutor):
             sleep(self.show_status_interval)
 
     @property
-    def download_speed(self):
+    def speed(self):
         return human_filesize(self.bytes_per_sec) + '/s'
 
-    def calc_download_speed(self):
+    def calc_speed(self):
         tl = []
         nl = []
         q = self.recv_size_queue
@@ -426,12 +434,8 @@ class WebDownloadPool(ThreadPoolExecutor):
             self.logger.debug('write {} ({}) <- {}'.format(file, human_filesize(size), url))
 
     def download(self, url, filepath, retry, **kwargs_for_requests):
-        if os.path.isfile(filepath):
-            self.logger.info('# {}'.format(filepath))
-            return
         tmpfile = filepath + self.tmpfile_suffix
         fs_touch(tmpfile)
-        self.logger.info('+ {} <- {} (retry={})'.format(filepath, url, retry))
         for cnt, x in meta_gen_retry(retry)(self.request_data, url, tmpfile, **kwargs_for_requests):
             if isinstance(x, Exception):
                 self.logger.warning('! <{}> {}'.format(type(x).__name__, x))
@@ -447,7 +451,11 @@ class WebDownloadPool(ThreadPoolExecutor):
         self.logger.debug('* {} ({})'.format(filepath, human_filesize(dl_obj.size)))
 
     def submit_download(self, url, filepath, retry, **kwargs_for_requests):
-        self.submit(self.download, url, filepath, retry, **kwargs_for_requests)
+        if os.path.isfile(filepath):
+            self.logger.info('# {}'.format(filepath))
+            return
+        self.logger.info('+ {} <- {} (retry={})'.format(filepath, url, retry))
+        self.schedule_queue.put((url, filepath, retry, kwargs_for_requests))
 
 
 def parse_https_url(url: str, allow_fragments=True):
