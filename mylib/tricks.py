@@ -5,10 +5,12 @@ import argparse
 import hashlib
 import importlib.util
 import sys
-import inflection
 from collections import defaultdict
 from functools import wraps
-from typing import Dict, Iterable, Callable, Generator, Tuple, Union, Mapping, List
+from threading import Thread
+from typing import Dict, Iterable, Callable, Generator, Tuple, Union, Mapping, List, Iterator
+
+import inflection
 
 from .number import int_is_power_of_2
 
@@ -287,6 +289,8 @@ class Attreebute:
     def __update_data__(self, key, value):
         if isinstance(value, Attreebute):
             self.__data__[key] = value.__data__
+        elif isinstance(value, list):
+            self.__data__[key] = [e.__data__ if isinstance(e, Attreebute) else e for e in value]
         elif key not in self.__exclude__:
             self.__data__[key] = value
 
@@ -479,7 +483,7 @@ class EverythingFineNoError(Exception):
     pass
 
 
-class SnakeCaseAttributeInflection:
+class AttributeInflection:
     def __getattribute__(self, item):
         if item == '__dict__':
             return object.__getattribute__(self, item)
@@ -496,3 +500,90 @@ class SnakeCaseAttributeInflection:
 def percentage(quotient, digits: int = 1) -> str:
     fmt = '{:.' + str(digits) + '%}'
     return fmt.format(quotient)
+
+
+def width_of_int(x: int):
+    return len(str(x))
+
+
+def meta_new_thread(group: None = None, name: str = None, daemon: bool = False) -> Callable[..., Thread]:
+    thread_kwargs = {'group': group, 'name': name, 'daemon': daemon}
+
+    def new_thread(callee: Callable, *args, **kwargs):
+        return Thread(target=callee, args=args, kwargs=kwargs, **thread_kwargs)
+
+    return new_thread
+
+
+def meta_retry(max_retries=0, stop_exceptions=(), continue_exceptions=()) -> Callable:
+    stop_exceptions = stop_exceptions or ()
+    continue_exceptions = continue_exceptions or Exception
+    if max_retries is None:
+        max_retries = -1
+    max_retries = int(max_retries)
+    if max_retries >= 0:
+        max_try = max_retries + 1
+    else:
+        max_try = max_retries
+
+    def retry(callee: Callable, *args, **kwargs):
+        cnt = max_try
+        while cnt:
+            try:
+                return callee(*args, **kwargs)
+            except stop_exceptions:
+                raise
+            except continue_exceptions as e:
+                last_error = e
+                cnt -= 1
+        raise last_error
+
+    return retry
+
+
+class CLIArgumentList(list):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.add(*args, **kwargs)
+
+    def add_arg(self, arg):
+        if isinstance(arg, str):
+            self.append(arg)
+        elif isinstance(arg, (Iterable, Iterator)):
+            for a in arg:
+                self.add_arg(a)
+        else:
+            self.append(str(arg))
+        return self
+
+    def add_kwarg(self, key: str, value):
+        if isinstance(key, str):
+            if isinstance(value, str):
+                self.append(key)
+                self.append(value)
+            elif isinstance(value, (Iterable, Iterator)):
+                for v in value:
+                    self.add_kwarg(key, v)
+            elif value is True:
+                self.append(key)
+            elif value is None or value is False:
+                pass
+            else:
+                self.append(key)
+                self.append(str(value))
+        return self
+
+    def add(self, *args, **kwargs):
+        for a in args:
+            self.add_arg(a)
+        for k, v in kwargs.items():
+            self.add_kwarg(*self.kwarg_to_long_option(k, v))
+        return self
+
+    @staticmethod
+    def kwarg_to_long_option(key: str, value):
+        if '_' in key:
+            k = '--' + '-'.join(key.split('_'))
+        else:
+            k = '-' + key
+        return k, value

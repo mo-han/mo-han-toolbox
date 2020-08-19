@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 # encoding=utf8
+import os
+
 import requests
 
-from .web_client import HTTPFailure, parse_https_url, make_kwargs_for_lib_requests
-from .tricks import SnakeCaseAttributeInflection
+from .log import get_logger
+from .os_util import pushd_context, ensure_open_file, write_json_file
+from .web_client import HTTPResponseInspection, parse_https_url, make_kwargs_for_lib_requests, WebDownloadExecutor
+from .tricks import AttributeInflection, width_of_int, Attreebute
 
 FANBOX_DOMAIN = 'fanbox.cc'
 FANBOX_HOMEPAGE = 'https://' + FANBOX_DOMAIN
@@ -30,26 +34,29 @@ def fanbox_post_id_from_url(url: str) -> int or None:
             return int(post)
 
 
-class PixivFanboxImage(SnakeCaseAttributeInflection):
+class PixivFanboxImage(Attreebute, AttributeInflection):
     def __init__(self, image_dict: dict):
-        self.__dict__.update(image_dict)
+        super().__init__(image_dict)
 
 
-class PixivFanboxPost(SnakeCaseAttributeInflection):
+class PixivFanboxPost(Attreebute, AttributeInflection):
     def __init__(self, post_dict: dict):
-        self.__dict__.update(post_dict)
-        self.text = self.__dict__['body']['text']
-        self.images = [PixivFanboxImage(i) for i in self.body['images']]
+        post_dict['text'] = post_dict['body']['text']
+        post_dict['images'] = [PixivFanboxImage(i) for i in post_dict['body']['images']]
+        del post_dict['body']
+        super().__init__(post_dict)
 
 
 class PixivFanboxAPI:
     def __init__(self, **kwargs_for_requests):
+        self.logger = get_logger('.'.join((__name__, self.__class__.__name__)))
         self.api_url = FANBOX_API_URL
         self.kwargs_for_requests = make_kwargs_for_lib_requests(**kwargs_for_requests)
         self.kwargs_for_requests['headers']['Origin'] = FANBOX_HOMEPAGE
 
     def get(self, url, params=None):
         r = requests.get(url, params=params, **self.kwargs_for_requests)
+        self.logger.debug(r.request.url)
         if r.ok:
             d = r.json()
             if len(d) == 1 and TXT_BODY in d:
@@ -57,7 +64,7 @@ class PixivFanboxAPI:
             else:
                 return d
         else:
-            raise HTTPFailure(r)
+            raise HTTPResponseInspection(r)
 
     def get_post_info(self, post_id):
         url = self.api_url + '/post.info'
@@ -85,3 +92,75 @@ class PixivFanboxAPI:
         url = self.api_url + '/plan.listCreator'
         params = {'creatorId': creator_id}
         return self.get(url, params)
+
+
+def pixiv_fanbox_creator_folder(creator_data: dict):
+    return '{creatorId} {user[name]} (pixiv {user[userId]})'.format(**creator_data)
+
+
+def download_pixiv_fanbox_post(post_or_id: PixivFanboxPost or dict or str or int, root_dir='.',
+                               fanbox_api: PixivFanboxAPI = None,
+                               download_pool: WebDownloadExecutor = None,
+                               split=512 * 1024, retry=-1, **kwargs_for_requests):
+    download_pool = download_pool or WebDownloadExecutor()
+    fanbox_api = fanbox_api or PixivFanboxAPI(**kwargs_for_requests)
+    if isinstance(post_or_id, PixivFanboxPost):
+        post = post_or_id
+    elif isinstance(post_or_id, dict):
+        post = PixivFanboxPost(post_or_id)
+    elif isinstance(post_or_id, (str, int)):
+        post = fanbox_api.get_post_info(post_or_id)
+    else:
+        raise TypeError('`post_or_id` type: PixivFanboxPost, dict, str, int')
+    creator_folder = pixiv_fanbox_creator_folder(post.__data__)
+    post_folder = '[{creatorId} ({user[name]})] {title} (fanbox {id})'.format(**post.__data__)
+    os.makedirs(os.path.join(root_dir, creator_folder, post_folder), exist_ok=True)
+
+    file = 'post.json'
+    filepath = os.path.join(root_dir, creator_folder, post_folder, file)
+    write_json_file(filepath, post.__data__, indent=4)
+
+    n_width = width_of_int(len(post.images))
+    n = 0
+    for image in post.images:
+        n += 1
+        file = '{}-{}.{}'.format(str(n).zfill(n_width), image.id, image.extension)
+        filepath = os.path.join(root_dir, creator_folder, post_folder, file)
+        download_pool.submit_download(image.original_url, filepath,
+                                      split=split, retry=retry,
+                                      **kwargs_for_requests)
+
+
+def download_pixiv_fanbox_creator(creator_id, root_dir='.',
+                                  fanbox_api: PixivFanboxAPI = None,
+                                  download_pool: WebDownloadExecutor = None,
+                                  split=512 * 1024, retry=-1, **kwargs_for_requests):
+    download_params = {'split': split, 'retry': retry, **kwargs_for_requests}
+    fanbox_api = fanbox_api or PixivFanboxAPI(**kwargs_for_requests)
+    download_pool = download_pool or WebDownloadExecutor()
+    info = fanbox_api.get_creator_info(creator_id)
+    info['plans'] = fanbox_api.list_sponsor_plan_of_creator(creator_id)
+    profile_images = [i for i in info['profileItems'] if i['type'] == 'image']
+    creator_folder = pixiv_fanbox_creator_folder(**info)
+    os.makedirs(os.path.join(root_dir, creator_folder), exist_ok=True)
+
+    write_json_file(os.path.join(root_dir, creator_folder, 'info.json'), info, indent=4)
+    url = info['user']['iconUrl']
+    file = 'icon-' + os.path.split(url)[-1]
+    filepath = os.path.join(root_dir, creator_folder, file)
+    download_pool.submit_download(url, filepath, **download_params)
+
+    n_width = width_of_int(len(profile_images))
+    n = 0
+    for i in profile_images:
+        n += 1
+        url = i['imageUrl']
+        file = 'profile-{}-{}'.format(str(n).zfill(n_width), os.path.split(url)[-1])
+        filepath = os.path.join(root_dir, creator_folder, file)
+        download_pool.submit_download(url, filepath, **download_params)
+
+    for i in info['plans']:
+        url = i['coverImageUrl']
+        file = 'plan-{}-{}'.format(i['fee'], os.path.split(url)[-1])
+        filepath = os.path.join(root_dir, creator_folder, file)
+        download_pool.submit_download(url, filepath, **download_params)

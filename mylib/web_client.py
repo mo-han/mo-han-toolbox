@@ -7,51 +7,22 @@ import json
 import os
 import re
 from concurrent.futures.thread import ThreadPoolExecutor
-from concurrent.futures import Future
 from io import StringIO
-from typing import List
+from queue import Queue
+from time import sleep, time
+from typing import Dict
 
 import humanize
 import lxml.html
 import requests.utils
 
-from .os_util import fs_touch, SubscriptableFileIO
-from .tricks import JSONType, EverythingFineNoError, percentage
-from .log import get_logger, LOG_FMT_1LEVEL_MESSAGE_ONLY
+from .log import get_logger
+from .tricks import JSONType, meta_new_thread
 
 MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE = '# Netscape HTTP Cookie File'
 USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'
 
 HTMLElementTree = lxml.html.HtmlElement
-
-
-class HTTPFailure(Exception):
-    def __init__(self, response: requests.Response):
-        http_ver = {10: '1.0', 11: '1.1'}
-        self.ver = http_ver[response.raw.version]
-        self.code = int(response.status_code)
-        self.desc = str(response.reason)
-        self.json = None
-        ct = response.headers['content-type']
-        if 'json' in ct or 'javascript' in ct:
-            try:
-                self.json = response.json()
-            except json.decoder.JSONDecodeError:
-                pass
-
-    def __repr__(self):
-        t = '[HTTP/{} {} {}]'.format(self.ver, self.code, self.desc)
-        if self.json:
-            t += ' JSON={}'.format(self.json)
-        return t
-
-    __str__ = __repr__
-
-
-class HTTPIncomplete(Exception):
-    def __init__(self, expect_size: int, recv_size: int):
-        self.expect_size = expect_size
-        self.recv_size = recv_size
 
 
 def decode_html_char_ref(x: str) -> str:
@@ -180,13 +151,15 @@ def cookie_str_from_dict(cookies: dict) -> str:
 
 
 def headers_from_user_agent(user_agent: str = None, headers: dict = None) -> dict:
-    h = headers or {}
+    from copy import deepcopy
+    h = deepcopy(headers) or {}
     h['User-Agent'] = user_agent or USER_AGENT_FIREFOX_WIN10
     return h
 
 
 def headers_from_cookies(cookies_data: dict or str, headers: dict = None) -> dict:
-    h = headers or headers_from_user_agent()
+    from copy import deepcopy
+    h = deepcopy(headers) or headers_from_user_agent()
     if isinstance(cookies_data, dict):
         cookie = cookie_str_from_dict(cookies_data)
     elif isinstance(cookies_data, str):
@@ -261,135 +234,167 @@ get_browser = {
 
 
 def human_filesize(bytes_n: int):
-    return humanize.naturalsize(bytes_n, binary=True)
+    return humanize.naturalsize(bytes_n, binary=True).replace(' ', '')
 
 
-class WebDownloadExecutor(ThreadPoolExecutor):
-    class DownloadFailure(Exception):
-        def __init__(self, url, filepath, latest_exception):
-            self.url = url
-            self.file = filepath
-            self.error = latest_exception
-
-    class Download:
-        def __init__(self, r: requests.Response, filepath: str = None):
-            if not r.ok:
-                raise HTTPFailure(r)
-            self.file = filepath or None
-            self.code = r.status_code
-            self.reason = r.reason
-            self.url = r.request.url
-            self.data = r.content
-            self.size = len(self.data)
-            content_length = int(r.headers.get('Content-Length', '-1'))
-            if content_length >= 0 and content_length != self.size:
-                raise HTTPIncomplete(content_length, self.size)
-            if self.code == 206:
-                content_range = r.headers['Content-Range']
-                start, end, total = [int(s) for s in re.search(r'(\d+)-(\d+)/(\d+)', content_range).groups()]
-                self.start = start
-                self.stop = end + 1
-                if self.stop - self.start != self.size:
-                    raise HTTPIncomplete(self.size, self.stop - self.start)
-                self.total_size = total
-            else:
-                self.start = 0
-                self.stop = self.size
-                self.total_size = self.size
-
-        @property
-        def is_206_partial(self):
-            return self.code == 206
-
-        @property
-        def is_not_206_partial(self):
-            return self.code != 206
-
-        @property
-        def is_complete_data(self):
-            return self.size == self.total_size
-
-        @property
-        def is_at_end(self):
-            return self.stop >= self.total_size
-
-    def __init__(self, threads: int = 8, name: str = None):
-        self.name = name or self.__class__.__name__
-        self.logger = get_logger(self.name, fmt=LOG_FMT_1LEVEL_MESSAGE_ONLY)
-        super(WebDownloadExecutor, self).__init__(max_workers=threads)
-
-    def submit_download(self, url, filepath, split_size=1024 * 1024, max_retries=3, **kwargs) -> Future:
-        return self.submit(self.batch_atomic_download,
-                           url, filepath, split_size=split_size, max_retries=max_retries, **kwargs)
-
-    def batch_atomic_download(self, url, filepath, split_size, max_retries, **kwargs) -> List[Future]:
-        fs_touch(filepath)
-        self.logger.info(
-            '+ {} ({}) split={} retry={}'.format(filepath, url, human_filesize(split_size), max_retries))
-        first = self.atomic_download(url, filepath, start=0, stop=split_size, max_retries=max_retries, **kwargs)
-        total = first.total_size
-        if split_size <= 0 or first.is_not_206_partial or first.is_complete_data:
-            return []
-
-        start = split_size
-        stop = start + split_size
-        download_futures = []
-        while stop <= total:
-            self.logger.info('++ {} ({} - {} / {})'.format(
-                filepath, percentage(start / total), percentage(stop / total),
-                human_filesize(total)))
-            df = self.submit(self.atomic_download,
-                             url, filepath, start=start, stop=stop, max_retries=max_retries, **kwargs)
-            download_futures.append(df)
-            if stop == total:
-                break
-            start = stop
-            stop = start + split_size
-            stop = total if stop > total else stop
+class Download:
+    def __init__(self, response: requests.Response, filepath: str = None, content: bytes = None):
+        content = content or response.content
+        if not response.ok:
+            raise HTTPResponseInspection(response, content)
+        self.id = id(response)
+        self.file = filepath or None
+        self.code = response.status_code
+        self.reason = response.reason
+        self.url = response.request.url
+        self.data = content
+        self.size = len(self.data)
+        content_length = int(response.headers.get('Content-Length', '-1'))
+        if content_length >= 0 and content_length != self.size:
+            raise HTTPIncomplete(content_length, self.size)
+        if self.code == 206:
+            content_range = response.headers['Content-Range']
+            start, end, total = [int(s) for s in re.search(r'(\d+)-(\d+)/(\d+)', content_range).groups()]
+            self.start = start
+            self.stop = end + 1
+            if self.stop - self.start != self.size:
+                raise HTTPIncomplete(self.size, self.stop - self.start)
+            self.total_size = total
         else:
-            return download_futures
+            self.start = 0
+            self.stop = self.size
+            self.total_size = self.size
 
-    def atomic_download(self, url, filepath, start, stop, max_retries, **kwargs):
-        max_retries = int(max_retries)
-        try_cnt = max_retries + 1 if max_retries >= 0 else max_retries
-        latest_error = EverythingFineNoError
-        while try_cnt:
+    @property
+    def is_complete_data(self):
+        return self.size == self.total_size
+
+    @property
+    def is_at_end(self):
+        return self.stop >= self.total_size
+
+
+class HTTPResponseInspection(Exception):
+    def __init__(self, response: requests.Response, content: bytes = None, no_content: bool = False):
+        http_ver = {10: '1.0', 11: '1.1'}
+        content = b'' if no_content else content or response.content
+        self.version = http_ver[response.raw.version]
+        self.code = int(response.status_code)
+        self.reason = str(response.reason)
+        self.json = None
+        self.size = size = len(content)
+        if size <= 32:
+            self.excerpt = content
+        elif size <= 4096:
+            encoding = response.encoding or response.apparent_encoding
             try:
-                d = self.download(url, filepath, start=start, stop=stop, **kwargs)
-                self.write_download_file(d)
-                return d
-            except Exception as e:
-                latest_error = e
-                self.logger.warning('! {}'.format(e))
-                self.logger.info('++ {} ({} - {}) (retry)'.format(
-                    filepath, human_filesize(start), human_filesize(stop)))
-                try_cnt -= 1
+                text = str(content, encoding=encoding, errors='replace')
+            except (LookupError, TypeError):
+                text = str(content, errors='replace')
+            h: HTMLElementTree = lxml.html.document_fromstring(text)
+            self.excerpt = h.body.text_content()
         else:
-            raise self.DownloadFailure(url, filepath, latest_error)
+            self.excerpt = None
+        ct = response.headers['content-type']
+        if 'json' in ct or 'javascript' in ct:
+            try:
+                self.json = response.json()
+            except json.decoder.JSONDecodeError:
+                pass
 
-    def download(self, url, filepath, start, stop, **kwargs):
-        kwargs = make_kwargs_for_lib_requests(**kwargs)
+    def __repr__(self):
+        t = '[HTTP/{} {} {}]'.format(self.version, self.code, self.reason)
+        if self.json:
+            t += ' JSON={}'.format(self.json)
+        elif self.excerpt:
+            t += ' {}'.format(self.excerpt)
+        else:
+            t += ' {} bytes'.format(self.size)
+        return t
+
+    __str__ = __repr__
+
+
+class HTTPIncomplete(Exception):
+    def __init__(self, expect_size: int, recv_size: int):
+        self.expect_size = expect_size
+        self.recv_size = recv_size
+
+
+class _WebDownloadExecutor(ThreadPoolExecutor):
+    # todo: implement alpha version
+    tmpfile_suffix = '.download'
+
+    def __init__(self, threads: int = 5, timeout: int = 30, name: str = None):
+        self.timeout = timeout
+        self.name = name or self.__class__.__name__
+        self.logger = get_logger('.'.join((__name__, self.name)))
+        self.whole_files = {}
+        self.split_chunks_status: Dict[str, Dict[tuple, bool]] = {}
+        self.recv_size_queue = Queue()
+        self.bytes_per_sec = 0
+        self.emergency_queue = Queue()
+        self.auto_logging_interval = 5
+        self.auto_logging_enable = False
+        meta_new_thread(daemon=True)(self.calc_download_speed).start()
+        meta_new_thread(daemon=True)(self.auto_logging).start()
+        super().__init__(max_workers=threads)
+
+    def auto_logging(self):
+        eq = self.emergency_queue
+        while True:
+            if self.auto_logging_enable:
+                self.logger.info('[DS:{}]'.format(self.download_speed))
+            if not eq.empty():
+                e = eq.get()
+                if isinstance(e, Exception):
+                    self.shutdown(wait=False)
+                    raise e
+            sleep(self.auto_logging_interval)
+
+    @property
+    def download_speed(self):
+        return human_filesize(self.bytes_per_sec) + '/s'
+
+    def calc_download_speed(self):
+        tl = []
+        nl = []
+        q = self.recv_size_queue
+        while True:
+            if q.empty():
+                sleep(0.1)
+                continue
+            t, n = q.get()
+            tl.append(t)
+            nl.append(n)
+            try:
+                self.bytes_per_sec = sum(nl) // (tl[-1] - tl[0])
+            except ZeroDivisionError:
+                self.bytes_per_sec = 0
+            while time() - tl[0] > self.auto_logging_interval:
+                tl.pop(0)
+                nl.pop(0)
+
+    def parse_head(self, url, **kwargs_for_requests):
+        head = requests.head(url, **kwargs_for_requests).headers
+        split = head.pop('accept-range') == 'bytes'
+        size = int(head.pop('content-length', '-1'))
+        self.logger.debug('HEAD: split={}, size={}'.format(split, size))
+        return {'split': split, 'size': size}
+
+    def download_data(self, url, file, start=0, stop=0, **kwargs_for_requests) -> Download:
+        kwargs = make_kwargs_for_lib_requests(**kwargs_for_requests)
         if stop:
             kwargs['headers']['Range'] = 'bytes={}-{}'.format(start, stop - 1)
         elif start > 0:
             kwargs['headers']['Range'] = 'bytes={}-'.format(start)
         elif start < 0:
             kwargs['headers']['Range'] = 'bytes={}'.format(start)
-        r = requests.get(url, **kwargs)
-        return self.Download(r, filepath)
+        r = requests.get(url, stream=True, timeout=self.timeout, **kwargs)
+        ...
 
-    def write_download_file(self, download: Download):
-        total = download.total_size
-        file = download.file
-        start = download.start
-        stop = download.stop
-        with SubscriptableFileIO(file) as f:
-            if len(f) != total:
-                f.truncate(total)
-            f[start: stop] = download.data
-        self.logger.info(
-            '>> {} ({} - {} / {})'.format(
-                file, percentage(start / total), percentage(stop / total), human_filesize(total)))
+    def write_file(self, ):
+        ...
 
 
 def parse_https_url(url: str, allow_fragments=True):
@@ -418,4 +423,5 @@ def make_kwargs_for_lib_requests(params=None, cookies=None, headers=None, user_a
         r['cookies'] = cookies
     if proxies:
         r['proxies'] = proxies
+    r.update(**kwargs)
     return r
