@@ -1,12 +1,26 @@
-#### [SubscriptableFileIO](mylib/os_util.py#L225)
 
-*slice data in subscriptable FileIO object*
+#### 
+
+
+#### [WebDownloadPool](mylib/web_client.py#L337)
+
+HTTP multi-threading downloader
 
 ```python
-from mylib.os_util import SubscriptableFileIO
+d = WebDownloadPool()
+d.submit_download(url, file, retry, **kwargs_for_requests)
+d.queue_download(url, file, retry, **kwargs_for_requests)
+d.queue_end()
+```
 
+#### [SubscriptableFileIO](mylib/os_util.py#L225)
+
+*slice data read/write with subscriptable FileIO object*
+
+```python
 with SubscriptableFileIO('filepath') as f:
     f[-10:] = b'123abc'
+    print(f[123:456])
 ```
 
 #### [bilibili_aocx](mykits/bilibili_aocx.py)

@@ -224,22 +224,27 @@ def fs_find_iter(pattern: str or Callable = None, root: str = '.',
 
 class SubscriptableFileIO(FileIO):
     """slice data in FileIO object"""
+
     def __init__(self, file, mode='r+b', *args, **kwargs):
         """refer to doc string of io.FileIO"""
         super(SubscriptableFileIO, self).__init__(file, mode=mode, *args, **kwargs)
         try:
-            self.file_size = os.path.getsize(file)
+            self._size = os.path.getsize(file)
         except TypeError:
-            self.file_size = os.path.getsize(self.name)
+            self._size = os.path.getsize(self.name)
 
     def __len__(self):
-        return self.file_size
+        return self._size
+
+    @property
+    def size(self):
+        return self._size
 
     def __getitem__(self, key: int or slice):
         orig_pos = self.tell()
         if isinstance(key, int):
             if key < 0:
-                key = len(self) + key
+                key = self.size + key
             self.seek(key)
             r = self.read(1)
         elif isinstance(key, slice):
@@ -247,11 +252,11 @@ class SubscriptableFileIO(FileIO):
             if not start:
                 start = 0
             elif start < 0:
-                start = len(self) + start
+                start = self.size + start
             if not stop:
-                stop = len(self)
+                stop = self.size
             elif stop < 0:
-                stop = len(self) + stop
+                stop = self.size + stop
             size = stop - start
             if size <= 0:
                 r = b''
@@ -271,7 +276,7 @@ class SubscriptableFileIO(FileIO):
             if len(value) != 1:
                 raise ValueError("overflow write", value)
             if key < 0:
-                key = len(self) + key
+                key = self.size + key
             self.seek(key)
             r = self.write(value)
         elif isinstance(key, slice):
@@ -279,11 +284,11 @@ class SubscriptableFileIO(FileIO):
             if not start:
                 start = 0
             elif start < 0:
-                start = len(self) + start
+                start = self.size + start
             if not stop:
-                stop = len(self)
+                stop = self.size
             elif stop < 0:
-                stop = len(self) + stop
+                stop = self.size + stop
             size = stop - start
             if size <= 0:
                 r = 0

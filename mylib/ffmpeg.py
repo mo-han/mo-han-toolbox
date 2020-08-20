@@ -125,7 +125,6 @@ class FFmpegArgumentList(list):
 
 
 class FFmpegCommandCaller:
-    logger = get_logger('ffmpeg.cmd')
     exe = 'ffmpeg'
     head = FFmpegArgumentList(exe)
     body = FFmpegArgumentList()
@@ -135,6 +134,7 @@ class FFmpegCommandCaller:
         pass
 
     def __init__(self, banner: bool = True, loglevel: str = None, overwrite: bool = None, to_pipe: bool = False):
+        self.logger = get_logger('.'.join((__name__, self.__class__.__name__)))
         self.capture_stdout_stderr = to_pipe
         self.set_head(banner=banner, loglevel=loglevel, overwrite=overwrite)
 
@@ -359,10 +359,10 @@ class FFmpegSegmentsContainer:
             if filetype.guess(path).mime.startswith('video'):
                 d, b = os.path.split(path)
                 self.input_data = {TXT_FILENAME: b, TXT_SEGMENT: {}, TXT_NON_SEGMENT: {}}
-                with SubscriptableFileIO(path) as f_cut:
-                    fl_middle = len(f_cut) // 2
+                with SubscriptableFileIO(path) as f:
+                    middle = f.size // 2
                     root_base = '.{}-{}'.format(self.nickname, hex_hash(
-                        f_cut[:4096] + f_cut[fl_middle - 2048:fl_middle + 2048] + f_cut[:-4096])[:8])
+                        f[:4096] + f[middle - 2048:middle + 2048] + f[-4096:])[:8])
                 work_dir = work_dir or d
                 path = self.root = os.path.join(work_dir, root_base)  # file path -> dir path
             else:
@@ -446,11 +446,11 @@ class FFmpegSegmentsContainer:
     def write_metadata(self):
         with pushd_context(self.root):
             self.ffmpeg_cmd.metadata_file(self.input_filepath, self.metadata_file)
-            with open(self.metadata_file) as f:
+            with open(self.metadata_file, encoding='utf8') as f:
                 meta_lines = f.readlines()
             meta_lines = [line for line in meta_lines if line.partition('=')[0] not in
                           ('encoder', 'major_brand', 'minor_version', 'compatible_brands', 'compilation', 'media_type')]
-            with open(self.metadata_file, 'w') as f:
+            with open(self.metadata_file, 'w', encoding='utf8') as f:
                 f.writelines(meta_lines)
 
     def write_input_json(self):
