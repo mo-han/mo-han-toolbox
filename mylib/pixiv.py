@@ -126,7 +126,7 @@ def download_pixiv_fanbox_post(post_or_id: PixivFanboxPost or dict or str or int
         n += 1
         file = '{}-{}.{}'.format(str(n).zfill(n_width), image.id, image.extension)
         filepath = os.path.join(root_dir, creator_folder, post_folder, file)
-        download_pool.submit_download(image.original_url, filepath, retry, **kwargs_for_requests)
+        download_pool.queue_download(image.original_url, filepath, retry, **kwargs_for_requests)
 
 
 def download_pixiv_fanbox_creator(creator_id, root_dir='.',
@@ -136,17 +136,17 @@ def download_pixiv_fanbox_creator(creator_id, root_dir='.',
     download_params = {'retry': retry, **kwargs_for_requests}
     fanbox_api = fanbox_api or PixivFanboxAPI(**kwargs_for_requests)
     download_pool = download_pool or WebDownloadPool()
-    info = fanbox_api.get_creator_info(creator_id)
-    info['plans'] = fanbox_api.list_sponsor_plan_of_creator(creator_id)
-    profile_images = [i for i in info['profileItems'] if i['type'] == 'image']
-    creator_folder = pixiv_fanbox_creator_folder(info)
+    creator = fanbox_api.get_creator_info(creator_id)
+    creator['plans'] = fanbox_api.list_sponsor_plan_of_creator(creator_id)
+    profile_images = [i for i in creator['profileItems'] if i['type'] == 'image']
+    creator_folder = pixiv_fanbox_creator_folder(creator)
     os.makedirs(os.path.join(root_dir, creator_folder), exist_ok=True)
 
-    write_json_file(os.path.join(root_dir, creator_folder, 'info.json'), info, indent=4)
-    url = info['user']['iconUrl']
+    write_json_file(os.path.join(root_dir, creator_folder, 'creator.json'), creator, indent=4)
+    url = creator['user']['iconUrl']
     file = 'icon-' + os.path.split(url)[-1]
     filepath = os.path.join(root_dir, creator_folder, file)
-    download_pool.submit_download(url, filepath, **download_params)
+    download_pool.queue_download(url, filepath, **download_params)
 
     n_width = width_of_int(len(profile_images))
     n = 0
@@ -155,10 +155,10 @@ def download_pixiv_fanbox_creator(creator_id, root_dir='.',
         url = i['imageUrl']
         file = 'profile-{}-{}'.format(str(n).zfill(n_width), os.path.split(url)[-1])
         filepath = os.path.join(root_dir, creator_folder, file)
-        download_pool.submit_download(url, filepath, **download_params)
+        download_pool.queue_download(url, filepath, **download_params)
 
-    for i in info['plans']:
+    for i in creator['plans']:
         url = i['coverImageUrl']
         file = 'plan-{}-{}'.format(i['fee'], os.path.split(url)[-1])
         filepath = os.path.join(root_dir, creator_folder, file)
-        download_pool.submit_download(url, filepath, **download_params)
+        download_pool.queue_download(url, filepath, **download_params)
