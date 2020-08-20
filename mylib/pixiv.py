@@ -95,7 +95,7 @@ class PixivFanboxAPI:
 
 
 def pixiv_fanbox_creator_folder(creator_data: dict):
-    return '{creatorId} {user[name]} (pixiv {user[userId]})'.format(**creator_data)
+    return '[{user[name]}] fanbox {creatorId} {user[userId]}'.format(**creator_data)
 
 
 def download_pixiv_fanbox_post(post_or_id: PixivFanboxPost or dict or str or int, root_dir='.',
@@ -113,7 +113,7 @@ def download_pixiv_fanbox_post(post_or_id: PixivFanboxPost or dict or str or int
     else:
         raise TypeError('`post_or_id` type: PixivFanboxPost, dict, str, int')
     creator_folder = pixiv_fanbox_creator_folder(post.__data__)
-    post_folder = '[{creatorId} ({user[name]})] {title} (fanbox {id})'.format(**post.__data__)
+    post_folder = '[{user[name]} {creatorId}] {title} (fanbox {id})'.format(**post.__data__)
     os.makedirs(os.path.join(root_dir, creator_folder, post_folder), exist_ok=True)
 
     file = 'post.json'

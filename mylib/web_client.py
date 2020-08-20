@@ -18,7 +18,7 @@ import humanize
 import lxml.html
 import requests.utils
 
-from .log import get_logger
+from .log import get_logger, LOG_FMT_MESSAGE_ONLY
 from .os_util import SubscriptableFileIO, fs_touch
 from .tricks import JSONType, meta_new_thread, meta_gen_retry
 
@@ -343,7 +343,7 @@ class WebDownloadPool(ThreadPoolExecutor):
         self.download_queueing = False
         self.timeout = timeout
         self.name = name or self.__class__.__name__
-        self.logger = get_logger('.'.join((__name__, self.name)))
+        self.logger = get_logger('.'.join((__name__, self.name)), fmt=LOG_FMT_MESSAGE_ONLY)
         self.whole_files = {}
         self.split_chunks_status: Dict[str, Dict[tuple, bool]] = {}
         self.recv_size_queue = Queue()
@@ -353,7 +353,7 @@ class WebDownloadPool(ThreadPoolExecutor):
         self.show_status_enable = True
         super().__init__(max_workers=threads_n)
         meta_new_thread(daemon=True)(self.calc_speed).start()
-        meta_new_thread(daemon=True)(self.logging).start()
+        meta_new_thread(daemon=True)(self.show_status).start()
         self.queue_start()
 
     def schedule(self):
@@ -368,11 +368,11 @@ class WebDownloadPool(ThreadPoolExecutor):
             self.submit(self.download, url, filepath, retry, **kwargs_for_requests)
             self.logger.debug('schedule {}'.format(filepath))
 
-    def logging(self):
+    def show_status(self):
         eq = self.emergency_queue
         while True:
             if self.show_status_enable:
-                status_msg = '| {} | {} threads | {:>10} |'.format(self.name, self._max_workers, self.speed)
+                status_msg = '| {} | {} threads | {:>11} |'.format(self.name, self._max_workers, self.speed)
                 # status_width = len(status_msg)
                 # preamble = shutil.get_terminal_size()[0] - status_width - 1
                 # print(' ' * preamble + status_msg, end='\r', file=sys.stderr)
@@ -443,7 +443,7 @@ class WebDownloadPool(ThreadPoolExecutor):
             if len(f) != total:
                 f.truncate(total)
             f[start: stop] = dl_obj.data
-            self.logger.debug('w "{}" ({}) <- {}'.format(file, human_filesize(size), url))
+            self.logger.debug('w {} ({}) <- {}'.format(file, human_filesize(size), url))
 
     def download(self, url, filepath, retry, **kwargs_for_requests):
         tmpfile = filepath + self.tmpfile_suffix
@@ -460,17 +460,20 @@ class WebDownloadPool(ThreadPoolExecutor):
             return
         self.write_file(dl_obj)
         os.rename(tmpfile, filepath)
-        self.logger.info('* "{}" ({})'.format(filepath, human_filesize(dl_obj.size)))
+        self.log_file_done(filepath, dl_obj.size)
+
+    def log_file_done(self, filepath, size):
+        self.logger.info('* {} ({})'.format(filepath, human_filesize(size)))
 
     def file_already_exists(self, filepath):
         if os.path.isfile(filepath):
-            self.logger.info('# "{}"'.format(filepath))
+            self.logger.info('# {}'.format(filepath))
             return True
         else:
             return False
 
     def log_new_download(self, url, filepath, retry):
-        self.logger.info('+ "{}" <- {} (retry={})'.format(filepath, url, retry))
+        self.logger.info('+ {} <- {} (retry={})'.format(filepath, url, retry))
 
     def submit_download(self, url, filepath, retry, **kwargs_for_requests):
         if self.file_already_exists(filepath):
