@@ -1,7 +1,3 @@
-
-#### 
-
-
 #### [WebDownloadPool](mylib/web_client.py#L337)
 
 HTTP multi-threading downloader
