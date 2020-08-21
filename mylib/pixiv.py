@@ -143,8 +143,14 @@ def download_pixiv_fanbox_creator(creator_id, root_dir='.',
     os.makedirs(os.path.join(root_dir, creator_folder), exist_ok=True)
 
     write_json_file(os.path.join(root_dir, creator_folder, 'creator.json'), creator, indent=4)
+
     url = creator['user']['iconUrl']
     file = 'icon-' + os.path.split(url)[-1]
+    filepath = os.path.join(root_dir, creator_folder, file)
+    download_pool.queue_download(url, filepath, **download_params)
+
+    url = creator['coverImageUrl']
+    file = 'cover-' + os.path.split(url)[-1]
     filepath = os.path.join(root_dir, creator_folder, file)
     download_pool.queue_download(url, filepath, **download_params)
 
