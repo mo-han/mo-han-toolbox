@@ -18,10 +18,9 @@ from mylib.web_client import DownloadPool
 url = ...
 file = ...
 retry = ...
-kwargs_for_requests = {...: ...}
 d = DownloadPool()
-d.submit_download(url, file, retry, **kwargs_for_requests)
-d.put_download_in_queue(url, file, retry, **kwargs_for_requests)
+d.submit_download(url, file, retry, cookies=...)
+d.put_download_in_queue(url, file, retry, cookies=...)
 d.put_end_of_queue()
 d.start_queue()
 ```
