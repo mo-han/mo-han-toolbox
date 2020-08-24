@@ -1,6 +1,7 @@
 cython>=3a
 pip-autoremove
 pip-chill
+pipdeptree
 pipenv
 ptpython
 pyinstaller

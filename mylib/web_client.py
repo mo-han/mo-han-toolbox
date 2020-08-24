@@ -6,21 +6,20 @@ import http.cookiejar
 import json
 import os
 import re
-import shutil
 import sys
 from concurrent.futures.thread import ThreadPoolExecutor
 from io import StringIO
 from queue import Queue
 from time import sleep, time
-from typing import Dict
 
+import colorama
 import humanize
 import lxml.html
 import requests.utils
 
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
-from .os_util import SubscriptableFileIO, fs_touch
-from .tricks import JSONType, meta_new_thread, meta_gen_retry
+from .os_util import SubscriptableFileIO, fs_touch, write_file_chunk
+from .tricks import JSONType, meta_new_thread, meta_gen_retry, singleton
 
 MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE = '# Netscape HTTP Cookie File'
 USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'
@@ -334,45 +333,49 @@ class HTTPIncomplete(Exception):
         self.recv_size = recv_size
 
 
-class WebDownloadPool(ThreadPoolExecutor):
+@singleton
+class DownloadPool(ThreadPoolExecutor):
     tmpfile_suffix = '.download'
 
-    def __init__(self, threads_n: int = 5, timeout: int = 30, name: str = None):
+    def __init__(self, threads_n: int = 5, timeout: int = 30, name: str = None, show_status: bool = True):
         self._max_workers: int = 0
-        self.download_queue = Queue()
-        self.download_queueing = False
+        self.queue = Queue()
         self.timeout = timeout
         self.name = name or self.__class__.__name__
         self.logger = get_logger('.'.join((__name__, self.name)), fmt=LOG_FMT_MESSAGE_ONLY)
-        self.whole_files = {}
-        self.split_chunks_status: Dict[str, Dict[tuple, bool]] = {}
         self.recv_size_queue = Queue()
         self.bytes_per_sec = 0
         self.emergency_queue = Queue()
         self.show_status_interval = 2
-        self.show_status_enable = True
-        super().__init__(max_workers=threads_n)
+        self.show_status_enable = show_status
         meta_new_thread(daemon=True)(self.calc_speed).start()
         meta_new_thread(daemon=True)(self.show_status).start()
-        self.queue_start()
+        super().__init__(max_workers=threads_n)
 
-    def schedule(self):
-        self.download_queueing = True
-        q = self.download_queue
+    def queue_pipeline(self):
+        self.logger.debug('queue of {} started'.format(self))
+        q = self.queue
         while True:
             args = q.get()
             if args is None:
-                self.download_queueing = False
                 break
             url, filepath, retry, kwargs_for_requests = args
             self.submit(self.download, url, filepath, retry, **kwargs_for_requests)
-            self.logger.debug('schedule {}'.format(filepath))
+            self.logger.debug('submit {}'.format(filepath))
+        self.logger.debug('queue of {} stopped'.format(self))
 
     def show_status(self):
+        def color(x):
+            left = colorama.Fore.LIGHTGREEN_EX
+            right = colorama.Style.RESET_ALL
+            return left + str(x) + right
+
+        colorama.init()
         eq = self.emergency_queue
         while True:
             if self.show_status_enable:
-                status_msg = '| {} | {} threads | {:>11} |'.format(self.name, self._max_workers, self.speed)
+                status_msg = '| {} | {} threads | {:>11} |'.format(
+                    color(self.name), color(self._max_workers), color(self.speed))
                 # status_width = len(status_msg)
                 # preamble = shutil.get_terminal_size()[0] - status_width - 1
                 # print(' ' * preamble + status_msg, end='\r', file=sys.stderr)
@@ -412,9 +415,12 @@ class WebDownloadPool(ThreadPoolExecutor):
         split = head.pop('accept-range') == 'bytes'
         size = int(head.pop('content-length', '-1'))
         self.logger.debug('HEAD: split={}, size={}'.format(split, size))
+
         return {'split': split, 'size': size}
 
     def request_data(self, url, filepath, start=0, stop=0, **kwargs_for_requests) -> Download:
+        # chunk_size = requests.models.CONTENT_CHUNK_SIZE
+        chunk_size = 4096 * 1024
         kwargs = make_kwargs_for_lib_requests(**kwargs_for_requests)
         if stop:
             kwargs['headers']['Range'] = 'bytes={}-{}'.format(start, stop - 1)
@@ -424,10 +430,16 @@ class WebDownloadPool(ThreadPoolExecutor):
             kwargs['headers']['Range'] = 'bytes={}'.format(start)
         r = requests.get(url, stream=True, timeout=self.timeout, **kwargs)
         self.logger.debug(HTTPResponseInspection(r, no_content=True))
+
         content = b''
-        for chunk in r.iter_content(chunk_size=requests.models.CONTENT_CHUNK_SIZE):
+        stop = 0
+        for chunk in r.iter_content(chunk_size=chunk_size):
             self.recv_size_queue.put((time(), len(chunk)))
+            start = stop
+            stop = start + len(chunk)
             content += chunk
+            total = len(content)
+            write_file_chunk(filepath, start, stop, chunk, total)
         self.logger.debug(HTTPResponseInspection(r, content=content))
         d = Download(r, filepath, content=content)
         return d
@@ -440,7 +452,7 @@ class WebDownloadPool(ThreadPoolExecutor):
         size = dl_obj.size
         total = dl_obj.total_size
         with SubscriptableFileIO(file) as f:
-            if len(f) != total:
+            if f.size != total:
                 f.truncate(total)
             f[start: stop] = dl_obj.data
             self.logger.debug('w {} ({}) <- {}'.format(file, human_filesize(size), url))
@@ -478,20 +490,21 @@ class WebDownloadPool(ThreadPoolExecutor):
     def submit_download(self, url, filepath, retry, **kwargs_for_requests):
         if self.file_already_exists(filepath):
             return
-        self.submit(self.download, url, filepath, retry, **kwargs_for_requests)
+        future = self.submit(self.download, url, filepath, retry, **kwargs_for_requests)
         self.log_new_download(url, filepath, retry)
+        return future
 
-    def queue_download(self, url, filepath, retry, **kwargs_for_requests):
+    def put_download_in_queue(self, url, filepath, retry, **kwargs_for_requests):
         if self.file_already_exists(filepath):
             return
-        self.download_queue.put((url, filepath, retry, kwargs_for_requests))
+        self.queue.put((url, filepath, retry, kwargs_for_requests))
         self.log_new_download(url, filepath, retry)
 
-    def queue_end(self):
-        self.download_queue.put(None)
+    def put_end_of_queue(self):
+        self.queue.put(None)
 
-    def queue_start(self):
-        meta_new_thread()(self.schedule).start()
+    def start_queue(self):
+        meta_new_thread()(self.queue_pipeline).start()
 
 
 def parse_https_url(url: str, allow_fragments=True):

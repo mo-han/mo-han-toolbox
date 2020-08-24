@@ -1,3 +1,5 @@
+#colored  #by-gooey #license-mit
+colorama
 ffmpeg-python
 filetype  #license-mit
 gallery-dl

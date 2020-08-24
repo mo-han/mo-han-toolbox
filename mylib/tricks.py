@@ -125,9 +125,9 @@ def modify_and_import(module_path: str, code_modifier: str or Callable, package_
 def singleton(cls):
     _instances = {}
 
-    def get_instance():
+    def get_instance(*args, **kwargs):
         if cls not in _instances:
-            _instances[cls] = cls()
+            _instances[cls] = cls(*args, **kwargs)
         return _instances[cls]
 
     return get_instance

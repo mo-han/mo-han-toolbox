@@ -339,3 +339,16 @@ def file_offset_read(file, offset: int, length: int = None, end: int = None):
             return f.read(length)
         else:
             return f.read()
+
+
+def write_file_chunk(filepath: str, start: int, stop: int, data: bytes, total: int = None):
+    # if not 0 <= start <= stop:
+    #     raise ValueError('violate 0 <= start({}) <= stop({})'.format(start, stop))
+    # if len(data) >= stop - start:
+    #     raise ValueError('data length > stop - start')
+    with SubscriptableFileIO(filepath) as f:
+        if total and f.size != total:
+            f.truncate(total)
+        elif f.size < stop:
+            f.truncate(stop)
+        f[start:stop] = data
