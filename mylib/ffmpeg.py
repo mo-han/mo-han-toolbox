@@ -18,30 +18,30 @@ from .tricks import hex_hash, decorator_factory_args_choices, remove_from_list, 
     dedup_list
 from .log import get_logger
 
-TXT_SEGMENT = 'segment'
-TXT_NON_SEGMENT = 'non segment'
-TXT_FILENAME = 'filename'
-TXT_VIDEO = 'video'
-TXT_OTHER = 'other'
-TXT_MORE = 'more'
-TXT_ALL = 'all'
-TXT_ONLY_VIDEO = 'only video'
-TXT_ONLY_PICTURE = 'only picture'
-TXT_ONLY_AUDIO = 'only audio'
-TXT_ONLY_SUBTITLE = 'only subtitle'
-TXT_ONLY_DATA = 'only data'
-TXT_ONLY_ATTACHMENT = 'only attachment'
-TXT_NO_VIDEO = 'no video'
-TXT_NO_AUDIO = 'no audio'
-TXT_NO_SUBTITLE = 'no subtitle'
-TXT_NO_DATA = 'no data'
-TXT_NO_ATTACHMENT = 'no attachment'
-TXT_FIRST_VIDEO = 'first video'
-STREAM_MAP_PRESET_TABLE = {TXT_ALL: ['0'], TXT_ONLY_VIDEO: ['0:V'], TXT_ONLY_AUDIO: ['0:a'],
-                           TXT_ONLY_SUBTITLE: ['0:s'], TXT_ONLY_ATTACHMENT: ['0:t'], TXT_ONLY_DATA: ['0:d'],
-                           TXT_NO_VIDEO: ['0', '-0:V'], TXT_NO_AUDIO: ['0', '-0:a'], TXT_NO_SUBTITLE: ['0', '-0:s'],
-                           TXT_NO_ATTACHMENT: ['0', '-0:t'], TXT_NO_DATA: ['0', '-0:d'],
-                           TXT_FIRST_VIDEO: ['0:V:0'], TXT_ONLY_PICTURE: ['0:v', '-0:V']}
+S_SEGMENT = 'segment'
+S_NON_SEGMENT = 'non segment'
+S_FILENAME = 'filename'
+S_VIDEO = 'video'
+S_OTHER = 'other'
+S_MORE = 'more'
+S_ALL = 'all'
+S_ONLY_VIDEO = 'only video'
+S_ONLY_PICTURE = 'only picture'
+S_ONLY_AUDIO = 'only audio'
+S_ONLY_SUBTITLE = 'only subtitle'
+S_ONLY_DATA = 'only data'
+S_ONLY_ATTACHMENT = 'only attachment'
+S_NO_VIDEO = 'no video'
+S_NO_AUDIO = 'no audio'
+S_NO_SUBTITLE = 'no subtitle'
+S_NO_DATA = 'no data'
+S_NO_ATTACHMENT = 'no attachment'
+S_FIRST_VIDEO = 'first video'
+STREAM_MAP_PRESET_TABLE = {S_ALL: ['0'], S_ONLY_VIDEO: ['0:V'], S_ONLY_AUDIO: ['0:a'],
+                           S_ONLY_SUBTITLE: ['0:s'], S_ONLY_ATTACHMENT: ['0:t'], S_ONLY_DATA: ['0:d'],
+                           S_NO_VIDEO: ['0', '-0:V'], S_NO_AUDIO: ['0', '-0:a'], S_NO_SUBTITLE: ['0', '-0:s'],
+                           S_NO_ATTACHMENT: ['0', '-0:t'], S_NO_DATA: ['0', '-0:d'],
+                           S_FIRST_VIDEO: ['0:V:0'], S_ONLY_PICTURE: ['0:v', '-0:V']}
 CODEC_NAME_TO_FILEXT_TABLE = {'mjpeg': '.jpg', 'png': '.png', 'hevc': '.mp4', 'h264': '.mp4', 'vp9': '.webm'}
 
 decorator_choose_map_preset = decorator_factory_args_choices({'map_preset': STREAM_MAP_PRESET_TABLE.keys()})
@@ -358,7 +358,7 @@ class FFmpegSegmentsContainer:
             self.input_filepath = path
             if filetype.guess(path).mime.startswith('video'):
                 d, b = os.path.split(path)
-                self.input_data = {TXT_FILENAME: b, TXT_SEGMENT: {}, TXT_NON_SEGMENT: {}}
+                self.input_data = {S_FILENAME: b, S_SEGMENT: {}, S_NON_SEGMENT: {}}
                 with SubscriptableFileIO(path) as f:
                     middle = f.size // 2
                     root_base = '.{}-{}'.format(self.nickname, hex_hash(
@@ -383,12 +383,12 @@ class FFmpegSegmentsContainer:
             if not self.is_split():
                 self.split(select_streams=select_streams)
             self.read_input_json()
-            if TXT_FILENAME not in self.input_data:
+            if S_FILENAME not in self.input_data:
                 self.read_filename()
             self.read_output_json()
 
     def write_filename(self):
-        fn = self.input_data.get(TXT_FILENAME)
+        fn = self.input_data.get(S_FILENAME)
         if not fn:
             return
         with pushd_context(self.root):
@@ -404,7 +404,7 @@ class FFmpegSegmentsContainer:
             prefix = self.input_filename_prefix
             for f in fs_find_iter(pattern=prefix + '*', recursive=False, strip_root=True):
                 filename = f.lstrip(prefix)
-                self.input_data[TXT_FILENAME] = filename
+                self.input_data[S_FILENAME] = filename
                 return filename
             else:
                 raise self.ContainerError('no filename found')
@@ -413,7 +413,7 @@ class FFmpegSegmentsContainer:
         i_file = self.input_filepath
         if not i_file:
             raise self.ContainerError('no input filepath')
-        d = self.input_data or {TXT_SEGMENT: {}, TXT_NON_SEGMENT: {}}
+        d = self.input_data or {S_SEGMENT: {}, S_NON_SEGMENT: {}}
 
         with pushd_context(self.root):
             for stream in ffmpeg.probe(i_file, select_streams=select_streams)['streams']:
@@ -423,19 +423,19 @@ class FFmpegSegmentsContainer:
                 # segment_output = '%d' + suitable_filext if suitable_filext else None
                 segment_output = '%d.mkv'
                 index = str(index)
-                d[TXT_SEGMENT][index] = {}
+                d[S_SEGMENT][index] = {}
                 seg_folder = self.input_prefix + index
                 os.makedirs(seg_folder, exist_ok=True)
                 with pushd_context(seg_folder):
                     self.ffmpeg_cmd.segment(i_file, segment_output, map='0:{}'.format(index))
             try:
-                self.ffmpeg_cmd.convert([i_file], self.input_picture, copy_all=True, map_preset=TXT_ONLY_PICTURE)
-                d[TXT_NON_SEGMENT][self.picture_file] = {}
+                self.ffmpeg_cmd.convert([i_file], self.input_picture, copy_all=True, map_preset=S_ONLY_PICTURE)
+                d[S_NON_SEGMENT][self.picture_file] = {}
             except self.ffmpeg_cmd.FFmpegError:
                 pass
             try:
-                self.ffmpeg_cmd.convert([i_file], self.input_non_visual, copy_all=True, map_preset=TXT_ALL, map='-0:v')
-                d[TXT_NON_SEGMENT][self.non_visual_file] = {}
+                self.ffmpeg_cmd.convert([i_file], self.input_non_visual, copy_all=True, map_preset=S_ALL, map='-0:v')
+                d[S_NON_SEGMENT][self.non_visual_file] = {}
             except self.ffmpeg_cmd.FFmpegError:
                 pass
 
@@ -458,19 +458,19 @@ class FFmpegSegmentsContainer:
         prefix = self.input_prefix
 
         with pushd_context(self.root):
-            for k in d[TXT_SEGMENT]:
+            for k in d[S_SEGMENT]:
                 seg_folder = prefix + k
-                d[TXT_SEGMENT][k] = {}
+                d[S_SEGMENT][k] = {}
                 with pushd_context(seg_folder):
                     for file in fs_find_iter(pattern=self.segment_filename_regex_pattern, regex=True,
                                              recursive=False, strip_root=True):
-                        d[TXT_SEGMENT][k][file] = excerpt_single_video_stream(file)
-            for k in d[TXT_NON_SEGMENT]:
+                        d[S_SEGMENT][k][file] = excerpt_single_video_stream(file)
+            for k in d[S_NON_SEGMENT]:
                 file = prefix + k
                 if os.path.isfile(file):
-                    d[TXT_NON_SEGMENT][k] = ffmpeg.probe(file)
+                    d[S_NON_SEGMENT][k] = ffmpeg.probe(file)
                 else:
-                    del d[TXT_NON_SEGMENT][k]
+                    del d[S_NON_SEGMENT][k]
             write_json_file(self.input_json, d, indent=4)
 
         self.input_data = d
@@ -520,22 +520,22 @@ class FFmpegSegmentsContainer:
         video_args = video_args or FFmpegArgumentList()
         other_args = other_args or FFmpegArgumentList()
         more_args = more_args or FFmpegArgumentList()
-        videos = self.input_data[TXT_SEGMENT].keys()
-        others = self.input_data[TXT_NON_SEGMENT].keys()
+        videos = self.input_data[S_SEGMENT].keys()
+        others = self.input_data[S_NON_SEGMENT].keys()
         need_map = True if len(videos) > 1 or self.picture_file in others else False
         d = self.output_data or {}
         input_count = 0
 
-        d[TXT_VIDEO] = []
+        d[S_VIDEO] = []
         for index in videos:
             args = FFmpegArgumentList()
             if need_map:
                 args.add(map=input_count)
             i_args = os.path.join(self.output_prefix + index, self.concat_list_file), args
-            d[TXT_VIDEO].append(i_args)
+            d[S_VIDEO].append(i_args)
             input_count += 1
 
-        d[TXT_OTHER] = []
+        d[S_OTHER] = []
         for o in others:
             args = FFmpegArgumentList()
             if o == self.non_visual_file:
@@ -549,17 +549,17 @@ class FFmpegSegmentsContainer:
                     args.add(map=input_count)
                 args += other_args
                 i_args = self.input_prefix + o, args
-                d[TXT_OTHER].append(i_args)
+                d[S_OTHER].append(i_args)
             else:
                 if need_map:
                     args.add(map=input_count)
                 i_args = self.input_prefix + o, args
-                d[TXT_OTHER].append(i_args)
+                d[S_OTHER].append(i_args)
             input_count += 1
 
-        d[TXT_SEGMENT] = video_args
-        d[TXT_MORE] = FFmpegArgumentList(vcodec='copy') + more_args
-        d[TXT_FILENAME] = filename or self.input_data[TXT_FILENAME]
+        d[S_SEGMENT] = video_args
+        d[S_MORE] = FFmpegArgumentList(vcodec='copy') + more_args
+        d[S_FILENAME] = filename or self.input_data[S_FILENAME]
         d['kwargs'] = kwargs
 
         self.output_data = d
@@ -576,22 +576,22 @@ class FFmpegSegmentsContainer:
         concat_list = []
         extra_input_list = []
         output_args = []
-        for i, args in d[TXT_VIDEO]:
+        for i, args in d[S_VIDEO]:
             concat_list.append(i)
             output_args.extend(args)
-        for i, args in d[TXT_OTHER]:
+        for i, args in d[S_OTHER]:
             extra_input_list.append(i)
             output_args.extend(args)
-        output_args.extend(d[TXT_MORE])
+        output_args.extend(d[S_MORE])
         with pushd_context(self.root):
-            self.ffmpeg_cmd.concat(concat_list, d[TXT_FILENAME], output_args,
+            self.ffmpeg_cmd.concat(concat_list, d[S_FILENAME], output_args,
                                    concat_demuxer=True, extra_inputs=extra_input_list, copy_all=False,
                                    metadata_file=self.metadata_file,
                                    **d['kwargs'])
 
     def write_output_concat_list_file(self):
         with pushd_context(self.root):
-            d = self.input_data[TXT_SEGMENT]
+            d = self.input_data[S_SEGMENT]
             for index in d:
                 folder = self.output_prefix + index
                 os.makedirs(folder, exist_ok=True)
@@ -612,7 +612,7 @@ class FFmpegSegmentsContainer:
 
     def get_all_segments(self):
         segments = []
-        for i, d in self.input_data[TXT_SEGMENT].items():
+        for i, d in self.input_data[S_SEGMENT].items():
             segments.extend((i, f) for f in d)
         return segments
 
@@ -626,7 +626,7 @@ class FFmpegSegmentsContainer:
         segments = []
         prefix = self.output_prefix
         with pushd_context(self.root):
-            for index in self.input_data[TXT_SEGMENT]:
+            for index in self.input_data[S_SEGMENT]:
                 with pushd_context(prefix + index):
                     segments.extend([(index, f.rstrip(self.suffix_lock)) for f in
                                      fs_find_iter('*' + self.suffix_lock)])
@@ -636,7 +636,7 @@ class FFmpegSegmentsContainer:
         segments = []
         prefix = self.output_prefix
         with pushd_context(self.root):
-            for index in self.input_data[TXT_SEGMENT]:
+            for index in self.input_data[S_SEGMENT]:
                 with pushd_context(prefix + index):
                     segments.extend([(index, f.rstrip(self.suffix_done)) for f in
                                      fs_find_iter('*' + self.suffix_done)])
@@ -681,7 +681,7 @@ class FFmpegSegmentsContainer:
         segment_path_no_prefix = os.path.join(stream_id, segment_file)
         i_seg = self.input_prefix + segment_path_no_prefix
         o_seg = self.output_prefix + segment_path_no_prefix
-        args = self.output_data[TXT_SEGMENT]
+        args = self.output_data[S_SEGMENT]
         with pushd_context(self.root):
             self.nap()
             if self.file_has_lock(o_seg):
@@ -722,7 +722,7 @@ class FFmpegSegmentsContainer:
 
     def estimate(self, overwrite=False) -> dict:
         d = {}
-        segments = self.input_data[TXT_SEGMENT]
+        segments = self.input_data[S_SEGMENT]
         for stream_id in segments:
             d[stream_id] = sd = {}
             seg_list_by_rate = sorted(segments[stream_id].items(), key=lambda x: x[-1]['bit_rate'])

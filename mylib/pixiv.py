@@ -12,7 +12,7 @@ from .web_client import HTTPResponseInspection, parse_https_url, make_kwargs_for
 FANBOX_DOMAIN = 'fanbox.cc'
 FANBOX_HOMEPAGE = 'https://' + FANBOX_DOMAIN
 FANBOX_API_URL = 'https://' + 'api.' + FANBOX_DOMAIN
-TXT_BODY = 'body'
+S_BODY = 'body'
 
 logger = get_logger(__name__)
 
@@ -79,8 +79,8 @@ class PixivFanboxAPI:
         logger.debug(r.request.url)
         if r.ok:
             d = r.json()
-            if len(d) == 1 and TXT_BODY in d:
-                return d[TXT_BODY]
+            if len(d) == 1 and S_BODY in d:
+                return d[S_BODY]
             else:
                 return d
         else:
