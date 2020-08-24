@@ -25,7 +25,7 @@ d.put_end_of_queue()
 d.start_queue()
 ```
 
-#### [PixivFanboxAPI](mykits/pixiv.py#L71)
+#### [PixivFanboxAPI](mylib/pixiv.py#L71)
 
 pixivFANBOX API (incomplete but usable)
 
