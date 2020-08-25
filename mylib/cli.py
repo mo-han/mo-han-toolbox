@@ -6,7 +6,7 @@ import sys
 from .tricks import constrain_value
 
 
-class SimpleCLIDisplay:
+class LinePrinter:
     def __init__(self, width: int = 0, output=sys.stdout):
         self.output = output
         self.width = constrain_value(width, int, 'x > 0', True, 0)

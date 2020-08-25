@@ -8,11 +8,11 @@ import shlex
 import sys
 from argparse import ArgumentParser, REMAINDER
 
-from mylib.cli import SimpleCLIDisplay
+from mylib.cli import LinePrinter
 from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, Attreebute
 
 rtd = Attreebute()  # runtime data
-cli_draw = SimpleCLIDisplay()
+cli_draw = LinePrinter()
 common_parser_kwargs = {'formatter_class': ArgParseCompactHelpFormatter}
 ap = ArgumentParser(**common_parser_kwargs)
 sub = ap.add_subparsers(title='sub-commands')

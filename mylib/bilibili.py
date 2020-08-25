@@ -16,7 +16,7 @@ import requests
 import you_get.util.strings
 from lxml import html
 
-from .cli import SimpleCLIDisplay
+from .cli import LinePrinter
 from .misc import safe_print, safe_basename
 from .os_util import ensure_sigint_signal
 from .tricks import modify_and_import, until_return_try, range_from_expr
@@ -348,7 +348,7 @@ def download_bilibili_video(url: str or int,
                             **kwargs):
     # 确保在Windows操作系统中，SIGINT信号能够被传递到下层扩展中，从而确保Ctrl+C能够立即停止程序
     ensure_sigint_signal()
-    cli = SimpleCLIDisplay()
+    cli = LinePrinter()
 
     if not output:
         output = '.'
