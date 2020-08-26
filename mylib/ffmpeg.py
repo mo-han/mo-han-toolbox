@@ -581,24 +581,34 @@ class FFmpegSegmentsContainer:
         self.write_output_json()
         self.write_output_concat_list_file()
 
-    def config_video(self, video_args: FFmpegArgsList = None):
-        conf = self.read_output_json()
-        conf['original']['video_args'] = video_args or FFmpegArgsList()
-        self.config(**conf['original'])
-
-    def config_hevc(self, video_args: FFmpegArgsList = None, x265_log_level='error'):
+    def config_video(self, video_args: FFmpegArgsList = None, crf: int = None):
         conf = self.read_output_json()
         video_args = video_args or FFmpegArgsList()
-        video_args.add(vcodec='hevc', x265_params='log-level=' + x265_log_level)
+        if crf is not None:
+            video_args.add(crf=crf)
         conf['original']['video_args'] = video_args
         self.config(**conf['original'])
 
-    def config_qsv264(self, video_args: FFmpegArgsList = None, quality: int = None):
+    def config_hevc(self, video_args: FFmpegArgsList = None, crf: int = None,
+                    x265_log_level: str = 'error', **x265_params):
+        conf = self.read_output_json()
+        video_args = video_args or FFmpegArgsList()
+        if crf is not None:
+            video_args.add(crf=crf)
+        x265_params_s = f'log-level={x265_log_level}'
+        for k in x265_params:
+            k_s = k.replace('_', '-')
+            x265_params_s += f':{k_s}={x265_params[k]}'
+        video_args.add(vcodec='hevc', x265_params=f'{x265_params_s}')
+        conf['original']['video_args'] = video_args
+        self.config(**conf['original'])
+
+    def config_qsv264(self, video_args: FFmpegArgsList = None, crf: int = None):
         conf = self.read_output_json()
         video_args = video_args or FFmpegArgsList()
         video_args.add(vcodec='h264_qsv')
-        if quality is not None:
-            video_args.add(global_quality=quality)
+        if crf is not None:
+            video_args.add(global_quality=crf)
         conf['original']['video_args'] = video_args
         self.config(**conf['original'])
 
