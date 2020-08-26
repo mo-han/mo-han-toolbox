@@ -18,6 +18,7 @@ from .tricks import hex_hash, decorator_factory_args_choices, remove_from_list, 
     dedup_list
 from .log import get_logger
 
+S_ORIGINAL = 'original'
 S_SEGMENT = 'segment'
 S_NON_SEGMENT = 'non segment'
 S_FILENAME = 'filename'
@@ -75,7 +76,7 @@ def excerpt_single_video_stream(filepath: str) -> dict:
             d['bit_rate'] = int(8 * d['size'] // d['duration'])
             d['codec_name'] = single_stream['codec_name']
             d['height'] = single_stream['height']
-            d['with'] = single_stream['width']
+            d['width'] = single_stream['width']
             d['pix_fmt'] = single_stream['pix_fmt']
     return d
 
@@ -139,9 +140,10 @@ class FFmpegCaller:
     class FFmpegError(Exception):
         pass
 
-    def __init__(self, banner: bool = True, loglevel: str = None, overwrite: bool = None, to_pipe: bool = False):
+    def __init__(self, banner: bool = True, loglevel: str = None, overwrite: bool = None,
+                 capture_out_err: bool = False):
         self.logger = get_logger('.'.join((__name__, self.__class__.__name__)))
-        self.capture_stdout_stderr = to_pipe
+        self.capture_stdout_stderr = capture_out_err
         self.set_head(banner=banner, loglevel=loglevel, overwrite=overwrite)
 
     @property
@@ -183,7 +185,7 @@ class FFmpegCaller:
         out, err = p.communicate(input_bytes)
         code = p.returncode
         if code:
-            raise self.FFmpegError(code, (err or b'<UNCAUGHT>').decode())
+            raise self.FFmpegError(code, (err or b'<error not captured>').decode())
         else:
             if err:
                 self.logger.debug(err.decode())
@@ -198,7 +200,7 @@ class FFmpegCaller:
             p = subprocess.run(cmd)
         code = p.returncode
         if code:
-            raise self.FFmpegError(code, (p.stderr or b'<UNCAUGHT>').decode())
+            raise self.FFmpegError(code, (p.stderr or b'<error not captured>').decode())
         else:
             if p.stderr:
                 self.logger.debug(p.stderr.decode())
@@ -312,7 +314,7 @@ class FFmpegCaller:
 class FFmpegSegmentsContainer:
     nickname = 'ffsegcon'
     logger = get_logger('.'.join((__name__, nickname)))
-    ffcmd = FFmpegCaller(banner=False, loglevel='warning', overwrite=True)
+    ffcmd = FFmpegCaller(banner=False, loglevel='warning', overwrite=True, capture_out_err=True)
     tag_file = 'FFMPEG_SEGMENTS_CONTAINER.TAG'
     tag_sig = 'Signature: ' + hex_hash(tag_file.encode())
     picture_file = 'p.mp4'
@@ -493,6 +495,9 @@ class FFmpegSegmentsContainer:
     def read_output_json(self):
         with pushd_context(self.root):
             self.output_data = read_json_file(self.output_json)
+            if not self.output_data:
+                self.config()
+                self.output_data = read_json_file(self.output_json)
         return self.output_data
 
     def write_output_json(self):
@@ -533,12 +538,12 @@ class FFmpegSegmentsContainer:
         others = self.input_data[S_NON_SEGMENT].keys()
         need_map = True if len(videos) > 1 or self.picture_file in others else False
         d = self.output_data or {}
-        d['original'] = {'video_args': video_args,
+        d[S_ORIGINAL] = {'video_args': video_args,
                          'other_args': other_args,
                          'more_args': more_args,
                          'non_visual_map': non_visual_map,
                          'filename': filename,
-                         'kwargs': kwargs}
+                         **kwargs}
         input_count = 0
 
         d[S_VIDEO] = []
@@ -581,36 +586,56 @@ class FFmpegSegmentsContainer:
         self.write_output_json()
         self.write_output_concat_list_file()
 
-    def config_video(self, video_args: FFmpegArgsList = None, crf: int = None):
+    def config_other_args(self, other_args: FFmpegArgsList):
+        conf = self.read_output_json()
+        conf[S_ORIGINAL]['other_args'] = other_args
+        self.config(**conf[S_ORIGINAL])
+
+    def config_more_args(self, more_args: FFmpegArgsList):
+        conf = self.read_output_json()
+        conf[S_ORIGINAL]['more_args'] = more_args
+        self.config(**conf[S_ORIGINAL])
+
+    def config_non_visual_map(self, non_visual_map: Iterable[str] or Iterator[str]):
+        conf = self.read_output_json()
+        conf[S_ORIGINAL]['non_visual_map'] = non_visual_map
+        self.config(**conf[S_ORIGINAL])
+
+    def config_kwargs(self, **kwargs):
+        conf = self.read_output_json()
+        conf[S_ORIGINAL].update(kwargs)
+        self.config(**conf[S_ORIGINAL])
+
+    def config_filename(self, filename):
+        conf = self.read_output_json()
+        conf[S_ORIGINAL][S_FILENAME] = filename
+        self.config(**conf[S_ORIGINAL])
+
+    def config_video(self, video_args: FFmpegArgsList = None, crf: int = None, vf=None, s=None, ):
         conf = self.read_output_json()
         video_args = video_args or FFmpegArgsList()
-        if crf is not None:
-            video_args.add(crf=crf)
-        conf['original']['video_args'] = video_args
-        self.config(**conf['original'])
+        video_args.add(crf=crf, vf=vf, s=s)
+        conf[S_ORIGINAL]['video_args'] = video_args
+        self.config(**conf[S_ORIGINAL])
 
-    def config_hevc(self, video_args: FFmpegArgsList = None, crf: int = None,
+    def config_hevc(self, video_args: FFmpegArgsList = None, crf: int = None, vf=None, s=None,
                     x265_log_level: str = 'error', **x265_params):
         conf = self.read_output_json()
         video_args = video_args or FFmpegArgsList()
-        if crf is not None:
-            video_args.add(crf=crf)
         x265_params_s = f'log-level={x265_log_level}'
         for k in x265_params:
             k_s = k.replace('_', '-')
             x265_params_s += f':{k_s}={x265_params[k]}'
-        video_args.add(vcodec='hevc', x265_params=f'{x265_params_s}')
-        conf['original']['video_args'] = video_args
-        self.config(**conf['original'])
+        video_args.add(vcodec='hevc', x265_params=f'{x265_params_s}', crf=crf, vf=vf, s=s)
+        conf[S_ORIGINAL]['video_args'] = video_args
+        self.config(**conf[S_ORIGINAL])
 
-    def config_qsv264(self, video_args: FFmpegArgsList = None, crf: int = None):
+    def config_qsv264(self, video_args: FFmpegArgsList = None, crf: int = None, vf=None, s=None, ):
         conf = self.read_output_json()
         video_args = video_args or FFmpegArgsList()
-        video_args.add(vcodec='h264_qsv')
-        if crf is not None:
-            video_args.add(global_quality=crf)
-        conf['original']['video_args'] = video_args
-        self.config(**conf['original'])
+        video_args.add(vcodec='h264_qsv', global_quality=crf, vf=vf, s=s)
+        conf[S_ORIGINAL]['video_args'] = video_args
+        self.config(**conf[S_ORIGINAL])
 
     def merge(self):
         if not self.read_output_json():
@@ -689,14 +714,17 @@ class FFmpegSegmentsContainer:
         return segments
 
     def convert(self, overwrite: bool = False):
-        segments = self.get_untouched_segments()
+        if overwrite:
+            def get_segments():
+                return self.get_all_segments()
+        else:
+            def get_segments():
+                return self.get_untouched_segments()
+        segments = get_segments()
         while segments:
-            stream_id, segment_file = random.choice(segments)
+            # stream_id, segment_file = random.choice(segments)
+            stream_id, segment_file = segments.pop(0)
             self.convert_one_segment(stream_id, segment_file, overwrite=overwrite)
-            segments = self.get_untouched_segments()
-
-    def convert_overwrite(self):
-        self.convert(overwrite=True)
 
     def nap(self):
         t = round(random.uniform(0.2, 0.4), 3)
@@ -763,10 +791,7 @@ class FFmpegSegmentsContainer:
                 raise self.SegmentNotDoneError
             return excerpt_single_video_stream(o_seg)
 
-    def estimate_overwrite(self):
-        return self.estimate(overwrite=True)
-
-    def estimate(self, overwrite=False) -> dict:
+    def estimate(self, overwrite=True) -> dict:
         d = {}
         segments = self.input_data[S_SEGMENT]
         for stream_id in segments:
@@ -830,3 +855,36 @@ class FFmpegSegmentsContainer:
                         if self.file_has_delete(o_seg):
                             os.remove(o_seg + self.suffix_delete)
                 segments = self.get_lock_segments() + self.get_done_segments()
+
+    def vf_scale_down_res(self, within='FHD'):
+        height, width = self.width_height
+        return make_ffmpeg_vf_scale_down_res(width, height, within=within)
+
+    @property
+    def width_height(self):
+        seg0 = self.get_all_segments()[0]
+        i, f = seg0
+        seg0_d = self.input_data[S_SEGMENT][i][f]
+        width = seg0_d['width']
+        height = seg0_d['height']
+        return height, width
+
+
+def make_ffmpeg_vf_scale_down_res(width: int, height: int, within='FHD'):
+    """generate 'scale=<w>:<h>' value for ffmpeg `vf` option, to scale down the given resolution
+    return empty str if the given resolution is enough low thus scaling is not needed"""
+    side_len = {'fhd': (1920, 1080), 'hd': (1280, 720)}
+    auto_calc = -2
+    within = within.lower()
+    tgt_long, tgt_short = side_len[within]
+    long = max((width, height))
+    short = min((width, height))
+    if long <= tgt_long and short <= tgt_short:
+        return ''
+    ratio = short / long
+    tgt_ratio = tgt_short / tgt_long
+    narrow = False if ratio > tgt_ratio else True
+    portrait = True if height > width else False
+    baseline = tgt_long if narrow else tgt_short
+    value = f'{baseline}:{auto_calc}' if narrow ^ portrait else f'{auto_calc}:{baseline}'
+    return 'scale=' + value
