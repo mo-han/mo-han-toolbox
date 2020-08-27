@@ -95,7 +95,8 @@ class FFmpegArgsList(list):
 
     def add_arg(self, arg):
         if isinstance(arg, str):
-            self.append(arg)
+            if arg:
+                self.append(arg)
         elif isinstance(arg, (Iterable, Iterator)):
             for a in arg:
                 self.add_arg(a)
@@ -106,8 +107,9 @@ class FFmpegArgsList(list):
     def add_kwarg(self, key: str, value):
         if isinstance(key, str):
             if isinstance(value, str):
-                self.append(key)
-                self.append(value)
+                if value:
+                    self.append(key)
+                    self.append(value)
             elif isinstance(value, (Iterable, Iterator)):
                 for v in value:
                     self.add_kwarg(key, v)
@@ -138,7 +140,12 @@ class FFmpegCaller:
     capture_stdout_stderr = False
 
     class FFmpegError(Exception):
-        pass
+        def __init__(self, exit_code: int, stderr_content: str):
+            self.exit_code = exit_code
+            self.stderr_content = stderr_content.splitlines()
+
+        def __str__(self):
+            return f'{self.__class__.__name__}: {self.exit_code}\n' + '\n'.join(self.stderr_content)
 
     def __init__(self, banner: bool = True, loglevel: str = None, overwrite: bool = None,
                  capture_out_err: bool = False):
@@ -399,16 +406,21 @@ class FFmpegSegmentsContainer:
             self.read_output_json()
 
     def write_filename(self):
-        fn = self.input_data.get(S_FILENAME)
+        if self.input_filepath:
+            fn = os.path.split(self.input_filepath)[-1]
+        else:
+            fn = self.input_data.get(S_FILENAME)
         if not fn:
             return
+        self.input_data[S_FILENAME] = fn
         with pushd_context(self.root):
             prefix = self.input_filename_prefix
             for f in fs_find_iter(pattern=prefix + '*', recursive=False, strip_root=True):
                 fs_rename(f, prefix + fn, append_src_ext=False)
                 break
             else:
-                ensure_open_file(prefix + fn)
+                fs_touch(prefix + fn)
+            write_json_file(self.input_json, self.input_data, indent=4)
 
     def read_filename(self):
         with pushd_context(self.root):
@@ -611,10 +623,10 @@ class FFmpegSegmentsContainer:
         conf[S_ORIGINAL][S_FILENAME] = filename
         self.config(**conf[S_ORIGINAL])
 
-    def config_video(self, video_args: FFmpegArgsList = None, crf: int = None, vf=None, s=None, ):
+    def config_video(self, video_args: FFmpegArgsList = None, crf: int = None, vf=None, s=None, **kwargs):
         conf = self.read_output_json()
         video_args = video_args or FFmpegArgsList()
-        video_args.add(crf=crf, vf=vf, s=s)
+        video_args.add(crf=crf, vf=vf, s=s, **kwargs)
         conf[S_ORIGINAL]['video_args'] = video_args
         self.config(**conf[S_ORIGINAL])
 
@@ -630,10 +642,10 @@ class FFmpegSegmentsContainer:
         conf[S_ORIGINAL]['video_args'] = video_args
         self.config(**conf[S_ORIGINAL])
 
-    def config_qsv264(self, video_args: FFmpegArgsList = None, crf: int = None, vf=None, s=None, ):
+    def config_qsv264(self, video_args: FFmpegArgsList = None, crf: int = None, vf=None, s=None, **kwargs):
         conf = self.read_output_json()
         video_args = video_args or FFmpegArgsList()
-        video_args.add(vcodec='h264_qsv', global_quality=crf, vf=vf, s=s)
+        video_args.add(vcodec='h264_qsv', global_quality=crf, vf=vf, s=s, **kwargs)
         conf[S_ORIGINAL]['video_args'] = video_args
         self.config(**conf[S_ORIGINAL])
 
