@@ -35,7 +35,7 @@ class VXI11Cmd(cmd.Cmd):
     def default(self, line):
         return self.do_cmd(line)
 
-    def onecmd(self, line):
+    def onecmd(self, line) -> str:
         try:
             r = super(VXI11Cmd, self).onecmd(line)
             ok = True
@@ -95,8 +95,7 @@ class VXI11Cmd(cmd.Cmd):
 
     def tcpserver(self, host: str, port: int):
         callback = self.onecmd
-        welcome = 'vxi11cmd server, listening on port {}:{}, connected to remote {}.\r\n\r\n'
-        welcome = welcome.format(host, port, self.address).encode()
+        welcome = f'vxi11cmd server, listen on {host}:{port}, connect to {self.address}.\r\n\r\n'.encode()
 
         class CmdServerHandler(BaseRequestHandler):
             def handle(self):
@@ -108,14 +107,13 @@ class VXI11Cmd(cmd.Cmd):
                         i = buffer.find(b'\n')
                         if i == -1:
                             break
-                        else:
-                            line = bytes(buffer[:i + 1])
-                            buffer[:] = buffer[i + 1:]
-                            command = line.decode().strip()
-                            print(command)
-                            answer = callback(command)
-                            if answer:
-                                self.request.send(answer.encode() + b'\r\n')
+                        line = bytes(buffer[:i + 1])
+                        buffer[:] = buffer[i + 1:]
+                        command = line.decode().strip()
+                        print(command)
+                        answer = callback(command)
+                        if answer:
+                            self.request.send(answer.encode() + b'\r\n')
 
         server = TCPServer((host, port), CmdServerHandler)
         server.serve_forever()
