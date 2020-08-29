@@ -95,7 +95,7 @@ class VXI11Cmd(cmd.Cmd):
 
     def tcpserver(self, host: str, port: int):
         callback = self.onecmd
-        welcome = f'vxi11cmd server, listen on {host}:{port}, connect to {self.address}.\r\n\r\n'.encode()
+        welcome = f'vxi11cmd server, listen on {host}:{port}, connect to {self.address}.\n\n'.encode()
 
         class CmdServerHandler(BaseRequestHandler):
             def handle(self):
@@ -113,7 +113,7 @@ class VXI11Cmd(cmd.Cmd):
                         print(command)
                         answer = callback(command)
                         if answer:
-                            self.request.send(answer.encode() + b'\r\n')
+                            self.request.send(answer.encode() + b'\n')
 
         server = TCPServer((host, port), CmdServerHandler)
         server.serve_forever()
@@ -140,12 +140,3 @@ class VXI11Cmd(cmd.Cmd):
     def do_idn(self, *args):
         """Instrument identity."""
         return self.do_cmd('*idn?')
-
-    @staticmethod
-    def str2float(s: str):
-        try:
-            return float(s)
-        except ValueError:
-            return s
-
-
