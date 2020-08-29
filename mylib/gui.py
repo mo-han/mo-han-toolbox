@@ -42,7 +42,8 @@ class PySimpleGUISpecialKeyEvent:
 
 
 def rename_dialog(src: str):
-    import PySimpleGUIQt as sg
+    import PySimpleGUIQt
+    sg = PySimpleGUIQt
     ske = PySimpleGUISpecialKeyEvent()
     conf_file = real_join_path('~', '.config/rename_dialog.json')
     root = 'root'
@@ -58,6 +59,7 @@ def rename_dialog(src: str):
     save_replace = 'save_replace'
     save_pattern = 'save_pattern'
     add_root = 'add_root'
+    rename_info_file = 'rename_info_file'
     title = 'Rename - {}'.format(src)
     h = .7
 
@@ -66,6 +68,9 @@ def rename_dialog(src: str):
     tmp_rl = conf[replace] or ['']
     old_root, old_base = os.path.split(src)
     old_fn, old_ext = os.path.splitext(old_base)
+    info_file_base = [f for f in os.listdir(old_root) if
+                     f.endswith('.info') and (f.startswith(old_fn) or old_fn.startswith(f.rstrip('.info')))]
+    has_info = True if info_file_base else False
 
     # sg.theme('SystemDefaultForReal')
     layout = [
@@ -90,6 +95,14 @@ def rename_dialog(src: str):
         [sg.Submit(ok, size=(10, 1)),
          sg.Stretch(),
          sg.Cancel(cancel, size=(10, 1))]]
+    if has_info:
+        info_file_base = info_file_base[0]
+        info_filepath = os.path.join(old_root, info_file_base)
+        with open(info_filepath, encoding='utf8') as f:
+            info = f.read()
+        layout.insert(2, [sg.CB(info_file_base, default=True, key=rename_info_file, enable_events=True)])
+        layout.insert(3, [sg.ML(info)])
+        layout.insert(4, [sg.HorizontalSeparator()])
 
     ensure_sigint_signal()
     window = sg.Window(title, return_keyboard_events=True).layout(layout).finalize()
@@ -149,6 +162,9 @@ def rename_dialog(src: str):
         elif event == ok:
             try:
                 shutil.move(src, dst)
+                if has_info and data[rename_info_file]:
+                    shutil.move(info_filepath,
+                                os.path.splitext(dst)[0] + '.info')
                 loop = False
             except FileNotFoundError:
                 for k in (root, fname, ext):
