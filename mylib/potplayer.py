@@ -45,7 +45,13 @@ class PotPlayerKit:
 
     def focus(self):
         old_coord = mouse.get_position()
-        self.current.set_focus()
+        while True:
+            try:
+                self.current.set_focus()
+                break
+            except pywinauto.findwindows.ElementAmbiguousError:
+                print('! ambiguous potplayer window , check it')
+                self.gasp(1)
         mouse.move(*old_coord)
         self.gasp()
 

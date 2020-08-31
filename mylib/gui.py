@@ -76,11 +76,11 @@ def rename_dialog(src: str):
     layout = [
         [sg.T(src, key='src')],
         [sg.HorizontalSeparator()],
+        [sg.I(old_fn, key=fname, focus=True),
+         sg.I(old_ext, key=ext, size=(6, h))],
         [sg.I(old_root, key=root),
          sg.B('+', key=add_root, size=(3, h)),
          sg.FolderBrowse('...', target=root, initial_folder=old_root, size=(6, h))],
-        [sg.I(old_fn, key=fname, focus=True),
-         sg.I(old_ext, key=ext, size=(6, h))],
         [sg.HorizontalSeparator()],
         [sg.T('Regular Expression Substitution Pattern & Replacement')],
         [sg.T(size=(0, h)),
@@ -101,7 +101,7 @@ def rename_dialog(src: str):
         with open(info_filepath, encoding='utf8') as f:
             info = f.read()
         layout.insert(2, [sg.CB(info_file_base, default=True, key=rename_info_file, enable_events=True)])
-        layout.insert(3, [sg.ML(info)])
+        layout.insert(2, [sg.ML(info)])
         layout.insert(4, [sg.HorizontalSeparator()])
 
     ensure_sigint_signal()
@@ -162,9 +162,10 @@ def rename_dialog(src: str):
         elif event == ok:
             try:
                 shutil.move(src, dst)
-                if has_info and data[rename_info_file]:
-                    shutil.move(info_filepath,
-                                os.path.splitext(dst)[0] + '.info')
+                if has_info:
+                    if data[rename_info_file]:
+                        shutil.move(info_filepath,
+                                    os.path.splitext(dst)[0] + '.info')
                 loop = False
             except FileNotFoundError:
                 for k in (root, fname, ext):
