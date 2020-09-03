@@ -12,4 +12,4 @@ test.*
 *.exe
 *.log
 dukto.txt
-vxi11cmd/extra.py
+scpi_shell/extra.py
