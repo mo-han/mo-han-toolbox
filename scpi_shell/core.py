@@ -1,10 +1,13 @@
 # coding=utf8
 
 import cmd
+import inspect
 import signal
 import sys
+from pprint import pprint
 from socketserver import TCPServer, BaseRequestHandler
 from ast import literal_eval
+from typing import Callable
 
 import vxi11  # pip install -U python-vxi11
 from serial import Serial, SerialException
@@ -29,6 +32,11 @@ def win32_ctrl_c():
 class LinkWrapper:
     def __init__(self, link):
         self.__dict__['_link'] = self._link = link
+
+    @property
+    def members(self):
+        return {k: v.__doc__ if isinstance(v, Callable) else v for k, v in inspect.getmembers(self._link) if
+                not (k.startswith('__') and k.endswith('__')) or k in ('__class__',)}
 
     def __setattr__(self, key, value):
         setattr(self._link, key, value)
@@ -85,16 +93,20 @@ class SCPIShell(cmd.Cmd):
         self.write = None
         self.lastcmd_return = None
         self.connected = False
+        self.verbose = 0
         super(SCPIShell, self).__init__()
         if self.address:
             self.connect(address, conn_type, timeout)
+
+    def do_verbose(self, line):
+        self.verbose = int(line)
 
     def postcmd(self, stop, line):
         self.lastcmd_return = stop
         return None
 
     def default(self, line):
-        return self.do_cmd(line)
+        return self.do_scpi(line)
 
     def onecmd(self, line) -> str:
         ok = False
@@ -144,21 +156,23 @@ class SCPIShell(cmd.Cmd):
         for c in ['idn', 'remote']:
             self.onecmd(c)
 
-    def do_cmd(self, line=None):
+    def do_scpi(self, line=None):
         """Send (SCPI) command."""
         command = line or input('Send command：')
-        r = self.send_command(command)
+        if self.verbose:
+            print(f'{self.prompt}`{command}`')
+        r = self.send_scpi(command)
         if r:
             print(r)
         return r
 
-    def send_command(self, command):
+    def send_scpi(self, command):
         if '?' in command:
             return self.ask(command)
         else:
             self.write(command)
 
-    def attr(self, key=None, value=None):
+    def link_attr(self, key=None, value=None):
         if key is None:
             return self.link
         if value is None:
@@ -166,18 +180,23 @@ class SCPIShell(cmd.Cmd):
         else:
             setattr(self.link, key, value)
 
-    def do_attr(self, line):
+    def do_link_attr(self, line):
         """get or set attr of underlying link:
         attr <key_name>
         attr <key_name> <new_value>
         """
         args = line.split(maxsplit=1)
         if not args:
-            print(self.attr())
+            print(self.link_attr())
         elif len(args) == 1:
-            print(self.attr(args[0]))
+            key = args[0]
+            value = self.link_attr(key)
+            if key == 'members':
+                pprint(value)
+            else:
+                print(value)
         else:
-            self.attr(args[0], literal_eval(args[-1]))
+            self.link_attr(args[0], literal_eval(args[-1]))
 
     def connect(self, address=None, conn_type=None, timeout=None):
         self.address = address = address or self.address
@@ -235,7 +254,7 @@ class SCPIShell(cmd.Cmd):
         """close current underlying link"""
         self.link.close()
 
-    def do_tcpserver(self, line: str):
+    def do_tcprelay(self, line: str):
         """Usage: tcpserver [ADDRESS]:PORT
         Start a TCP socket server as a command repeater, listing on [ADDRESS]:PORT.
         `ADDRESS`, if omitted, default to `localhost`.
@@ -244,12 +263,12 @@ class SCPIShell(cmd.Cmd):
             host, port = line.split(':', maxsplit=1)
             host = host or 'localhost'
             port = int(port)
-            self.tcpserver(host, port)
+            self.tcprelay(host, port)
         except ValueError:
             print('Invalid server address: {}'.format(line))
-            print('Usage: {}'.format(self.do_tcpserver.__doc__))
+            print('Usage: {}'.format(self.do_tcprelay.__doc__))
 
-    def tcpserver(self, host: str, port: int):
+    def tcprelay(self, host: str, port: int):
         callback = self.onecmd
         welcome = f'vxi11cmd server, listen on {host}:{port}, connect to {self.address}.\n\n'.encode()
 
@@ -281,12 +300,12 @@ class SCPIShell(cmd.Cmd):
 
     def do_local(self, *args):
         """Switch instrument into local mode."""
-        return self.do_cmd(':communicate:remote 0')
+        return self.do_scpi(':communicate:remote 0')
 
     def do_remote(self, *args):
         """Switch instrument into remote mode."""
-        return self.do_cmd(':communicate:remote 1')
+        return self.do_scpi(':communicate:remote 1')
 
     def do_idn(self, *args):
         """Instrument identity."""
-        return self.do_cmd('*idn?')
+        return self.do_scpi('*idn?')
