@@ -34,7 +34,7 @@ def range_from_expr(expr: str) -> Generator:
         yield from range(s[0], s[-1] + 1)
 
 
-def decorator_factory_args_choices(choices: Dict[int or str, Iterable]) -> Decorator:
+def meta_deco_args_choices(choices: Dict[int or str, Iterable]) -> Decorator:
     """decorator factory: force arguments of a func limited inside the given choices
 
     :param choices: a dict which describes the choices of arguments

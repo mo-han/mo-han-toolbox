@@ -106,6 +106,22 @@ cmd_mode = add_sub_parser('cmd', ['cli'], 'command line interactive mode')
 cmd_mode.set_defaults(func=cmd_mode_func)
 
 
+def ffconv_func():
+    from mylib.ffmpeg import preset_video_convert
+    content = rtd.args.content
+    codec = rtd.args.codec
+
+ffconv = add_sub_parser('ffconv', [], 'convert video file by ffmpeg')
+ffconv.set_defaults(func=ffconv_func)
+ffconv.add_argument('source')
+ffconv.add_argument('-t', '--content', choices=('cgi', 'film'))
+ffconv.add_argument('-c', '--codec', choices=('a', 'h'))
+ffconv.add_argument('-q', '--quality-crf', type=float)
+ffconv.add_argument('-a', '--hw-accel', choices=('q', 'qsv'))
+ffconv.add_argument('-w', '--within-res', choices=('fhd', 'hd'))
+ffconv.add_argument('-o', )
+
+
 def ffprobe_func():
     from ffmpeg import probe
     from pprint import pprint
