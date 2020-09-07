@@ -3,7 +3,7 @@ colorama
 ffmpeg-python
 filetype  #license-mit
 gallery-dl
-gooey
+gooey  #need:wxpython:https://extras.wxpython.org/wxPython4/extras/
 humanize  #license-mit
 imagehash
 inflection  #license-mit
