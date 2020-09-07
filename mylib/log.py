@@ -24,7 +24,8 @@ def get_logger(logger_name: str, level: str = 'INFO', fmt=LOG_FMT, datefmt=LOG_D
         handlers_l = [logging.StreamHandler()]
     for h in handlers_l:
         h.setFormatter(formatter)
-        logger.addHandler(h)
+        # logger.addHandler(h)
+    logger.handlers = handlers_l
     return logger
 
 

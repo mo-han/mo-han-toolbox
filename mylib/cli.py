@@ -14,7 +14,7 @@ class LinePrinter:
     def print(self, text: str = '', **kwargs):
         return print(text, file=self.output, **kwargs)
 
-    def horizontal_line(self, char: str = '-', shorter: int = 0, **kwargs):
+    def horizontal_line(self, char: str = '-', shorter: int = 1, **kwargs):
         width = self.width or shutil.get_terminal_size()[0]
         return self.print(char * (width - shorter), **kwargs)
 
