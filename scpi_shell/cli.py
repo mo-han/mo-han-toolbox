@@ -20,28 +20,33 @@ def run_cli_app():
                         help='connection timeout')
     parser.add_argument('-c', '--command', nargs='+', metavar='args',
                         help='commands to be run once')
-    parser.add_argument('-s', '--tcpserver', metavar='[listen_addr]:<port>',
-                        help='start a tcp server listening on the given address')
+    parser.add_argument('-l', '--tcp-relay', metavar='[listen_addr]:<port>',
+                        help='start a tcp relay server listening on the given address')
     args = parser.parse_args()
 
     remote = args.remote
     conn_type = args.type
     timeout = args.timeout
     command_list = args.command
-    tcpserver_addr = args.tcpserver
+    relay_addr = args.tcp_relay
     win32_ctrl_c()
 
     if remote:
-        cli = SCPIShell(address=remote, conn_type=conn_type, timeout=timeout)
+        shell = SCPIShell(address=remote, conn_type=conn_type, timeout=timeout)
         if command_list:
-            cli.onecmd(' '.join(command_list))
-        elif tcpserver_addr:
-            cli.do_tcpserver(tcpserver_addr)
+            shell.onecmd(' '.join(command_list))
+        elif relay_addr:
+            shell.do_tcprelay(relay_addr)
         else:
-            cli.cmdloop()
+            shell.cmdloop()
+    elif timeout or command_list:
+        parser.error('--type, --timeout or --command has no effect when --remote is missing')
+    elif relay_addr:
+        shell = SCPIShell()
+        shell.do_tcprelay(relay_addr)
     else:
-        cli = SCPIShell()
-        cli.cmdloop()
+        shell = SCPIShell()
+        shell.cmdloop()
 
 
 if __name__ == '__main__':

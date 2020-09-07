@@ -91,7 +91,7 @@ class Clipboard:
             data = None
         return data
 
-    def get_path(self) -> list:
+    def list_paths(self) -> list:
         paths = self.get(self._wcb.CF_HDROP)
         if paths:
             return list(paths)

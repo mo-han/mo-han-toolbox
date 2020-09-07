@@ -9,6 +9,7 @@ import sys
 from argparse import ArgumentParser, REMAINDER
 
 from mylib.cli import LinePrinter
+from mylib.os_util import clipboard as cb
 from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, Attreebute
 
 rtd = Attreebute()  # runtime data
@@ -106,14 +107,45 @@ cmd_mode = add_sub_parser('cmd', ['cli'], 'command line interactive mode')
 cmd_mode.set_defaults(func=cmd_mode_func)
 
 
+def ffconv_func():
+    from mylib.ffmpeg import preset_video_convert
+    source = rtd.args.source or cb.list_paths()
+    content = rtd.args.content
+    codec = rtd.args.codec
+    quality = rtd.args.quality_crf
+    hwa = rtd.args.hw_accel
+    within = rtd.args.within_res
+    overwrite = rtd.args.overwrite
+    redo_origin = rtd.args.redo_origin
+    verbose = rtd.args.verbose
+    opts = rtd.args.opts
+    if verbose:
+        print(rtd.args)
+    preset_video_convert(source=source, codec=codec, crf=quality, content=content, hwa=hwa, within=within,
+                         overwrite=overwrite, redo_origin=redo_origin, verbose=verbose, ffmpeg_opts=opts)
+
+
+ffconv = add_sub_parser('ffconv', [], 'convert video file by ffmpeg')
+ffconv.set_defaults(func=ffconv_func)
+ffconv.add_argument('-s', '--source', metavar='<path>', help='if omitted, will try paths in clipboard')
+ffconv.add_argument('-t', '--content', choices=('cgi', 'film'))
+ffconv.add_argument('-c', '--codec', choices=('a', 'h'))
+ffconv.add_argument('-q', '--quality-crf', type=float, metavar='<decimal>')
+ffconv.add_argument('-a', '--hw-accel', choices=('q', 'qsv'))
+ffconv.add_argument('-w', '--within-res', choices=('FHD', 'HD', 'qHD'))
+ffconv.add_argument('-O', '--overwrite', action='store_true')
+ffconv.add_argument('-R', '--redo-origin', action='store_true')
+ffconv.add_argument('-v', '--verbose', action='count', default=0)
+ffconv.add_argument('opts', nargs='*', help='ffmpeg options (insert -- before opts)')
+
+
 def ffprobe_func():
     from ffmpeg import probe
     from pprint import pprint
     file = rtd.args.file
     ss = rtd.args.select_streams
     if not file:
-        from mylib.os_util import clipboard as cb
-        file = cb.get_path()[0]
+        file = cb.list_paths()[0]
     if ss:
         pprint(probe(file, select_streams=ss))
     else:
@@ -134,8 +166,7 @@ def file_type_func():
     else:
         fmt = '{type} ({file})'
     if not files:
-        from mylib.os_util import clipboard
-        files = clipboard.get_path()
+        files = cb.list_paths()
     for f in files:
         try:
             print(fmt.format(type=guess(f).mime, file=f))
@@ -214,7 +245,6 @@ rename.add_argument('replace')
 
 def run_from_lines_func():
     import os
-    from mylib.os_util import clipboard
     args = rtd.args
     file = args.file
     dry_run = args.dry_run
@@ -226,7 +256,7 @@ def run_from_lines_func():
         with open(file, 'r') as fd:
             lines = fd.readlines()
     else:
-        lines = str(clipboard.get()).splitlines()
+        lines = str(cb.get()).splitlines()
     for line in lines:
         if not line:
             continue
@@ -310,8 +340,7 @@ clipboard_findurl.add_argument('pattern', help='URL pattern, or website name')
 
 def clipboard_rename_func():
     from mylib.gui import rename_dialog
-    from mylib.os_util import clipboard
-    for f in clipboard.get_path():
+    for f in cb.list_paths():
         rename_dialog(f)
 
 

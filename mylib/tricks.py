@@ -34,26 +34,28 @@ def range_from_expr(expr: str) -> Generator:
         yield from range(s[0], s[-1] + 1)
 
 
-def decorator_factory_args_choices(choices: Dict[int or str, Iterable]) -> Decorator:
+def meta_deco_args_choices(choices: Dict[int or str, Iterable]) -> Decorator:
     """decorator factory: force arguments of a func limited inside the given choices
 
     :param choices: a dict which describes the choices of arguments
         the key of the dict must be either the index of args or the key(str) of kwargs
         the value of the dict must be an iterable."""
-    err_fmt = "value of '{}' is not a valid choice in {}"
+    err_fmt = "value of '{}' ({}) is not a valid choice in {}"
 
     def decorator(func):
         @wraps(func)
         def decorated_func(*args, **kwargs):
             for arg_index in range(len(args)):
                 param_name = func.__code__.co_varnames[arg_index]
-                if arg_index in choices and args[arg_index] not in choices[arg_index]:
+                value = args[arg_index]
+                if arg_index in choices and value not in choices[arg_index]:
                     raise ValueError(err_fmt.format(param_name, choices[arg_index]))
-                elif param_name in choices and args[arg_index] not in choices[param_name]:
-                    raise ValueError(err_fmt.format(param_name, choices[param_name]))
+                elif param_name in choices and value not in choices[param_name]:
+                    raise ValueError(err_fmt.format(param_name, value, choices[param_name]))
             for param_name in kwargs:
-                if param_name in choices and kwargs[param_name] not in choices[param_name]:
-                    raise ValueError(err_fmt.format(param_name, choices[param_name]))
+                value = kwargs[param_name]
+                if param_name in choices and value not in choices[param_name]:
+                    raise ValueError(err_fmt.format(param_name, value, choices[param_name]))
 
             return func(*args, **kwargs)
 
