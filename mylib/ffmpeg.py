@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 # encoding=utf8
-import json
 import os
 import random
 import shutil
 import subprocess
 import sys
-from glob import glob
+from math import log
 from time import sleep
-from typing import Iterable, List, Iterator
+from typing import Iterable, Iterator
 
 import ffmpeg
 import filetype
@@ -16,10 +15,9 @@ import filetype
 from .cli import LinePrinter
 from .os_util import pushd_context, write_json_file, read_json_file, SubscriptableFileIO, ensure_open_file, \
     fs_find_iter, \
-    fs_rename, fs_touch, shlex_double_quotes_join
-from .tricks import hex_hash, meta_deco_args_choices, remove_from_list, seconds_from_colon_time, \
-    dedup_list, Attreebute
-from .log import get_logger, LOG_FMT_MESSAGE_ONLY
+    fs_rename, fs_touch, shlex_double_quotes_join, TEMPDIR, list_files, split_filename_tail
+from .tricks import hex_hash, meta_deco_args_choices, remove_from_list, seconds_from_colon_time
+from .log import get_logger, LOG_FMT_MESSAGE_ONLY, set_logger_level
 
 S_ORIGINAL = 'original'
 S_SEGMENT = 'segment'
@@ -47,6 +45,11 @@ STREAM_MAP_PRESET_TABLE = {S_ALL: ['0'], S_ONLY_VIDEO: ['0:V'], S_ONLY_AUDIO: ['
                            S_NO_ATTACHMENT: ['0', '-0:t'], S_NO_DATA: ['0', '-0:d'],
                            S_FIRST_VIDEO: ['0:V:0'], S_ONLY_PICTURE: ['0:v', '-0:V']}
 CODEC_NAME_TO_FILEXT_TABLE = {'mjpeg': '.jpg', 'png': '.png', 'hevc': '.mp4', 'h264': '.mp4', 'vp9': '.webm'}
+OLD_TAILS = ['.__origin__', '.hevc8b']
+TAILS_D = {'o': '.origin', 'a8': '.avc8b', 'h8': '.hevc8b', 'aq8': '.qsvavc8b', 'hq8': '.qsvhevc8b'}
+TAILS_L = TAILS_D.values()
+VALID_TAILS = OLD_TAILS + list(TAILS_L)
+VIDEO_CODECS_A10N = {'a': 'h264', 'h': 'hevc'}
 
 decorator_choose_map_preset = meta_deco_args_choices({'map_preset': STREAM_MAP_PRESET_TABLE.keys()})
 
@@ -158,7 +161,7 @@ class FFmpegRunner:
 
     def __init__(self, banner: bool = True, loglevel: str = None, overwrite: bool = None,
                  capture_out_err: bool = False):
-        self.logger = get_logger('.'.join((__name__, self.__class__.__name__)))
+        self.logger = get_logger(f'{__name__}.{self.__class__.__name__}')
         self.capture_stdout_stderr = capture_out_err
         self.set_head(banner=banner, loglevel=loglevel, overwrite=overwrite)
 
@@ -329,8 +332,6 @@ class FFmpegRunner:
 
 class FFmpegSegmentsContainer:
     nickname = 'ffsegcon'
-    logger = get_logger('.'.join((__name__, nickname)))
-    ff = FFmpegRunner(banner=False, loglevel='warning', overwrite=True, capture_out_err=True)
     tag_file = 'FFMPEG_SEGMENTS_CONTAINER.TAG'
     tag_sig = 'Signature: ' + hex_hash(tag_file.encode())
     picture_file = 'p.mp4'
@@ -375,44 +376,59 @@ class FFmpegSegmentsContainer:
     def __repr__(self):
         return "{} at '{}' from '{}'".format(FFmpegSegmentsContainer.__name__, self.root, self.input_filepath)
 
-    def __init__(self, path: str, work_dir: str = None, single_video_stream: bool = True):
-        path = os.path.abspath(path)
+    def __init__(self, path: str, work_dir: str = None, single_video_stream: bool = True, log_lvl=None):
+        self.logger = get_logger(f'{__name__}.{self.nickname}')
+        self.ff = FFmpegRunner(banner=False, loglevel='warning', overwrite=True, capture_out_err=True)
+        if log_lvl:
+            self.logger.setLevel(log_lvl)
+            self.ff.logger.setLevel(log_lvl)
+        _path = os.path.abspath(path)
         select_streams = 'V:0' if single_video_stream else 'V'
-        if not os.path.exists(path):
-            raise self.PathError("path not exist: '{}'".format(path))
+        if not os.path.exists(_path):
+            raise self.PathError("path not exist: '{}'".format(_path))
 
-        if os.path.isfile(path):
-            self.input_filepath = path
-            if filetype.guess(path).mime.startswith('video'):
-                d, b = os.path.split(path)
+        if os.path.isfile(_path):
+            self.input_filepath = _path
+            if filetype.guess(_path).mime.startswith('video'):
+                d, b = os.path.split(_path)
                 self.input_data = {S_FILENAME: b, S_SEGMENT: {}, S_NON_SEGMENT: {}}
-                with SubscriptableFileIO(path) as f:
+                with SubscriptableFileIO(_path) as f:
                     middle = f.size // 2
                     root_base = '.{}-{}'.format(self.nickname, hex_hash(
                         f[:4096] + f[middle - 2048:middle + 2048] + f[-4096:])[:8])
                 work_dir = work_dir or d
-                path = self.root = os.path.join(work_dir, root_base)  # file path -> dir path
+                _path = self.root = os.path.join(work_dir, root_base)  # file path -> dir path
             else:
-                raise self.PathError("non-video file: '{}'".format(path))
+                raise self.PathError("non-video file: '{}'".format(_path))
 
-        if not os.path.isdir(path):
-            try:
-                os.makedirs(path, exist_ok=True)
-            except FileExistsError:
-                raise self.PathError("invalid folder path used by file: '{}'".format(path))
-            self.tag_container_folder()
-            self.split(select_streams=select_streams)
-
-        if os.path.isdir(path):
-            self.root = path
-            if not self.container_is_tagged():
-                raise self.ContainerError("non-container folder: '{}'".format(path))
-            if not self.is_split():
+        try:
+            if not os.path.isdir(_path):
+                try:
+                    os.makedirs(_path, exist_ok=True)
+                except FileExistsError:
+                    raise self.PathError("invalid folder path used by file: '{}'".format(_path))
+                self.tag_container_folder()
                 self.split(select_streams=select_streams)
-            self.read_input_json()
-            if S_FILENAME not in self.input_data:
-                self.read_filename()
-            self.read_output_json()
+
+            if os.path.isdir(_path):
+                try:
+                    self.root = _path
+                    if not self.container_is_tagged():
+                        raise self.ContainerError("non-container folder: '{}'".format(_path))
+                    if not self.is_split():
+                        self.split(select_streams=select_streams)
+                    self.read_input_json()
+                    if S_FILENAME not in self.input_data:
+                        self.read_filename()
+                    self.read_output_json()
+                except KeyError:
+                    shutil.rmtree(_path)
+                    self = FFmpegSegmentsContainer(path=path, work_dir=work_dir,
+                                                   single_video_stream=single_video_stream, log_lvl=log_lvl)
+        except KeyboardInterrupt:
+            sleep(.5)
+            shutil.rmtree(_path)
+            raise self.ContainerError('aborted')
 
     def write_filename(self):
         if self.input_filepath:
@@ -654,8 +670,8 @@ class FFmpegSegmentsContainer:
         conf[S_ORIGINAL]['video_args'] = video_args
         self.config(**conf[S_ORIGINAL])
 
-    def config_qsv264(self, video_args: FFmpegArgsList = None, crf=None, vf=None, within=None,
-                      **kwargs):
+    def config_qsv_avc(self, video_args: FFmpegArgsList = None, crf=None, vf=None, within=None,
+                       **kwargs):
         conf = self.read_output_json()
         video_args = video_args or FFmpegArgsList()
         vf = ffmpeg_vf_res_scale_down_str(*self.width_height, within, vf)
@@ -895,6 +911,31 @@ class FFmpegSegmentsContainer:
         height = seg0_d['height']
         return width, height
 
+    def excerpt_segments(self):
+        try:
+            d = {}
+            segments = self.input_data[S_SEGMENT]
+            for i in segments:
+                mkv0_d = segments[i]['0.mkv']
+                d[i] = {}
+                for k in ('codec_name', 'pix_fmt', 'width', 'height'):
+                    d[i][k] = mkv0_d[k]
+            return d
+        except KeyError:
+            raise self.ContainerError('broken')
+
+    def guess_crf(self, codec=None):
+        d = self.excerpt_segments()
+        i, d = list(d.items())[0]
+        config_funcs = {'h264': self.config_video, 'hevc': self.config_hevc}
+        codec = VIDEO_CODECS_A10N.get(codec, codec) or d['codec_name']
+        config_func = config_funcs[codec]
+        crf0 = 25
+        config_func(crf=crf0)
+        e = self.estimate()
+        r = e[i]
+        return round(crf0 + 6 * log(r, 2), 2)
+
 
 def get_width_height(filepath) -> (int, int):
     d = ffmpeg.probe(filepath, select_streams='V')['streams'][0]
@@ -916,20 +957,18 @@ def ffmpeg_vf_res_scale_down_str(width: int, height: int, within='FHD', vf: str 
         return
     ratio = short / long
     tgt_ratio = tgt_short / tgt_long
-    narrow = False if ratio > tgt_ratio else True
+    thin = False if ratio > tgt_ratio else True
     portrait = True if height > width else False
-    baseline = tgt_long if narrow else tgt_short
-    res_scale = 'scale=' + (f'{baseline}:{auto_calc}' if narrow ^ portrait else f'{auto_calc}:{baseline}')
+    baseline = tgt_long if thin else tgt_short
+    res_scale = 'scale=' + (f'{baseline}:{auto_calc}' if thin ^ portrait else f'{auto_calc}:{baseline}')
     return f'{res_scale},{vf}' if vf else res_scale
 
 
 @meta_deco_args_choices({'hwa': (None, 'qsv', 'q'), 'content': (None, 'cgi', 'film'),
                          'codec': (None, 'a', 'h')})
-def preset_video_convert(source, codec=None, crf=None, content=None, hwa=None, within=None,
-                         overwrite=False, redo_origin=False, verbose=0, ffmpeg_opts=None,
+def preset_video_convert(source, codec=None, crf=None, content=None, hwa=None, within=None, vf=None,
+                         overwrite=False, redo=False, verbose=0, ffmpeg_opts=None,
                          *args, **kwargs):
-    old_tails = ['.__origin__', '.hevc8b']
-    tails_d = {'o': '.origin', 'a8': '.avc8b', 'h8': '.hevc8b', 'aq8': '.qsvavc8b', 'hq8': '.qsvhevc8b'}
     ff = FFmpegRunner(overwrite=True, banner=False)
     if verbose > 1:
         lvl = 'DEBUG'
@@ -939,7 +978,6 @@ def preset_video_convert(source, codec=None, crf=None, content=None, hwa=None, w
         lvl = 'WARNING'
     ff.logger.setLevel(lvl)
     logger = get_logger(f'{__name__}.smartconv', fmt=LOG_FMT_MESSAGE_ONLY)
-    tails_l = tails_d.values()
     codecs_d = {'h': 'hevc', 'a': None, 'hq': 'hevc_qsv', 'aq': 'h264_qsv'}
 
     ffargs = FFmpegArgsList(pix_fmt='yuv420p')
@@ -959,37 +997,40 @@ def preset_video_convert(source, codec=None, crf=None, content=None, hwa=None, w
     if ffmpeg_opts:
         ffargs.add(ffmpeg_opts)
     ffargs.add(*args, **kwargs)
-    tail = tails_d[f'{codec}8']
+    tail = TAILS_D[f'{codec}8']
 
     def conv_one_file(filepath):
         lp = LinePrinter()
         lp.hl()
+        if not os.path.isfile(filepath):
+            logger.info(f'# skip non-file\n  {filepath}')
         ft = filetype.guess(filepath)
         if not ft or not ft.mime.startswith('video'):
-            logger.info(f'# skip non-video: {filepath}')
+            logger.info(f'# skip non-video\n  {filepath}')
             return
         dirname, input_basename = os.path.split(filepath)
         input_non_ext, input_ext = os.path.splitext(input_basename)
         input_name, input_tail = os.path.splitext(input_non_ext)
-        if input_tail in tails_l or input_tail in old_tails:
+        if input_tail in TAILS_L or input_tail in OLD_TAILS:
             if 'origin' in input_tail:
-                if not redo_origin:
-                    logger.info(f'# skip origin: {filepath}')
+                if not redo:
+                    logger.info(f'# skip origin\n  {filepath}')
                     return
             else:
-                logger.info(f'# skip {input_tail}: {filepath}')
+                logger.info(f'# skip {input_tail}\n  {filepath}')
                 return
         else:
             input_name = input_non_ext
             input_tail = ''
         if within:
-            ffargs.add(vf=ffmpeg_vf_res_scale_down_str(*get_width_height(filepath), within))
+            w, h = get_width_height(filepath)
+            ffargs.add(vf=ffmpeg_vf_res_scale_down_str(w, h, within, vf=vf))
         origin_path = os.path.join(dirname, input_name + '.origin' + input_ext)
         output_path = os.path.join(dirname, input_name + tail + input_ext)
         if os.path.isfile(output_path) and not overwrite:
-            logger.info(f'# skip tail: {output_path}')
+            logger.info(f'# skip tail\n  {output_path}')
             return
-        logger.info(f'* {tail}: {filepath}')
+        logger.info(f'* {tail}\n  {filepath}')
         lp.hl()
         try:
             ff.convert([filepath], output_path, ffargs)
@@ -1002,18 +1043,34 @@ def preset_video_convert(source, codec=None, crf=None, content=None, hwa=None, w
             os.remove(output_path)
             sys.exit(2)
 
-    if isinstance(source, (list, tuple, set)):
-        if not source:
-            logger.info(f'# empty source')
-        for file in source:
-            conv_one_file(file)
-    elif os.path.isdir(source):
-        with pushd_context(source):
-            for file in fs_find_iter(recursive=False):
-                conv_one_file(file)
-    elif os.path.isfile(source):
-        conv_one_file(source)
-    else:
-        files = [f for f in glob(source) if os.path.isfile(f)]
-        for file in files:
-            conv_one_file(file)
+    for filepath in list_files(source, recursive=False):
+        conv_one_file(filepath)
+
+
+def mark_high_crf_video_file(src, crf_thres, codec='a' or 'h', redo=True, recursive=False, work_dir=TEMPDIR):
+    logger = get_logger(f'{__name__}.markhighcrf', fmt=LOG_FMT_MESSAGE_ONLY)
+    for filepath in list_files(src, recursive=recursive):
+        dirname, name, tail, ext = split_filename_tail(filepath, VALID_TAILS)
+        if tail and (not redo or 'origin' not in tail):
+            logger.info(f'# skip tail={tail}\n  {filepath}')
+            continue
+        logger.info(f'+ guess crf\n  {filepath}')
+        try:
+            c = FFmpegSegmentsContainer(filepath, work_dir=work_dir, log_lvl='WARNING')
+        except FFmpegSegmentsContainer.ContainerError as e:
+            logger.error(f'! {e.args}')
+            sys.exit(2)
+        try:
+            set_logger_level(c.ff.logger, 'WARNING')
+            crf_guess = c.guess_crf(codec)
+            if crf_guess >= crf_thres - 4:
+                origin_marked = os.path.join(dirname, name + '.origin' + ext)
+                logger.info(f'* rename crf={crf_guess} tail=.origin')
+                os.rename(filepath, origin_marked)
+            else:
+                logger.info(f'# skip crf={crf_guess}')
+        except KeyboardInterrupt:
+            c.purge()
+            sys.exit(2)
+        finally:
+            c.purge()

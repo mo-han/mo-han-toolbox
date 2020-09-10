@@ -23,6 +23,7 @@ pysimpleguiqt
 pywinauto<0.6.7
 requests
 selenium<3.8  # phantomjs
+send2trash
 splinter<0.8  # phantomjs
 uiautomator2
 you-get

@@ -19,7 +19,7 @@ import requests.utils
 
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
 from .os_util import SubscriptableFileIO, fs_touch, write_file_chunk
-from .tricks import JSONType, meta_new_thread, meta_gen_retry, singleton
+from .tricks import JSONType, meta_new_thread, meta_retry_iter, singleton
 
 MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE = '# Netscape HTTP Cookie File'
 USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'
@@ -62,7 +62,7 @@ def convert_cookies_json_to_netscape(json_data_or_filepath: JSONType or str, dis
             line += true_
         else:
             line += false_
-        line += '{}\t{}\t{}'.format(c['expirationDate'], c['name'], c['value'])
+        line += '{}\t{}\t{}'.format(c.get('expirationDate', 0), c['name'], c['value'])
         lines.append(line)
     return '\n'.join(lines)
 
@@ -460,7 +460,7 @@ class DownloadPool(ThreadPoolExecutor):
     def download(self, url, filepath, retry, **kwargs_for_requests):
         tmpfile = filepath + self.tmpfile_suffix
         fs_touch(tmpfile)
-        for cnt, x in meta_gen_retry(retry)(self.request_data, url, tmpfile, **kwargs_for_requests):
+        for cnt, x in meta_retry_iter(retry)(self.request_data, url, tmpfile, **kwargs_for_requests):
             if isinstance(x, Exception):
                 self.logger.warning('! <{}> {}'.format(type(x).__name__, x))
                 if cnt:

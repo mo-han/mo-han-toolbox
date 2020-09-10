@@ -4,12 +4,15 @@
 
 import cmd
 import glob
+import os
 import shlex
 import sys
 from argparse import ArgumentParser, REMAINDER
 
+from send2trash import send2trash
+
 from mylib.cli import LinePrinter
-from mylib.os_util import clipboard as cb
+from mylib.os_util import clipboard as cb, list_files
 from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, Attreebute
 
 rtd = Attreebute()  # runtime data
@@ -107,7 +110,81 @@ cmd_mode = add_sub_parser('cmd', ['cli'], 'command line interactive mode')
 cmd_mode.set_defaults(func=cmd_mode_func)
 
 
-def ffconv_func():
+def clear_redundant_files_func():
+    from mylib.os_util import filter_filename_tail, join_filename_tail
+    lp = LinePrinter()
+    args = rtd.args
+    tk = set(args.tails_keep or [])
+    xk = set(args.extensions_keep or [])
+    tg = set(args.tails_gone or [])
+    xg = set(args.extensions_gone or [])
+    dry = args.dry_run
+    src = args.src
+    src = src or list_files(src, recursive=False)
+    from collections import defaultdict
+    keep = defaultdict(list)
+    gone = defaultdict(list)
+    for dn, fn, tail, ext in filter_filename_tail(src, tk | tg, tk, xk):
+        keep[(dn, fn)].append((tail, ext))
+    for dn, fn, tail, ext in filter_filename_tail(src, tk | tg, tg, xg):
+        gone[(dn, fn)].append((tail, ext))
+    for g in gone:
+        if g in keep:
+            dn, fn = g
+            lp.hl()
+            print(f'* {os.path.join(dn, fn)}')
+            for tail, ext in keep[g]:
+                print(f'@ {tail} {ext}')
+            for tail, ext in gone[g]:
+                print(f'- {tail} {ext}')
+                if not dry:
+                    send2trash(join_filename_tail(dn, fn, tail, ext))
+
+
+files_clear_redundant = add_sub_parser('file.clear.redundant', ['fcr', 'crf'], 'clear files with related names')
+fcr = files_clear_redundant
+fcr.set_defaults(func=clear_redundant_files_func)
+fcr.add_argument('-t', '--tails-keep', nargs='*', metavar='tail', help='keep files with these tails')
+fcr.add_argument('-x', '--extensions-keep', nargs='*', metavar='ext', help='keep files with these extensions')
+fcr.add_argument('-T', '--tails-gone', nargs='*', metavar='tail', help='remove files with these tails')
+fcr.add_argument('-X', '--extensions-gone', nargs='*', metavar='ext', help='remove files with these extensions')
+fcr.add_argument('-D', '--dry-run', action='store_true')
+fcr.add_argument('src', nargs='*')
+
+
+def ccj_func():
+    from mylib.web_client import convert_cookies_file_json_to_netscape
+    files = rtd.args.file or list_files(cb, recursive=False)
+    for fp in files:
+        print(f'* {fp}')
+        convert_cookies_file_json_to_netscape(fp)
+
+
+ccj = add_sub_parser('cookies.conv.json', ['ccj'], 'convert .json cookies file')
+ccj.set_defaults(func=ccj_func)
+ccj.add_argument('file', nargs='*')
+
+
+def vid_mhc_func():
+    from mylib.ffmpeg import mark_high_crf_video_file
+    args = rtd.args
+    crf = args.crf
+    codec = args.codec
+    redo_origin = args.redo_origin
+    src = args.src
+    mark_high_crf_video_file(src=src, crf_thres=crf, codec=codec, redo=redo_origin)
+
+
+vid_mhc = add_sub_parser('video.mark.high.crf', ['vmhc'],
+                         'mark video file with high crf (estimated) by adding a tail (.origin) in its filename')
+vid_mhc.set_defaults(func=vid_mhc_func)
+vid_mhc.add_argument('-f', '--crf', type=float, default=25)
+vid_mhc.add_argument('-c', '--codec', choices=('a', 'h'))
+vid_mhc.add_argument('-R', '--redo-origin', action='store_true')
+vid_mhc.add_argument('src', nargs='*')
+
+
+def ffmpeg_func():
     from mylib.ffmpeg import preset_video_convert
     source = rtd.args.source or cb.list_paths()
     content = rtd.args.content
@@ -122,21 +199,21 @@ def ffconv_func():
     if verbose:
         print(rtd.args)
     preset_video_convert(source=source, codec=codec, crf=quality, content=content, hwa=hwa, within=within,
-                         overwrite=overwrite, redo_origin=redo_origin, verbose=verbose, ffmpeg_opts=opts)
+                         overwrite=overwrite, redo=redo_origin, verbose=verbose, ffmpeg_opts=opts)
 
 
-ffconv = add_sub_parser('ffconv', [], 'convert video file by ffmpeg')
-ffconv.set_defaults(func=ffconv_func)
-ffconv.add_argument('-s', '--source', metavar='<path>', help='if omitted, will try paths in clipboard')
-ffconv.add_argument('-t', '--content', choices=('cgi', 'film'))
-ffconv.add_argument('-c', '--codec', choices=('a', 'h'))
-ffconv.add_argument('-q', '--quality-crf', type=float, metavar='<decimal>')
-ffconv.add_argument('-a', '--hw-accel', choices=('q', 'qsv'))
-ffconv.add_argument('-w', '--within-res', choices=('FHD', 'HD', 'qHD'))
-ffconv.add_argument('-O', '--overwrite', action='store_true')
-ffconv.add_argument('-R', '--redo-origin', action='store_true')
-ffconv.add_argument('-v', '--verbose', action='count', default=0)
-ffconv.add_argument('opts', nargs='*', help='ffmpeg options (insert -- before opts)')
+ffmpeg = add_sub_parser('wrap.ffmpeg', ['ffmpeg'], 'convert video file using ffmpeg')
+ffmpeg.set_defaults(func=ffmpeg_func)
+ffmpeg.add_argument('-s', '--source', metavar='<path>', help='if omitted, will try paths in clipboard')
+ffmpeg.add_argument('-t', '--content', choices=('cgi', 'film'))
+ffmpeg.add_argument('-c', '--codec', choices=('a', 'h'))
+ffmpeg.add_argument('-q', '--quality-crf', type=float, metavar='<decimal>')
+ffmpeg.add_argument('-a', '--hw-accel', choices=('q', 'qsv'))
+ffmpeg.add_argument('-w', '--within-res', choices=('FHD', 'HD', 'qHD'))
+ffmpeg.add_argument('-O', '--overwrite', action='store_true')
+ffmpeg.add_argument('-R', '--redo-origin', action='store_true')
+ffmpeg.add_argument('-v', '--verbose', action='count', default=0)
+ffmpeg.add_argument('opts', nargs='*', help='ffmpeg options (insert -- before opts)')
 
 
 def ffprobe_func():
@@ -152,7 +229,7 @@ def ffprobe_func():
         pprint(probe(file))
 
 
-ffprobe = add_sub_parser('ffprobe', [], 'json format ffprobe on a file')
+ffprobe = add_sub_parser('wrap.ffprobe', ['ffprobe'], 'json format ffprobe on a file')
 ffprobe.set_defaults(func=ffprobe_func)
 ffprobe.add_argument('-s', '--select-streams')
 ffprobe.add_argument('file', nargs='?')
@@ -184,26 +261,26 @@ def pip2pi_func():
     from mylib.pip2pi_x import libpip2pi_commands_x
     import sys
     argv0 = ' '.join(sys.argv[:2]) + ' --'
-    sys.argv = [argv0] + rtd.args.argv
-    libpip2pi_commands_x.pip2pi(['pip2pi'] + rtd.args.argv)
+    sys.argv = [argv0] + rtd.args.arg
+    libpip2pi_commands_x.pip2pi(['pip2pi'] + rtd.args.arg)
 
 
 pip2pi = add_sub_parser('pip2pi', [], 'modified pip2pi (from pip2pi)')
 pip2pi.set_defaults(func=pip2pi_func)
-pip2pi.add_argument('argv', nargs='*')
+pip2pi.add_argument('arg', nargs='*', help='arguments propagated to pip2pi, put a -- before them')
 
 
 def dir2pi_func():
     from mylib.pip2pi_x import libpip2pi_commands_x
     import sys
     argv0 = ' '.join(sys.argv[:2]) + ' --'
-    sys.argv = [argv0] + rtd.args.argv
-    libpip2pi_commands_x.dir2pi(['dir2pi'] + rtd.args.argv)
+    sys.argv = [argv0] + rtd.args.arg
+    libpip2pi_commands_x.dir2pi(['dir2pi'] + rtd.args.arg)
 
 
 dir2pi = add_sub_parser('dir2pi', [], 'modified dir2pi (from pip2pi)')
 dir2pi.set_defaults(func=dir2pi_func)
-dir2pi.add_argument('argv', nargs='*')
+dir2pi.add_argument('arg', nargs='*', help='arguments propagated to dir2pi, put a -- before them')
 
 
 def iwara_dl_func():
@@ -219,28 +296,30 @@ iwara_dl.set_defaults(func=iwara_dl_func)
 iwara_dl.add_argument('argv', nargs='*', help='argument(s) propagated to youtube-dl, better put a -- before it')
 
 
-def rename_func():
-    from mylib.os_util import regex_move_path
+def regex_rename_func():
+    from mylib.os_util import regex_move_path, list_files
     args = rtd.args
     source = args.source
+    recursive = args.recursive
     pattern = args.pattern
     replace = args.replace
     only_basename = args.only_basename
     dry_run = args.dry_run
-    for src_path in glob.glob(source):
+    for src in list_files(source, recursive=recursive):
         try:
-            regex_move_path(src_path, pattern, replace, only_basename, dry_run)
+            regex_move_path(src, pattern, replace, only_basename, dry_run)
         except OSError as e:
             print(repr(e))
 
 
-rename = add_sub_parser('rename', ['ren', 'rn'], 'rename file(s) or folder(s)')
-rename.set_defaults(func=rename_func)
-rename.add_argument('-B', '-not-only-basename', dest='only_basename', action='store_false')
-rename.add_argument('-D', '--dry-run', action='store_true')
-rename.add_argument('source')
-rename.add_argument('pattern')
-rename.add_argument('replace')
+regex_rename = add_sub_parser('rename.regex', ['regren', 'rern', 'rrn'], 'rename file(s) or folder(s)')
+regex_rename.set_defaults(func=regex_rename_func)
+regex_rename.add_argument('-B', '-not-only-basename', dest='only_basename', action='store_false')
+regex_rename.add_argument('-D', '--dry-run', action='store_true')
+regex_rename.add_argument('-s', '--source')
+regex_rename.add_argument('-r', '--recursive')
+regex_rename.add_argument('pattern')
+regex_rename.add_argument('replace')
 
 
 def run_from_lines_func():
@@ -455,7 +534,7 @@ def move_ehviewer_images():
 
 
 ehv_img_mv = add_sub_parser('ehv.img.mv', ['ehvmv'],
-                            'move ehviewer downloaded images into corresponding folders named by the authors')
+                            'move ehviewer downloaded images into folders')
 ehv_img_mv.set_defaults(func=move_ehviewer_images)
 ehv_img_mv.add_argument('-D', '--dry-run', action='store_true')
 
