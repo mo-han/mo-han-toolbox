@@ -8,9 +8,11 @@ import shutil
 import signal
 import sys
 import tempfile
+from collections import defaultdict
 from contextlib import contextmanager
+from glob import glob
 from io import FileIO
-from typing import Iterable, Callable, Generator
+from typing import Iterable, Callable, Generator, Iterator, Tuple, Dict, List
 
 if os.name == 'nt':
     from .nt_util import *
@@ -18,15 +20,15 @@ elif os.name == 'posix':
     from .posix_util import *
 
 
-def regex_move_path(source: str, pattern: str, replace: str, only_basename: bool = True, dry_run: bool = False):
+def regex_move_path(src: str, pattern: str, replace: str, only_basename: bool = True, dry_run: bool = False):
     if only_basename:
-        parent, basename = os.path.split(source)
+        parent, basename = os.path.split(src)
         dst = os.path.join(parent, re.sub(pattern, replace, basename))
     else:
-        dst = re.sub(pattern, replace, source)
-    print('{}\n-> {}'.format(source, dst))
+        dst = re.sub(pattern, replace, src)
+    print('* {} ->\n  {}'.format(src, dst))
     if not dry_run:
-        shutil.move(source, dst)
+        shutil.move(src, dst)
 
 
 def legal_fs_name(x: str, repl: str or dict = None) -> str:
@@ -217,9 +219,10 @@ def fs_find_iter(pattern: str or Callable = None, root: str = '.',
                     yield join_path(par, fn)
     else:
         for basename in os.listdir(root):
-            path = join_path(root, basename)
-            if check(path) and match(basename):
-                yield path
+            real_path = os.path.join(root, basename)
+            output_path = join_path(root, basename)
+            if check(real_path) and match(basename):
+                yield output_path
 
 
 class SubscriptableFileIO(FileIO):
@@ -352,3 +355,56 @@ def write_file_chunk(filepath: str, start: int, stop: int, data: bytes, total: i
         elif f.size < stop:
             f.truncate(stop)
         f[start:stop] = data
+
+
+def list_files(src, recursive=False) -> list:
+    if not src:
+        return list_files(clipboard.list_paths(exist_only=True), recursive=recursive)
+    elif isinstance(src, str):
+        if os.path.isfile(src):
+            return [src]
+        elif os.path.isdir(src):
+            return list(fs_find_iter(root=src, recursive=recursive, strip_root=False))
+        else:
+            return [fp for fp in glob(src, recursive=recursive) if os.path.isfile(fp)]
+    elif isinstance(src, (Iterable, Iterator)):
+        r = []
+        for s in src:
+            r.extend(list_files(s, recursive=recursive))
+        return r
+    elif isinstance(src, Clipboard):
+        return src.list_paths()
+    else:
+        raise TypeError('invalid source', src)
+
+
+def split_filename_tail(filepath, valid_tails) -> Tuple[str, str, str, str]:
+    dirname, basename = os.path.split(filepath)
+    file_non_ext, file_ext = os.path.splitext(basename)
+    file_name, file_tail = os.path.splitext(file_non_ext)
+    if file_tail in valid_tails:
+        return dirname, file_name, file_tail, file_ext
+    else:
+        return dirname, file_non_ext, '', file_ext
+
+
+def join_filename_tail(dirname, name_without_tail, tail, ext):
+    return os.path.join(dirname, f'{name_without_tail}{tail}{ext}')
+
+
+def group_filename_tail(filepath_list, valid_tails) -> Dict[Tuple[str, str], List[Tuple[str, str]]]:
+    rv = defaultdict(list)
+    for fp in filepath_list:
+        dn, fn, tail, ext = split_filename_tail(fp, valid_tails)
+        rv[(dn, fn)].append((tail, ext))
+    return rv
+
+
+def filter_filename_tail(filepath_list, valid_tails, filter_tails, filter_extensions):
+    rv = []
+    for (dn, fn), tail_ext in group_filename_tail(filepath_list, valid_tails).items():
+        for tail, ext in tail_ext:
+            if tail in filter_tails or ext in filter_extensions:
+                rv.append((dn, fn, tail, ext))
+    return rv
+

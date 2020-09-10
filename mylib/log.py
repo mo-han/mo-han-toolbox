@@ -33,3 +33,9 @@ def set_logger_format(logger: logging.Logger, fmt, datefmt):
     formatter = logging.Formatter(fmt=fmt, datefmt=datefmt)
     for h in logger.handlers:
         h.setFormatter(formatter)
+
+
+def set_logger_level(logger: logging.Logger, level):
+    logger.setLevel(level)
+    for h in logger.handlers:
+        h.setLevel(level)

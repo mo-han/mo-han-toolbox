@@ -517,10 +517,10 @@ def meta_new_thread(group: None = None, name: str = None, daemon: bool = False) 
     return new_thread
 
 
-def meta_gen_retry(max_retries=0,
-                   throw_exceptions=(),
-                   swallow_exceptions=(Exception,),
-                   ):
+def meta_retry_iter(max_retries=0,
+                    throw_exceptions=(),
+                    swallow_exceptions=(Exception,),
+                    ):
     throw_exceptions = throw_exceptions or ()
     swallow_exceptions = swallow_exceptions or Exception
     if max_retries is None:
@@ -591,3 +591,12 @@ class CLIArgumentList(list):
         else:
             k = '-' + key
         return k, value
+
+
+class Singleton(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]

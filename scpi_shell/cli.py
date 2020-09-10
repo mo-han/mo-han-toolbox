@@ -18,7 +18,7 @@ def run_cli_app():
                         help='connection type: vxi11, serial')
     parser.add_argument('-o', '--timeout', type=float,
                         help='connection timeout')
-    parser.add_argument('-c', '--command', nargs='+', metavar='args',
+    parser.add_argument('-c', '--command', nargs='+', metavar='arg',
                         help='commands to be run once')
     parser.add_argument('-l', '--tcp-relay', metavar='[listen_addr]:<port>',
                         help='start a tcp relay server listening on the given address')

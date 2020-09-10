@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # encoding=utf8
 import inspect
+import os
 import re
 from time import sleep
 import win32clipboard
 import pywintypes
 
-from .tricks import singleton, decorator_self_context
+from .tricks import Singleton, decorator_self_context
 
 ILLEGAL_FS_CHARS = r'\/:*?"<>|'
 ILLEGAL_FS_CHARS_LEN = len(ILLEGAL_FS_CHARS)
@@ -15,8 +16,7 @@ ILLEGAL_FS_CHARS_UNICODE_REPLACE = r'⧹⧸꞉∗？″﹤﹥￨'
 ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE = str.maketrans(ILLEGAL_FS_CHARS, ILLEGAL_FS_CHARS_UNICODE_REPLACE)
 
 
-@singleton
-class Clipboard:
+class Clipboard(metaclass=Singleton):
     _wcb = win32clipboard
     cf_dict = {n.lstrip('CF_'): m for n, m in inspect.getmembers(_wcb) if n.startswith('CF_')}
 
@@ -91,12 +91,19 @@ class Clipboard:
             data = None
         return data
 
-    def list_paths(self) -> list:
+    def list_paths(self, exist_only=True) -> list:
         paths = self.get(self._wcb.CF_HDROP)
         if paths:
-            return list(paths)
+            if exist_only:
+                return [p for p in paths if os.path.exists(p)]
+            else:
+                return list(paths)
         else:
-            return []
+            lines = [line.strip() for line in str(self.get()).splitlines()]
+            if lines:
+                return [line for line in lines if os.path.exists(line)]
+            else:
+                return []
 
     @decorator_self_context
     def get_all(self) -> dict:
