@@ -14,40 +14,58 @@ from glob import glob
 from io import FileIO
 from typing import Iterable, Callable, Generator, Iterator, Tuple, Dict, List
 
+from filetype import filetype
+
 if os.name == 'nt':
     from .nt_util import *
 elif os.name == 'posix':
     from .posix_util import *
 
+TEMPDIR = tempfile.gettempdir()
 
-def regex_move_path(src: str, pattern: str, replace: str, only_basename: bool = True, dry_run: bool = False):
+
+def fs_inplace_rename(src: str, pattern: str, replace: str, only_basename: bool = True, dry_run: bool = False):
+    if only_basename:
+        parent, basename = os.path.split(src)
+        dst = os.path.join(parent, basename.replace(pattern, replace))
+    else:
+        dst = src.replace(pattern, replace)
+    if src != dst:
+        print('* {} ->\n  {}'.format(src, dst))
+    if not dry_run:
+        shutil.move(src, dst)
+
+
+def fs_inplace_rename_regex(src: str, pattern: str, replace: str, only_basename: bool = True, dry_run: bool = False):
     if only_basename:
         parent, basename = os.path.split(src)
         dst = os.path.join(parent, re.sub(pattern, replace, basename))
     else:
         dst = re.sub(pattern, replace, src)
-    print('* {} ->\n  {}'.format(src, dst))
+    if src != dst:
+        print('* {} ->\n  {}'.format(src, dst))
     if not dry_run:
         shutil.move(src, dst)
 
 
-def legal_fs_name(x: str, repl: str or dict = None) -> str:
+def fs_legal_name(x: str, repl: str or dict = None) -> str:
     if repl:
         if isinstance(repl, str):
-            rl = len(repl)
-            if rl > 1:
-                legal = ILLEGAL_FS_CHARS_REGEX_PATTERN.sub(repl, x)
-            elif rl == 1:
-                legal = x.translate(str.maketrans(ILLEGAL_FS_CHARS, repl * ILLEGAL_FS_CHARS_LEN))
-            else:
-                legal = x.translate(str.maketrans('', '', ILLEGAL_FS_CHARS))
+            r = ILLEGAL_FS_CHARS_REGEX_PATTERN.sub(repl, x)
+            # rl = len(repl)
+            # if rl > 1:
+            #     r = ILLEGAL_FS_CHARS_REGEX_PATTERN.sub(repl, x)
+            # elif rl == 1:
+            #     r = x.translate(str.maketrans(ILLEGAL_FS_CHARS, repl * ILLEGAL_FS_CHARS_LEN))
+            # else:
+            #     r = x.translate(str.maketrans('', '', ILLEGAL_FS_CHARS))
         elif isinstance(repl, dict):
-            legal = x.translate(repl)
+            r = x.translate(repl)
         else:
             raise ValueError("Invalid repl '{}'".format(repl))
     else:
-        legal = x.translate(ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE)
-    return legal
+        r = x.translate(ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE)
+    return r
 
 
 def fs_rename(src_path: str, dst_name_or_path: str = None, dst_ext: str = None, *,
@@ -73,9 +91,6 @@ def fs_rename(src_path: str, dst_name_or_path: str = None, dst_ext: str = None, 
 def ensure_sigint_signal():
     if sys.platform == 'win32':
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # %ERRORLEVEL% = '-1073741510'
-
-
-TEMPDIR = tempfile.gettempdir()
 
 
 def real_join_path(path, *paths, expanduser: bool = True, expandvars: bool = True):
@@ -358,9 +373,10 @@ def write_file_chunk(filepath: str, start: int, stop: int, data: bytes, total: i
 
 
 def list_files(src, recursive=False) -> list:
-    if not src:
-        return list_files(clipboard.list_paths(exist_only=True), recursive=recursive)
-    elif isinstance(src, str):
+    # if src is None:
+    #     return list_files(clipboard.list_paths(exist_only=True), recursive=recursive)
+    # elif isinstance(src, str):
+    if isinstance(src, str):
         if os.path.isfile(src):
             return [src]
         elif os.path.isdir(src):
@@ -373,7 +389,7 @@ def list_files(src, recursive=False) -> list:
             r.extend(list_files(s, recursive=recursive))
         return r
     elif isinstance(src, Clipboard):
-        return src.list_paths()
+        return list_files(src.list_paths(exist_only=True), recursive=recursive)
     else:
         raise TypeError('invalid source', src)
 
@@ -408,3 +424,7 @@ def filter_filename_tail(filepath_list, valid_tails, filter_tails, filter_extens
                 rv.append((dn, fn, tail, ext))
     return rv
 
+
+def filetype_is(filepath, keyword):
+    guess = filetype.guess(filepath)
+    return guess and keyword in guess.mime

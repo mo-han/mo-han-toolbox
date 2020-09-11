@@ -11,7 +11,7 @@ import requests
 from .tricks import VoidDuck, str_ishex
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
 from .web_client import cookies_dict_from_netscape_file, get_html_element_tree
-from .os_util import legal_fs_name
+from .os_util import fs_legal_name
 
 EH_TITLE_REGEX_PATTERN = re.compile(
     r'^'
@@ -111,7 +111,7 @@ def tidy_ehviewer_images(dry_run: bool = False):
         fn, ext = os.path.splitext(basename)
         fn = str(fn)
         fn = ' '.join(core_title_l[:6]) + ' ' + fn.split()[-1]
-        nf = os.path.join(a, legal_fs_name(fn + ext))
+        nf = os.path.join(a, fs_legal_name(fn + ext))
         logger.info(logmsg_move.format(f, nf))
         if not dry_run:
             if not os.path.isdir(a):

@@ -15,7 +15,7 @@ import filetype
 from .cli import LinePrinter
 from .os_util import pushd_context, write_json_file, read_json_file, SubscriptableFileIO, ensure_open_file, \
     fs_find_iter, \
-    fs_rename, fs_touch, shlex_double_quotes_join, TEMPDIR, list_files, split_filename_tail
+    fs_rename, fs_touch, shlex_double_quotes_join, TEMPDIR, list_files, split_filename_tail, filetype_is
 from .tricks import hex_hash, meta_deco_args_choices, remove_from_list, seconds_from_colon_time
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY, set_logger_level
 
@@ -389,7 +389,8 @@ class FFmpegSegmentsContainer:
 
         if os.path.isfile(_path):
             self.input_filepath = _path
-            if filetype.guess(_path).mime.startswith('video'):
+            ft_guess = filetype.guess(_path)
+            if ft_guess and ft_guess.mime.startswith('video'):
                 d, b = os.path.split(_path)
                 self.input_data = {S_FILENAME: b, S_SEGMENT: {}, S_NON_SEGMENT: {}}
                 with SubscriptableFileIO(_path) as f:
@@ -414,6 +415,7 @@ class FFmpegSegmentsContainer:
                 try:
                     self.root = _path
                     if not self.container_is_tagged():
+                        shutil.rmtree(self.root)
                         raise self.ContainerError("non-container folder: '{}'".format(_path))
                     if not self.is_split():
                         self.split(select_streams=select_streams)
@@ -1047,9 +1049,13 @@ def preset_video_convert(source, codec=None, crf=None, content=None, hwa=None, w
         conv_one_file(filepath)
 
 
-def mark_high_crf_video_file(src, crf_thres, codec='a' or 'h', redo=True, recursive=False, work_dir=TEMPDIR):
+def mark_high_crf_video_file(src, crf_thres, codec='a' or 'h',
+                             redo=True, recursive=False,
+                             work_dir=None, auto_clean=True):
     logger = get_logger(f'{__name__}.markhighcrf', fmt=LOG_FMT_MESSAGE_ONLY)
     for filepath in list_files(src, recursive=recursive):
+        if not filetype_is(filepath, 'video'):
+            continue
         dirname, name, tail, ext = split_filename_tail(filepath, VALID_TAILS)
         if tail and (not redo or 'origin' not in tail):
             logger.info(f'# skip tail={tail}\n  {filepath}')
@@ -1063,7 +1069,7 @@ def mark_high_crf_video_file(src, crf_thres, codec='a' or 'h', redo=True, recurs
         try:
             set_logger_level(c.ff.logger, 'WARNING')
             crf_guess = c.guess_crf(codec)
-            if crf_guess >= crf_thres - 4:
+            if crf_guess >= crf_thres:
                 origin_marked = os.path.join(dirname, name + '.origin' + ext)
                 logger.info(f'* rename crf={crf_guess} tail=.origin')
                 os.rename(filepath, origin_marked)
@@ -1073,4 +1079,5 @@ def mark_high_crf_video_file(src, crf_thres, codec='a' or 'h', redo=True, recurs
             c.purge()
             sys.exit(2)
         finally:
-            c.purge()
+            if auto_clean:
+                c.purge()

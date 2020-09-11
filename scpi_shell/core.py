@@ -36,7 +36,7 @@ class LinkWrapper:
     @property
     def members(self):
         return {k: v.__doc__ if isinstance(v, Callable) else v for k, v in inspect.getmembers(self._link) if
-                not (k.startswith('__') and k.endswith('__')) or k in ('__class__',)}
+                k[:2] + k[-2:] != '____' and not isinstance(v, Callable) or k in ('__class__',)}
 
     def __setattr__(self, key, value):
         setattr(self._link, key, value)
@@ -172,7 +172,7 @@ class SCPIShell(cmd.Cmd):
         else:
             self.write(command)
 
-    def link_attr(self, key=None, value=None):
+    def link_config(self, key=None, value=None):
         if key is None:
             return self.link
         if value is None:
@@ -180,23 +180,24 @@ class SCPIShell(cmd.Cmd):
         else:
             setattr(self.link, key, value)
 
-    def do_link_attr(self, line):
-        """get or set attr of underlying link:
+    def do_link_config(self, line):
+        """get or set attribution of underlying link:
         attr <key_name>
         attr <key_name> <new_value>
         """
         args = line.split(maxsplit=1)
         if not args:
-            print(self.link_attr())
+            print(self.link_config())
+            pprint(self.link_config('members'))
         elif len(args) == 1:
             key = args[0]
-            value = self.link_attr(key)
+            value = self.link_config(key)
             if key == 'members':
                 pprint(value)
             else:
                 print(value)
         else:
-            self.link_attr(args[0], literal_eval(args[-1]))
+            self.link_config(args[0], literal_eval(args[-1]))
 
     def connect(self, address=None, conn_type=None, timeout=None):
         self.address = address = address or self.address

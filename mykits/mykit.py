@@ -119,8 +119,7 @@ def clear_redundant_files_func():
     tg = set(args.tails_gone or [])
     xg = set(args.extensions_gone or [])
     dry = args.dry_run
-    src = args.src
-    src = src or list_files(src, recursive=False)
+    src = list_files(args.src or cb, recursive=False)
     from collections import defaultdict
     keep = defaultdict(list)
     gone = defaultdict(list)
@@ -168,25 +167,31 @@ ccj.add_argument('file', nargs='*')
 def vid_mhc_func():
     from mylib.ffmpeg import mark_high_crf_video_file
     args = rtd.args
-    crf = args.crf
+    threshold = args.crf_threshold
     codec = args.codec
+    clean = not args.no_clean
+    work_dir = args.work_dir
     redo_origin = args.redo_origin
-    src = args.src
-    mark_high_crf_video_file(src=src, crf_thres=crf, codec=codec, redo=redo_origin)
+    src = args.src or cb
+    mark_high_crf_video_file(src=src, crf_thres=threshold, codec=codec,
+                             redo=redo_origin, work_dir=work_dir, auto_clean=clean)
 
 
 vid_mhc = add_sub_parser('video.mark.high.crf', ['vmhc'],
-                         'mark video file with high crf (estimated) by adding a tail (.origin) in its filename')
+                         'mark video file with high crf (estimated), '
+                         'by appending ".origin" in its filename (before file extension)')
 vid_mhc.set_defaults(func=vid_mhc_func)
-vid_mhc.add_argument('-f', '--crf', type=float, default=25)
+vid_mhc.add_argument('-t', '--crf-threshold', type=float, default=22)
 vid_mhc.add_argument('-c', '--codec', choices=('a', 'h'))
-vid_mhc.add_argument('-R', '--redo-origin', action='store_true')
+vid_mhc.add_argument('-L', '--no-clean', action='store_true', help='not clean temp files in work dir')
+vid_mhc.add_argument('-W', '--work-dir')
+vid_mhc.add_argument('-R', '--redo', action='store_true', dest='redo_origin')
 vid_mhc.add_argument('src', nargs='*')
 
 
 def ffmpeg_func():
     from mylib.ffmpeg import preset_video_convert
-    source = rtd.args.source or cb.list_paths()
+    source = rtd.args.source or cb
     content = rtd.args.content
     codec = rtd.args.codec
     quality = rtd.args.quality_crf
@@ -243,7 +248,7 @@ def file_type_func():
     else:
         fmt = '{type} ({file})'
     if not files:
-        files = cb.list_paths()
+        files = cb.list_paths(exist_only=True)
     for f in files:
         try:
             print(fmt.format(type=guess(f).mime, file=f))
@@ -297,7 +302,7 @@ iwara_dl.add_argument('argv', nargs='*', help='argument(s) propagated to youtube
 
 
 def regex_rename_func():
-    from mylib.os_util import regex_move_path, list_files
+    from mylib.os_util import fs_inplace_rename_regex, list_files
     args = rtd.args
     source = args.source
     recursive = args.recursive
@@ -305,21 +310,47 @@ def regex_rename_func():
     replace = args.replace
     only_basename = args.only_basename
     dry_run = args.dry_run
-    for src in list_files(source, recursive=recursive):
+    for src in list_files(source or cb, recursive=recursive):
         try:
-            regex_move_path(src, pattern, replace, only_basename, dry_run)
+            fs_inplace_rename_regex(src, pattern, replace, only_basename, dry_run)
         except OSError as e:
             print(repr(e))
 
 
-regex_rename = add_sub_parser('rename.regex', ['regren', 'rern', 'rrn'], 'rename file(s) or folder(s)')
+regex_rename = add_sub_parser('rename.regex', ['regren', 'rern', 'rrn'], 'regex rename file(s) or folder(s)')
 regex_rename.set_defaults(func=regex_rename_func)
 regex_rename.add_argument('-B', '-not-only-basename', dest='only_basename', action='store_false')
 regex_rename.add_argument('-D', '--dry-run', action='store_true')
 regex_rename.add_argument('-s', '--source')
-regex_rename.add_argument('-r', '--recursive')
+regex_rename.add_argument('-r', '--recursive', action='store_true')
 regex_rename.add_argument('pattern')
 regex_rename.add_argument('replace')
+
+
+def rename_func():
+    from mylib.os_util import fs_inplace_rename, list_files
+    args = rtd.args
+    source = args.source
+    recursive = args.recursive
+    pattern = args.pattern
+    replace = args.replace
+    only_basename = args.only_basename
+    dry_run = args.dry_run
+    for src in list_files(source or cb, recursive=recursive):
+        try:
+            fs_inplace_rename(src, pattern, replace, only_basename, dry_run)
+        except OSError as e:
+            print(repr(e))
+
+
+rename = add_sub_parser('rename', ['ren'], 'rename file(s) or folder(s)')
+rename.set_defaults(func=regex_rename_func)
+rename.add_argument('-B', '-not-only-basename', dest='only_basename', action='store_false')
+rename.add_argument('-D', '--dry-run', action='store_true')
+rename.add_argument('-s', '--source')
+rename.add_argument('-r', '--recursive', action='store_true')
+rename.add_argument('pattern')
+rename.add_argument('replace')
 
 
 def run_from_lines_func():
