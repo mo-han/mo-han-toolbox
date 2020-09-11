@@ -169,11 +169,12 @@ def vid_mhc_func():
     args = rtd.args
     threshold = args.crf_threshold
     codec = args.codec
+    res_limit = args.resolution_limit
     clean = not args.no_clean
     work_dir = args.work_dir
     redo_origin = args.redo_origin
     src = args.src or cb
-    mark_high_crf_video_file(src=src, crf_thres=threshold, codec=codec,
+    mark_high_crf_video_file(src=src, crf_thres=threshold, codec=codec, res_limit=res_limit,
                              redo=redo_origin, work_dir=work_dir, auto_clean=clean)
 
 
@@ -183,6 +184,7 @@ vid_mhc = add_sub_parser('video.mark.high.crf', ['vmhc'],
 vid_mhc.set_defaults(func=vid_mhc_func)
 vid_mhc.add_argument('-t', '--crf-threshold', type=float, default=22)
 vid_mhc.add_argument('-c', '--codec', choices=('a', 'h'))
+vid_mhc.add_argument('-m', '--resolution-limit', choices=('FHD', 'HD'))
 vid_mhc.add_argument('-L', '--no-clean', action='store_true', help='not clean temp files in work dir')
 vid_mhc.add_argument('-W', '--work-dir')
 vid_mhc.add_argument('-R', '--redo', action='store_true', dest='redo_origin')
@@ -196,25 +198,25 @@ def ffmpeg_func():
     codec = rtd.args.codec
     quality = rtd.args.quality_crf
     hwa = rtd.args.hw_accel
-    within = rtd.args.within_res
+    res_limit = rtd.args.resolution_limit
     overwrite = rtd.args.overwrite
     redo_origin = rtd.args.redo_origin
     verbose = rtd.args.verbose
     opts = rtd.args.opts
     if verbose:
         print(rtd.args)
-    preset_video_convert(source=source, codec=codec, crf=quality, content=content, hwa=hwa, within=within,
+    preset_video_convert(source=source, codec=codec, crf=quality, content=content, hwa=hwa, res_limit=res_limit,
                          overwrite=overwrite, redo=redo_origin, verbose=verbose, ffmpeg_opts=opts)
 
 
 ffmpeg = add_sub_parser('wrap.ffmpeg', ['ffmpeg'], 'convert video file using ffmpeg')
 ffmpeg.set_defaults(func=ffmpeg_func)
-ffmpeg.add_argument('-s', '--source', metavar='<path>', help='if omitted, will try paths in clipboard')
+ffmpeg.add_argument('-s', '--source', nargs='*', metavar='path', help='if omitted, will try paths in clipboard')
 ffmpeg.add_argument('-t', '--content', choices=('cgi', 'film'))
 ffmpeg.add_argument('-c', '--codec', choices=('a', 'h'))
 ffmpeg.add_argument('-q', '--quality-crf', type=float, metavar='<decimal>')
 ffmpeg.add_argument('-a', '--hw-accel', choices=('q', 'qsv'))
-ffmpeg.add_argument('-w', '--within-res', choices=('FHD', 'HD', 'qHD'))
+ffmpeg.add_argument('-m', '--resolution-limit', choices=('FHD', 'HD', 'qHD'))
 ffmpeg.add_argument('-O', '--overwrite', action='store_true')
 ffmpeg.add_argument('-R', '--redo-origin', action='store_true')
 ffmpeg.add_argument('-v', '--verbose', action='count', default=0)
