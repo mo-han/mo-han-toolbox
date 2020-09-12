@@ -966,10 +966,8 @@ def ffmpeg_vf_res_scale_down_str(width: int, height: int, res_limit='FHD', vf: s
     return f'{res_scale},{vf}' if vf else res_scale
 
 
-@meta_deco_args_choices({'hwa': (None, 'qsv', 'q'), 'content': (None, 'cgi', 'film'),
-                         'codec': (None, 'a', 'h')})
-def preset_video_convert(source, codec=None, crf=None, content=None, hwa=None, res_limit=None, vf=None,
-                         overwrite=False, redo=False, verbose=0, ffmpeg_opts=None,
+def preset_video_convert(source, codec='', crf=None, keywords=(), hwa='', vf='',
+                         overwrite=False, redo=False, verbose=0, ffmpeg_opts=(),
                          *args, **kwargs):
     ff = FFmpegRunner(overwrite=True, banner=False)
     if verbose > 1:
@@ -982,61 +980,74 @@ def preset_video_convert(source, codec=None, crf=None, content=None, hwa=None, r
     logger = get_logger(f'{__name__}.smartconv', fmt=LOG_FMT_MESSAGE_ONLY)
     codecs_d = {'h': 'hevc', 'a': None, 'hq': 'hevc_qsv', 'aq': 'h264_qsv'}
 
-    ffargs = FFmpegArgsList(pix_fmt='yuv420p')
-    if content == 'cgi':
+    ffmpeg_args = FFmpegArgsList(pix_fmt='yuv420p')
+    keywords = set(keywords) or set()
+    if {'FHD', 'fhd'} & keywords:
+        res_limit = 'FHD'
+    elif {'HD', 'hd'} & keywords:
+        res_limit = 'HD'
+    elif {'qHD'} & keywords:
+        res_limit = 'qHD'
+    else:
+        res_limit = None
+    if 'cgi' in keywords:
         codec = codec or 'a'
         crf = crf or 19
         res_limit = res_limit or 'FHD'
-    elif content == 'film':
+    elif {'film', 'movie', 'real'} & keywords:
         codec = codec or 'h'
         crf = crf or 25
         res_limit = res_limit or 'HD'
+    if {'audio64kbps', 'a64k', 'sound64kbps', '64kbps'} & keywords:
+        ffmpeg_args.add(ab='64k')
+    elif {'audio96kbps', 'a96k', 'sound96kbps', '96kbps'} & keywords:
+        ffmpeg_args.add(ab='96k')
+    codec = codec or 'a'
     if hwa in ('q', 'qsv'):
         codec += 'q'
-        ffargs.add(vcodec=codecs_d[codec], global_quality=crf)
+        ffmpeg_args.add(vcodec=codecs_d[codec], global_quality=crf)
     else:
-        ffargs.add(vcodec=codecs_d[codec], crf=crf)
-    if ffmpeg_opts:
-        ffargs.add(ffmpeg_opts)
-    ffargs.add(*args, **kwargs)
+        ffmpeg_args.add(vcodec=codecs_d[codec], crf=crf)
+    ffmpeg_args.add(ffmpeg_opts, *args, **kwargs)
     tail = TAILS_D[f'{codec}8']
 
-    def conv_one_file(filepath):
+    def conv_one_file(fp):
         lp = LinePrinter()
         lp.hl()
-        if not os.path.isfile(filepath):
-            logger.info(f'# skip non-file\n  {filepath}')
-        ft = filetype.guess(filepath)
+        if not os.path.isfile(fp):
+            logger.info(f'# skip non-file\n  {fp}')
+        ft = filetype.guess(fp)
         if not ft or not ft.mime.startswith('video'):
-            logger.info(f'# skip non-video\n  {filepath}')
+            logger.info(f'# skip non-video\n  {fp}')
             return
-        dirname, input_basename = os.path.split(filepath)
+        dirname, input_basename = os.path.split(fp)
         input_non_ext, input_ext = os.path.splitext(input_basename)
         input_name, input_tail = os.path.splitext(input_non_ext)
         if input_tail in TAILS_L or input_tail in OLD_TAILS:
             if 'origin' in input_tail:
                 if not redo:
-                    logger.info(f'# skip origin\n  {filepath}')
+                    logger.info(f'# skip origin\n  {fp}')
                     return
             else:
-                logger.info(f'# skip {input_tail}\n  {filepath}')
+                logger.info(f'# skip {input_tail}\n  {fp}')
                 return
         else:
             input_name = input_non_ext
             input_tail = ''
-        if res_limit:
-            w, h = get_width_height(filepath)
-            ffargs.add(vf=ffmpeg_vf_res_scale_down_str(w, h, res_limit, vf=vf))
         origin_path = os.path.join(dirname, input_name + '.origin' + input_ext)
         output_path = os.path.join(dirname, input_name + tail + input_ext)
         if os.path.isfile(output_path) and not overwrite:
             logger.info(f'# skip tail\n  {output_path}')
             return
-        logger.info(f'* {tail}\n  {filepath}')
+        logger.info(f'* {tail}\n  {fp}')
         lp.hl()
+
         try:
-            ff.convert([filepath], output_path, ffargs)
-            os.rename(filepath, origin_path)
+            if res_limit:
+                w, h = get_width_height(fp)
+                ffmpeg_args.add(vf=ffmpeg_vf_res_scale_down_str(w, h, res_limit, vf=vf))
+            ff.convert([fp], output_path, ffmpeg_args)
+            os.rename(fp, origin_path)
         except ff.FFmpegError as e:
             logger.error(f'! {output_path}\n {e}')
             os.remove(output_path)

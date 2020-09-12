@@ -194,29 +194,27 @@ vid_mhc.add_argument('src', nargs='*')
 def ffmpeg_func():
     from mylib.ffmpeg import preset_video_convert
     source = rtd.args.source or cb
-    content = rtd.args.content
+    keywords = rtd.args.keywords or ()
     codec = rtd.args.codec
     quality = rtd.args.quality_crf
     hwa = rtd.args.hw_accel
-    res_limit = rtd.args.resolution_limit
     overwrite = rtd.args.overwrite
     redo_origin = rtd.args.redo_origin
     verbose = rtd.args.verbose
     opts = rtd.args.opts
     if verbose:
         print(rtd.args)
-    preset_video_convert(source=source, codec=codec, crf=quality, content=content, hwa=hwa, res_limit=res_limit,
+    preset_video_convert(source=source, codec=codec, crf=quality, keywords=keywords, hwa=hwa,
                          overwrite=overwrite, redo=redo_origin, verbose=verbose, ffmpeg_opts=opts)
 
 
-ffmpeg = add_sub_parser('wrap.ffmpeg', ['ffmpeg'], 'convert video file using ffmpeg')
+ffmpeg = add_sub_parser('wrap.ffmpeg', ['ffmpeg', 'ff'], 'convert video file using ffmpeg')
 ffmpeg.set_defaults(func=ffmpeg_func)
 ffmpeg.add_argument('-s', '--source', nargs='*', metavar='path', help='if omitted, will try paths in clipboard')
-ffmpeg.add_argument('-t', '--content', choices=('cgi', 'film'))
+ffmpeg.add_argument('-k', '--keywords', metavar='kw', nargs='*')
 ffmpeg.add_argument('-c', '--codec', choices=('a', 'h'))
 ffmpeg.add_argument('-q', '--quality-crf', type=float, metavar='<decimal>')
 ffmpeg.add_argument('-a', '--hw-accel', choices=('q', 'qsv'))
-ffmpeg.add_argument('-m', '--resolution-limit', choices=('FHD', 'HD', 'qHD'))
 ffmpeg.add_argument('-O', '--overwrite', action='store_true')
 ffmpeg.add_argument('-R', '--redo-origin', action='store_true')
 ffmpeg.add_argument('-v', '--verbose', action='count', default=0)
@@ -236,7 +234,7 @@ def ffprobe_func():
         pprint(probe(file))
 
 
-ffprobe = add_sub_parser('wrap.ffprobe', ['ffprobe'], 'json format ffprobe on a file')
+ffprobe = add_sub_parser('wrap.ffprobe', ['ffprobe', 'ffp'], 'json format ffprobe on a file')
 ffprobe.set_defaults(func=ffprobe_func)
 ffprobe.add_argument('-s', '--select-streams')
 ffprobe.add_argument('file', nargs='?')

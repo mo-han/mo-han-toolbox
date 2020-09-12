@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # encoding=utf8
+import os
 import re
 
 from .tricks import singleton
@@ -29,6 +30,10 @@ class Clipboard:
 
     def get(self):
         return self._cb.paste()
+
+    def list_paths(self, exist_only=True):
+        lines = [line.strip() for line in str(self.get()).splitlines()]
+        return [line for line in lines if os.path.exists(line)]
 
 
 clipboard = Clipboard()

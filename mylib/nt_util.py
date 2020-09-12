@@ -100,10 +100,7 @@ class Clipboard(metaclass=Singleton):
                 return list(paths)
         else:
             lines = [line.strip() for line in str(self.get()).splitlines()]
-            if lines:
-                return [line for line in lines if os.path.exists(line)]
-            else:
-                return []
+            return [line for line in lines if os.path.exists(line)]
 
     @decorator_self_context
     def get_all(self) -> dict:
