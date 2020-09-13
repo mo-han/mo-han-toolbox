@@ -570,7 +570,7 @@ class FFmpegSegmentsContainer:
         return bool(self.read_input_json())
 
     def purge(self):
-        shutil.rmtree(self.root)
+        shutil.rmtree(self.root, ignore_errors=True)
         self.__dict__ = {}
 
     def config(self,
