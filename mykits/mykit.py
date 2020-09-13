@@ -193,28 +193,34 @@ vid_mhc.add_argument('src', nargs='*')
 
 def ffmpeg_func():
     from mylib.ffmpeg import preset_video_convert
-    source = rtd.args.source or cb
-    keywords = rtd.args.keywords or ()
-    codec = rtd.args.codec
-    quality = rtd.args.quality_crf
-    hwa = rtd.args.hw_accel
-    overwrite = rtd.args.overwrite
-    redo_origin = rtd.args.redo_origin
-    verbose = rtd.args.verbose
-    opts = rtd.args.opts
+    args = rtd.args
+    source = args.source or cb
+    keywords = args.keywords or ()
+    codec = args.codec
+    quality = args.quality_crf
+    hwa = args.hw_accel
+    cut_points = args.cut_points
+    overwrite = args.overwrite
+    redo_origin = args.redo_origin
+    verbose = args.verbose
+    opts = args.opts
     if verbose:
-        print(rtd.args)
-    preset_video_convert(source=source, codec=codec, crf=quality, keywords=keywords, hwa=hwa,
+        print(args)
+    preset_video_convert(source=source, codec=codec, crf=quality, keywords=keywords, hwa=hwa, cut_points=cut_points,
                          overwrite=overwrite, redo=redo_origin, verbose=verbose, ffmpeg_opts=opts)
 
 
 ffmpeg = add_sub_parser('wrap.ffmpeg', ['ffmpeg', 'ff'], 'convert video file using ffmpeg')
 ffmpeg.set_defaults(func=ffmpeg_func)
 ffmpeg.add_argument('-s', '--source', nargs='*', metavar='path', help='if omitted, will try paths in clipboard')
-ffmpeg.add_argument('-k', '--keywords', metavar='kw', nargs='*')
+ffmpeg.add_argument('-k', '--keywords', metavar='kw', nargs='*',
+                    choices=('FHD', 'fhd', 'HD', 'hd', 'qHD', 'cgi', 'film', 'movie', 'real', 'hevc', 'qsv',
+                             'audio64kbps', 'a64k', 'sound64kbps', '64kbps',
+                             'audio96kbps', 'a96k', 'sound96kbps', '96kbps'))
 ffmpeg.add_argument('-c', '--codec', choices=('a', 'h'))
 ffmpeg.add_argument('-q', '--quality-crf', type=float, metavar='<decimal>')
 ffmpeg.add_argument('-a', '--hw-accel', choices=('q', 'qsv'))
+ffmpeg.add_argument('-p', '--cut-timestamps', dest='cut_points', metavar='ts', nargs='*')
 ffmpeg.add_argument('-O', '--overwrite', action='store_true')
 ffmpeg.add_argument('-R', '--redo-origin', action='store_true')
 ffmpeg.add_argument('-v', '--verbose', action='count', default=0)
@@ -243,7 +249,7 @@ ffprobe.add_argument('file', nargs='?')
 def file_type_func():
     from filetype import guess
     files = rtd.args.file
-    if rtd.args.print_no_file:
+    if rtd.args.print_no_path:
         fmt = '{type}'
     else:
         fmt = '{type} ({file})'

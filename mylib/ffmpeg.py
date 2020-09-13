@@ -13,11 +13,11 @@ import ffmpeg
 import filetype
 
 from .cli import LinePrinter
+from .log import get_logger, LOG_FMT_MESSAGE_ONLY
 from .os_util import pushd_context, write_json_file, read_json_file, SubscriptableFileIO, ensure_open_file, \
     fs_find_iter, \
-    fs_rename, fs_touch, shlex_double_quotes_join, TEMPDIR, list_files, split_filename_tail, filetype_is
+    fs_rename, fs_touch, shlex_double_quotes_join, list_files, split_filename_tail
 from .tricks import hex_hash, meta_deco_args_choices, remove_from_list, seconds_from_colon_time
-from .log import get_logger, LOG_FMT_MESSAGE_ONLY, set_logger_level
 
 S_ORIGINAL = 'original'
 S_SEGMENT = 'segment'
@@ -52,6 +52,17 @@ VALID_TAILS = OLD_TAILS + list(TAILS_L)
 VIDEO_CODECS_A10N = {'a': 'h264', 'h': 'hevc'}
 
 decorator_choose_map_preset = meta_deco_args_choices({'map_preset': STREAM_MAP_PRESET_TABLE.keys()})
+
+
+def file_is_video(filepath):
+    guess = filetype.guess(filepath)
+    ext = os.path.splitext(filepath)[-1]
+    if guess and 'video' in guess.mime:
+        return True
+    elif ext.lower().lstrip('.') in ('mp4', 'mkv', 'webm', 'flv'):
+        return True
+    else:
+        return False
 
 
 def filext_from_codec_name(x) -> str:
@@ -389,8 +400,7 @@ class FFmpegSegmentsContainer:
 
         if os.path.isfile(_path):
             self.input_filepath = _path
-            ft_guess = filetype.guess(_path)
-            if ft_guess and ft_guess.mime.startswith('video'):
+            if file_is_video(_path):
                 d, b = os.path.split(_path)
                 self.input_data = {S_FILENAME: b, S_SEGMENT: {}, S_NON_SEGMENT: {}}
                 with SubscriptableFileIO(_path) as f:
@@ -654,7 +664,7 @@ class FFmpegSegmentsContainer:
                      **kwargs):
         conf = self.read_output_json()
         video_args = video_args or FFmpegArgsList()
-        vf = ffmpeg_vf_res_scale_down_str(*self.width_height, res_limit, vf)
+        vf = self.vf_res_scale_down(res_limit, vf)
         video_args.add(crf=crf, vf=vf, **kwargs)
         conf[S_ORIGINAL]['video_args'] = video_args
         self.config(**conf[S_ORIGINAL])
@@ -667,7 +677,7 @@ class FFmpegSegmentsContainer:
         for k in x265_params:
             k_s = k.replace('_', '-')
             x265_params_s += f':{k_s}={x265_params[k]}'
-        vf = ffmpeg_vf_res_scale_down_str(*self.width_height, res_limit, vf)
+        vf = self.vf_res_scale_down(res_limit, vf)
         video_args.add(vcodec='hevc', x265_params=f'{x265_params_s}', crf=crf, vf=vf)
         conf[S_ORIGINAL]['video_args'] = video_args
         self.config(**conf[S_ORIGINAL])
@@ -676,7 +686,7 @@ class FFmpegSegmentsContainer:
                        **kwargs):
         conf = self.read_output_json()
         video_args = video_args or FFmpegArgsList()
-        vf = ffmpeg_vf_res_scale_down_str(*self.width_height, res_limit, vf)
+        vf = self.vf_res_scale_down(res_limit, vf)
         video_args.add(vcodec='h264_qsv', global_quality=crf, vf=vf, **kwargs)
         conf[S_ORIGINAL]['video_args'] = video_args
         self.config(**conf[S_ORIGINAL])
@@ -900,9 +910,9 @@ class FFmpegSegmentsContainer:
                             os.remove(o_seg + self.suffix_delete)
                 segments = self.list_lock_segments() + self.list_done_segments()
 
-    def vf_res_scale_down(self, res_limit='FHD'):
+    def vf_res_scale_down(self, res_limit='FHD', vf=None):
         width, height = self.width_height
-        return ffmpeg_vf_res_scale_down_str(width, height, res_limit=res_limit)
+        return ffmpeg_vf_res_scale_down_str(width, height, res_limit=res_limit, vf=None)
 
     @property
     def width_height(self):
@@ -926,14 +936,14 @@ class FFmpegSegmentsContainer:
         except KeyError:
             raise self.ContainerError('broken')
 
-    def guess_crf(self, codec=None):
+    def guess_crf(self, codec=None, res_limit=None):
         d = self.excerpt_segments()
         i, d = list(d.items())[0]
         config_funcs = {'h264': self.config_video, 'hevc': self.config_hevc}
         codec = VIDEO_CODECS_A10N.get(codec, codec) or d['codec_name']
         config_func = config_funcs[codec]
         crf0 = 25
-        config_func(crf=crf0)
+        config_func(crf=crf0, res_limit=res_limit)
         e = self.estimate()
         r = e[i]
         return round(crf0 + 6 * log(r, 2), 2)
@@ -966,7 +976,7 @@ def ffmpeg_vf_res_scale_down_str(width: int, height: int, res_limit='FHD', vf: s
     return f'{res_scale},{vf}' if vf else res_scale
 
 
-def preset_video_convert(source, codec='', crf=None, keywords=(), hwa='', vf='',
+def preset_video_convert(source, codec='', crf=None, keywords=(), hwa='', vf='', cut_points=(),
                          overwrite=False, redo=False, verbose=0, ffmpeg_opts=(),
                          *args, **kwargs):
     ff = FFmpegRunner(overwrite=True, banner=False)
@@ -998,26 +1008,30 @@ def preset_video_convert(source, codec='', crf=None, keywords=(), hwa='', vf='',
         codec = codec or 'h'
         crf = crf or 25
         res_limit = res_limit or 'HD'
+    if 'hevc' in keywords:
+        codec = 'h'
     if {'audio64kbps', 'a64k', 'sound64kbps', '64kbps'} & keywords:
         ffmpeg_args.add(ab='64k')
     elif {'audio96kbps', 'a96k', 'sound96kbps', '96kbps'} & keywords:
         ffmpeg_args.add(ab='96k')
     codec = codec or 'a'
-    if hwa in ('q', 'qsv'):
+    if 'qsv' in keywords or hwa in ('q', 'qsv'):
         codec += 'q'
         ffmpeg_args.add(vcodec=codecs_d[codec], global_quality=crf)
     else:
         ffmpeg_args.add(vcodec=codecs_d[codec], crf=crf)
-    ffmpeg_args.add(ffmpeg_opts, *args, **kwargs)
+    ffmpeg_args.add(ffmpeg_opts)
     tail = TAILS_D[f'{codec}8']
+    cut_points = cut_points or []
+    start = cut_points[0] if cut_points else 0
+    end = cut_points[1] if len(cut_points) >= 2 else 0
 
     def conv_one_file(fp):
         lp = LinePrinter()
         lp.hl()
         if not os.path.isfile(fp):
             logger.info(f'# skip non-file\n  {fp}')
-        ft = filetype.guess(fp)
-        if not ft or not ft.mime.startswith('video'):
+        if not file_is_video(fp):
             logger.info(f'# skip non-video\n  {fp}')
             return
         dirname, input_basename = os.path.split(fp)
@@ -1046,7 +1060,7 @@ def preset_video_convert(source, codec='', crf=None, keywords=(), hwa='', vf='',
             if res_limit:
                 w, h = get_width_height(fp)
                 ffmpeg_args.add(vf=ffmpeg_vf_res_scale_down_str(w, h, res_limit, vf=vf))
-            ff.convert([fp], output_path, ffmpeg_args)
+            ff.convert([fp], output_path, ffmpeg_args, start=start, end=end, **kwargs)
             os.rename(fp, origin_path)
         except ff.FFmpegError as e:
             logger.error(f'! {output_path}\n {e}')
@@ -1065,7 +1079,7 @@ def mark_high_crf_video_file(src, crf_thres, codec='a' or 'h', res_limit=None,
                              work_dir=None, auto_clean=True):
     logger = get_logger(f'{__name__}.markhighcrf', fmt=LOG_FMT_MESSAGE_ONLY)
     for filepath in list_files(src, recursive=recursive):
-        if not filetype_is(filepath, 'video'):
+        if not file_is_video(filepath):
             continue
         dirname, name, tail, ext = split_filename_tail(filepath, VALID_TAILS)
         if tail and (not redo or 'origin' not in tail):
@@ -1074,15 +1088,12 @@ def mark_high_crf_video_file(src, crf_thres, codec='a' or 'h', res_limit=None,
         logger.info(f'+ {filepath}')
         try:
             c = FFmpegSegmentsContainer(filepath, work_dir=work_dir, log_lvl='WARNING')
-            if res_limit:
-                w, h = c.width_height
-                c.config_video(vf=c.vf_res_scale_down(res_limit))
         except FFmpegSegmentsContainer.ContainerError as e:
             logger.error(f'! {e.args}')
             sys.exit(2)
         try:
-            set_logger_level(c.ff.logger, 'WARNING')
-            crf_guess = c.guess_crf(codec)
+            # set_logger_level(c.ff.logger, 'INFO')
+            crf_guess = c.guess_crf(codec, res_limit=res_limit)
             if crf_guess >= crf_thres:
                 origin_marked = os.path.join(dirname, name + '.origin' + ext)
                 logger.info(f'* rename crf={crf_guess} tail=.origin')
@@ -1090,7 +1101,8 @@ def mark_high_crf_video_file(src, crf_thres, codec='a' or 'h', res_limit=None,
             else:
                 logger.info(f'# skip crf={crf_guess}')
         except KeyboardInterrupt:
-            c.purge()
+            if auto_clean:
+                c.purge()
             sys.exit(2)
         finally:
             if auto_clean:
