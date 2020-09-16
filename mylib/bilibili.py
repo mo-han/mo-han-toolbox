@@ -21,7 +21,8 @@ from .misc import safe_print, safe_basename
 from .os_util import ensure_sigint_signal
 from .tricks import modify_and_import, until_return_try, range_from_expr
 from .lamb_av_util import concat_videos, merge_m4s
-from .web_client import cookie_str_from_dict, cookies_dict_from_netscape_file, get_html_element_tree, HTMLElementTree
+from .web_client import cookie_str_from_dict, cookies_dict_from_netscape_file, get_html_element_tree, HTMLElementTree, \
+    make_kwargs_for_lib_requests
 
 BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'
 BILIBILI_EPISODE_URL_PREFIX = 'https://www.bilibili.com/bangumi/play/'
@@ -193,6 +194,26 @@ def find_bilibili_vid(x: str or int) -> str or None:
     return vid
 
 
+def transparent_avid_to_bvid(vid: str or int, cookies: dict = None) -> str or None:
+    if isinstance(vid, str):
+        if vid[:2] in ('av', 'AV'):
+            aid = vid[2:]
+        else:
+            return vid
+    elif isinstance(vid, int):
+        aid = vid
+    else:
+        raise TypeError('avid must be str or int')
+    url = 'https://api.bilibili.com/x/web-interface/archive/stat'
+    r = requests.get(url, params={'aid': aid}, **make_kwargs_for_lib_requests(cookies=cookies))
+    print(r.url)
+    j = r.json()
+    if j['code'] == 0 and j['data']:
+        return j['data']['bvid']
+    else:
+        return None
+
+
 def bilibili_url_from_vid(vid: str) -> str:
     if vid[:2] in ('BV', 'av'):
         return BILIBILI_VIDEO_URL_PREFIX + vid
@@ -353,10 +374,10 @@ def download_bilibili_video(url: str or int,
     if not output:
         output = '.'
     if '://' not in url:
-        url = bilibili_url_from_vid(find_bilibili_vid(url) or url)
+        url = bilibili_url_from_vid(transparent_avid_to_bvid(find_bilibili_vid(url) or url))
 
+    cli.print(url)
     cli.hl(shorter=1)
-    cli.print(url, end='')
     b = YouGetBilibiliX(cookies=cookies, qn_max=qn_max, qn_want=qn_want)
 
     if info:
