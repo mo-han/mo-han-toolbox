@@ -428,3 +428,12 @@ def filter_filename_tail(filepath_list, valid_tails, filter_tails, filter_extens
 def filetype_is(filepath, keyword):
     guess = filetype.guess(filepath)
     return guess and keyword in guess.mime
+
+
+def shrink_basename(s: str, max_bytes=250, encoding='utf8', add_dots=True):
+    shrunk = False
+    limit = max_bytes - 3 if add_dots else max_bytes
+    while len(s.encode(encoding=encoding)) > limit:
+        s = s[:-1]
+        shrunk = True
+    return s + '...' if shrunk and add_dots else s
