@@ -5,6 +5,7 @@ import inspect
 import signal
 import sys
 from pprint import pprint
+from socket import timeout as SocketTimeout
 from socketserver import TCPServer, BaseRequestHandler
 from ast import literal_eval
 from typing import Callable
@@ -114,13 +115,15 @@ class SCPIShell(cmd.Cmd):
             r = super(SCPIShell, self).onecmd(line)
             ok = True
         except Vxi11Exception as e:
-            r = f'VXI11 Error: {e.msg}'
+            r = f'! error (vxi11): {e.msg}'
         except SerialException as e:
-            r = f'Serial Error: {e}'
+            r = f'! error (serial): {e}'
         except AttributeError as e:
-            r = f'Attribute Error: {str(e)}'
+            r = f'! error (attribute): {str(e)}'
         except EmptyTimeout:
-            r = f"No return until timeout: '{line}'"
+            r = f"! error (timeout): '{line}'"
+        except SocketTimeout:
+            r = '! error (socket): timeout'
         if ok:
             return r
         else:

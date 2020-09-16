@@ -912,7 +912,7 @@ class FFmpegSegmentsContainer:
 
     def vf_res_scale_down(self, res_limit='FHD', vf=None):
         width, height = self.width_height
-        return ffmpeg_vf_res_scale_down_str(width, height, res_limit=res_limit, vf=None)
+        return get_vf_res_scale_down(width, height, res_limit=res_limit, vf=None)
 
     @property
     def width_height(self):
@@ -955,7 +955,7 @@ def get_width_height(filepath) -> (int, int):
 
 
 @meta_deco_args_choices({'res_limit': (None, 'FHD', 'HD', 'qHD')})
-def ffmpeg_vf_res_scale_down_str(width: int, height: int, res_limit='FHD', vf: str = None) -> str or None:
+def get_vf_res_scale_down(width: int, height: int, res_limit='FHD', vf: str = None) -> str or None:
     """generate 'scale=<w>:<h>' value for ffmpeg `vf` option, to scale down the given resolution
     return empty str if the given resolution is enough low thus scaling is not needed"""
     d = {'FHD': (1920, 1080), 'HD': (1280, 720), 'qHD': (960, 540)}
@@ -976,9 +976,9 @@ def ffmpeg_vf_res_scale_down_str(width: int, height: int, res_limit='FHD', vf: s
     return f'{res_scale},{vf}' if vf else res_scale
 
 
-def preset_video_convert(source, codec='', crf=None, keywords=(), hwa='', vf='', cut_points=(),
-                         overwrite=False, redo=False, verbose=0, ffmpeg_opts=(),
-                         *args, **kwargs):
+def kw_video_convert(source, keywords=(), vf='', cut_points=(),
+                     overwrite=False, redo=False, verbose=0, ffmpeg_opts=(),
+                     **kwargs):
     ff = FFmpegRunner(overwrite=True, banner=False)
     if verbose > 1:
         lvl = 'DEBUG'
@@ -992,34 +992,43 @@ def preset_video_convert(source, codec='', crf=None, keywords=(), hwa='', vf='',
 
     ffmpeg_args = FFmpegArgsList(pix_fmt='yuv420p')
     keywords = set(keywords) or set()
-    if {'FHD', 'fhd'} & keywords:
-        res_limit = 'FHD'
-    elif {'HD', 'hd'} & keywords:
-        res_limit = 'HD'
-    elif {'qHD'} & keywords:
-        res_limit = 'qHD'
-    else:
-        res_limit = None
-    if 'cgi' in keywords:
-        codec = codec or 'a'
-        crf = crf or 19
-        res_limit = res_limit or 'FHD'
-    elif {'film', 'movie', 'real'} & keywords:
-        codec = codec or 'h'
-        crf = crf or 25
-        res_limit = res_limit or 'HD'
-    if 'hevc' in keywords:
-        codec = 'h'
-    if {'audio64kbps', 'a64k', 'sound64kbps', '64kbps'} & keywords:
-        ffmpeg_args.add(ab='64k')
-    elif {'audio96kbps', 'a96k', 'sound96kbps', '96kbps'} & keywords:
-        ffmpeg_args.add(ab='96k')
-    codec = codec or 'a'
-    if 'qsv' in keywords or hwa in ('q', 'qsv'):
-        codec += 'q'
-        ffmpeg_args.add(vcodec=codecs_d[codec], global_quality=crf)
-    else:
-        ffmpeg_args.add(vcodec=codecs_d[codec], crf=crf)
+    res_limit = None
+    codec = 'a'
+    crf = None
+    for kw in keywords:
+        if kw[0] + kw[-1] == 'vk' and kw[1:-1].isdecimal():
+            ffmpeg_args.add(b__v=kw[1:])
+        elif kw[:3] == 'crf':
+            crf = kw[3:]
+        elif kw[0] + kw[-1] == 'ak' and kw[1:-1].isdecimal():
+            ffmpeg_args.add(b__a=kw[1:])
+        elif kw == 'vcopy':
+            ffmpeg_args.add(c__v='copy')
+        elif kw == 'acopy':
+            ffmpeg_args.add(c__a='copy')
+        elif kw == 'copy':
+            ffmpeg_args.add(c='copy')
+        elif kw in ('FHD', 'fhd'    ):
+            res_limit = 'FHD'
+        elif kw in ('HD', 'hd'):
+            res_limit = 'HD'
+        elif kw in ('qHD',):
+            res_limit = 'qHD'
+        elif kw in ('2ch', 'stereo'):
+            ffmpeg_args.add(ac=2)
+        elif kw == 'hevc':
+            codec = 'h'
+        ...
+        if kw == 'smallhd':
+            codec = 'h'
+            crf = crf or 25
+            res_limit = 'HD'
+        ...
+        if kw == 'qsv':
+            codec += 'q'
+            ffmpeg_args.add(vcodec=codecs_d[codec], global_quality=crf)
+        else:
+            ffmpeg_args.add(vcodec=codecs_d[codec], crf=crf)
     ffmpeg_args.add(ffmpeg_opts)
     tail = TAILS_D[f'{codec}8']
     cut_points = cut_points or []
@@ -1059,7 +1068,7 @@ def preset_video_convert(source, codec='', crf=None, keywords=(), hwa='', vf='',
         try:
             if res_limit:
                 w, h = get_width_height(fp)
-                ffmpeg_args.add(vf=ffmpeg_vf_res_scale_down_str(w, h, res_limit, vf=vf))
+                ffmpeg_args.add(vf=(get_vf_res_scale_down(w, h, res_limit, vf=vf)))
             ff.convert([fp], output_path, ffmpeg_args, start=start, end=end, **kwargs)
             os.rename(fp, origin_path)
         except ff.FFmpegError as e:
