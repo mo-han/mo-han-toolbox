@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # encoding=utf8
 import fnmatch
+import html
 import json
+import urllib.parse
 import os
 import shlex
 import shutil
@@ -48,7 +50,11 @@ def fs_inplace_rename_regex(src: str, pattern: str, replace: str, only_basename:
         shutil.move(src, dst)
 
 
-def fs_legal_name(x: str, repl: str or dict = None) -> str:
+def fs_legal_name(x: str, repl: str or dict = None, unescape_html=True, decode_url=True) -> str:
+    if unescape_html:
+        x = html.unescape(x)
+    if decode_url:
+        x = urllib.parse.unquote(x)
     if repl:
         if isinstance(repl, str):
             r = ILLEGAL_FS_CHARS_REGEX_PATTERN.sub(repl, x)
