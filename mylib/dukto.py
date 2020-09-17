@@ -112,19 +112,26 @@ ndrop.__main__.NetDropShell = NetDropShellX
 
 
 def run(**kwargs):
-    if kwargs:
-        config_at(**kwargs)
+    for k, v in kwargs.items():
+        config_at[k.replace('_', '.')] = v
     ndrop.__main__.run()
 
 
 def copy_recv_text(file: str = None, use_clipboard: bool = False):
     queue = config_at.server.text.queue
+    if file:
+        def handle(t):
+            with ensure_open_file(file, 'a') as f:
+                f.write(t + '\n')
+                ndrop.netdrop.logger.info("Copy TEXT to file '{}'".format(file))
+    elif use_clipboard:
+        def handle(t):
+            clipboard.set(t)
+            ndrop.netdrop.logger.info('Copy TEXT to clipboard')
+    else:
+        def handle(t):
+            ...
+
     while 1:
         text = queue.get()
-        if file:
-            with ensure_open_file(file, 'a') as f:
-                f.write(text + '\n')
-                ndrop.netdrop.logger.info("Copy TEXT to file '{}'".format(file))
-        if use_clipboard:
-            clipboard.set(text)
-            ndrop.netdrop.logger.info('Copy TEXT to clipboard')
+        handle(text)
