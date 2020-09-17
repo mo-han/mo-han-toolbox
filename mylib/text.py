@@ -35,3 +35,12 @@ def simple_partial_query(pattern_list: Iterable[str], source_pool: Iterator[str]
     else:
         raise ValueError('logic', logic)
     return dedup_list(r)
+
+
+def dedup_str(s):
+    # https://stackoverflow.com/a/29489919/7966259
+    i = (s + s)[1:-1].find(s)
+    if i == -1:
+        return s
+    else:
+        return s[:i + 1]
