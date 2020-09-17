@@ -11,7 +11,7 @@ import requests
 from .tricks import VoidDuck, str_ishex
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
 from .web_client import cookies_dict_from_netscape_file, get_html_element_tree
-from .os_util import fs_legal_name
+from .os_util import fs_legal_name, shrink_basename
 
 EH_TITLE_REGEX_PATTERN = re.compile(
     r'^'
@@ -23,7 +23,7 @@ EH_TITLE_REGEX_PATTERN = re.compile(
 )
 
 
-def tidy_ehviewer_images(dry_run: bool = False):
+def catalog_ehviewer_images(dry_run: bool = False):
     logger = get_logger('ehvimg', fmt=LOG_FMT_MESSAGE_ONLY)
     logmsg_move = '* move {} -> {}'
     logmsg_skip = '# skip {}'
@@ -62,15 +62,27 @@ def tidy_ehviewer_images(dry_run: bool = False):
             db[gid] = d
             with open(dbf, 'w') as fp:
                 json.dump(db, fp)
+            sleep(1)
 
-        title = d['title']
+        creators = []
+        title = d['title'].strip()
         try:
-            core_title_l = re.findall(r'[\w]+[\-\+\']?[\w]?', EH_TITLE_REGEX_PATTERN.match(title).group(2))
+            title_match = EH_TITLE_REGEX_PATTERN.match(title)
+            if title_match:
+                core_title = title_match.group(2)
+                core_title_l = re.findall(r'[\w]+[\-+\']?[\w]?', core_title)
+            elif title[:1] + title[-1:] == '[]':
+                core_title = ''
+                core_title_l = []
+                creators.append(title[1:-1].strip())
+            else:
+                core_title = ''
+                core_title_l = []
         except AttributeError:
             print(logmsg_err.format(title))
             raise
         comic_magazine_title = None
-        if core_title_l[0].lower() == 'comic':
+        if core_title_l and core_title_l[0].lower() == 'comic':
             comic_magazine_title_l = []
             for s in core_title_l[1:]:
                 if re.match(r'^\d+', s):
@@ -84,38 +96,39 @@ def tidy_ehviewer_images(dry_run: bool = False):
 
         tags = d['tags']
         if 'artist' in tags:
-            a = tags['artist']
+            creators = tags['artist']
         elif 'group' in tags:
-            a = tags['group']
+            creators = tags['group']
         else:
             for m in (
-                    re.match(r'^\s*(?:\([^)]+\))\s*\[([^\]]+)\]', title),
-                    re.match(r'^\s*\[(?:pixiv|fanbox|tumblr|twitter)\]\s*(.+)\s*[(\[]', title, flags=re.I),
+                    re.match(r'^\s*(?:\([^)]+\))\s*\[([^]]+)]', title),
+                    re.match(r'^\s*\[(?:pixiv|fanbox|tumblr|twitter)]\s*(.+)\s*[(\[]', title, flags=re.I),
                     re.match(r'^\s*artist - ([^(\[]+)\s*', title, flags=re.I),
             ):
                 if m:
-                    a = m.group(1)
+                    m1 = m.group(1).strip()
+                    if m1:
+                        creators = [m1]
                     break
-            else:
-                a = ''
-            a = [a]
 
-        if len(a) > 3:
+        if len(creators) > 3:
             if comic_magazine_title:
-                a = comic_magazine_title
+                folder = comic_magazine_title
             else:
-                a = '[]'
+                folder = '[]'
         else:
-            a = '[{}]'.format(', '.join(a))
+            folder = '[{}]'.format(', '.join(creators))
+        folder = fs_legal_name(folder)
         parent, basename = os.path.split(f)
         fn, ext = os.path.splitext(basename)
-        fn = str(fn)
-        fn = ' '.join(core_title_l[:6]) + ' ' + fn.split()[-1]
-        nf = os.path.join(a, fs_legal_name(fn + ext))
+        # fn = ' '.join(core_title_l) + ' ' + fn.split()[-1]
+        fn = shrink_basename(core_title, 200, add_dots=True) + ' ' + fn.split()[-1]
+        fn = fn.strip()
+        nf = os.path.join(folder, fs_legal_name(fn + ext))
         logger.info(logmsg_move.format(f, nf))
         if not dry_run:
-            if not os.path.isdir(a):
-                os.mkdir(a)
+            if not os.path.isdir(folder):
+                os.mkdir(folder)
             shutil.move(f, nf)
 
 
