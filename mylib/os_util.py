@@ -3,13 +3,13 @@
 import fnmatch
 import html
 import json
-import urllib.parse
 import os
 import shlex
 import shutil
 import signal
 import sys
 import tempfile
+import urllib.parse
 from collections import defaultdict
 from contextlib import contextmanager
 from glob import glob

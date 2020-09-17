@@ -8,10 +8,10 @@ from time import sleep
 
 import requests
 
-from .tricks import VoidDuck, str_ishex
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
+from .os_util import fs_legal_name, shrink_basename, write_json_file, read_json_file
+from .tricks import VoidDuck, str_ishex
 from .web_client import cookies_dict_from_netscape_file, get_html_element_tree
-from .os_util import fs_legal_name, shrink_basename
 
 EH_TITLE_REGEX_PATTERN = re.compile(
     r'^'
@@ -32,9 +32,8 @@ def catalog_ehviewer_images(dry_run: bool = False):
     dbf = 'ehdb.json'
 
     if os.path.isfile(dbf):
-        with open(dbf) as fp:
-            db = json.load(fp)
-            logger.info('@ using DB file: {}'.format(dbf))
+        logger.info('@ using DB file: {}'.format(dbf))
+        db = read_json_file(dbf)
     else:
         db = {}
     skipped_gid_l = []
@@ -60,8 +59,7 @@ def catalog_ehviewer_images(dry_run: bool = False):
             logger.info(logmsg_data.format(g.gid, g.token))
             d = g.data
             db[gid] = d
-            with open(dbf, 'w') as fp:
-                json.dump(db, fp)
+            write_json_file(dbf, db, indent=4)
             sleep(1)
 
         creators = []
@@ -109,6 +107,7 @@ def catalog_ehviewer_images(dry_run: bool = False):
                     m1 = m.group(1).strip()
                     if m1:
                         creators = [m1]
+                        core_title = title
                     break
 
         if len(creators) > 3:
@@ -122,8 +121,7 @@ def catalog_ehviewer_images(dry_run: bool = False):
         parent, basename = os.path.split(f)
         fn, ext = os.path.splitext(basename)
         # fn = ' '.join(core_title_l) + ' ' + fn.split()[-1]
-        fn = shrink_basename(core_title, 200, add_dots=True) + ' ' + fn.split()[-1]
-        fn = fn.strip()
+        fn = shrink_basename(core_title, 200, add_dots=True).strip() + ' ' + fn.split()[-1]
         nf = os.path.join(folder, fs_legal_name(fn + ext))
         logger.info(logmsg_move.format(f, nf))
         if not dry_run:
