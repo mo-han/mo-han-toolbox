@@ -194,7 +194,7 @@ def find_bilibili_vid(x: str or int) -> str or None:
     return vid
 
 
-def transparent_avid_to_bvid(vid: str or int, cookies: dict = None) -> str or None:
+def transparent_avid_to_bvid_via_webapi(vid: str or int, cookies: dict = None) -> str or None:
     if isinstance(vid, str):
         if vid[:2] in ('av', 'AV'):
             aid = vid[2:]
@@ -374,7 +374,7 @@ def download_bilibili_video(url: str or int,
     if not output:
         output = '.'
     if '://' not in url:
-        url = bilibili_url_from_vid(transparent_avid_to_bvid(find_bilibili_vid(url) or url))
+        url = bilibili_url_from_vid(transparent_avid_to_bvid_via_webapi(find_bilibili_vid(url) or url))
 
     cli.print(url)
     cli.hl(shorter=1)
@@ -400,8 +400,8 @@ def download_bilibili_video(url: str or int,
             for p in parts:
                 url = base_url + '?p={}'.format(p)
                 cli.print()
-                cli.hl(shorter=1)
                 cli.print(url)
+                cli.hl(shorter=1)
                 b.download_by_url(url, **dl_kwargs)
         else:
             b.download_by_url(url, **dl_kwargs)

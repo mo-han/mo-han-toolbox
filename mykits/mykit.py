@@ -556,9 +556,9 @@ img_sim_view.add_argument(
 
 
 def move_ehviewer_images():
-    from mylib.ehentai import tidy_ehviewer_images
+    from mylib.ehentai import catalog_ehviewer_images
     args = rtd.args
-    tidy_ehviewer_images(dry_run=args.dry_run)
+    catalog_ehviewer_images(dry_run=args.dry_run)
 
 
 ehv_img_mv = add_sub_parser('ehv.img.mv', ['ehvmv'],
