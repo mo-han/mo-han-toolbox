@@ -3,7 +3,6 @@
 """This tool heavily depends on `mylib` package, make sure `mylib` folder is in the same path with this tool."""
 
 import cmd
-import glob
 import os
 import shlex
 import sys
@@ -494,10 +493,9 @@ bilibili_download.add_argument('-A', '--no-moderate-audio', dest='moderate_audio
 
 
 def json_key_func():
-    from json import load
+    from mylib.os_util import read_json_file
     args = rtd.args
-    with open(args.file) as f:
-        d = load(f)
+    d = read_json_file(args.file)
     print(d[args.key])
 
 
@@ -508,21 +506,19 @@ json_key.add_argument('key', help='query key')
 
 
 def update_json_file():
-    from json import load, dump
+    from mylib.os_util import read_json_file, write_json_file
     args = rtd.args
     old, new = args.old, args.new
-    with open(old) as f:
-        d = load(f)
-    with open(new) as f:
-        d.update(load(f))
-    with open(old, 'w') as f:
-        dump(d, f)
+    d = read_json_file(old)
+    d.update(read_json_file(new))
+    write_json_file(old, d, indent=args.indent)
 
 
 json_update = add_sub_parser('json.update', ['jsup'], 'update <old> JSON file with <new>')
 json_update.set_defaults(func=update_json_file)
 json_update.add_argument('old', help='JSON file with old data')
 json_update.add_argument('new', help='JSON file with new data')
+json_update.add_argument('-t', '--indent', type=int, default=2, metavar='N')
 
 
 def view_similar_images():
