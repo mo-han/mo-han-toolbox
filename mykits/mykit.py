@@ -164,7 +164,7 @@ ccj.add_argument('file', nargs='*')
 
 
 def vid_mhc_func():
-    from mylib.ffmpeg import mark_high_crf_video_file
+    from mylib.ffmpeg_local import mark_high_crf_video_file
     args = rtd.args
     threshold = args.crf_threshold
     codec = args.codec
@@ -191,7 +191,7 @@ vid_mhc.add_argument('src', nargs='*')
 
 
 def ffmpeg_func():
-    from mylib.ffmpeg import kw_video_convert
+    from mylib.ffmpeg_local import kw_video_convert
     args = rtd.args
     source = args.source or cb
     keywords = args.keywords or ()
