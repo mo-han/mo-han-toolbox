@@ -363,13 +363,16 @@ def run_from_lines_func():
             lines = fd.readlines()
     else:
         lines = str(cb.get()).splitlines()
-    for line in lines:
-        if not line:
-            continue
-        command = cmd_fmt.format(line.strip())
-        print('#', command)
-        if not dry_run:
-            os.system(command)
+    try:
+        for line in lines:
+            if not line:
+                continue
+            command = cmd_fmt.format(line.strip())
+            print('#', command)
+            if not dry_run:
+                os.system(command)
+    except KeyboardInterrupt:
+        sys.exit(2)
 
 
 run_from_lines = add_sub_parser(
