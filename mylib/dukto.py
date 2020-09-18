@@ -130,7 +130,7 @@ def copy_recv_text(file: str = None, use_clipboard: bool = False):
             ndrop.netdrop.logger.info('Copy TEXT to clipboard')
     else:
         def handle(t):
-            ...
+            pass
 
     while 1:
         text = queue.get()
