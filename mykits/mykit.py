@@ -284,17 +284,17 @@ dir2pi.set_defaults(func=dir2pi_func)
 dir2pi.add_argument('arg', nargs='*', help='arguments propagated to dir2pi, put a -- before them')
 
 
-def iwara_dl_func():
-    from mylib.iwara import youtube_dl_main_x_iwara
+def ytdl_func():
+    from mylib.ytdl import youtube_dl_main_x
     import sys
     argv0 = ' '.join(sys.argv[:2]) + ' --'
     sys.argv = [argv0] + rtd.args.argv
-    youtube_dl_main_x_iwara()
+    youtube_dl_main_x()
 
 
-iwara_dl = add_sub_parser('iwara.dl', ['iwrdl'], 'modified youtube-dl for iwara.tv (fixing issue of missing uploader)')
-iwara_dl.set_defaults(func=iwara_dl_func)
-iwara_dl.add_argument('argv', nargs='*', help='argument(s) propagated to youtube-dl, better put a -- before it')
+ytdl = add_sub_parser('ytdl', [], 'youtube-dl with modifications: [iwara.tv] fix missing uploader')
+ytdl.set_defaults(func=ytdl_func)
+ytdl.add_argument('argv', nargs='*', help='argument(s) propagated to youtube-dl, better put a -- before it')
 
 
 def regex_rename_func():
