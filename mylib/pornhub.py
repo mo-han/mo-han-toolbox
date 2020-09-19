@@ -18,6 +18,8 @@ class PornHubIE(youtube_dl.extractor.pornhub.PornHubIE, metaclass=ABCMeta):
     def _real_extract(self, url):
         data = super()._real_extract(url)
         try:
+            if data.get('uploader'):
+                return data
             html = get_html_element_tree(url)
             uploader = html.xpath('//div[@class="userInfo"]//a')[0].text
             data['uploader'] = uploader

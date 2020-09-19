@@ -1003,6 +1003,8 @@ def kw_video_convert(source, keywords=(), vf='', cut_points=(), dest=None,
             crf = kw[3:]
         elif kw[0] + kw[-1] == 'ak' and kw[1:-1].isdecimal():
             ffmpeg_args.add(b__a=kw[1:])
+        elif kw[:3] == 'fps':
+            ffmpeg_args.add(r=kw[3:])
         elif kw == 'vcopy':
             ffmpeg_args.add(c__v='copy')
         elif kw == 'acopy':
