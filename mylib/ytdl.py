@@ -8,5 +8,5 @@ from mylib.pornhub import PornHubIE
 
 def youtube_dl_main_x(argv=None):
     youtube_dl.extractor.IwaraIE = IwaraIE
-    youtube_dl.extractor.PornHubIE = PornHubIE
+    # youtube_dl.extractor.PornHubIE = PornHubIE
     youtube_dl.main(argv)
