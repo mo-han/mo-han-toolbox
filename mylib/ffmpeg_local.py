@@ -1074,6 +1074,7 @@ def kw_video_convert(source, keywords=(), vf='', cut_points=(), dest=None,
                 w, h = get_width_height(fp)
                 ffmpeg_args.add(vf=(get_vf_res_scale_down(w, h, res_limit, vf=vf)))
             ff.convert([fp], output_path, ffmpeg_args, start=start, end=end, **kwargs)
+            logger.info(f'+ {output_path}')
             os.rename(fp, origin_path)
         except ff.FFmpegError as e:
             logger.error(f'! {output_path}\n {e}')
