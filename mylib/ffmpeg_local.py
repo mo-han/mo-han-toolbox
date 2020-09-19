@@ -997,7 +997,7 @@ def kw_video_convert(source, keywords=(), vf='', cut_points=(), dest=None,
     crf = None
 
     for kw in keywords:
-        if kw[0] + kw[-1] == 'vk' and kw[1:-1].isdecimal():
+        if kw[0] + kw[-1] in ('vk', 'vM') and kw[1:-1].isdecimal():
             ffmpeg_args.add(b__v=kw[1:])
         elif kw[:3] == 'crf':
             crf = kw[3:]
