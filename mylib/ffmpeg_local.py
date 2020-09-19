@@ -976,7 +976,7 @@ def get_vf_res_scale_down(width: int, height: int, res_limit='FHD', vf: str = No
     return f'{res_scale},{vf}' if vf else res_scale
 
 
-def kw_video_convert(source, keywords=(), vf='', cut_points=(),
+def kw_video_convert(source, keywords=(), vf='', cut_points=(), dest=None,
                      overwrite=False, redo=False, verbose=0, ffmpeg_opts=(),
                      **kwargs):
     ff = FFmpegRunner(overwrite=True, banner=False)
@@ -995,6 +995,7 @@ def kw_video_convert(source, keywords=(), vf='', cut_points=(),
     res_limit = None
     codec = 'a'
     crf = None
+
     for kw in keywords:
         if kw[0] + kw[-1] == 'vk' and kw[1:-1].isdecimal():
             ffmpeg_args.add(b__v=kw[1:])
@@ -1008,7 +1009,7 @@ def kw_video_convert(source, keywords=(), vf='', cut_points=(),
             ffmpeg_args.add(c__a='copy')
         elif kw == 'copy':
             ffmpeg_args.add(c='copy')
-        elif kw in ('FHD', 'fhd'    ):
+        elif kw in ('FHD', 'fhd'):
             res_limit = 'FHD'
         elif kw in ('HD', 'hd'):
             res_limit = 'HD'
@@ -1018,17 +1019,18 @@ def kw_video_convert(source, keywords=(), vf='', cut_points=(),
             ffmpeg_args.add(ac=2)
         elif kw == 'hevc':
             codec = 'h'
-        ...
-        if kw == 'smallhd':
-            codec = 'h'
-            crf = crf or 25
-            res_limit = 'HD'
-        ...
-        if kw == 'qsv':
-            codec += 'q'
-            ffmpeg_args.add(vcodec=codecs_d[codec], global_quality=crf)
-        else:
-            ffmpeg_args.add(vcodec=codecs_d[codec], crf=crf)
+
+    if 'smallhd' in keywords:
+        codec = 'h'
+        crf = crf or 25
+        res_limit = 'HD'
+
+    if 'qsv' in keywords:
+        codec += 'q'
+        ffmpeg_args.add(vcodec=codecs_d[codec], global_quality=crf)
+    else:
+        ffmpeg_args.add(vcodec=codecs_d[codec], crf=crf)
+
     ffmpeg_args.add(ffmpeg_opts)
     tail = TAILS_D[f'{codec}8']
     cut_points = cut_points or []
@@ -1058,7 +1060,7 @@ def kw_video_convert(source, keywords=(), vf='', cut_points=(),
             input_name = input_non_ext
             input_tail = ''
         origin_path = os.path.join(dirname, input_name + '.origin' + input_ext)
-        output_path = os.path.join(dirname, input_name + tail + input_ext)
+        output_path = dest or os.path.join(dirname, input_name + tail + input_ext)
         if os.path.isfile(output_path) and not overwrite:
             logger.info(f'# skip tail\n  {output_path}')
             return
@@ -1087,14 +1089,17 @@ def mark_high_crf_video_file(src, crf_thres, codec='a' or 'h', res_limit=None,
                              redo=True, recursive=False,
                              work_dir=None, auto_clean=True):
     logger = get_logger(f'{__name__}.markhighcrf', fmt=LOG_FMT_MESSAGE_ONLY)
+    lp = LinePrinter()
+
     for filepath in list_files(src, recursive=recursive):
         if not file_is_video(filepath):
             continue
+        lp.hl()
+        logger.info(f'+ {filepath}')
         dirname, name, tail, ext = split_filename_tail(filepath, VALID_TAILS)
         if tail and (not redo or 'origin' not in tail):
-            logger.info(f'# skip tail={tail}\n  {filepath}')
+            logger.info(f'# skip tail={tail}')
             continue
-        logger.info(f'+ {filepath}')
         try:
             c = FFmpegSegmentsContainer(filepath, work_dir=work_dir, log_lvl='WARNING')
         except FFmpegSegmentsContainer.ContainerError as e:

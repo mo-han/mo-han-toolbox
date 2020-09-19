@@ -196,13 +196,14 @@ def ffmpeg_func():
     source = args.source or cb
     keywords = args.keywords or ()
     cut_points = args.cut_points
+    output_path = args.output_path
     overwrite = args.overwrite
     redo_origin = args.redo_origin
     verbose = args.verbose
     opts = args.opts
     if verbose:
         print(args)
-    kw_video_convert(source=source, keywords=keywords, cut_points=cut_points,
+    kw_video_convert(source=source, keywords=keywords, cut_points=cut_points, dest=output_path,
                      overwrite=overwrite, redo=redo_origin, verbose=verbose, ffmpeg_opts=opts)
 
 
@@ -211,6 +212,7 @@ ffmpeg.set_defaults(func=ffmpeg_func)
 ffmpeg.add_argument('-s', '--source', nargs='*', metavar='path', help='if omitted, will try paths in clipboard')
 ffmpeg.add_argument('-k', '--keywords', metavar='kw', nargs='*')
 ffmpeg.add_argument('-t', '--time-cut', dest='cut_points', metavar='ts', nargs='*')
+ffmpeg.add_argument('-o', '--output-path')
 ffmpeg.add_argument('-O', '--overwrite', action='store_true')
 ffmpeg.add_argument('-R', '--redo-origin', action='store_true')
 ffmpeg.add_argument('-v', '--verbose', action='count', default=0)
@@ -365,6 +367,7 @@ def run_from_lines_func():
         lines = str(cb.get()).splitlines()
     try:
         for line in lines:
+            line = line.strip()
             if not line:
                 continue
             command = cmd_fmt.format(line.strip())
