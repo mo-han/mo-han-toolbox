@@ -14,9 +14,12 @@ from collections import defaultdict
 from contextlib import contextmanager
 from glob import glob
 from io import FileIO
+from queue import Queue
 from typing import Iterable, Callable, Generator, Iterator, Tuple, Dict, List
 
 from filetype import filetype
+
+from .tricks import make_kwargs_dict
 
 if os.name == 'nt':
     from .nt_util import *
@@ -194,7 +197,8 @@ def check_file_ext(fp: str, ext_list: Iterable):
 
 def fs_find_iter(pattern: str or Callable = None, root: str = '.',
                  regex: bool = False, find_dir_instead_of_file: bool = False,
-                 recursive: bool = True, strip_root: bool = True) -> Generator:
+                 recursive: bool = True, strip_root: bool = True,
+                 progress_queue: Queue = None) -> Generator:
     if find_dir_instead_of_file:
         def pick_os_walk_tuple(parent, folder_list, file_list):
             return parent, folder_list
@@ -232,17 +236,31 @@ def fs_find_iter(pattern: str or Callable = None, root: str = '.',
     else:
         raise ValueError("invalid pattern: '{}', should be `str` or `function(fname)`")
 
+    def put_progress(path):
+        progress_queue.put(path)
+
+    def no_progress(path):
+        pass
+
+    if progress_queue:
+        update_progress = put_progress
+    else:
+        update_progress = no_progress
+
     if recursive:
         for t3e in os.walk(root):
             par, fn_list = pick_os_walk_tuple(*t3e)
             for fn in fn_list:
                 if match(fn):
-                    yield join_path(par, fn)
+                    output_path = join_path(par, fn)
+                    update_progress(output_path)
+                    yield output_path
     else:
         for basename in os.listdir(root):
             real_path = os.path.join(root, basename)
             output_path = join_path(root, basename)
             if check(real_path) and match(basename):
+                update_progress(output_path)
                 yield output_path
 
 
@@ -378,7 +396,8 @@ def write_file_chunk(filepath: str, start: int, stop: int, data: bytes, total: i
         f[start:stop] = data
 
 
-def list_files(src, recursive=False) -> list:
+def list_files(src, recursive=False, progress_queue: Queue = None) -> list:
+    recur_kwargs = make_kwargs_dict(recursive=recursive, progress_queue=progress_queue)
     # if src is None:
     #     return list_files(clipboard.list_paths(exist_only=True), recursive=recursive)
     # elif isinstance(src, str):
@@ -386,16 +405,16 @@ def list_files(src, recursive=False) -> list:
         if os.path.isfile(src):
             return [src]
         elif os.path.isdir(src):
-            return list(fs_find_iter(root=src, recursive=recursive, strip_root=False))
+            return list(fs_find_iter(root=src, strip_root=False, **recur_kwargs))
         else:
             return [fp for fp in glob(src, recursive=recursive) if os.path.isfile(fp)]
     elif isinstance(src, (Iterable, Iterator)):
         r = []
         for s in src:
-            r.extend(list_files(s, recursive=recursive))
+            r.extend(list_files(s, **recur_kwargs))
         return r
     elif isinstance(src, Clipboard):
-        return list_files(src.list_paths(exist_only=True), recursive=recursive)
+        return list_files(src.list_paths(exist_only=True), **recur_kwargs)
     else:
         raise TypeError('invalid source', src)
 

@@ -508,7 +508,7 @@ def width_of_int(x: int):
     return len(str(x))
 
 
-def meta_new_thread(group: None = None, name: str = None, daemon: bool = False) -> Callable[..., Thread]:
+def meta_new_thread(group: None = None, name: str = None, daemon: bool = False):
     thread_kwargs = {'group': group, 'name': name, 'daemon': daemon}
 
     def new_thread(callee: Callable, *args, **kwargs):
@@ -600,3 +600,7 @@ class Singleton(type):
         if cls not in cls._instances:
             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
+
+
+def make_kwargs_dict(**kwargs):
+    return kwargs
