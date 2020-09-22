@@ -14,23 +14,26 @@ class LinePrinter:
     def print(self, text: str = '', **kwargs):
         return print(text, file=self.output, **kwargs)
 
-    def horizontal_line(self, char: str = '-', shorter: int = 1, **kwargs):
+    def clear(self):
+        return self.line(char=' ', end='\r')
+
+    def line(self, char: str = '-', shorter: int = 1, **kwargs):
         width = self.width or shutil.get_terminal_size()[0]
         return self.print(char * (width - shorter), **kwargs)
 
-    hl = horizontal_line
+    l = line
 
-    def horizontal_line_under(self, **kwargs):
-        return self.horizontal_line(char='_')
+    def underscore(self, **kwargs):
+        return self.line(char='_')
 
-    hlu = horizontal_line_under
+    u = underscore
 
-    def horizontal_line_double(self, **kwargs):
-        return self.horizontal_line(char='=')
+    def double_line(self, **kwargs):
+        return self.line(char='=')
 
-    hld = horizontal_line_double
+    d = double_line
 
-    def horizontal_line_wave(self, **kwargs):
-        return self.horizontal_line(char='~')
+    def wave_line(self, **kwargs):
+        return self.line(char='~')
 
-    hlw = horizontal_line_wave
+    w = wave_line

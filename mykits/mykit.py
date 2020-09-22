@@ -10,7 +10,7 @@ from argparse import ArgumentParser, REMAINDER
 
 from send2trash import send2trash
 
-from mylib.cli import LinePrinter
+from mylib.tui import LinePrinter
 from mylib.os_util import clipboard as cb, list_files
 from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, Attreebute
 
@@ -32,13 +32,13 @@ class MyKitCmd(cmd.Cmd):
 
     def precmd(self, line):
         if line:
-            cli_draw.hl(shorter=1)
+            cli_draw.l(shorter=1)
         self._done = False
         return line
 
     def postcmd(self, stop, line):
         if self._done:
-            cli_draw.hl(shorter=1)
+            cli_draw.l(shorter=1)
         return self._stop
 
     def emptyline(self):
@@ -129,7 +129,7 @@ def clear_redundant_files_func():
     for g in gone:
         if g in keep:
             dn, fn = g
-            lp.hl()
+            lp.l()
             print(f'* {os.path.join(dn, fn)}')
             for tail, ext in keep[g]:
                 print(f'@ {tail} {ext}')

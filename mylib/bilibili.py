@@ -16,7 +16,7 @@ import requests
 import you_get.util.strings
 from lxml import html
 
-from .cli import LinePrinter
+from .tui import LinePrinter
 from .misc import safe_print, safe_basename
 from .os_util import ensure_sigint_signal
 from .tricks import modify_and_import, until_return_try, range_from_expr
@@ -377,7 +377,7 @@ def download_bilibili_video(url: str or int,
         url = bilibili_url_from_vid(transparent_avid_to_bvid_via_webapi(find_bilibili_vid(url) or url))
 
     cli.print(url)
-    cli.hl(shorter=1)
+    cli.l(shorter=1)
     b = YouGetBilibiliX(cookies=cookies, qn_max=qn_max, qn_want=qn_want)
 
     if info:
@@ -401,7 +401,7 @@ def download_bilibili_video(url: str or int,
                 url = base_url + '?p={}'.format(p)
                 cli.print()
                 cli.print(url)
-                cli.hl(shorter=1)
+                cli.l(shorter=1)
                 b.download_by_url(url, **dl_kwargs)
         else:
             b.download_by_url(url, **dl_kwargs)

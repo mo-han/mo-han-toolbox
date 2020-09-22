@@ -12,7 +12,7 @@ from typing import Iterable, Iterator
 import ffmpeg
 import filetype
 
-from .cli import LinePrinter
+from .tui import LinePrinter
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
 from .os_util import pushd_context, write_json_file, read_json_file, SubscriptableFileIO, ensure_open_file, \
     fs_find_iter, \
@@ -1041,7 +1041,7 @@ def kw_video_convert(source, keywords=(), vf='', cut_points=(), dest=None,
 
     def conv_one_file(fp):
         lp = LinePrinter()
-        lp.hl()
+        lp.l()
         if not os.path.isfile(fp):
             logger.info(f'# skip non-file\n  {fp}')
         if not file_is_video(fp):
@@ -1067,7 +1067,7 @@ def kw_video_convert(source, keywords=(), vf='', cut_points=(), dest=None,
             logger.info(f'# skip tail\n  {output_path}')
             return
         logger.info(f'* {tail}\n  {fp}')
-        lp.hl()
+        lp.l()
 
         try:
             if res_limit:
@@ -1097,7 +1097,7 @@ def mark_high_crf_video_file(src, crf_thres, codec='a' or 'h', res_limit=None,
     for filepath in list_files(src, recursive=recursive):
         if not file_is_video(filepath):
             continue
-        lp.hl()
+        lp.l()
         logger.info(f'+ {filepath}')
         dirname, name, tail, ext = split_filename_tail(filepath, VALID_TAILS)
         if tail and (not redo or 'origin' not in tail):
