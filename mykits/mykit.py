@@ -11,7 +11,7 @@ from argparse import ArgumentParser, REMAINDER
 from send2trash import send2trash
 
 from mylib.tui import LinePrinter
-from mylib.os_util import clipboard as cb, list_files
+from mylib.os_util import clipboard, list_files
 from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, Attreebute
 
 rtd = Attreebute()  # runtime data
@@ -118,7 +118,7 @@ def clear_redundant_files_func():
     tg = set(args.tails_gone or [])
     xg = set(args.extensions_gone or [])
     dry = args.dry_run
-    src = list_files(args.src or cb, recursive=False)
+    src = list_files(args.src or clipboard, recursive=False)
     from collections import defaultdict
     keep = defaultdict(list)
     gone = defaultdict(list)
@@ -152,7 +152,7 @@ fcr.add_argument('src', nargs='*')
 
 def ccj_func():
     from mylib.web_client import convert_cookies_file_json_to_netscape
-    files = rtd.args.file or list_files(cb, recursive=False)
+    files = rtd.args.file or list_files(clipboard, recursive=False)
     for fp in files:
         print(f'* {fp}')
         convert_cookies_file_json_to_netscape(fp)
@@ -172,7 +172,7 @@ def vid_mhc_func():
     clean = not args.no_clean
     work_dir = args.work_dir
     redo_origin = args.redo_origin
-    src = args.src or cb
+    src = args.src or clipboard
     mark_high_crf_video_file(src=src, crf_thres=threshold, codec=codec, res_limit=res_limit,
                              redo=redo_origin, work_dir=work_dir, auto_clean=clean)
 
@@ -193,7 +193,7 @@ vid_mhc.add_argument('src', nargs='*')
 def ffmpeg_func():
     from mylib.ffmpeg_local import kw_video_convert
     args = rtd.args
-    source = args.source or cb
+    source = args.source or clipboard
     keywords = args.keywords or ()
     cut_points = args.cut_points
     output_path = args.output_path
@@ -225,7 +225,7 @@ def ffprobe_func():
     file = rtd.args.file
     ss = rtd.args.select_streams
     if not file:
-        file = cb.list_paths()[0]
+        file = clipboard.list_paths()[0]
     if ss:
         pprint(probe(file, select_streams=ss))
     else:
@@ -246,7 +246,7 @@ def file_type_func():
     else:
         fmt = '{type} ({file})'
     if not files:
-        files = cb.list_paths(exist_only=True)
+        files = clipboard.list_paths(exist_only=True)
     for f in files:
         try:
             print(fmt.format(type=guess(f).mime, file=f))
@@ -308,7 +308,7 @@ def regex_rename_func():
     replace = args.replace
     only_basename = args.only_basename
     dry_run = args.dry_run
-    for src in list_files(source or cb, recursive=recursive):
+    for src in list_files(source or clipboard, recursive=recursive):
         try:
             fs_inplace_rename_regex(src, pattern, replace, only_basename, dry_run)
         except OSError as e:
@@ -334,7 +334,7 @@ def rename_func():
     replace = args.replace
     only_basename = args.only_basename
     dry_run = args.dry_run
-    for src in list_files(source or cb, recursive=recursive):
+    for src in list_files(source or clipboard, recursive=recursive):
         try:
             fs_inplace_rename(src, pattern, replace, only_basename, dry_run)
         except OSError as e:
@@ -364,7 +364,7 @@ def run_from_lines_func():
         with open(file, 'r') as fd:
             lines = fd.readlines()
     else:
-        lines = str(cb.get()).splitlines()
+        lines = str(clipboard.get()).splitlines()
     try:
         for line in lines:
             line = line.strip()
@@ -452,7 +452,7 @@ clipboard_findurl.add_argument('pattern', help='URL pattern, or website name')
 
 def clipboard_rename_func():
     from mylib.gui import rename_dialog
-    for f in cb.list_paths():
+    for f in clipboard.list_paths():
         rename_dialog(f)
 
 
@@ -496,6 +496,42 @@ bilibili_download.add_argument('-A', '--no-moderate-audio', dest='moderate_audio
                                help='by default the best quality audio is NOT used, '
                                     'instead, a moderate quality (~128kbps) is chose, which is good enough. '
                                     'this option force choosing the best quality audio stream')
+
+
+def json_edit_func():
+    from mylib.os_util import read_json_file, write_json_file, list_files
+    from mylib.tricks import eval_or_str
+    args = rtd.args
+    file = args.file or list_files(clipboard)[0]
+    indent = args.indent
+    delete = args.delete
+    item_l = args.item
+    d = read_json_file(file)
+
+    if delete:
+        def handle(key, value):
+            if key in d:
+                if value:
+                    if d[key] == value:
+                        del d[key]
+                else:
+                    del d[key]
+    else:
+        def handle(key, value):
+            d[key] = value
+
+    for item in item_l:
+        k, v = map(eval_or_str, item.split('=', maxsplit=1))
+        handle(k, v)
+    write_json_file(file, d, indent=indent)
+
+
+json_edit = add_sub_parser('json.edit', ['jse'], 'edit JSON file')
+json_edit.set_defaults(func=json_edit_func)
+json_edit.add_argument('-f', '--file', nargs='?')
+json_edit.add_argument('-i', '--indent', type=int, default=4)
+json_edit.add_argument('-d', '--delete', action='store_true')
+json_edit.add_argument('item', nargs='+')
 
 
 def json_key_func():

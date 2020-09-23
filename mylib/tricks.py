@@ -604,3 +604,11 @@ class Singleton(type):
 
 def make_kwargs_dict(**kwargs):
     return kwargs
+
+
+def eval_or_str(x: str):
+    from ast import literal_eval
+    try:
+        return literal_eval(x)
+    except (ValueError, SyntaxError):
+        return x
