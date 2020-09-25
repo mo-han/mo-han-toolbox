@@ -139,7 +139,7 @@ def clear_redundant_files_func():
                     send2trash(join_filename_tail(dn, fn, tail, ext))
 
 
-files_clear_redundant = add_sub_parser('file.clear.redundant', ['fcr', 'crf'], 'clear files with related names')
+files_clear_redundant = add_sub_parser('file.clear.redundant', ['fcr'], 'clear files with related names')
 fcr = files_clear_redundant
 fcr.set_defaults(func=clear_redundant_files_func)
 fcr.add_argument('-t', '--tails-keep', nargs='*', metavar='tail', help='keep files with these tails')
@@ -393,7 +393,7 @@ def dukto_x_func():
     from queue import Queue
     args = rtd.args
     config_at.server.text.queue = Queue()
-    config_at.server.echo = args.echo
+    config_at.server.msg_echo = args.echo
     t = Thread(target=copy_recv_text, args=(args.file, args.clipboard))
     t.daemon = True
     ndrop_args = rtd.args.ndrop_args

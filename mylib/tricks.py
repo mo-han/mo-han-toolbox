@@ -222,9 +222,7 @@ def remove_from_list(source: Iterable, rmv_set: Iterable) -> list:
 
 
 def dedup_list(source: Iterable) -> list:
-    r = []
-    [r.append(e) for e in source if e not in r]
-    return r
+    return list(set(source))
 
 
 def constrain_value(x, x_type: Callable, x_constraint: str or Callable = None, enable_default=False, default=None):
@@ -612,3 +610,21 @@ def eval_or_str(x: str):
         return literal_eval(x)
     except (ValueError, SyntaxError):
         return x
+
+
+def make_ternary_call(callee: callable, *args, **kwargs):
+    return callee, args, kwargs
+
+
+def meta_wrap_in_process(callee, before=None, after=None):
+    def wrap(*args, **kwargs):
+        if before:
+            for _callee, _args, _kwargs in before:
+                _callee(*_args, **_kwargs)
+        r = callee(*args, **kwargs)
+        if after:
+            for _callee, _args, _kwargs in before:
+                _callee(*_args, **_kwargs)
+        return r
+
+    return wrap

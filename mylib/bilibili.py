@@ -289,6 +289,8 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         fp = you_get_filename(fp)
         print(fp)
         with open(fp, 'w', encoding='utf8') as f:
+            f.write(self.url)
+            f.write('\n\n')
             f.write(self.get_desc())
             f.write('\n\n')
             f.write(str(self.get_tags()))

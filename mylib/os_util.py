@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # encoding=utf8
 import fnmatch
+import getpass
 import html
 import json
 import os
+import platform
 import shlex
 import shutil
 import signal
@@ -462,3 +464,16 @@ def shrink_basename(s: str, max_bytes=250, encoding='utf8', add_dots=True):
         s = s[:-1]
         shrunk = True
     return s + '...' if shrunk and add_dots else s
+
+
+def get_names():
+    class Names:
+        hostname: str
+        osname: str
+        username: str
+
+    r = Names()
+    r.hostname = platform.node()
+    r.osname = platform.system()
+    r.username = getpass.getuser()
+    return r
