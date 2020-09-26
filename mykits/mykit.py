@@ -421,7 +421,9 @@ def url_from_clipboard():
     args = rtd.args
     pattern = args.pattern
     t = pyperclip.paste()
-    if pattern == 'ed2k':
+    if not pattern:
+        urls = []
+    elif pattern == 'ed2k':
         p = r'ed2k://[^/]+/'
         urls = regex_find(p, t, dedup=True)
     elif pattern == 'magnet':
@@ -435,6 +437,9 @@ def url_from_clipboard():
         urls = find_url_in_text(t)
     elif pattern in ('youtube', 'ytb'):
         from mylib.youtube import find_url_in_text
+        urls = find_url_in_text(t)
+    elif pattern in ('bilibili', 'bili'):
+        from mylib.bilibili import find_url_in_text
         urls = find_url_in_text(t)
     else:
         from mylib.text import regex_find

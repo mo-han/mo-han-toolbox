@@ -16,6 +16,7 @@ import requests
 import you_get.util.strings
 from lxml import html
 
+from .text import regex_find
 from .tui import LinePrinter
 from .misc import safe_print, safe_basename
 from .os_util import ensure_sigint_signal
@@ -194,7 +195,7 @@ def find_bilibili_vid(x: str or int) -> str or None:
     return vid
 
 
-def transparent_avid_to_bvid_via_webapi(vid: str or int, cookies: dict = None) -> str or None:
+def vid_to_bvid_web_api(vid: str or int, cookies: dict = None) -> str or None:
     if isinstance(vid, str):
         if vid[:2] in ('av', 'AV'):
             aid = vid[2:]
@@ -376,7 +377,7 @@ def download_bilibili_video(url: str or int,
     if not output:
         output = '.'
     if '://' not in url:
-        url = bilibili_url_from_vid(transparent_avid_to_bvid_via_webapi(find_bilibili_vid(url) or url))
+        url = bilibili_url_from_vid(vid_to_bvid_web_api(find_bilibili_vid(url) or url))
 
     cli.print(url)
     cli.l(shorter=1)
@@ -542,3 +543,9 @@ class BilibiliAppCacheEntry:
         safe_print(output)
         concat_videos(blv_list, output)
         shutil.copy2(os.path.join(self.folder, self._current_part, 'danmaku.xml'), output[:-3] + 'xml')
+
+
+def find_url_in_text(text: str) -> list:
+    pattern = re.compile(r'(BV[\da-zA-Z]{10}|av\d+|AV\d+|ep\d+|ss\d+)')
+    urls = [bilibili_url_from_vid(vid) for vid in regex_find(pattern, text, dedup=True)]
+    return urls
