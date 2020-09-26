@@ -7,7 +7,7 @@ from pprint import pformat
 from typing import Callable
 
 from telegram import ChatAction
-from telegram.ext import Updater, CommandHandler, Filters
+from telegram.ext import Updater, CommandHandler, Filters, Defaults
 from telegram.ext.filters import MergedFilter
 
 from .os_util import get_names
@@ -34,11 +34,14 @@ def merge_filters_or(*filters):
 
 
 class SimpleBot:
-    def __init__(self, token, auto_run=True, filters=None, user_whitelist=None, **kwargs):
+    def __init__(self, token, auto_run=True, user_whitelist=None, timeout=None,
+                 filters=None, **kwargs):
         self.device = get_names()
-        self.updater = Updater(token, use_context=True, **kwargs)
+        self.updater = Updater(token, use_context=True,
+                               request_kwargs={'read_timeout': timeout, 'connect_timeout': timeout},
+                               **kwargs)
         self.bot = self.updater.bot
-        self.__update_me__()
+        self.__update_me__(timeout=timeout)
         self.common_filters = filters
         if user_whitelist:
             chat_id_filter = Filters.chat(filter(lambda x: isinstance(x, int), user_whitelist))
@@ -48,7 +51,7 @@ class SimpleBot:
         self.post_handler = []
         self.__register_handlers__()
         if auto_run:
-            self.__bot_run__()
+            self.__bot_run__(poll_timeout=timeout)
 
     def __register_handlers__(self):
         self.commands_list = []
@@ -65,8 +68,8 @@ class SimpleBot:
                     _kwargs['filters'] = merge_filters_and(self.common_filters, _filters)
                 self.updater.dispatcher.add_handler(_type(**_kwargs))
 
-    def __update_me__(self):
-        self.me = self.bot.get_me()
+    def __update_me__(self, timeout=None):
+        self.me = self.bot.get_me(timeout=timeout)
         fullname = self.me.first_name or ''
         last_name = self.me.last_name
         if last_name:
@@ -77,8 +80,11 @@ class SimpleBot:
     def __send_action_typing__(self, update):
         self.bot.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING)
 
-    def __bot_run__(self):
-        self.updater.start_polling()
+    def __bot_run__(self, poll_timeout=None):
+        poll_param = {}
+        if poll_timeout is not None:
+            poll_param['timeout'] = poll_timeout
+        self.updater.start_polling(**poll_param)
         self.updater.idle()
 
     def __suggest_commands(self):
