@@ -6,7 +6,7 @@ from inspect import getmembers, ismethod
 from pprint import pformat
 from typing import Callable
 
-from telegram import ChatAction
+from telegram import ChatAction, Bot
 from telegram.ext import Updater, CommandHandler, Filters, Defaults
 from telegram.ext.filters import MergedFilter
 
@@ -40,13 +40,16 @@ class SimpleBot:
         self.updater = Updater(token, use_context=True,
                                request_kwargs={'read_timeout': timeout, 'connect_timeout': timeout},
                                **kwargs)
-        self.bot = self.updater.bot
+        self.bot: Bot = self.updater.bot
         self.__update_me__(timeout=timeout)
         self.common_filters = filters
         if user_whitelist:
             chat_id_filter = Filters.chat(filter(lambda x: isinstance(x, int), user_whitelist))
             chat_username_filter = Filters.chat(filter(lambda x: isinstance(x, str), user_whitelist))
             self.common_filters = merge_filters_and(self.common_filters, chat_id_filter | chat_username_filter)
+            for u in user_whitelist:
+                if isinstance(u, int):
+                    self.bot.send_message(u, self.__info_of_self__())
         self.pre_handler = []
         self.post_handler = []
         self.__register_handlers__()
@@ -87,20 +90,24 @@ class SimpleBot:
         self.updater.start_polling(**poll_param)
         self.updater.idle()
 
-    def __suggest_commands(self):
+    def __suggest_commands__(self):
         lines = [f'try these commands:']
         methods = [self.start, self.test, self.menu]
         lines.extend([f'/{e.__name__}' for e in methods])
         return '\n'.join(lines)
 
+    def __info_of_self__(self):
+        return f'bot:\n' \
+               f'{self.fullname} @{self.username}\n' \
+               f'running on device:\n' \
+               f'{self.device.username} @ {self.device.hostname} ({self.device.osname})'
+
     @meta_deco_handler_method(CommandHandler)
     def start(self, update, context):
         self.__send_action_typing__(update)
         self.__update_me__()
-        update.message.reply_text(
-            f'bot:\n{self.fullname} @{self.username}\n'
-            f'running on device:\n{self.device.username} @ {self.device.hostname} ({self.device.osname})')
-        update.message.reply_text(self.__suggest_commands())
+        update.message.reply_text(self.__info_of_self__())
+        update.message.reply_text(self.__suggest_commands__())
 
     @meta_deco_handler_method(CommandHandler)
     def test(self, update, context):

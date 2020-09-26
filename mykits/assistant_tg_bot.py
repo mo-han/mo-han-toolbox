@@ -9,7 +9,7 @@ from mylib.os_util import read_json_file, ensure_sigint_signal
 from mylib.tricks import ArgParseCompactHelpFormatter
 
 ap = argparse.ArgumentParser(formatter_class=ArgParseCompactHelpFormatter)
-ap.add_argument('-c', '--config-file', metavar='path')
+ap.add_argument('-c', '--config-file', metavar='path', required=True)
 ap.add_argument('-v', '--verbose', action='store_true')
 ap.add_argument('-T', '--timeout', type=float)
 args = ap.parse_args()
@@ -39,7 +39,7 @@ def main():
     get_logger('telegram').setLevel(log_lvl)
     config = read_json_file(config_file)
     token = config['token']
-    bot = MyAssistantBot(token, user_whitelist=config.get('user_whitelist'), timeout=args.timeout)
+    MyAssistantBot(token, user_whitelist=config.get('user_whitelist'), timeout=args.timeout)
 
 
 if __name__ == '__main__':
