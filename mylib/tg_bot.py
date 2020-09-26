@@ -98,8 +98,8 @@ class SimpleBot:
         self.__send_action_typing__(update)
         self.__update_me__()
         update.message.reply_text(
-            f'bot running:\n{self.fullname} @{self.username}\n'
-            f'on device:\n{self.device.username} @ {self.device.hostname} ({self.device.osname})')
+            f'bot:\n{self.fullname} @{self.username}\n'
+            f'running on device:\n{self.device.username} @ {self.device.hostname} ({self.device.osname})')
         update.message.reply_text(self.__suggest_commands())
 
     @meta_deco_handler_method(CommandHandler)
@@ -114,6 +114,7 @@ class SimpleBot:
     @meta_deco_handler_method(CommandHandler)
     def menu(self, update, context):
         """list all commands"""
+        self.__send_action_typing__(update)
         lines = []
         for n, v in self.commands_list:
             doc = (v.__doc__ or '...').split('\n', maxsplit=1)[0].strip()
