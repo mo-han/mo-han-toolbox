@@ -7,6 +7,7 @@ import os
 import shlex
 import sys
 from argparse import ArgumentParser, REMAINDER
+from pprint import pprint
 
 from send2trash import send2trash
 
@@ -15,7 +16,7 @@ from mylib.os_util import clipboard, list_files
 from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, Attreebute
 
 rtd = Attreebute()  # runtime data
-cli_draw = LinePrinter()
+tui_lp = LinePrinter()
 common_parser_kwargs = {'formatter_class': ArgParseCompactHelpFormatter}
 ap = ArgumentParser(**common_parser_kwargs)
 sub = ap.add_subparsers(title='sub-commands')
@@ -32,13 +33,13 @@ class MyKitCmd(cmd.Cmd):
 
     def precmd(self, line):
         if line:
-            cli_draw.l(shorter=1)
+            tui_lp.l(shorter=1)
         self._done = False
         return line
 
     def postcmd(self, stop, line):
         if self._done:
-            cli_draw.l(shorter=1)
+            tui_lp.l(shorter=1)
         return self._stop
 
     def emptyline(self):
@@ -150,6 +151,38 @@ fcr.add_argument('-D', '--dry-run', action='store_true')
 fcr.add_argument('src', nargs='*')
 
 
+def cookies_write_func():
+    import json
+    from mylib.web_client import convert_cookies_json_to_netscape
+    args = rtd.args
+    files = args.file or list_files(clipboard, recursive=False)
+    verbose = args.verbose
+    for fp in files:
+        tui_lp.l()
+        print(f'* {fp}')
+        data = input('# input cookies data, or copy data to clipboard and press enter:\n')
+        if not data:
+            print(f'# empty input, paste from clipboard')
+            data = clipboard.get()
+        if verbose:
+            pprint(data)
+        try:
+            j = json.loads(data)
+            c = convert_cookies_json_to_netscape(j, disable_filepath=True)
+        except json.decoder.JSONDecodeError:
+            c = data
+        if verbose:
+            pprint(c)
+        with open(fp, 'w') as f:
+            f.write(c)
+
+
+cookies_write = add_sub_parser('cookies.write', ['cwr'], 'write cookies file')
+cookies_write.set_defaults(func=cookies_write_func)
+cookies_write.add_argument('file', nargs='*')
+cookies_write.add_argument('-v', '--verbose', action='store_true')
+
+
 def ccj_func():
     from mylib.web_client import convert_cookies_file_json_to_netscape
     files = rtd.args.file or list_files(clipboard, recursive=False)
@@ -158,9 +191,9 @@ def ccj_func():
         convert_cookies_file_json_to_netscape(fp)
 
 
-ccj = add_sub_parser('cookies.conv.json', ['ccj'], 'convert .json cookies file')
-ccj.set_defaults(func=ccj_func)
-ccj.add_argument('file', nargs='*')
+cookies_conv_json = add_sub_parser('cookies.conv.json', ['ccj'], 'convert .json cookies file')
+cookies_conv_json.set_defaults(func=ccj_func)
+cookies_conv_json.add_argument('file', nargs='*')
 
 
 def vid_mhc_func():
@@ -565,7 +598,7 @@ json_update = add_sub_parser('json.update', ['jsup'], 'update <old> JSON file wi
 json_update.set_defaults(func=update_json_file)
 json_update.add_argument('old', help='JSON file with old data')
 json_update.add_argument('new', help='JSON file with new data')
-json_update.add_argument('-t', '--indent', type=int, default=2, metavar='N')
+json_update.add_argument('-t', '--indent', type=int, default=4, metavar='N')
 
 
 def view_similar_images():
