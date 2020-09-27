@@ -3,11 +3,10 @@
 """telegram bot utilities"""
 from functools import reduce
 from inspect import getmembers, ismethod
-from pprint import pformat
 from typing import Callable
 
 from telegram import ChatAction, Bot
-from telegram.ext import Updater, CommandHandler, Filters, Defaults
+from telegram.ext import Updater, CommandHandler, Filters
 from telegram.ext.filters import MergedFilter
 
 from .os_util import get_names
@@ -41,7 +40,7 @@ class SimpleBot:
                                request_kwargs={'read_timeout': timeout, 'connect_timeout': timeout},
                                **kwargs)
         self.bot: Bot = self.updater.bot
-        self.__update_me__(timeout=timeout)
+        self.__get_me__(timeout=timeout)
         self.common_filters = filters
         if user_whitelist:
             chat_id_filter = Filters.chat(filter(lambda x: isinstance(x, int), user_whitelist))
@@ -54,7 +53,7 @@ class SimpleBot:
         self.post_handler = []
         self.__register_handlers__()
         if auto_run:
-            self.__bot_run__(poll_timeout=timeout)
+            self.__run__(poll_timeout=timeout)
 
     def __register_handlers__(self):
         self.commands_list = []
@@ -71,7 +70,7 @@ class SimpleBot:
                     _kwargs['filters'] = merge_filters_and(self.common_filters, _filters)
                 self.updater.dispatcher.add_handler(_type(**_kwargs))
 
-    def __update_me__(self, timeout=None):
+    def __get_me__(self, timeout=None):
         self.me = self.bot.get_me(timeout=timeout)
         fullname = self.me.first_name or ''
         last_name = self.me.last_name
@@ -80,20 +79,21 @@ class SimpleBot:
         self.fullname = fullname
         self.username = self.me.username
 
-    def __send_action_typing__(self, update):
+    def __typing__(self, update):
         self.bot.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING)
 
-    def __bot_run__(self, poll_timeout=None):
+    def __run__(self, poll_timeout=None):
         poll_param = {}
         if poll_timeout is not None:
             poll_param['timeout'] = poll_timeout
         self.updater.start_polling(**poll_param)
         self.updater.idle()
 
-    def __suggest_commands__(self):
+    def __recommended_commands__(self):
         lines = [f'try these commands:']
-        methods = [self.start, self.test, self.menu]
-        lines.extend([f'/{e.__name__}' for e in methods])
+        recommended = [n for n, v in self.commands_list if
+                       hasattr(v, 'handler_xattr') and 'recommended' in v.handler_xattr]
+        lines.extend([f'/{e}' for e in recommended])
         return '\n'.join(lines)
 
     def __info_of_self__(self):
@@ -104,26 +104,24 @@ class SimpleBot:
 
     @meta_deco_handler_method(CommandHandler)
     def start(self, update, context):
-        self.__send_action_typing__(update)
-        self.__update_me__()
+        """let's roll out"""
+        self.__typing__(update)
+        self.__get_me__()
         update.message.reply_text(self.__info_of_self__())
-        update.message.reply_text(self.__suggest_commands__())
+        update.message.reply_text(self.__recommended_commands__())
 
-    @meta_deco_handler_method(CommandHandler)
-    def test(self, update, context):
-        self.__send_action_typing__(update)
-        for name in ('effective_message', 'effective_user'):
-            update.message.reply_text(name)
-            update.message.reply_text(pformat(getattr(update, name).to_dict()))
-        update.message.reply_text('bot.get_me()')
-        update.message.reply_text(pformat(self.bot.get_me().to_dict()))
+    start.handler_xattr = ['recommended']
 
     @meta_deco_handler_method(CommandHandler)
     def menu(self, update, context):
-        """list all commands"""
-        self.__send_action_typing__(update)
+        """list commands"""
+        self.__typing__(update)
         lines = []
         for n, v in self.commands_list:
+            if n.startswith('_'):
+                continue
             doc = (v.__doc__ or '...').split('\n', maxsplit=1)[0].strip()
             lines.append(f'{n} - {doc}')
         update.message.reply_text('\n'.join(lines))
+
+    menu.handler_xattr = ['recommended']

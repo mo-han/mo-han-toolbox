@@ -457,7 +457,7 @@ def filetype_is(filepath, keyword):
     return guess and keyword in guess.mime
 
 
-def shrink_basename(s: str, max_bytes=250, encoding='utf8', add_dots=True):
+def shrink_name(s: str, max_bytes=250, encoding='utf8', add_dots=True):
     shrunk = False
     limit = max_bytes - 3 if add_dots else max_bytes
     while len(s.encode(encoding=encoding)) > limit:

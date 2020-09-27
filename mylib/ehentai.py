@@ -9,7 +9,7 @@ from time import sleep
 import requests
 
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
-from .os_util import fs_legal_name, shrink_basename, write_json_file, read_json_file
+from .os_util import fs_legal_name, shrink_name, write_json_file, read_json_file
 from .tricks import VoidDuck, str_ishex
 from .web_client import cookies_dict_from_netscape_file, get_html_element_tree
 
@@ -99,14 +99,17 @@ def catalog_ehviewer_images(dry_run: bool = False):
             creators = tags['group']
         else:
             for m in (
-                    re.match(r'^\s*(?:\([^)]+\))\s*\[([^]]+)]', title),
-                    re.match(r'^\s*\[(?:pixiv|fanbox|tumblr|twitter)]\s*(.+)\s*[(\[]', title, flags=re.I),
-                    re.match(r'^\s*artist - ([^(\[]+)\s*', title, flags=re.I),
+                    re.match(r'^(?:\([^)]+\))\s*\[([^]]+)]', title),
+                    re.match(r'^\[(?:pixiv|fanbox|tumblr|twitter)]\s*(.+)\s*[(\[]', title, flags=re.I),
+                    re.match(r'^\W*artist\W*(\w.*)', title, flags=re.I),
             ):
                 if m:
                     m1 = m.group(1).strip()
                     if m1:
-                        creators = [m1]
+                        if '|' in m1:
+                            creators = [e.strip() for e in m1.split('|')]
+                        else:
+                            creators = [m1]
                         core_title = title
                     break
 
@@ -121,7 +124,7 @@ def catalog_ehviewer_images(dry_run: bool = False):
         parent, basename = os.path.split(f)
         fn, ext = os.path.splitext(basename)
         # fn = ' '.join(core_title_l) + ' ' + fn.split()[-1]
-        fn = shrink_basename(core_title, 200, add_dots=True).strip() + ' ' + fn.split()[-1]
+        fn = shrink_name(core_title, 200, add_dots=True).strip() + ' ' + fn.split()[-1]
         nf = os.path.join(folder, fs_legal_name(fn + ext))
         logger.info(logmsg_move.format(f, nf))
         if not dry_run:
