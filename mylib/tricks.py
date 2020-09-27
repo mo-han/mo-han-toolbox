@@ -7,6 +7,7 @@ import importlib.util
 import sys
 from collections import defaultdict
 from functools import wraps
+from inspect import signature
 from threading import Thread
 from typing import Dict, Iterable, Callable, Generator, Tuple, Union, Mapping, List, Iterator, Any
 
@@ -222,7 +223,9 @@ def remove_from_list(source: Iterable, rmv_set: Iterable) -> list:
 
 
 def dedup_list(source: Iterable) -> list:
-    return list(set(source))
+    r = []
+    [r.append(e) for e in source if e not in r]
+    return r
 
 
 def constrain_value(x, x_type: Callable, x_constraint: str or Callable = None, enable_default=False, default=None):
@@ -628,3 +631,19 @@ def meta_wrap_in_process(callee, before=None, after=None):
         return r
 
     return wrap
+
+
+def meta_deco_copy_signature(source: Callable) -> Decorator:
+    # https://stackoverflow.com/questions/42420810/copy-signature-forward-all-arguments-from-wrapper-function
+    src_sig = signature(source)
+
+    def deco_copy_signature(target: Callable) -> Callable:
+        @wraps(target)
+        def wrapper(*args, **kwargs):
+            src_sig.bind(*args, **kwargs)
+            return target(*args, **kwargs)
+
+        wrapper.__signature__ = signature(source)
+        return wrapper
+
+    return deco_copy_signature
