@@ -1026,6 +1026,11 @@ def kw_video_convert(source, keywords=(), vf='', cut_points=(), dest=None,
         codec = 'h'
         crf = crf or 25
         res_limit = 'HD'
+    elif 'smallerhd' in keywords:
+        codec = 'h'
+        crf = crf or 28
+        res_limit = 'HD'
+        ffmpeg_args.add(b__a='64k')
 
     if 'qsv' in keywords:
         codec += 'q'
