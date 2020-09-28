@@ -230,7 +230,7 @@ def bilibili_url_from_vid(vid: str) -> str:
 # noinspection PyUnresolvedReferences
 class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     def __init__(self, *args, cookies: str or dict = None, qn_max=116, qn_want=None):
-        super(YouGetBilibiliX, self).__init__(*args)
+        super().__init__(*args)
         self.cookie = None
         if cookies:
             self.set_cookie(cookies)
@@ -272,7 +272,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     def bilibili_headers(self, referer=None, cookie=None):
         if not cookie:
             cookie = self.cookie
-        headers = super(YouGetBilibiliX, self).bilibili_headers(referer=referer, cookie=cookie)
+        headers = super().bilibili_headers(referer=referer, cookie=cookie)
         return headers
 
     def get_title(self):
