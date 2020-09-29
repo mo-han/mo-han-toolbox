@@ -196,7 +196,7 @@ class SCPIShell(cmd.Cmd):
         command = line or input('Send command：')
         if self.verbose:
             print(f'{self.prompt}`{command}`')
-        p_return(self.send_scpi(command))
+        return p_return(self.send_scpi(command))
 
     def send_scpi(self, command):
         if '?' in command:
