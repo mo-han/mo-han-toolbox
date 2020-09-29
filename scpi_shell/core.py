@@ -4,10 +4,10 @@ import cmd
 import inspect
 import signal
 import sys
-from pprint import pprint, pformat
-from socket import timeout as SocketTimeout
-from socketserver import TCPServer, BaseRequestHandler
 from ast import literal_eval
+from pprint import pformat
+from socket import timeout as SocketTimeout
+from socketserver import ThreadingTCPServer, StreamRequestHandler
 from typing import Callable
 
 import vxi11  # pip install -U python-vxi11
@@ -302,9 +302,9 @@ class SCPIShell(cmd.Cmd):
 
     def tcprelay(self, host: str, port: int):
         callback = self.onecmd
-        welcome = f'vxi11cmd server, relay {host}:{port}, remote {self.address}.\n\n'.encode()
+        welcome = f'vxi11cmd server, relay {host}:{port}, remote {self.address}.\r\n\r\n'.encode()
 
-        class CmdServerHandler(BaseRequestHandler):
+        class CmdServerHandler(StreamRequestHandler):
             def handle(self):
                 self.request.send(welcome)
                 buffer = bytearray()
@@ -322,7 +322,7 @@ class SCPIShell(cmd.Cmd):
                         if answer:
                             self.request.send(answer.encode() + b'\n')
 
-        server = TCPServer((host, port), CmdServerHandler)
+        server = ThreadingTCPServer((host, port), CmdServerHandler)
         server.serve_forever()
 
     @staticmethod
