@@ -4,7 +4,7 @@ import cmd
 import inspect
 import signal
 import sys
-from pprint import pprint
+from pprint import pprint, pformat
 from socket import timeout as SocketTimeout
 from socketserver import TCPServer, BaseRequestHandler
 from ast import literal_eval
@@ -13,8 +13,11 @@ from typing import Callable
 import vxi11  # pip install -U python-vxi11
 from serial import Serial, SerialException
 
+__author__ = '周默晗'
+__contact__ = 'work.zhoumohan@gmail.com'
+
 S_VXI11 = 'vxi11'
-S_SERIAL = 'serial'
+STR_SERIAL = 'serial'
 # PROMPT_LEFT_ARROW = '←'
 PROMPT_LEFT_ARROW = '<-'
 
@@ -28,6 +31,33 @@ class EmptyTimeout(Exception):
 def win32_ctrl_c():
     if sys.platform == 'win32':
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # %ERRORLEVEL% = '-1073741510'
+
+
+def str2eval(x: str):
+    from ast import literal_eval
+    try:
+        return literal_eval(x)
+    except (ValueError, SyntaxError):
+        return x
+
+
+def str2float(s: str):
+    try:
+        return str(float(s))
+    except ValueError:
+        return s
+
+
+def p_return(x):
+    if x is not None:
+        print(x)
+    return x
+
+
+def pp_return(x):
+    if x is not None:
+        pp_return(x)
+    return x
 
 
 class LinkWrapper:
@@ -81,6 +111,8 @@ class VXI11LinkWrapper(LinkWrapper):
 
 
 class SCPIShell(cmd.Cmd):
+    intro = f'communicate with a remote instrument via SCPI commands\n' \
+            f'written by {__author__} <{__contact__}>'
     default_conn_type = 'VXI-11'
     default_timeout = 5
 
@@ -164,10 +196,7 @@ class SCPIShell(cmd.Cmd):
         command = line or input('Send command：')
         if self.verbose:
             print(f'{self.prompt}`{command}`')
-        r = self.send_scpi(command)
-        if r:
-            print(r)
-        return r
+        p_return(self.send_scpi(command))
 
     def send_scpi(self, command):
         if '?' in command:
@@ -190,15 +219,14 @@ class SCPIShell(cmd.Cmd):
         """
         args = line.split(maxsplit=1)
         if not args:
-            print(self.link_config())
-            pprint(self.link_config('members'))
+            return f"{self.link_config()}\n{self.link_config('members')}"
         elif len(args) == 1:
             key = args[0]
             value = self.link_config(key)
             if key == 'members':
-                pprint(value)
+                return pformat(value)
             else:
-                print(value)
+                return value
         else:
             self.link_config(args[0], literal_eval(args[-1]))
 
@@ -217,7 +245,7 @@ class SCPIShell(cmd.Cmd):
             self.write = self.link.write
             self.read = self.link.read
             self.connected = True
-        elif conn_type_lower.startswith(S_SERIAL):
+        elif conn_type_lower.startswith(STR_SERIAL):
             if address.count(':'):
                 port, setting = address.split(':', maxsplit=1)
                 if setting.count(','):
@@ -274,7 +302,7 @@ class SCPIShell(cmd.Cmd):
 
     def tcprelay(self, host: str, port: int):
         callback = self.onecmd
-        welcome = f'vxi11cmd server, listen on {host}:{port}, connect to {self.address}.\n\n'.encode()
+        welcome = f'vxi11cmd server, relay {host}:{port}, remote {self.address}.\n\n'.encode()
 
         class CmdServerHandler(BaseRequestHandler):
             def handle(self):

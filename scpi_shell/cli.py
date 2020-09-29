@@ -11,7 +11,7 @@ except ImportError as e:
 
 
 def run_cli_app():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=SCPIShell.intro, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-r', '--remote',
                         help='address or port or link of remote instrument')
     parser.add_argument('-t', '--type', default='VXI-11',
