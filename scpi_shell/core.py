@@ -318,9 +318,14 @@ class SCPIShell(cmd.Cmd):
                         buffer[:] = buffer[i + 1:]
                         command = line.decode().strip()
                         print(command)
-                        answer = callback(command)
-                        if answer:
-                            self.request.send(answer.encode() + b'\r\n')
+                        try:
+                            answer = callback(command)
+                            if answer:
+                                self.request.send(answer.encode() + b'\r\n')
+                        except KeyboardInterrupt:
+                            sys.exit(2)
+                        except Exception as e:
+                            self.request.send(str(e).encode() + b'\r\n')
 
         server = ThreadingTCPServer((host, port), CmdServerHandler)
         server.serve_forever()
