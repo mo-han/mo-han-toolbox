@@ -320,7 +320,7 @@ class SCPIShell(cmd.Cmd):
                         print(command)
                         answer = callback(command)
                         if answer:
-                            self.request.send(answer.encode() + b'\n')
+                            self.request.send(answer.encode() + b'\r\n')
 
         server = ThreadingTCPServer((host, port), CmdServerHandler)
         server.serve_forever()
