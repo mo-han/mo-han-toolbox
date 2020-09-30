@@ -3,20 +3,25 @@
 import fnmatch
 import getpass
 import html
+import io
 import json
 import os
 import platform
 import shlex
 import shutil
 import signal
+import subprocess
 import sys
 import tempfile
+import locale
+import codecs
 import urllib.parse
 from collections import defaultdict
 from contextlib import contextmanager
 from glob import glob
-from io import FileIO
+from io import FileIO, BytesIO
 from queue import Queue
+from time import time
 from typing import Iterable, Callable, Generator, Iterator, Tuple, Dict, List
 
 from filetype import filetype
@@ -477,3 +482,32 @@ def get_names():
     r.osname = platform.system()
     r.username = getpass.getuser()
     return r
+
+
+def monitor_sub_process_tty_frozen(p: subprocess.Popen, encoding=None, timeout=30, wait=1,
+                                   monitor_stdout=True, monitor_stderr=False):
+    def inc_decode(decoder: codecs.IncrementalDecoder, byte: bytes) -> str or None:
+        chars = decoder.decode(byte)
+        if chars:
+            decoder.reset()
+            return chars
+
+    if not encoding:
+        encoding = locale.getdefaultlocale()[1]
+    monitoring = []
+    if monitor_stdout:
+        monitoring.append((p.stdout, codecs.getincrementaldecoder(encoding)()))
+    if monitor_stderr:
+        monitoring.append((p.stderr, codecs.getincrementaldecoder(encoding)()))
+    t0 = time()
+    while 1:
+        for m in monitoring:
+            pipe, dec = m
+            b = pipe.read(1)
+            if b:
+                t0 = time()
+                c = inc_decode(dec, b)
+            elif time() - t0 > timeout:
+                raise TimeoutError(p)
+            else:
+                sleep(wait)
