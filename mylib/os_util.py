@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # encoding=utf8
+import codecs
 import fnmatch
 import getpass
 import html
-import io
 import json
+import locale
 import os
 import platform
 import shlex
@@ -13,20 +14,19 @@ import signal
 import subprocess
 import sys
 import tempfile
-import locale
-import codecs
 import urllib.parse
 from collections import defaultdict
 from contextlib import contextmanager
 from glob import glob
-from io import FileIO, BytesIO
+from io import FileIO
 from queue import Queue
 from time import time
 from typing import Iterable, Callable, Generator, Iterator, Tuple, Dict, List
 
+import psutil
 from filetype import filetype
 
-from .tricks import make_kwargs_dict
+from .tricks import make_kwargs_dict, NonBlockingCaller, meta_new_thread
 
 if os.name == 'nt':
     from .nt_util import *
@@ -484,30 +484,56 @@ def get_names():
     return r
 
 
-def monitor_sub_process_tty_frozen(p: subprocess.Popen, encoding=None, timeout=30, wait=1,
-                                   monitor_stdout=True, monitor_stderr=False):
-    def inc_decode(decoder: codecs.IncrementalDecoder, byte: bytes) -> str or None:
-        chars = decoder.decode(byte)
+def monitor_sub_process_tty_frozen(p: subprocess.Popen, timeout=30, wait=1,
+                                   encoding=None, ignore_decode_error=True,
+                                   ):
+    def decode(inc_decoder: codecs.IncrementalDecoder, new_bytes: bytes) -> str or None:
+        chars = inc_decoder.decode(new_bytes)
         if chars:
-            decoder.reset()
+            inc_decoder.reset()
             return chars
 
     if not encoding:
         encoding = locale.getdefaultlocale()[1]
     monitoring = []
+    monitor_stdout = bool(p.stdout)
+    monitor_stderr = bool(p.stderr)
     if monitor_stdout:
-        monitoring.append((p.stdout, codecs.getincrementaldecoder(encoding)()))
+        monitoring.append((NonBlockingCaller(p.stdout.read, 1), codecs.getincrementaldecoder(encoding)(), sys.stdout))
     if monitor_stderr:
-        monitoring.append((p.stderr, codecs.getincrementaldecoder(encoding)()))
+        monitoring.append((NonBlockingCaller(p.stderr.read, 1), codecs.getincrementaldecoder(encoding)(), sys.stderr))
     t0 = time()
     while 1:
-        for m in monitoring:
-            pipe, dec = m
-            b = pipe.read(1)
-            if b:
-                t0 = time()
-                c = inc_decode(dec, b)
-            elif time() - t0 > timeout:
-                raise TimeoutError(p)
-            else:
-                sleep(wait)
+        if time() - t0 > timeout:
+            for cp in psutil.Process(p.pid).children(recursive=True):
+                cp.kill()
+            p.kill()
+            raise TimeoutError(p.args)
+        for reader, decoder, output in monitoring:
+            decoder: codecs.IncrementalDecoder
+            try:
+                b = reader.peek()
+                if b:
+                    t0 = time()
+                    reader.call()
+                    if output:
+                        try:
+                            s = decode(decoder, b)
+                            if s:
+                                decoder.reset()
+                                output.write(s)
+                        except UnicodeDecodeError:
+                            if ignore_decode_error:
+                                decoder.reset()
+                                continue
+                            else:
+                                raise
+                else:
+                    r = p.poll()
+                    if r is not None:
+                        return r
+                    sleep(wait)
+            except reader.StillRunning:
+                pass
+            except Exception as e:
+                raise e

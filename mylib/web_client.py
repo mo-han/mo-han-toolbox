@@ -19,7 +19,7 @@ import requests.utils
 
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
 from .os_util import SubscriptableFileIO, fs_touch, write_file_chunk
-from .tricks import JSONType, meta_new_thread, meta_retry_iter, singleton
+from .tricks import JSONType, meta_retry_iter, singleton, meta_new_thread
 
 MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE = '# Netscape HTTP Cookie File'
 USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'
@@ -348,8 +348,8 @@ class DownloadPool(ThreadPoolExecutor):
         self.emergency_queue = Queue()
         self.show_status_interval = 2
         self.show_status_enable = show_status
-        meta_new_thread(daemon=True)(self.calc_speed).start()
-        meta_new_thread(daemon=True)(self.show_status).start()
+        meta_new_thread(daemon=True)(self.calc_speed).call()
+        meta_new_thread(daemon=True)(self.show_status).call()
         super().__init__(max_workers=threads_n)
 
     def queue_pipeline(self):
@@ -504,7 +504,7 @@ class DownloadPool(ThreadPoolExecutor):
         self.queue.put(None)
 
     def start_queue(self):
-        meta_new_thread()(self.queue_pipeline).start()
+        meta_new_thread()(self.queue_pipeline).call()
 
 
 def parse_https_url(url: str, allow_fragments=True):

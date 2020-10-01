@@ -8,6 +8,7 @@ import sys
 from collections import defaultdict
 from functools import wraps
 from inspect import signature
+from queue import Queue
 from threading import Thread
 from typing import Dict, Iterable, Callable, Generator, Tuple, Union, Mapping, List, Iterator, Any
 
@@ -65,11 +66,12 @@ def meta_deco_args_choices(choices: Dict[int or str, Iterable]) -> Decorator:
     return decorator
 
 
-def decorator_factory_exception_retry(exceptions: Exception or Iterable[Exception], max_retries: int = 3,
-                                      enable_default=False, default=None,
-                                      exception_predicate: Callable[[Exception], bool] = None,
-                                      exception_queue: QueueType = None) -> Decorator:
+def meta_deco_retry(exceptions=None, max_retries: int = 3,
+                    enable_default=False, default=None,
+                    exception_predicate: Callable[[Exception], bool] = None,
+                    exception_queue: QueueType = None) -> Decorator:
     """decorator factory: force a func re-running for several times on exception(s)"""
+    exceptions = exceptions or ()
     predicate = exception_predicate or (lambda e: True)
     max_retries = int(max_retries)
     initial_counter = max_retries if max_retries < 0 else max_retries + 1
@@ -509,15 +511,6 @@ def width_of_int(x: int):
     return len(str(x))
 
 
-def meta_new_thread(group: None = None, name: str = None, daemon: bool = False):
-    thread_kwargs = {'group': group, 'name': name, 'daemon': daemon}
-
-    def new_thread(callee: Callable, *args, **kwargs):
-        return Thread(target=callee, args=args, kwargs=kwargs, **thread_kwargs)
-
-    return new_thread
-
-
 def meta_retry_iter(max_retries=0,
                     throw_exceptions=(),
                     swallow_exceptions=(Exception,),
@@ -647,3 +640,74 @@ def meta_deco_copy_signature(source: Callable) -> Decorator:
         return wrapper
 
     return deco_copy_signature
+
+
+class ExceptionWithKwargs(Exception):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args)
+        self.kwargs = kwargs
+
+    def __str__(self):
+        args_str = ', '.join([str(a) for a in self.args])
+        kwargs_str = ', '.join([f'{k}={v}' for k, v in self.kwargs.items()])
+        return f"({', '.join((args_str, kwargs_str))})"
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}{self}'
+
+
+def meta_new_thread(group: None = None, name: str = None, daemon: bool = False):
+    thread_kwargs = {'group': group, 'name': name, 'daemon': daemon}
+
+    def new_thread(callee: Callable, *args, **kwargs):
+        return Thread(target=callee, args=args, kwargs=kwargs, **thread_kwargs)
+
+    return new_thread
+
+
+class NonBlockingCaller:
+    class StillRunning(ExceptionWithKwargs):
+        pass
+
+    class Stopped(Exception):
+        pass
+
+    def __init__(self, callee: Callable, *args, **kwargs):
+        self.triple = callee, args, kwargs
+        self._running = False
+        self.call()
+
+    @property
+    def running(self):
+        return self._running
+
+    def thread(self):
+        try:
+            callee, args, kwargs = self.triple
+            self._result_queue.put(callee(*args, **kwargs), block=False)
+        except Exception as e:
+            self._exception_queue.put(e, block=False)
+        finally:
+            self._running = False
+
+    def call(self):
+        if self._running:
+            return False
+        self._running = True
+        self._result_queue = Queue(maxsize=1)
+        self._exception_queue = Queue(maxsize=1)
+        self._thread = meta_new_thread(daemon=True)(self.thread)
+        self._thread.start()
+        return True
+
+    def peek(self):
+        """return callee result, or raise callee exception, or raise NonBlockingCaller.StillRunning"""
+        rq = self._result_queue
+        eq = self._exception_queue
+        if rq.qsize():
+            return rq.get(block=False)
+        elif eq.qsize():
+            raise rq.get(block=False)
+        else:
+            callee, args, kwargs = self.triple
+            raise self.StillRunning(callee, *args, **kwargs)

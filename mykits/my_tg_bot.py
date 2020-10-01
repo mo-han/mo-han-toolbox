@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
 # encoding=utf8
 import argparse
-import os
 import re
 from pprint import pformat
 
+from mylib.imports import *
 from mylib.log import get_logger
-from mylib.os_util import read_json_file, ensure_sigint_signal
-from mylib.tricks import ArgParseCompactHelpFormatter
+from mylib.os_util import read_json_file, ensure_sigint_signal, monitor_sub_process_tty_frozen
+from mylib.tricks import ArgParseCompactHelpFormatter, meta_deco_retry
 
 ap = argparse.ArgumentParser(formatter_class=ArgParseCompactHelpFormatter)
 ap.add_argument('-c', '--config-file', metavar='path', required=True)
 ap.add_argument('-v', '--verbose', action='store_true')
 ap.add_argument('-T', '--timeout', type=float)
 args = ap.parse_args()
+
+
+@meta_deco_retry(exceptions=TimeoutError, max_retries=-1)
+def bldl_retry_frozen(vid):
+    monitor_sub_process_tty_frozen(subprocess.Popen(f'bldl {vid}', shell=True, stdout=subprocess.PIPE))
 
 
 def main():
@@ -25,12 +30,14 @@ def main():
         @meta_deco_handler_method(MessageHandler, filters=Filters.regex(
             re.compile(r'BV[\da-zA-Z]{10}|av\d+|bilibili|b23\.tv')))
         def bilibili_video(self, update, context):
-            program = 'bldl'
             vid = find_bilibili_vid(update.message.text)
-            cmd = f'{program} {vid}'
-            update.message.reply_text(f'+ {vid}')
-            os.system(cmd)
-            update.message.reply_text(f'* {vid}')
+            try:
+                update.message.reply_text(f'+ {vid}')
+                bldl_retry_frozen(vid)
+                update.message.reply_text(f'* {vid}')
+            except Exception as e:
+                update.message.reply_text(f'- {vid}')
+                update.message.reply_text(f'! {repr(e)}')
 
         @meta_deco_handler_method(CommandHandler)
         def _secret(self, update, context):

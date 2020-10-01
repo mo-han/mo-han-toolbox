@@ -11,9 +11,9 @@ from pprint import pprint
 
 from send2trash import send2trash
 
-from mylib.tui import LinePrinter
 from mylib.os_util import clipboard, list_files
 from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, Attreebute
+from mylib.tui import LinePrinter
 
 rtd = Attreebute()  # runtime data
 tui_lp = LinePrinter()

@@ -372,15 +372,15 @@ def download_bilibili_video(url: str or int,
                             **kwargs):
     # 确保在Windows操作系统中，SIGINT信号能够被传递到下层扩展中，从而确保Ctrl+C能够立即停止程序
     ensure_sigint_signal()
-    cli = LinePrinter()
+    lp = LinePrinter()
 
     if not output:
         output = '.'
     if '://' not in url:
         url = bilibili_url_from_vid(vid_to_bvid_web_api(find_bilibili_vid(url) or url))
 
-    cli.print(url)
-    cli.l(shorter=1)
+    lp.print(url)
+    lp.l(shorter=1)
     b = YouGetBilibiliX(cookies=cookies, qn_max=qn_max, qn_want=qn_want)
 
     if info:
@@ -402,9 +402,9 @@ def download_bilibili_video(url: str or int,
             parts = range_from_expr(','.join(parts))
             for p in parts:
                 url = base_url + '?p={}'.format(p)
-                cli.print()
-                cli.print(url)
-                cli.l(shorter=1)
+                lp.print()
+                lp.print(url)
+                lp.l(shorter=1)
                 b.download_by_url(url, **dl_kwargs)
         else:
             b.download_by_url(url, **dl_kwargs)

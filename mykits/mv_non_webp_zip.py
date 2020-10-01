@@ -6,8 +6,8 @@ from time import time
 from zipfile import ZipFile, BadZipFile
 import shutil
 from mylib.os_util import clipboard as cb
-from mylib.os_util import list_files
 from mylib.tricks import meta_new_thread
+from mylib.os_util import list_files
 from queue import Queue
 from threading import Thread
 
@@ -41,7 +41,7 @@ def progress():
 
 
 t = meta_new_thread(daemon=True)(progress)
-t.start()
+t.call()
 files_l = list_files(src or cb, recursive=recursive, progress_queue=q)
 x, y, z = 0, 0, 0
 print()
