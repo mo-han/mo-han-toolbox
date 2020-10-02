@@ -1037,9 +1037,12 @@ def kw_video_convert(source, keywords=(), vf='', cut_points=(), dest=None,
         ffmpeg_args.add(vcodec=codecs_d[codec], global_quality=crf)
     else:
         ffmpeg_args.add(vcodec=codecs_d[codec], crf=crf)
-
     ffmpeg_args.add(ffmpeg_opts)
+
     tail = TAILS_D[f'{codec}8']
+    if 'copy' in keywords:
+        tail = ''
+        
     cut_points = cut_points or []
     start = cut_points[0] if cut_points else 0
     end = cut_points[1] if len(cut_points) >= 2 else 0
@@ -1052,6 +1055,7 @@ def kw_video_convert(source, keywords=(), vf='', cut_points=(), dest=None,
         if not file_is_video(fp):
             logger.info(f'# skip non-video\n  {fp}')
             return
+
         dirname, input_basename = os.path.split(fp)
         input_non_ext, input_ext = os.path.splitext(input_basename)
         input_name, input_tail = os.path.splitext(input_non_ext)
@@ -1066,8 +1070,12 @@ def kw_video_convert(source, keywords=(), vf='', cut_points=(), dest=None,
         else:
             input_name = input_non_ext
             input_tail = ''
+        output_ext = input_ext
+        if 'mp4' in keywords:
+            output_ext = '.mp4'
+
         origin_path = os.path.join(dirname, input_name + '.origin' + input_ext)
-        output_path = dest or os.path.join(dirname, input_name + tail + input_ext)
+        output_path = dest or os.path.join(dirname, input_name + tail + output_ext)
         if os.path.isfile(output_path) and not overwrite:
             logger.info(f'# skip tail\n  {output_path}')
             return

@@ -10,8 +10,8 @@ from time import time, sleep
 
 def __placeholder():
     os
-    shutil
     sys
     time
     sleep
+    shutil
     subprocess
