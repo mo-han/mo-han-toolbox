@@ -954,11 +954,11 @@ def get_width_height(filepath) -> (int, int):
     return d['width'], d['height']
 
 
-@meta_deco_args_choices({'res_limit': (None, 'FHD', 'HD', 'qHD')})
+@meta_deco_args_choices({'res_limit': (None, 'FHD', 'HD', 'qHD', 'QHD')})
 def get_vf_res_scale_down(width: int, height: int, res_limit='FHD', vf: str = None) -> str or None:
     """generate 'scale=<w>:<h>' value for ffmpeg `vf` option, to scale down the given resolution
     return empty str if the given resolution is enough low thus scaling is not needed"""
-    d = {'FHD': (1920, 1080), 'HD': (1280, 720), 'qHD': (960, 540)}
+    d = {'FHD': (1920, 1080), 'HD': (1280, 720), 'qHD': (960, 540), 'QHD': (2560, 1440)}
     auto_calc = -2
     if not res_limit:
         return
@@ -977,7 +977,8 @@ def get_vf_res_scale_down(width: int, height: int, res_limit='FHD', vf: str = No
 
 
 def kw_video_convert(source, keywords=(), vf='', cut_points=(), dest=None,
-                     overwrite=False, redo=False, verbose=0, ffmpeg_opts=(),
+                     overwrite=False, redo=False, ffmpeg_opts=(),
+                     verbose=0, dry_run=False,
                      **kwargs):
     ff = FFmpegRunner(overwrite=True, banner=False)
     if verbose > 1:
@@ -1017,6 +1018,8 @@ def kw_video_convert(source, keywords=(), vf='', cut_points=(), dest=None,
             res_limit = 'HD'
         elif kw in ('qHD',):
             res_limit = 'qHD'
+        elif kw in ('QHD', 'qhd'):
+            res_limit = 'QHD'
         elif kw in ('2ch', 'stereo'):
             ffmpeg_args.add(ac=2)
         elif kw == 'hevc':
@@ -1042,7 +1045,7 @@ def kw_video_convert(source, keywords=(), vf='', cut_points=(), dest=None,
     tail = TAILS_D[f'{codec}8']
     if 'copy' in keywords:
         tail = ''
-        
+
     cut_points = cut_points or []
     start = cut_points[0] if cut_points else 0
     end = cut_points[1] if len(cut_points) >= 2 else 0
@@ -1086,7 +1089,8 @@ def kw_video_convert(source, keywords=(), vf='', cut_points=(), dest=None,
             if res_limit:
                 w, h = get_width_height(fp)
                 ffmpeg_args.add(vf=(get_vf_res_scale_down(w, h, res_limit, vf=vf)))
-            ff.convert([fp], output_path, ffmpeg_args, start=start, end=end, **kwargs)
+            if not dry_run:
+                ff.convert([fp], output_path, ffmpeg_args, start=start, end=end, **kwargs)
             logger.info(f'+ {output_path}')
             os.rename(fp, origin_path)
         except ff.FFmpegError as e:
