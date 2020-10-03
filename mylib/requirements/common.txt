@@ -3,24 +3,18 @@ colorama
 ffmpeg-python
 filetype  #license-mit
 gallery-dl
-gooey  #need:wxpython:https://extras.wxpython.org/wxPython4/extras/
 humanize  #license-mit
 imagehash
 inflection  #license-mit
-keyboard
 lxml
-mouse
 ndrop
 opencv-python
 pillow
 pure-python-adb
-pyautogui  # pyautogui==0.9.39
 pymediainfo  #license-mit
 pyperclip
 pyreadline
 pyserial
-pysimpleguiqt
-pywinauto<0.6.7
 requests
 selenium<3.8  # phantomjs
 send2trash
