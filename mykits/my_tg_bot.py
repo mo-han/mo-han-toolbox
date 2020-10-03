@@ -15,14 +15,14 @@ ap = argparse.ArgumentParser(formatter_class=ArgParseCompactHelpFormatter)
 ap.add_argument('-c', '--config-file', metavar='path', required=True)
 ap.add_argument('-v', '--verbose', action='store_true')
 ap.add_argument('-T', '--timeout', type=float)
-args = ap.parse_args()
-config_file = args.config_file
+parsed_args = ap.parse_args()
+config_file = parsed_args.config_file
 config = read_json_file(config_file)
 
 
 @meta_deco_retry(exceptions=TimeoutError, max_retries=-1)
-def bldl_retry_frozen(vid):
-    p = subprocess.Popen(['bldl.cmd', str(vid)], stdout=subprocess.PIPE)
+def bldl_retry_frozen(*args):
+    p = subprocess.Popen(['bldl.cmd', *args], stdout=subprocess.PIPE)
     return monitor_sub_process_tty_frozen(p, encoding='u8')
 
 
@@ -35,20 +35,23 @@ def main():
         @meta_deco_handler_method(MessageHandler, filters=Filters.regex(
             re.compile(r'BV[\da-zA-Z]{10}|av\d+|bilibili|b23\.tv')))
         def bldl(self, update, context):
-            vid = find_bilibili_vid(update.message.text)
+            args = [s.strip() for s in update.message.text.splitlines()]
+            vid = find_bilibili_vid(args[0])
+            args[0] = vid
+            args_str = ' '.join(args)
             try:
-                update.message.reply_text(f'+ {vid}')
-                p, out, err = bldl_retry_frozen(vid)
+                update.message.reply_text(f'+ {args_str}')
+                p, out, err = bldl_retry_frozen(*args)
                 if p.returncode:
-                    update.message.reply_text(f'- {vid}')
+                    update.message.reply_text(f'- {args_str}')
                     echo = ''.join([decode(b) for b in out.readlines()[-3:]])
                     self.__reply_markdown__(update, f'```\n{echo}```')
                 else:
-                    update.message.reply_text(f'* {vid}')
-                    echo = ''.join([decode(b) for b in out.readlines()])
+                    update.message.reply_text(f'* {args_str}')
+                    echo = ''.join([s for s in [decode(b) for b in out.readlines()] if '─┤' not in s])
                     self.__reply_markdown__(update, f'```\n{echo}```')
             except Exception as e:
-                update.message.reply_text(f'! {vid}')
+                update.message.reply_text(f'! {args_str}')
                 self.__reply_markdown__(update, f'```{repr(e)}```')
 
         @meta_deco_handler_method(CommandHandler)
@@ -60,15 +63,15 @@ def main():
             update.message.reply_text('bot.get_me()')
             update.message.reply_text(pformat(self.bot.get_me().to_dict()))
 
-    if args.verbose:
+    if parsed_args.verbose:
         log_lvl = 'DEBUG'
-        print(args)
+        print(parsed_args)
         print(config)
     else:
         log_lvl = 'INFO'
     get_logger('telegram').setLevel(log_lvl)
     token = config['token']
-    MyAssistantBot(token, user_whitelist=config.get('user_whitelist'), timeout=args.timeout)
+    MyAssistantBot(token, user_whitelist=config.get('user_whitelist'), timeout=parsed_args.timeout)
 
 
 if __name__ == '__main__':
