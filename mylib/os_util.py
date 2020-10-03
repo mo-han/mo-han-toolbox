@@ -18,7 +18,7 @@ import urllib.parse
 from collections import defaultdict
 from contextlib import contextmanager
 from glob import glob
-from io import FileIO
+from io import FileIO, BytesIO
 from queue import Queue
 from time import time
 from typing import Iterable, Callable, Generator, Iterator, Tuple, Dict, List
@@ -138,7 +138,7 @@ def ensure_chdir(dest: str):
 
 
 @contextmanager
-def pushd_context(dst: str, ensure_dst: bool = False):
+def ctx_pushd(dst: str, ensure_dst: bool = False):
     if ensure_dst:
         cd = ensure_chdir
     else:
@@ -495,27 +495,34 @@ def monitor_sub_process_tty_frozen(p: subprocess.Popen, timeout=30, wait=1,
 
     if not encoding:
         encoding = locale.getdefaultlocale()[1]
+    _out = BytesIO()
+    _err = BytesIO()
     monitoring = []
     monitor_stdout = bool(p.stdout)
     monitor_stderr = bool(p.stderr)
     if monitor_stdout:
-        monitoring.append((NonBlockingCaller(p.stdout.read, 1), codecs.getincrementaldecoder(encoding)(), sys.stdout))
+        monitoring.append(
+            (NonBlockingCaller(p.stdout.read, 1), codecs.getincrementaldecoder(encoding)(), sys.stdout, _out))
     if monitor_stderr:
-        monitoring.append((NonBlockingCaller(p.stderr.read, 1), codecs.getincrementaldecoder(encoding)(), sys.stderr))
+        monitoring.append(
+            (NonBlockingCaller(p.stderr.read, 1), codecs.getincrementaldecoder(encoding)(), sys.stderr, _err))
     t0 = time()
     while 1:
         if time() - t0 > timeout:
             for cp in psutil.Process(p.pid).children(recursive=True):
                 cp.kill()
             p.kill()
-            raise TimeoutError(p.args)
-        for reader, decoder, output in monitoring:
+            _out.seek(0)
+            _err.seek(0)
+            raise TimeoutError(p, _out, _err)
+        for nb_reader, decoder, output, inner in monitoring:
             decoder: codecs.IncrementalDecoder
             try:
-                b = reader.peek()
+                b = nb_reader.get()
                 if b:
                     t0 = time()
-                    reader.call()
+                    inner.write(b)
+                    nb_reader.run()
                     if output:
                         try:
                             s = decode(decoder, b)
@@ -531,9 +538,11 @@ def monitor_sub_process_tty_frozen(p: subprocess.Popen, timeout=30, wait=1,
                 else:
                     r = p.poll()
                     if r is not None:
-                        return r
+                        _out.seek(0)
+                        _err.seek(0)
+                        return p, _out, _err
                     sleep(wait)
-            except reader.StillRunning:
+            except nb_reader.StillRunning:
                 pass
             except Exception as e:
                 raise e

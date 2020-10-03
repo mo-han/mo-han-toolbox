@@ -675,7 +675,7 @@ class NonBlockingCaller:
     def __init__(self, callee: Callable, *args, **kwargs):
         self.triple = callee, args, kwargs
         self._running = False
-        self.call()
+        self.run()
 
     @property
     def running(self):
@@ -690,7 +690,7 @@ class NonBlockingCaller:
         finally:
             self._running = False
 
-    def call(self):
+    def run(self):
         if self._running:
             return False
         self._running = True
@@ -700,7 +700,7 @@ class NonBlockingCaller:
         self._thread.start()
         return True
 
-    def peek(self):
+    def get(self):
         """return callee result, or raise callee exception, or raise NonBlockingCaller.StillRunning"""
         rq = self._result_queue
         eq = self._exception_queue

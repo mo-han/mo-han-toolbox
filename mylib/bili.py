@@ -179,7 +179,7 @@ def find_bilibili_vid(x: str or int) -> str or None:
     if isinstance(x, int):
         vid = 'av{}'.format(x)
     elif isinstance(x, str):
-        for p in (r'(av\d+)', r'(BV[\da-zA-Z]{10})'):
+        for p in (r'(BV[\da-zA-Z]{10})', r'(av\d+)',):
             m = re.search(p, x, flags=re.I)
             if m:
                 vid = m.group(1)
@@ -207,12 +207,11 @@ def vid_to_bvid_web_api(vid: str or int, cookies: dict = None) -> str or None:
         raise TypeError('avid must be str or int')
     url = 'https://api.bilibili.com/x/web-interface/archive/stat'
     r = requests.get(url, params={'aid': aid}, **make_kwargs_for_lib_requests(cookies=cookies))
-    print(r.url)
     j = r.json()
     if j['code'] == 0 and j['data']:
         return j['data']['bvid']
     else:
-        return None
+        raise BilibiliError(j)
 
 
 def bilibili_url_from_vid(vid: str) -> str:

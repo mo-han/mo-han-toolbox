@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # encoding=utf8
-
+import locale
 import re
 from typing import Iterable, Iterator
+
 from .tricks import dedup_list, meta_deco_args_choices
 
 
@@ -44,3 +45,10 @@ def dedup_periodical_str(s):
         return s
     else:
         return s[:i + 1]
+
+
+def decode(b: bytes, encoding='u8'):
+    try:
+        return b.decode(encoding=encoding)
+    except UnicodeDecodeError:
+        return b.decode(encoding=locale.getdefaultlocale()[1])

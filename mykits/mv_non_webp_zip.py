@@ -41,7 +41,7 @@ def progress():
 
 
 t = meta_new_thread(daemon=True)(progress)
-t.call()
+t.run()
 files_l = list_files(src or cb, recursive=recursive, progress_queue=q)
 x, y, z = 0, 0, 0
 print()

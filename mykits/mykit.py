@@ -474,7 +474,7 @@ def url_from_clipboard():
         from mylib.youtube import find_url_in_text
         urls = find_url_in_text(t)
     elif pattern in ('bilibili', 'bili'):
-        from mylib.bilibili import find_url_in_text
+        from mylib.bili import find_url_in_text
         urls = find_url_in_text(t)
     else:
         from mylib.text import regex_find
@@ -512,7 +512,7 @@ potplayer_rename.add_argument('-F', '--no-keep-front', action='store_true', help
 
 
 def bilibili_download_func():
-    from mylib.bilibili import download_bilibili_video
+    from mylib.bili import download_bilibili_video
     args = rtd.args
     if args.verbose:
         print(args)

@@ -5,7 +5,7 @@ from functools import reduce
 from inspect import getmembers, ismethod
 from typing import Callable
 
-from telegram import ChatAction, Bot
+from telegram import ChatAction, Bot, Update, ParseMode
 from telegram.ext import Updater, CommandHandler, Filters
 from telegram.ext.filters import MergedFilter
 
@@ -79,8 +79,15 @@ class SimpleBot:
         self.fullname = fullname
         self.username = self.me.username
 
-    def __typing__(self, update):
+    def __typing__(self, update: Update):
         self.bot.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING)
+
+    @staticmethod
+    def __reply_text__(update: Update, text, **kwargs):
+        update.message.reply_text(text, **kwargs)
+
+    def __reply_markdown__(self, update: Update, md_text):
+        self.__reply_text__(update, md_text, parse_mode=ParseMode.MARKDOWN)
 
     def __run__(self, poll_timeout=None):
         poll_param = {}
@@ -103,7 +110,7 @@ class SimpleBot:
                f'{self.device.username} @ {self.device.hostname} ({self.device.osname})'
 
     @meta_deco_handler_method(CommandHandler)
-    def start(self, update, context):
+    def start(self, update: Update, context):
         """let's roll out"""
         self.__typing__(update)
         self.__get_me__()
@@ -113,7 +120,7 @@ class SimpleBot:
     start.handler_xattr = ['recommended']
 
     @meta_deco_handler_method(CommandHandler)
-    def menu(self, update, context):
+    def menu(self, update: Update, context):
         """list commands"""
         self.__typing__(update)
         lines = []

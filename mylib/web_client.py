@@ -348,8 +348,8 @@ class DownloadPool(ThreadPoolExecutor):
         self.emergency_queue = Queue()
         self.show_status_interval = 2
         self.show_status_enable = show_status
-        meta_new_thread(daemon=True)(self.calc_speed).call()
-        meta_new_thread(daemon=True)(self.show_status).call()
+        meta_new_thread(daemon=True)(self.calc_speed).run()
+        meta_new_thread(daemon=True)(self.show_status).run()
         super().__init__(max_workers=threads_n)
 
     def queue_pipeline(self):
@@ -504,7 +504,7 @@ class DownloadPool(ThreadPoolExecutor):
         self.queue.put(None)
 
     def start_queue(self):
-        meta_new_thread()(self.queue_pipeline).call()
+        meta_new_thread()(self.queue_pipeline).run()
 
 
 def parse_https_url(url: str, allow_fragments=True):
