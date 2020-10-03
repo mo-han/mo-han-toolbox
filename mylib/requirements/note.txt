@@ -1,4 +1,4 @@
 install wxpython on linux:
-https://extras.wxpython.org/wxPython4/extras/
+https://extras.wxpython.org/wxPython4/extras/linux/
 https://stackoverflow.com/questions/61390486/wxpython-installation-failure
 https://askubuntu.com/questions/1073145/how-to-install-wxpython-4-ubuntu-18-04/1073183#1073183
