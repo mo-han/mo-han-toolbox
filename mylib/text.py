@@ -52,3 +52,7 @@ def decode(b: bytes, encoding='u8'):
         return b.decode(encoding=encoding)
     except UnicodeDecodeError:
         return b.decode(encoding=locale.getdefaultlocale()[1])
+
+
+def WideLenStr(str):
+    from unicodedata import east_asian_width

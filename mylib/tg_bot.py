@@ -48,7 +48,7 @@ class SimpleBot:
             self.common_filters = merge_filters_and(self.common_filters, chat_id_filter | chat_username_filter)
             for u in user_whitelist:
                 if isinstance(u, int):
-                    self.bot.send_message(u, self.__info_of_self__())
+                    self.bot.send_message(u, self.__about_self__())
         self.pre_handler = []
         self.post_handler = []
         self.__register_handlers__()
@@ -89,6 +89,9 @@ class SimpleBot:
     def __reply_markdown__(self, update: Update, md_text):
         self.__reply_text__(update, md_text, parse_mode=ParseMode.MARKDOWN)
 
+    def __reply_md_code_block__(self, update: Update, code_text):
+        self.__reply_markdown__(update, f'```\n{code_text}```')
+
     def __run__(self, poll_timeout=None):
         poll_param = {}
         if poll_timeout is not None:
@@ -103,7 +106,7 @@ class SimpleBot:
         lines.extend([f'/{e}' for e in recommended])
         return '\n'.join(lines)
 
-    def __info_of_self__(self):
+    def __about_self__(self):
         return f'bot:\n' \
                f'{self.fullname} @{self.username}\n' \
                f'running on device:\n' \
@@ -114,7 +117,7 @@ class SimpleBot:
         """let's roll out"""
         self.__typing__(update)
         self.__get_me__()
-        update.message.reply_text(self.__info_of_self__())
+        update.message.reply_text(self.__about_self__())
         update.message.reply_text(self.__recommended_commands__())
 
     start.handler_xattr = ['recommended']
@@ -129,6 +132,7 @@ class SimpleBot:
                 continue
             doc = (v.__doc__ or '...').split('\n', maxsplit=1)[0].strip()
             lines.append(f'{n} - {doc}')
-        update.message.reply_text('\n'.join(lines))
+        menu_str = '\n'.join(lines)
+        self.__reply_markdown__(update, f'```\n{menu_str}```')
 
     menu.handler_xattr = ['recommended']

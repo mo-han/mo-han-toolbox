@@ -21,9 +21,15 @@ config = read_json_file(config_file)
 
 
 @meta_deco_retry(exceptions=TimeoutError, max_retries=-1)
-def bldl_retry_frozen(*args):
-    p = subprocess.Popen(['bldl.cmd', *args], stdout=subprocess.PIPE)
+def bldl_retry_frozen(*args: str):
+    p = subprocess.Popen(['bldl.sh.cmd', *args], stdout=subprocess.PIPE)
     return monitor_sub_process_tty_frozen(p, encoding='u8')
+
+
+@meta_deco_retry(exceptions=TimeoutError, max_retries=-1)
+def ytdl_retry_frozen(*args: str):
+    p = subprocess.Popen(['ytdl.sh.cmd', *args], stdout=subprocess.PIPE)
+    return monitor_sub_process_tty_frozen(p, encoding='u8', timeout=60)
 
 
 def main():
@@ -33,26 +39,50 @@ def main():
 
     class MyAssistantBot(SimpleBot):
         @meta_deco_handler_method(MessageHandler, filters=Filters.regex(
-            re.compile(r'BV[\da-zA-Z]{10}|av\d+|bilibili|b23\.tv')))
-        def bldl(self, update, context):
+            re.compile(r'BV[\da-zA-Z]{10}|av\d+')))
+        def _bldl(self, update, *args):
             args = [s.strip() for s in update.message.text.splitlines()]
             vid = find_bilibili_vid(args[0])
             args[0] = vid
             args_str = ' '.join(args)
             try:
-                update.message.reply_text(f'+ {args_str}')
+                self.__reply_md_code_block__(update, f'+ {args_str}')
                 p, out, err = bldl_retry_frozen(*args)
                 if p.returncode:
-                    update.message.reply_text(f'- {args_str}')
+                    self.__reply_md_code_block__(update, f'- {args_str}')
                     echo = ''.join([decode(b) for b in out.readlines()[-3:]])
-                    self.__reply_markdown__(update, f'```\n{echo}```')
+                    self.__reply_md_code_block__(update, echo)
                 else:
-                    update.message.reply_text(f'* {args_str}')
+                    self.__reply_md_code_block__(update, f'* {args_str}')
                     echo = ''.join([s for s in [decode(b) for b in out.readlines()] if '─┤' not in s])
-                    self.__reply_markdown__(update, f'```\n{echo}```')
+                    self.__reply_md_code_block__(update, echo)
             except Exception as e:
-                update.message.reply_text(f'! {args_str}')
-                self.__reply_markdown__(update, f'```{repr(e)}```')
+                self.__reply_md_code_block__(update, f'- {args_str}')
+                self.__reply_md_code_block__(update, repr(e))
+
+        @meta_deco_handler_method(MessageHandler, filters=Filters.regex(
+            re.compile(r'pornhub|youtube|iwara')))
+        def _ytdl(self, update: Update, context):
+            args = [s.strip() for s in update.message.text.splitlines()]
+            args[0] = re.findall(r'https?://.+', args[0])[0]
+            args_str = ' '.join(args)
+            try:
+                self.__reply_md_code_block__(update, f'+ {args_str}')
+                p, out, err = ytdl_retry_frozen(*args)
+                while 1:
+                    if p.returncode:
+                        self.__reply_md_code_block__(update, f'! {args_str}')
+                        echo = ''.join([decode(b) for b in out.readlines()[-10:]])
+                        self.__reply_md_code_block__(update, echo)
+                        p, out, err = ytdl_retry_frozen(*args)
+                    else:
+                        self.__reply_md_code_block__(update, f'* {args_str}')
+                        echo = ''.join([s for s in [decode(b) for b in out.readlines()[-10:]]])
+                        self.__reply_md_code_block__(update, echo)
+                        break
+            except Exception as e:
+                self.__reply_md_code_block__(update, f'- {args_str}')
+                self.__reply_md_code_block__(update, repr(e))
 
         @meta_deco_handler_method(CommandHandler)
         def _secret(self, update: Update, context):

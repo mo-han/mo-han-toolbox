@@ -518,7 +518,7 @@ def monitor_sub_process_tty_frozen(p: subprocess.Popen, timeout=30, wait=1,
         for nb_reader, decoder, output, inner in monitoring:
             decoder: codecs.IncrementalDecoder
             try:
-                b = nb_reader.get()
+                b = nb_reader.get(wait)
                 if b:
                     t0 = time()
                     inner.write(b)

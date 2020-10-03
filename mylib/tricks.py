@@ -10,6 +10,7 @@ from functools import wraps
 from inspect import signature
 from queue import Queue
 from threading import Thread
+from time import sleep
 from typing import Dict, Iterable, Callable, Generator, Tuple, Union, Mapping, List, Iterator, Any
 
 import inflection
@@ -700,7 +701,7 @@ class NonBlockingCaller:
         self._thread.start()
         return True
 
-    def get(self):
+    def get(self, wait):
         """return callee result, or raise callee exception, or raise NonBlockingCaller.StillRunning"""
         rq = self._result_queue
         eq = self._exception_queue
@@ -709,5 +710,6 @@ class NonBlockingCaller:
         elif eq.qsize():
             raise rq.get(block=False)
         else:
+            sleep(wait)
             callee, args, kwargs = self.triple
             raise self.StillRunning(callee, *args, **kwargs)
