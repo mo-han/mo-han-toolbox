@@ -74,6 +74,8 @@ def main():
                         self.__reply_md_code_block__(update, f'! {args_str}')
                         echo = ''.join([decode(b) for b in out.readlines()[-10:]])
                         self.__reply_md_code_block__(update, echo)
+                        if 'ERROR: Unable to extract iframe URL' in echo:
+                            break
                         p, out, err = ytdl_retry_frozen(*args)
                     else:
                         self.__reply_md_code_block__(update, f'* {args_str}')

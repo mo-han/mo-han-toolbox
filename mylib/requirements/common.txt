@@ -10,6 +10,7 @@ lxml
 ndrop
 opencv-python
 pillow
+psutil
 pure-python-adb
 pymediainfo  #license-mit
 pyperclip
