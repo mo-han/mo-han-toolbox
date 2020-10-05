@@ -61,7 +61,7 @@ def main():
                 self.__reply_md_code_block__(update, repr(e))
 
         @meta_deco_handler_method(MessageHandler, filters=Filters.regex(
-            re.compile(r'pornhub|youtube|iwara')))
+            re.compile(r'youtube|youtu\.be|iwara|pornhub')))
         def _ytdl(self, update: Update, context):
             args = [s.strip() for s in update.message.text.splitlines()]
             args[0] = re.findall(r'https?://.+', args[0])[0]
