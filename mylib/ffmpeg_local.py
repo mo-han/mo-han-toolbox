@@ -976,11 +976,27 @@ def get_vf_res_scale_down(width: int, height: int, res_limit='FHD', vf: str = No
     return f'{res_scale},{vf}' if vf else res_scale
 
 
-def kw_video_convert(source, keywords=(), vf='', cut_points=(), dest=None,
+def get_filter_list(filters):
+    if not filters:
+        return []
+    elif isinstance(filters, str):
+        return [filters]
+    elif isinstance(filters, (Iterator, Iterable)):
+        return list(filters)
+    else:
+        return []
+
+
+def get_filter_str(filters):
+    return ','.join(get_filter_list(filters))
+
+
+def kw_video_convert(source, keywords=(), vf=None, cut_points=(), dest=None,
                      overwrite=False, redo=False, ffmpeg_opts=(),
                      verbose=0, dry_run=False,
                      **kwargs):
     ff = FFmpegRunner(overwrite=True, banner=False)
+    vf_list = get_filter_list(vf)
     if verbose > 1:
         lvl = 'DEBUG'
     elif verbose > 0:
@@ -996,6 +1012,9 @@ def kw_video_convert(source, keywords=(), vf='', cut_points=(), dest=None,
     res_limit = None
     codec = 'a'
     crf = None
+
+    if 'smartblur' in keywords:
+        vf_list.append('smartblur')
 
     for kw in keywords:
         if kw[0] + kw[-1] in ('vk', 'vM') and kw[1:-1].isdecimal():
@@ -1088,7 +1107,10 @@ def kw_video_convert(source, keywords=(), vf='', cut_points=(), dest=None,
         try:
             if res_limit:
                 w, h = get_width_height(fp)
-                ffmpeg_args.add(vf=(get_vf_res_scale_down(w, h, res_limit, vf=vf)))
+                ffmpeg_args.add(
+                    vf=get_vf_res_scale_down(
+                        w, h, res_limit,
+                        vf=get_filter_str(vf_list)))
             if not dry_run:
                 ff.convert([fp], output_path, ffmpeg_args, start=start, end=end, **kwargs)
             logger.info(f'+ {output_path}')

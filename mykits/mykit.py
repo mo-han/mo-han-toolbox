@@ -228,6 +228,7 @@ def ffmpeg_func():
     args = rtd.args
     source = args.source or clipboard
     keywords = args.keywords or ()
+    video_filters = args.video_filters
     cut_points = args.cut_points
     output_path = args.output_path
     overwrite = args.overwrite
@@ -237,7 +238,7 @@ def ffmpeg_func():
     opts = args.opts
     if verbose:
         print(args)
-    kw_video_convert(source=source, keywords=keywords, cut_points=cut_points, dest=output_path,
+    kw_video_convert(source=source, keywords=keywords, vf=video_filters, cut_points=cut_points, dest=output_path,
                      overwrite=overwrite, redo=redo_origin, verbose=verbose, dry_run=dry_run, ffmpeg_opts=opts)
 
 
@@ -245,6 +246,7 @@ ffmpeg = add_sub_parser('wrap.ffmpeg', ['ffmpeg', 'ff'], 'convert video file usi
 ffmpeg.set_defaults(func=ffmpeg_func)
 ffmpeg.add_argument('-s', '--source', nargs='*', metavar='path', help='if omitted, will try paths in clipboard')
 ffmpeg.add_argument('-k', '--keywords', metavar='kw', nargs='*')
+ffmpeg.add_argument('-vf', '--video-filters', nargs='*')
 ffmpeg.add_argument('-t', '--time-cut', dest='cut_points', metavar='ts', nargs='*')
 ffmpeg.add_argument('-o', '--output-path')
 ffmpeg.add_argument('-O', '--overwrite', action='store_true')
