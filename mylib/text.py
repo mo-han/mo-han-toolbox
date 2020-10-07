@@ -3,6 +3,7 @@
 import locale
 import re
 from typing import Iterable, Iterator
+from unicodedata import east_asian_width
 
 from .tricks import dedup_list, meta_deco_args_choices
 
@@ -54,5 +55,8 @@ def decode(b: bytes, encoding='u8'):
         return b.decode(encoding=locale.getdefaultlocale()[1])
 
 
-def WideLenStr(str):
-    from unicodedata import east_asian_width
+class WideLengthString(str):
+    def __len__(self):
+        y = super().__len__()
+        y += sum([1 for c in self if east_asian_width(c) == 'W'])
+        return y
