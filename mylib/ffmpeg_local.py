@@ -1095,6 +1095,8 @@ def kw_video_convert(source, keywords=(), vf=None, cut_points=(), dest=None,
         output_ext = input_ext
         if 'mp4' in keywords:
             output_ext = '.mp4'
+        if 'mkv' in keywords:
+            output_ext = '.mkv'
 
         origin_path = os.path.join(dirname, input_name + '.origin' + input_ext)
         output_path = dest or os.path.join(dirname, input_name + tail + output_ext)
