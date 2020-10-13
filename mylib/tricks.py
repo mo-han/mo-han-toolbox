@@ -67,12 +67,12 @@ def meta_deco_args_choices(choices: Dict[int or str, Iterable]) -> Decorator:
     return decorator
 
 
-def meta_deco_retry(exceptions=None, max_retries: int = 3,
+def meta_deco_retry(retry_exceptions=None, max_retries: int = 3,
                     enable_default=False, default=None,
                     exception_predicate: Callable[[Exception], bool] = None,
                     exception_queue: QueueType = None) -> Decorator:
     """decorator factory: force a func re-running for several times on exception(s)"""
-    exceptions = exceptions or ()
+    retry_exceptions = retry_exceptions or ()
     predicate = exception_predicate or (lambda e: True)
     max_retries = int(max_retries)
     initial_counter = max_retries if max_retries < 0 else max_retries + 1
@@ -85,7 +85,7 @@ def meta_deco_retry(exceptions=None, max_retries: int = 3,
             while cnt:
                 try:
                     return func(*args, **kwargs)
-                except exceptions as e:
+                except retry_exceptions as e:
                     if predicate(e):
                         if exception_queue:
                             exception_queue.put(e)

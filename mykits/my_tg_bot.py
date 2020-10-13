@@ -20,13 +20,13 @@ config_file = parsed_args.config_file
 config = read_json_file(config_file)
 
 
-@meta_deco_retry(exceptions=TimeoutError, max_retries=-1)
+@meta_deco_retry(retry_exceptions=(TimeoutError, ), max_retries=-1)
 def bldl_retry_frozen(*args: str):
     p = subprocess.Popen(['bldl.sh.cmd', *args], stdout=subprocess.PIPE)
     return monitor_sub_process_tty_frozen(p, encoding='u8')
 
 
-@meta_deco_retry(exceptions=TimeoutError, max_retries=-1)
+@meta_deco_retry(retry_exceptions=TimeoutError, max_retries=-1)
 def ytdl_retry_frozen(*args: str):
     p = subprocess.Popen(['ytdl.sh.cmd', *args], stdout=subprocess.PIPE)
     return monitor_sub_process_tty_frozen(p, encoding='u8', timeout=60)
@@ -49,13 +49,16 @@ def main():
                 self.__reply_md_code_block__(update, f'+ {args_str}')
                 p, out, err = bldl_retry_frozen(*args)
                 if p.returncode:
-                    echo = ''.join([decode(b) for b in out.readlines()[-3:]])
+                    echo = ''.join([decode(b) for b in out.readlines()[-5:]])
                     self.__reply_md_code_block__(update, f'- {args_str}\n\n{echo}')
                 else:
                     echo = ''.join([s for s in [decode(b) for b in out.readlines()] if '─┤' not in s])
                     self.__reply_md_code_block__(update, f'* {args_str}\n\n{echo}')
             except Exception as e:
-                self.__reply_md_code_block__(update, f'- {args_str}\n\n{repr(e)}')
+                e_repr = repr(e)
+                self.__reply_md_code_block__(update, f'! {args_str}\n\n{e_repr}')
+                if e_repr.startswith('BadRequest'):
+                    raise TimeoutError(e)
 
         @meta_deco_handler_method(MessageHandler, filters=Filters.regex(
             re.compile(r'youtube|youtu\.be|iwara|pornhub')))
@@ -78,7 +81,10 @@ def main():
                         self.__reply_md_code_block__(update, f'* {args_str}\n\n{echo}')
                         break
             except Exception as e:
-                self.__reply_md_code_block__(update, f'- {args_str}\n\n{repr(e)}')
+                e_repr = repr(e)
+                self.__reply_md_code_block__(update, f'! {args_str}\n\n{e_repr}')
+                if e_repr.startswith('BadRequest'):
+                    raise TimeoutError(e)
 
         @meta_deco_handler_method(CommandHandler)
         def _secret(self, update: Update, context):
