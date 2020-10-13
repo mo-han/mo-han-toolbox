@@ -49,16 +49,13 @@ def main():
                 self.__reply_md_code_block__(update, f'+ {args_str}')
                 p, out, err = bldl_retry_frozen(*args)
                 if p.returncode:
-                    self.__reply_md_code_block__(update, f'- {args_str}')
                     echo = ''.join([decode(b) for b in out.readlines()[-3:]])
-                    self.__reply_md_code_block__(update, echo)
+                    self.__reply_md_code_block__(update, f'- {args_str}\n\n{echo}')
                 else:
-                    self.__reply_md_code_block__(update, f'* {args_str}')
                     echo = ''.join([s for s in [decode(b) for b in out.readlines()] if '─┤' not in s])
-                    self.__reply_md_code_block__(update, echo)
+                    self.__reply_md_code_block__(update, f'* {args_str}\n\n{echo}')
             except Exception as e:
-                self.__reply_md_code_block__(update, f'- {args_str}')
-                self.__reply_md_code_block__(update, repr(e))
+                self.__reply_md_code_block__(update, f'- {args_str}\n\n{repr(e)}')
 
         @meta_deco_handler_method(MessageHandler, filters=Filters.regex(
             re.compile(r'youtube|youtu\.be|iwara|pornhub')))
@@ -71,29 +68,24 @@ def main():
                 p, out, err = ytdl_retry_frozen(*args)
                 while 1:
                     if p.returncode:
-                        self.__reply_md_code_block__(update, f'! {args_str}')
                         echo = ''.join([decode(b) for b in out.readlines()[-10:]])
-                        self.__reply_md_code_block__(update, echo)
+                        self.__reply_md_code_block__(update, f'! {args_str}\n\n{echo}')
                         if 'ERROR: Unable to extract iframe URL' in echo:
                             break
                         p, out, err = ytdl_retry_frozen(*args)
                     else:
-                        self.__reply_md_code_block__(update, f'* {args_str}')
                         echo = ''.join([s for s in [decode(b) for b in out.readlines()[-10:]]])
-                        self.__reply_md_code_block__(update, echo)
+                        self.__reply_md_code_block__(update, f'* {args_str}\n\n{echo}')
                         break
             except Exception as e:
-                self.__reply_md_code_block__(update, f'- {args_str}')
-                self.__reply_md_code_block__(update, repr(e))
+                self.__reply_md_code_block__(update, f'- {args_str}\n\n{repr(e)}')
 
         @meta_deco_handler_method(CommandHandler)
         def _secret(self, update: Update, context):
             self.__typing__(update)
             for name in ('effective_message', 'effective_user'):
-                update.message.reply_text(name)
-                update.message.reply_text(pformat(getattr(update, name).to_dict()))
-            update.message.reply_text('bot.get_me()')
-            update.message.reply_text(pformat(self.bot.get_me().to_dict()))
+                self.__reply_md_code_block__(update, f'{name}\n\n{pformat(getattr(update, name).to_dict())}')
+            self.__reply_md_code_block__(update, f'bot.get_me()\n\n{pformat(self.bot.get_me().to_dict())}')
 
     if parsed_args.verbose:
         log_lvl = 'DEBUG'
