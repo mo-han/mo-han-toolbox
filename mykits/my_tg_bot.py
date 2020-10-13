@@ -20,13 +20,13 @@ config_file = parsed_args.config_file
 config = read_json_file(config_file)
 
 
-@meta_deco_retry(exceptions=TimeoutError, max_retries=-1)
+@meta_deco_retry(retry_exceptions=(TimeoutError, ), max_retries=-1)
 def bldl_retry_frozen(*args: str):
     p = subprocess.Popen(['bldl.sh.cmd', *args], stdout=subprocess.PIPE)
     return monitor_sub_process_tty_frozen(p, encoding='u8')
 
 
-@meta_deco_retry(exceptions=TimeoutError, max_retries=-1)
+@meta_deco_retry(retry_exceptions=TimeoutError, max_retries=-1)
 def ytdl_retry_frozen(*args: str):
     p = subprocess.Popen(['ytdl.sh.cmd', *args], stdout=subprocess.PIPE)
     return monitor_sub_process_tty_frozen(p, encoding='u8', timeout=60)
@@ -49,16 +49,16 @@ def main():
                 self.__reply_md_code_block__(update, f'+ {args_str}')
                 p, out, err = bldl_retry_frozen(*args)
                 if p.returncode:
-                    self.__reply_md_code_block__(update, f'- {args_str}')
-                    echo = ''.join([decode(b) for b in out.readlines()[-3:]])
-                    self.__reply_md_code_block__(update, echo)
+                    echo = ''.join([decode(b) for b in out.readlines()[-5:]])
+                    self.__reply_md_code_block__(update, f'- {args_str}\n\n{echo}')
                 else:
-                    self.__reply_md_code_block__(update, f'* {args_str}')
                     echo = ''.join([s for s in [decode(b) for b in out.readlines()] if '─┤' not in s])
-                    self.__reply_md_code_block__(update, echo)
+                    self.__reply_md_code_block__(update, f'* {args_str}\n\n{echo}')
             except Exception as e:
-                self.__reply_md_code_block__(update, f'- {args_str}')
-                self.__reply_md_code_block__(update, repr(e))
+                e_repr = repr(e)
+                self.__reply_md_code_block__(update, f'! {args_str}\n\n{e_repr}')
+                if e_repr.startswith('BadRequest'):
+                    raise TimeoutError(e)
 
         @meta_deco_handler_method(MessageHandler, filters=Filters.regex(
             re.compile(r'youtube|youtu\.be|iwara|pornhub')))
@@ -71,29 +71,27 @@ def main():
                 p, out, err = ytdl_retry_frozen(*args)
                 while 1:
                     if p.returncode:
-                        self.__reply_md_code_block__(update, f'! {args_str}')
                         echo = ''.join([decode(b) for b in out.readlines()[-10:]])
-                        self.__reply_md_code_block__(update, echo)
+                        self.__reply_md_code_block__(update, f'! {args_str}\n\n{echo}')
                         if 'ERROR: Unable to extract iframe URL' in echo:
                             break
                         p, out, err = ytdl_retry_frozen(*args)
                     else:
-                        self.__reply_md_code_block__(update, f'* {args_str}')
                         echo = ''.join([s for s in [decode(b) for b in out.readlines()[-10:]]])
-                        self.__reply_md_code_block__(update, echo)
+                        self.__reply_md_code_block__(update, f'* {args_str}\n\n{echo}')
                         break
             except Exception as e:
-                self.__reply_md_code_block__(update, f'- {args_str}')
-                self.__reply_md_code_block__(update, repr(e))
+                e_repr = repr(e)
+                self.__reply_md_code_block__(update, f'! {args_str}\n\n{e_repr}')
+                if e_repr.startswith('BadRequest'):
+                    raise TimeoutError(e)
 
         @meta_deco_handler_method(CommandHandler)
         def _secret(self, update: Update, context):
             self.__typing__(update)
             for name in ('effective_message', 'effective_user'):
-                update.message.reply_text(name)
-                update.message.reply_text(pformat(getattr(update, name).to_dict()))
-            update.message.reply_text('bot.get_me()')
-            update.message.reply_text(pformat(self.bot.get_me().to_dict()))
+                self.__reply_md_code_block__(update, f'{name}\n\n{pformat(getattr(update, name).to_dict())}')
+            self.__reply_md_code_block__(update, f'bot.get_me()\n\n{pformat(self.bot.get_me().to_dict())}')
 
     if parsed_args.verbose:
         log_lvl = 'DEBUG'

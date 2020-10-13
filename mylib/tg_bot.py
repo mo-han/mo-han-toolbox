@@ -89,6 +89,8 @@ class SimpleBot:
     def __reply_markdown__(self, update: Update, md_text):
         self.__reply_text__(update, md_text, parse_mode=ParseMode.MARKDOWN)
 
+    __reply_md__ = __reply_markdown__
+
     def __reply_md_code_block__(self, update: Update, code_text):
         self.__reply_markdown__(update, f'```\n{code_text}```')
 
