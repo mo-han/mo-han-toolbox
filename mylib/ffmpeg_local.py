@@ -1062,7 +1062,7 @@ def kw_video_convert(source, keywords=(), vf=None, cut_points=(), dest=None,
     ffmpeg_args.add(ffmpeg_opts)
 
     tail = TAILS_D[f'{codec}8']
-    if 'copy' in keywords:
+    if keywords & {'copy', 'm4a', 'aac', 'vcopy'}:
         tail = ''
 
     cut_points = cut_points or []
@@ -1097,6 +1097,11 @@ def kw_video_convert(source, keywords=(), vf=None, cut_points=(), dest=None,
             output_ext = '.mp4'
         if 'mkv' in keywords:
             output_ext = '.mkv'
+        if 'm4a' in keywords:
+            output_ext = '.m4a'
+            ffmpeg_args.add(map=STREAM_MAP_PRESET_TABLE[S_NO_VIDEO])
+        if 'aac' in keywords:
+            output_ext = '.aac'
 
         origin_path = os.path.join(dirname, input_name + '.origin' + input_ext)
         output_path = dest or os.path.join(dirname, input_name + tail + output_ext)
