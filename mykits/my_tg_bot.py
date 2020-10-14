@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 # encoding=utf8
 import argparse
-import locale
 import re
 import subprocess
 from pprint import pformat
 
 from mylib.log import get_logger
 from mylib.os_util import read_json_file, ensure_sigint_signal, monitor_sub_process_tty_frozen
-from mylib.tricks import ArgParseCompactHelpFormatter, meta_deco_retry
 from mylib.text import decode
+from mylib.tricks import ArgParseCompactHelpFormatter, meta_deco_retry
 
 ap = argparse.ArgumentParser(formatter_class=ArgParseCompactHelpFormatter)
 ap.add_argument('-c', '--config-file', metavar='path', required=True)
@@ -33,9 +32,9 @@ def ytdl_retry_frozen(*args: str):
 
 
 def main():
+    from mylib.tg_bot import SimpleBot, meta_deco_handler_method, CommandHandler, Update
     from telegram.ext import MessageHandler, Filters
     from mylib.bili import find_bilibili_vid
-    from mylib.tg_bot import SimpleBot, meta_deco_handler_method, CommandHandler, Update
 
     class MyAssistantBot(SimpleBot):
         @meta_deco_handler_method(MessageHandler, filters=Filters.regex(
@@ -72,6 +71,8 @@ def main():
                         echo = ''.join([decode(b) for b in out.readlines()[-10:]])
                         self.__reply_md_code_block__(update, f'- {args_str}\n{echo}')
                         if 'ERROR: Unable to extract iframe URL' in echo:
+                            break
+                        if 'ERROR: This playlist does not exist' in echo:
                             break
                         p, out, err = ytdl_retry_frozen(*args)
                     else:
