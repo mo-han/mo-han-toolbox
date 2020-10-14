@@ -60,3 +60,21 @@ class WideLengthString(str):
         y = super().__len__()
         y += sum([1 for c in self if east_asian_width(c) == 'W'])
         return y
+
+
+def split_by_length_and_lf(x: str, length: int):
+    parts = []
+    while x:
+        if len(x) > length:
+            part = x[:length]
+            stop = part.rfind('\n') + 1
+            if stop:
+                parts.append(x[:stop])
+                x = x[stop:]
+            else:
+                parts.append(part)
+                x = x[length:]
+        else:
+            parts.append(x)
+            break
+    return parts

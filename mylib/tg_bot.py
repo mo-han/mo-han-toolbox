@@ -5,12 +5,13 @@ from functools import reduce
 from inspect import getmembers, ismethod
 from typing import Callable
 
-from telegram import ChatAction, Bot, Update, ParseMode
+from telegram import ChatAction, Bot, Update, ParseMode, constants
 from telegram.ext import Updater, CommandHandler, Filters
 from telegram.ext.filters import MergedFilter
 
 from .os_util import get_names
 from .tricks import Decorator
+from .text import split_by_length_and_lf
 
 
 def meta_deco_handler_method(handler_type, **handler_kwargs) -> Decorator:
@@ -84,7 +85,8 @@ class SimpleBot:
 
     @staticmethod
     def __reply_text__(update: Update, text, **kwargs):
-        update.message.reply_text(text, **kwargs)
+        for t in split_by_length_and_lf(text, constants.MAX_MESSAGE_LENGTH):
+            update.message.reply_text(t, **kwargs)
 
     def __reply_markdown__(self, update: Update, md_text):
         self.__reply_text__(update, md_text, parse_mode=ParseMode.MARKDOWN)
@@ -92,7 +94,8 @@ class SimpleBot:
     __reply_md__ = __reply_markdown__
 
     def __reply_md_code_block__(self, update: Update, code_text):
-        self.__reply_markdown__(update, f'```\n{code_text}```')
+        for ct in split_by_length_and_lf(code_text, constants.MAX_MESSAGE_LENGTH - 7):
+            self.__reply_markdown__(update, f'```\n{ct}```')
 
     def __run__(self, poll_timeout=None):
         poll_param = {}
