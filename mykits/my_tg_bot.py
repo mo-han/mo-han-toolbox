@@ -74,6 +74,8 @@ def main():
                             break
                         if 'ERROR: This playlist does not exist' in echo:
                             break
+                        if 'ERROR: Unsupported URL' in echo:
+                            break
                         p, out, err = ytdl_retry_frozen(*args)
                     else:
                         echo = ''.join([s for s in [decode(b) for b in out.readlines()[-10:]]])
