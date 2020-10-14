@@ -20,7 +20,7 @@ config_file = parsed_args.config_file
 config = read_json_file(config_file)
 
 
-@meta_deco_retry(retry_exceptions=(TimeoutError, ), max_retries=-1)
+@meta_deco_retry(retry_exceptions=TimeoutError, max_retries=-1)
 def bldl_retry_frozen(*args: str):
     p = subprocess.Popen(['bldl.sh.cmd', *args], stdout=subprocess.PIPE)
     return monitor_sub_process_tty_frozen(p, encoding='u8')
@@ -50,15 +50,13 @@ def main():
                 p, out, err = bldl_retry_frozen(*args)
                 if p.returncode:
                     echo = ''.join([decode(b) for b in out.readlines()[-5:]])
-                    self.__reply_md_code_block__(update, f'- {args_str}\n\n{echo}')
+                    self.__reply_md_code_block__(update, f'- {args_str}\n{echo}')
                 else:
                     echo = ''.join([s for s in [decode(b) for b in out.readlines()] if '─┤' not in s])
-                    self.__reply_md_code_block__(update, f'* {args_str}\n\n{echo}')
+                    self.__reply_md_code_block__(update, f'* {args_str}\n{echo}')
             except Exception as e:
                 e_repr = repr(e)
-                self.__reply_md_code_block__(update, f'! {args_str}\n\n{e_repr}')
-                if e_repr.startswith('BadRequest'):
-                    raise TimeoutError(e)
+                self.__reply_md_code_block__(update, f'! {args_str}\n{e_repr}')
 
         @meta_deco_handler_method(MessageHandler, filters=Filters.regex(
             re.compile(r'youtube|youtu\.be|iwara|pornhub')))
@@ -72,26 +70,26 @@ def main():
                 while 1:
                     if p.returncode:
                         echo = ''.join([decode(b) for b in out.readlines()[-10:]])
-                        self.__reply_md_code_block__(update, f'! {args_str}\n\n{echo}')
+                        self.__reply_md_code_block__(update, f'- {args_str}\n{echo}')
                         if 'ERROR: Unable to extract iframe URL' in echo:
                             break
                         p, out, err = ytdl_retry_frozen(*args)
                     else:
                         echo = ''.join([s for s in [decode(b) for b in out.readlines()[-10:]]])
-                        self.__reply_md_code_block__(update, f'* {args_str}\n\n{echo}')
+                        self.__reply_md_code_block__(update, f'* {args_str}\n{echo}')
                         break
             except Exception as e:
                 e_repr = repr(e)
-                self.__reply_md_code_block__(update, f'! {args_str}\n\n{e_repr}')
-                if e_repr.startswith('BadRequest'):
-                    raise TimeoutError(e)
+                self.__reply_md_code_block__(update, f'! {args_str}\n{e_repr}')
+                if 'BadRequest' in e_repr:
+                    self._ytdl(update)
 
         @meta_deco_handler_method(CommandHandler)
         def _secret(self, update: Update, context):
             self.__typing__(update)
             for name in ('effective_message', 'effective_user'):
-                self.__reply_md_code_block__(update, f'{name}\n\n{pformat(getattr(update, name).to_dict())}')
-            self.__reply_md_code_block__(update, f'bot.get_me()\n\n{pformat(self.bot.get_me().to_dict())}')
+                self.__reply_md_code_block__(update, f'{name}\n{pformat(getattr(update, name).to_dict())}')
+            self.__reply_md_code_block__(update, f'bot.get_me()\n{pformat(self.bot.get_me().to_dict())}')
 
     if parsed_args.verbose:
         log_lvl = 'DEBUG'
