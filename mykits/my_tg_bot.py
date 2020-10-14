@@ -82,8 +82,6 @@ def main():
             except Exception as e:
                 e_repr = repr(e)
                 self.__reply_md_code_block__(update, f'! {args_str}\n{e_repr}')
-                if 'BadRequest' in e_repr:
-                    self._ytdl(update)
 
         @meta_deco_handler_method(CommandHandler)
         def _secret(self, update: Update, context):
