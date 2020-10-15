@@ -96,8 +96,7 @@ def main():
             self.__reply_md_code_block__(update, f'bot.get_me()\n{pformat(self.bot.get_me().to_dict())}')
 
         def __about_this_bot__(self):
-            return f'{super().__about_this_bot__()}\n' \
-                   f'---' \
+            return f'{super().__about_this_bot__()}\n\n' \
                    f'script modified time:\n' \
                    f'{mt}'
 
