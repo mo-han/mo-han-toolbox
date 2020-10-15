@@ -49,7 +49,7 @@ class SimpleBot:
             self.common_filters = merge_filters_and(self.common_filters, chat_id_filter | chat_username_filter)
             for u in user_whitelist:
                 if isinstance(u, int):
-                    self.bot.send_message(u, self.__about_self__())
+                    self.bot.send_message(u, self.__about_this_bot__())
         self.pre_handler = []
         self.post_handler = []
         self.__register_handlers__()
@@ -111,7 +111,7 @@ class SimpleBot:
         lines.extend([f'/{e}' for e in recommended])
         return '\n'.join(lines)
 
-    def __about_self__(self):
+    def __about_this_bot__(self):
         return f'bot:\n' \
                f'{self.fullname} @{self.username}\n' \
                f'running on device:\n' \
@@ -122,7 +122,7 @@ class SimpleBot:
         """let's roll out"""
         self.__typing__(update)
         self.__get_me__()
-        update.message.reply_text(self.__about_self__())
+        update.message.reply_text(self.__about_this_bot__())
         update.message.reply_text(self.__recommended_commands__())
 
     start.handler_xattr = ['recommended']

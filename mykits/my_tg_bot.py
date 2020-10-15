@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # encoding=utf8
 import argparse
+import os
 import re
 import subprocess
+import time
 from pprint import pformat
 
 from mylib.log import get_logger
@@ -17,6 +19,7 @@ ap.add_argument('-T', '--timeout', type=float)
 parsed_args = ap.parse_args()
 config_file = parsed_args.config_file
 config = read_json_file(config_file)
+mt = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(os.path.getmtime(os.path.realpath(__file__))))
 
 
 @meta_deco_retry(retry_exceptions=TimeoutError, max_retries=-1)
@@ -91,6 +94,11 @@ def main():
             for name in ('effective_message', 'effective_user'):
                 self.__reply_md_code_block__(update, f'{name}\n{pformat(getattr(update, name).to_dict())}')
             self.__reply_md_code_block__(update, f'bot.get_me()\n{pformat(self.bot.get_me().to_dict())}')
+
+        def __about_this_bot__(self):
+            return f'{super().__about_this_bot__()}\n' \
+                   f'bot file mtime:\n' \
+                   f'{mt}'
 
     if parsed_args.verbose:
         log_lvl = 'DEBUG'
