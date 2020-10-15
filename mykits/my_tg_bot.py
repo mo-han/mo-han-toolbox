@@ -97,7 +97,8 @@ def main():
 
         def __about_this_bot__(self):
             return f'{super().__about_this_bot__()}\n' \
-                   f'bot file mtime:\n' \
+                   f'---' \
+                   f'script modified time:\n' \
                    f'{mt}'
 
     if parsed_args.verbose:

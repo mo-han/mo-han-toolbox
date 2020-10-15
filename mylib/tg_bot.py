@@ -114,6 +114,7 @@ class SimpleBot:
     def __about_this_bot__(self):
         return f'bot:\n' \
                f'{self.fullname} @{self.username}\n' \
+               f'---' \
                f'running on device:\n' \
                f'{self.device.username} @ {self.device.hostname} ({self.device.osname})'
 
