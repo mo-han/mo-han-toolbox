@@ -48,7 +48,7 @@ def main():
                 self.__reply_md_code_block__(update, f'+ {args_str}')
                 p, out, err = bldl_retry_frozen(*args)
                 if p.returncode:
-                    echo = ''.join([decode(b) for b in out.readlines()[-5:]])
+                    echo = ''.join([decode(b).rsplit('\r', maxsplit=1)[-1] for b in out.readlines()[-5:]])
                     self.__reply_md_code_block__(update, f'- {args_str}\n{echo}')
                 else:
                     echo = ''.join([s for s in [decode(b) for b in out.readlines()] if '─┤' not in s])
@@ -68,7 +68,7 @@ def main():
                 p, out, err = ytdl_retry_frozen(*args)
                 while 1:
                     if p.returncode:
-                        echo = ''.join([decode(b) for b in out.readlines()[-10:]])
+                        echo = ''.join([decode(b).rsplit('\r', maxsplit=1)[-1] for b in out.readlines()[-10:]])
                         self.__reply_md_code_block__(update, f'- {args_str}\n{echo}')
                         if 'ERROR: Unable to extract iframe URL' in echo:
                             break
