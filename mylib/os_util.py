@@ -546,3 +546,10 @@ def monitor_sub_process_tty_frozen(p: subprocess.Popen, timeout=30, wait=1,
                 pass
             except Exception as e:
                 raise e
+
+
+def path_or_glob(pathname, *, recursive=False):
+    if os.path.exists(pathname):
+        return [pathname]
+    else:
+        return glob(pathname, recursive=recursive)

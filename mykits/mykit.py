@@ -110,6 +110,63 @@ cmd_mode = add_sub_parser('cmd', ['cli'], 'command line interactive mode')
 cmd_mode.set_defaults(func=cmd_mode_func)
 
 
+def put_in_dir_func():
+    from mylib.os_util import read_json_file, real_join_path, write_json_file, path_or_glob, fs_move_cli
+    conf_file = real_join_path('~', '.config', 'fs.put_in_dir.json')
+    conf = read_json_file(conf_file) or {'dst_map': {}}
+    dst_map = conf['dst_map']
+    args = rtd.args
+    src = args.src or clipboard.list_paths()
+    dst = args.dst
+    alias = args.alias
+    dry_run = args.dry_run
+    if alias is None:
+        pass
+    elif not alias:
+        for k, v in dst_map.items():
+            print(f'{k}={v}')
+    else:
+        for a in alias:
+            try:
+                k, v = a.split('=', maxsplit=1)
+            except ValueError:
+                k, v = None, None
+            if v:
+                dst_map[k] = v
+                print(f'{k}={v}')
+            elif k and k in dst_map:
+                del dst_map[k]
+                print(f'{k}=')
+            else:
+                print(f'{a}={dst_map.get(a, "")}')
+    write_json_file(conf_file, conf, indent=4)
+    if dst:
+        dst = dst_map.get(dst, dst)
+        if os.path.isfile(dst):
+            print(f'! {dst} is file (should be directory)', file=sys.stderr)
+            exit(1)
+        if not os.path.isdir(dst) and not dry_run:
+            os.makedirs(dst)
+        for ss in src:
+            for s in path_or_glob(ss):
+                d = os.path.join(dst, os.path.basename(s))
+                if os.path.exists(d):
+                    y = input(f'overwrite {d} ? (y/n): ').lower()
+                    if y != 'y':
+                        continue
+                if not dry_run:
+                    fs_move_cli(s, d)
+                print(f'{s} -> {d}')
+
+
+put_in_dir = add_sub_parser('putindir', ['mvd'], 'put files/folders into dest dir')
+put_in_dir.set_defaults(func=put_in_dir_func)
+put_in_dir.add_argument('-D', '--dry-run', action='store_true')
+put_in_dir.add_argument('-a', '--alias', nargs='*', help='list, show, set or delete dst mapping aliases')
+put_in_dir.add_argument('dst', nargs='?', help='dest dir')
+put_in_dir.add_argument('src', nargs='*')
+
+
 def clear_redundant_files_func():
     from mylib.os_util import filter_filename_tail, join_filename_tail
     lp = LinePrinter()

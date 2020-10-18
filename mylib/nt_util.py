@@ -3,9 +3,11 @@
 import inspect
 import os
 import re
+import subprocess
 from time import sleep
-import win32clipboard
+
 import pywintypes
+import win32clipboard
 
 from .tricks import Singleton, decorator_self_context
 
@@ -112,3 +114,11 @@ class Clipboard(metaclass=Singleton):
 
 
 clipboard = Clipboard()
+
+
+def fs_copy_cli(src, dst):
+    return subprocess.run(['copy', src, dst], shell=True)
+
+
+def fs_move_cli(src, dst):
+    return subprocess.run(['move', src, dst], shell=True)

@@ -2,6 +2,7 @@
 # encoding=utf8
 import os
 import re
+import subprocess
 
 from .tricks import singleton
 
@@ -37,3 +38,11 @@ class Clipboard:
 
 
 clipboard = Clipboard()
+
+
+def fs_copy_cli(src, dst):
+    return subprocess.run(['cp', '-r', src, dst], shell=True)
+
+
+def fs_move_cli(src, dst):
+    return subprocess.run(['mv', src, dst], shell=True)
