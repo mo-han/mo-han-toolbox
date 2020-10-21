@@ -295,15 +295,19 @@ def ffmpeg_img2vid_func():
         images_l = [images]
     else:
         images_l = [os.path.join(folder, images) for folder in clipboard.list_paths() if os.path.isdir(folder)]
-    for images in images_l:
+    for i in images_l:
         if output in ('mp4', 'webm'):
-            output = f'{os.path.realpath(os.path.dirname(images))}.{output}'
+            o = f'{os.path.realpath(os.path.dirname(i))}.{output}'
+        else:
+            o = output
         for kw in keywords:
             output_args.add(*parse_kw_opt_str(kw))
         output_args.add(*ffmpeg_options)
         try:
             tui_lp.l()
-            ff.img2vid(images, res_fps, output, output_args)
+            print(i)
+            print(o)
+            ff.img2vid(i, res_fps, o, output_args)
         except KeyboardInterrupt:
             exit(2)
 
