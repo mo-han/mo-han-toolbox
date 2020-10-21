@@ -28,6 +28,11 @@ from .web_client import cookie_str_from_dict, cookies_dict_from_netscape_file, g
 BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'
 BILIBILI_EPISODE_URL_PREFIX = 'https://www.bilibili.com/bangumi/play/'
 BILIBILI_SHORT_URL_PREFIX = 'https://b23.tv/'
+QUALITY_DESC_PRIORITY = ['超清 4K', '高清 1080P60', '高清 1080P+', '高清 720P60', '高清 1080P', '高清 720P', '清晰 480P', '流畅 360P']
+
+
+def quality_desc_priority_index(quality_desc: str):
+    return QUALITY_DESC_PRIORITY.index(quality_desc)
 
 
 class BilibiliError(RuntimeError):
@@ -155,6 +160,14 @@ def code_modify_you_get_fs(x: str):
     return x
 
 
+def code_modify_you_get_extractor(x: str):
+    x = x.replace("key=lambda i: -self.dash_streams[i]['size']",
+                  "key=lambda i: quality_desc_priority_index(self.dash_streams[i]['quality'])")
+    return x
+
+
+you_get.extractor = modify_and_import('you_get.extractor', code_modify_you_get_extractor)
+you_get.extractor.quality_desc_priority_index = quality_desc_priority_index
 # 上面已经导入了原版的`you_get.util.strings`，这条模块路径很重要，另有几个模块依赖它
 # 在此基础上，下面一行代码将原版的`you_get.util.fs`替换成修改版
 you_get.util.fs = modify_and_import('you_get.util.fs', code_modify_you_get_fs)
