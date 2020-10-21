@@ -73,11 +73,7 @@ def main():
                     if p.returncode:
                         echo = ''.join([decode(b).rsplit('\r', maxsplit=1)[-1] for b in out.readlines()[-10:]])
                         self.__reply_md_code_block__(update, f'- {args_str}\n{echo}')
-                        if 'Unable to extract' in echo:
-                            break
-                        if 'ERROR: This playlist does not exist' in echo:
-                            break
-                        if 'ERROR: Unsupported URL' in echo:
+                        if 'ERROR: ' in echo:
                             break
                         p, out, err = ytdl_retry_frozen(*args)
                     else:
