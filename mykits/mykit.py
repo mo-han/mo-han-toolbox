@@ -280,6 +280,43 @@ vid_mhc.add_argument('-R', '--redo', action='store_true', dest='redo_origin')
 vid_mhc.add_argument('src', nargs='*')
 
 
+def ffmpeg_img2vid_func():
+    from mylib.ffmpeg_local import FFmpegRunnerAlpha, FFmpegArgsList, parse_kw_opt_str
+    ff = FFmpegRunnerAlpha(banner=False, overwrite=True)
+    ff.logger.setLevel('INFO')
+    args = rtd.args
+    images = args.images
+    output = args.output
+    res_fps = args.res_fps
+    keywords = args.keyword or ()
+    ffmpeg_options = args.opt or ()
+    output_args = FFmpegArgsList()
+    if os.path.isdir(os.path.dirname(images)):
+        images_l = [images]
+    else:
+        images_l = [os.path.join(folder, images) for folder in clipboard.list_paths() if os.path.isdir(folder)]
+    for images in images_l:
+        if output in ('mp4', 'webm'):
+            output = f'{os.path.realpath(os.path.dirname(images))}.{output}'
+        for kw in keywords:
+            output_args.add(*parse_kw_opt_str(kw))
+        output_args.add(*ffmpeg_options)
+        try:
+            tui_lp.l()
+            ff.img2vid(images, res_fps, output, output_args)
+        except KeyboardInterrupt:
+            exit(2)
+
+
+ffmpeg_img2vid = add_sub_parser('wrap.ffmpeg.img2vid', ['img2vid'], 'convert images (frames) into video using ffmpeg')
+ffmpeg_img2vid.set_defaults(func=ffmpeg_img2vid_func)
+ffmpeg_img2vid.add_argument('-i', '--images', help='input images, e.g. "%%03d.jpg"', required=True)
+ffmpeg_img2vid.add_argument('-o', '--output', help='output video', required=True)
+ffmpeg_img2vid.add_argument('-r', '--res-fps', metavar='WxH@FPS', required=True)
+ffmpeg_img2vid.add_argument('-k', '--keyword', nargs='*')
+ffmpeg_img2vid.add_argument('opt', help='ffmpeg options (better insert -- before them)', nargs='*')
+
+
 def ffmpeg_func():
     from mylib.ffmpeg_local import kw_video_convert
     args = rtd.args

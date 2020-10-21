@@ -150,7 +150,7 @@ class FFmpegArgsList(list):
         return self
 
 
-class FFmpegRunner:
+class FFmpegRunnerAlpha:
     exe = 'ffmpeg'
     head = FFmpegArgsList(exe)
     body = FFmpegArgsList()
@@ -310,9 +310,12 @@ class FFmpegRunner:
     @decorator_choose_map_preset
     def convert(self, input_paths: Iterable[str] or Iterator[str], output_path: str,
                 output_args: Iterable[str] or Iterator[str] = (), *,
+                input_args: Iterable[str] or Iterator[str] = (),
                 start: float or int or str = 0, end: float or int or str = 0,
                 copy_all: bool = False, map_preset: str = None, metadata_file: str = None,
                 **output_kwargs):
+        self.reset_args()
+
         if isinstance(start, str):
             start = seconds_from_colon_time(start)
         if isinstance(end, str):
@@ -321,10 +324,10 @@ class FFmpegRunner:
             start = max([get_real_duration(f) for f in input_paths]) + start
         if end < 0:
             end = max([get_real_duration(f) for f in input_paths]) + end
-        self.reset_args()
-
         if start:
             self.add_args(ss=start)
+
+        self.add_args(*input_args)
         self.add_args(i=input_paths)
         if metadata_file:
             self.add_args(i=metadata_file, map_metadata=len(input_paths))
@@ -339,6 +342,17 @@ class FFmpegRunner:
         self.add_args(*output_args, **output_kwargs)
         self.add_args(output_path)
         return self.proc_run()
+
+    def img2vid(self, img_src: str, res_fps: str, vid_path: str, *output_args, **output_kwargs):
+        res, fps = res_fps.split('@', maxsplit=1)
+        fps = float(fps)
+        width, height = map(int, res.split('x', maxsplit=1))
+        return self.convert(
+            (img_src,), vid_path,
+            FFmpegArgsList(
+                vf=f'scale={width}:{height}:force_original_aspect_ratio=1,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2',
+                *output_args, **output_kwargs),
+            input_args=FFmpegArgsList(r=fps))
 
 
 class FFmpegSegmentsContainer:
@@ -389,7 +403,7 @@ class FFmpegSegmentsContainer:
 
     def __init__(self, path: str, work_dir: str = None, single_video_stream: bool = True, log_lvl=None):
         self.logger = get_logger(f'{__name__}.{self.nickname}')
-        self.ff = FFmpegRunner(banner=False, loglevel='warning', overwrite=True, capture_out_err=True)
+        self.ff = FFmpegRunnerAlpha(banner=False, loglevel='warning', overwrite=True, capture_out_err=True)
         if log_lvl:
             self.logger.setLevel(log_lvl)
             self.ff.logger.setLevel(log_lvl)
@@ -995,8 +1009,7 @@ def kw_video_convert(source, keywords=(), vf=None, cut_points=(), dest=None,
                      overwrite=False, redo=False, ffmpeg_opts=(),
                      verbose=0, dry_run=False,
                      **kwargs):
-    ff = FFmpegRunner(overwrite=True, banner=False)
-    vf_list = get_filter_list(vf)
+    ff = FFmpegRunnerAlpha(overwrite=True, banner=False)
     if verbose > 1:
         lvl = 'DEBUG'
     elif verbose > 0:
@@ -1004,6 +1017,7 @@ def kw_video_convert(source, keywords=(), vf=None, cut_points=(), dest=None,
     else:
         lvl = 'WARNING'
     ff.logger.setLevel(lvl)
+    vf_list = get_filter_list(vf)
     logger = get_logger(f'{__name__}.smartconv', fmt=LOG_FMT_MESSAGE_ONLY)
     codecs_d = {'h': 'hevc', 'a': None, 'hq': 'hevc_qsv', 'aq': 'h264_qsv'}
 
@@ -1170,3 +1184,16 @@ def mark_high_crf_video_file(src, crf_thres, codec='a' or 'h', res_limit=None,
         finally:
             if auto_clean:
                 c.purge()
+
+
+def parse_kw_opt_str(kw: str):
+    if kw[:3] == 'crf' and kw[3:].isdecimal():
+        return FFmpegArgsList(crf=float(kw[3:]))
+    if kw == 'hevc':
+        return FFmpegArgsList(c__v='hevc')
+    if f'{kw[:1]}{kw[-1:]}'.lower() in ('vk', 'vm') and kw[1:-1].isdecimal():
+        return FFmpegArgsList(b__v=0 if kw[1:-1] == '0' else kw[1:])
+    if f'{kw[:1]}{kw[-1:]}'.lower() in ('ak', 'am') and kw[1:-1].isdecimal():
+        return FFmpegArgsList(b__a=0 if kw[1:-1] == '0' else kw[1:])
+    if kw == '10bit':
+        return FFmpegArgsList(pix_fmt='yuv420p10le')
