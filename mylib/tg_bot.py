@@ -3,20 +3,22 @@
 """telegram bot utilities"""
 from functools import reduce
 from inspect import getmembers, ismethod
+from queue import Queue
 from typing import Callable
 
 from telegram import ChatAction, Bot, Update, ParseMode, constants
-from telegram.ext import Updater, CommandHandler, Filters
+from telegram.ext import Updater, CommandHandler, Filters, CallbackContext
 from telegram.ext.filters import MergedFilter
 
 from .os_util import get_names
-from .tricks import Decorator
 from .text import split_by_length_and_lf
+from .tricks import Decorator
 
 
-def meta_deco_handler_method(handler_type, **handler_kwargs) -> Decorator:
+def meta_deco_handler_method(handler_type, is_specialty=False, **handler_kwargs) -> Decorator:
     def deco(handler_method: Callable):
         wrap = handler_method
+        wrap.is_specialty = is_specialty
         wrap.handler_registry = handler_type, handler_kwargs
         return wrap
 
@@ -34,24 +36,26 @@ def merge_filters_or(*filters):
 
 
 class SimpleBot:
-    def __init__(self, token, auto_run=True, user_whitelist=None, timeout=None,
-                 filters=None, **kwargs):
+    def __init__(self, token, *, timeout=None, whitelist=None, auto_run=True,
+                 filters=None, update_queue: Queue = None,
+                 **kwargs):
+        self.failed_updates = []
         self.device = get_names()
         self.updater = Updater(token, use_context=True,
                                request_kwargs={'read_timeout': timeout, 'connect_timeout': timeout},
                                **kwargs)
+        if update_queue:
+            self.updater.dispatcher.update_queue = self.updater.update_queue = self.update_queue = update_queue
         self.bot: Bot = self.updater.bot
         self.__get_me__(timeout=timeout)
         self.common_filters = filters
-        if user_whitelist:
-            chat_id_filter = Filters.chat(filter(lambda x: isinstance(x, int), user_whitelist))
-            chat_username_filter = Filters.chat(filter(lambda x: isinstance(x, str), user_whitelist))
+        if whitelist:
+            chat_id_filter = Filters.chat(filter(lambda x: isinstance(x, int), whitelist))
+            chat_username_filter = Filters.chat(filter(lambda x: isinstance(x, str), whitelist))
             self.common_filters = merge_filters_and(self.common_filters, chat_id_filter | chat_username_filter)
-            for u in user_whitelist:
+            for u in whitelist:
                 if isinstance(u, int):
                     self.bot.send_message(u, self.__about_this_bot__())
-        self.pre_handler = []
-        self.post_handler = []
         self.__register_handlers__()
         if auto_run:
             self.__run__(poll_timeout=timeout)
@@ -84,18 +88,18 @@ class SimpleBot:
         self.bot.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING)
 
     @staticmethod
-    def __reply_text__(update: Update, text, **kwargs):
+    def __reply_text__(text, update: Update, **kwargs):
         for t in split_by_length_and_lf(text, constants.MAX_MESSAGE_LENGTH):
             update.message.reply_text(t, **kwargs)
 
-    def __reply_markdown__(self, update: Update, md_text):
-        self.__reply_text__(update, md_text, parse_mode=ParseMode.MARKDOWN)
+    def __reply_markdown__(self, md_text, update: Update):
+        self.__reply_text__(md_text, update, parse_mode=ParseMode.MARKDOWN)
 
     __reply_md__ = __reply_markdown__
 
-    def __reply_md_code_block__(self, update: Update, code_text):
+    def __reply_md_code_block__(self, code_text, update: Update):
         for ct in split_by_length_and_lf(code_text, constants.MAX_MESSAGE_LENGTH - 7):
-            self.__reply_markdown__(update, f'```\n{ct}```')
+            self.__reply_markdown__(f'```\n{ct}```', update)
 
     def __run__(self, poll_timeout=None):
         poll_param = {}
@@ -104,11 +108,10 @@ class SimpleBot:
         self.updater.start_polling(**poll_param)
         self.updater.idle()
 
-    def __recommended_commands__(self):
+    def __specialty_menu__(self):
         lines = [f'try these commands:']
-        recommended = [n for n, v in self.commands_list if
-                       hasattr(v, 'handler_xattr') and 'recommended' in v.handler_xattr]
-        lines.extend([f'/{e}' for e in recommended])
+        specialty_menu = [n for n, v in self.commands_list if v.is_specialty]
+        lines.extend([f'/{e}' for e in specialty_menu])
         return '\n'.join(lines)
 
     def __about_this_bot__(self):
@@ -117,18 +120,16 @@ class SimpleBot:
                f'running on device:\n' \
                f'{self.device.username} @ {self.device.hostname} ({self.device.osname})'
 
-    @meta_deco_handler_method(CommandHandler)
-    def start(self, update: Update, context):
+    @meta_deco_handler_method(CommandHandler, is_specialty=True)
+    def start(self, update: Update, context: CallbackContext):
         """let's roll out"""
         self.__typing__(update)
         self.__get_me__()
         update.message.reply_text(self.__about_this_bot__())
-        update.message.reply_text(self.__recommended_commands__())
+        update.message.reply_text(self.__specialty_menu__())
 
-    start.handler_xattr = ['recommended']
-
-    @meta_deco_handler_method(CommandHandler)
-    def menu(self, update: Update, context):
+    @meta_deco_handler_method(CommandHandler, is_specialty=True)
+    def menu(self, update: Update, context: CallbackContext):
         """list commands"""
         self.__typing__(update)
         lines = []
@@ -138,6 +139,4 @@ class SimpleBot:
             doc = (v.__doc__ or '...').split('\n', maxsplit=1)[0].strip()
             lines.append(f'{n} - {doc}')
         menu_str = '\n'.join(lines)
-        self.__reply_markdown__(update, f'```\n{menu_str}```')
-
-    menu.handler_xattr = ['recommended']
+        self.__reply_markdown__(f'```\n{menu_str}```', update)
