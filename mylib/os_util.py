@@ -485,13 +485,16 @@ def shrink_name(s: str, max_bytes=250, encoding='utf8', add_dots=True, from_left
 
 def shrink_name_middle(s: str, max_bytes=250, encoding='utf8', add_dots=True):
     half_max_bytes = (max_bytes - 3 if add_dots else max_bytes) // 2
-    left = s[:len(s) // 2]
-    right = s[len(s) // 2:]
     common_params = make_kwargs_dict(encoding=encoding, add_dots=False)
-    left = shrink_name(left, half_max_bytes, **common_params)
-    right = shrink_name(right, half_max_bytes, **common_params)
+    half_s_len = len(s) // 2 + 1
+    left = shrink_name(s[:half_s_len], half_max_bytes, **common_params)
+    right = shrink_name(s[half_s_len:], half_max_bytes, **common_params)
+    lr = f'{left}{right}'
     if add_dots:
-        return f'{left}...{right}'
+        if len(lr) == len(s):
+            return s
+        else:
+            return f'{left}...{right}'
     else:
         return f'{left}{right}'
 
