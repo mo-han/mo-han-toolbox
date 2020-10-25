@@ -924,7 +924,7 @@ class FFmpegSegmentsContainer:
                             os.remove(o_seg + self.suffix_delete)
                 segments = self.list_lock_segments() + self.list_done_segments()
 
-    def vf_res_scale_down(self, res_limit='FHD', vf=None):
+    def vf_res_scale_down(self, res_limit=None, vf=None):
         width, height = self.width_height
         return get_vf_res_scale_down(width, height, res_limit=res_limit, vf=None)
 
@@ -968,11 +968,11 @@ def get_width_height(filepath) -> (int, int):
     return d['width'], d['height']
 
 
-@meta_deco_args_choices({'res_limit': (None, 'FHD', 'HD', 'qHD', 'QHD')})
+@meta_deco_args_choices({'res_limit': (None, 'FHD', 'HD', 'qHD', 'QHD', '4K')})
 def get_vf_res_scale_down(width: int, height: int, res_limit='FHD', vf: str = None) -> str or None:
     """generate 'scale=<w>:<h>' value for ffmpeg `vf` option, to scale down the given resolution
     return empty str if the given resolution is enough low thus scaling is not needed"""
-    d = {'FHD': (1920, 1080), 'HD': (1280, 720), 'qHD': (960, 540), 'QHD': (2560, 1440)}
+    d = {'FHD': (1920, 1080), 'HD': (1280, 720), 'qHD': (960, 540), 'QHD': (2560, 1440), '4K': (3840, 2160)}
     auto_calc = -2
     if not res_limit:
         return
@@ -1053,6 +1053,8 @@ def kw_video_convert(source, keywords=(), vf=None, cut_points=(), dest=None,
             res_limit = 'qHD'
         elif kw in ('QHD', 'qhd'):
             res_limit = 'QHD'
+        elif kw.lower() == '4k':
+            res_limit = '4K'
         elif kw in ('2ch', 'stereo'):
             ffmpeg_args.add(ac=2)
         elif kw == 'hevc':

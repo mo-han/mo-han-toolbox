@@ -300,7 +300,7 @@ vid_mhc = add_sub_parser('video.mark.high.crf', ['vmhc'],
 vid_mhc.set_defaults(func=vid_mhc_func)
 vid_mhc.add_argument('-t', '--crf-threshold', type=float, default=22)
 vid_mhc.add_argument('-c', '--codec', choices=('a', 'h'))
-vid_mhc.add_argument('-m', '--resolution-limit', choices=('FHD', 'HD'))
+vid_mhc.add_argument('-m', '--resolution-limit')
 vid_mhc.add_argument('-L', '--no-clean', action='store_true', help='not clean temp files in work dir')
 vid_mhc.add_argument('-W', '--work-dir')
 vid_mhc.add_argument('-R', '--redo', action='store_true', dest='redo_origin')

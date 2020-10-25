@@ -44,8 +44,6 @@ class SimpleBot:
         self.updater = Updater(token, use_context=True,
                                request_kwargs={'read_timeout': timeout, 'connect_timeout': timeout},
                                **kwargs)
-        if update_queue:
-            self.updater.dispatcher.update_queue = self.updater.update_queue = self.update_queue = update_queue
         self.bot: Bot = self.updater.bot
         self.__get_me__(timeout=timeout)
         self.common_filters = filters
