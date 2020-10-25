@@ -120,5 +120,21 @@ def fs_copy_cli(src, dst):
     return subprocess.run(['copy', src, dst], shell=True)
 
 
-def fs_move_cli(src, dst):
+def _fs_move_cli_move(src, dst):
     return subprocess.run(['move', src, dst], shell=True)
+
+
+def _fs_move_cli_robocopy(src, dst, quiet=True, verbose=False):
+    full_log = verbose or not quiet
+    args = ['robocopy']
+    if not full_log:
+        # https://stackoverflow.com/a/7487697/7966259
+        # /NP  : No Progress - don't display percentage copied.
+        # /NS  : No Size - don't log file sizes.
+        # /NC  : No Class - don't log file classes.
+        args.extend(['/NJH', '/NJS', '/NFL', '/NDL'])
+    args.extend(['/E', '/IS', '/MOVE', src, dst])
+    return subprocess.run(args, shell=True)
+
+
+fs_move_cli = _fs_move_cli_robocopy
