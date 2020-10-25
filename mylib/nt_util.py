@@ -117,11 +117,11 @@ clipboard = Clipboard()
 
 
 def fs_copy_cli(src, dst):
-    return subprocess.run(['copy', src, dst], shell=True)
+    subprocess.run(['copy', src, dst], shell=True).check_returncode()
 
 
 def _fs_move_cli_move(src, dst):
-    return subprocess.run(['move', src, dst], shell=True)
+    subprocess.run(['move', src, dst], shell=True).check_returncode()
 
 
 def _fs_move_cli_robocopy(src, dst, quiet=True, verbose=False):
@@ -133,8 +133,16 @@ def _fs_move_cli_robocopy(src, dst, quiet=True, verbose=False):
         # /NS  : No Size - don't log file sizes.
         # /NC  : No Class - don't log file classes.
         args.extend(['/NJH', '/NJS', '/NFL', '/NDL'])
-    args.extend(['/E', '/IS', '/MOVE', src, dst])
-    return subprocess.run(args, shell=True)
+    if os.path.isdir(src):
+        args.extend(['/E', '/IS'])
+    args.extend(['/MOVE', src, dst])
+    subprocess.run(args, shell=True).check_returncode()
 
 
-fs_move_cli = _fs_move_cli_robocopy
+def fs_move_cli(src, dst, quiet=True, verbose=False):
+    if os.path.isfile(src):
+        _fs_move_cli_move(src, dst)
+    elif os.path.isdir(src):
+        _fs_move_cli_robocopy(src, dst, quiet=quiet, verbose=verbose)
+    else:
+        raise ValueError(src)

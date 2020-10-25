@@ -26,7 +26,7 @@ from typing import Iterable, Callable, Generator, Iterator, Tuple, Dict, List
 import psutil
 from filetype import filetype
 
-from .tricks import make_kwargs_dict, NonBlockingCaller, meta_new_thread
+from .tricks import make_kwargs_dict, NonBlockingCaller
 
 if os.name == 'nt':
     from .nt_util import *
@@ -462,13 +462,38 @@ def filetype_is(filepath, keyword):
     return guess and keyword in guess.mime
 
 
-def shrink_name(s: str, max_bytes=250, encoding='utf8', add_dots=True):
+def shrink_name(s: str, max_bytes=250, encoding='utf8', add_dots=True, from_left=False):
+    if from_left:
+        def strip(x: str):
+            return x[1:]
+    else:
+        def strip(x: str):
+            return x[:-1]
     shrunk = False
     limit = max_bytes - 3 if add_dots else max_bytes
     while len(s.encode(encoding=encoding)) > limit:
-        s = s[:-1]
+        s = strip(s)
         shrunk = True
-    return s + '...' if shrunk and add_dots else s
+    if shrunk:
+        if from_left:
+            return '...' + s
+        else:
+            return s + '...'
+    else:
+        return s
+
+
+def shrink_name_middle(s: str, max_bytes=250, encoding='utf8', add_dots=True):
+    half_max_bytes = (max_bytes - 3 if add_dots else max_bytes) // 2
+    left = s[:len(s) // 2]
+    right = s[len(s) // 2:]
+    common_params = make_kwargs_dict(encoding=encoding, add_dots=False)
+    left = shrink_name(left, half_max_bytes, **common_params)
+    right = shrink_name(right, half_max_bytes, **common_params)
+    if add_dots:
+        return f'{left}...{right}'
+    else:
+        return f'{left}{right}'
 
 
 def get_names():

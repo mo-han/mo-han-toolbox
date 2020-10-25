@@ -5,13 +5,14 @@
 import cmd
 import os
 import shlex
+import shutil
 import sys
 from argparse import ArgumentParser, REMAINDER
 from pprint import pprint
 
 from send2trash import send2trash
 
-from mylib.os_util import clipboard, list_files
+from mylib.os_util import clipboard, list_files, ctx_pushd, fs_find_iter, fs_legal_name, shrink_name_middle, fs_move_cli
 from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, Attreebute
 from mylib.tui import LinePrinter
 
@@ -108,6 +109,32 @@ def cmd_mode_func():
 
 cmd_mode = add_sub_parser('cmd', ['cli'], 'command line interactive mode')
 cmd_mode.set_defaults(func=cmd_mode_func)
+
+
+def dir_flatter_func():
+    import shutil
+    args = rtd.args
+    src = args.src or clipboard.list_paths()
+    for s in src:
+        if not os.path.isdir(s):
+            print(f'! skip non-folder: {s}')
+            continue
+        with ctx_pushd(s):
+            dir_l = list(fs_find_iter(find_dir_instead_of_file=True))
+            if not dir_l:
+                continue
+            file_l = list(fs_find_iter(strip_root=True, recursive=True))
+            for fp in file_l:
+                flat_path = shrink_name_middle(fs_legal_name(fp))
+                shutil.move(fp, flat_path)
+            for dp in dir_l:
+                os.removedirs(dp)
+
+
+dir_flatter = add_sub_parser('dir.flatter', ['flat.dir', 'flat.folder'],
+                             'flatten directory tree inside a directory into files')
+dir_flatter.set_defaults(func=dir_flatter_func)
+dir_flatter.add_argument('src', nargs='*')
 
 
 def put_in_dir_func():

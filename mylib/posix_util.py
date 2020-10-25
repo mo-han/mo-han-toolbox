@@ -41,8 +41,8 @@ clipboard = Clipboard()
 
 
 def fs_copy_cli(src, dst):
-    return subprocess.run(['cp', '-r', src, dst], shell=True)
+    subprocess.run(['cp', '-r', src, dst], shell=True).check_returncode()
 
 
 def fs_move_cli(src, dst):
-    return subprocess.run(['mv', src, dst], shell=True)
+    subprocess.run(['mv', src, dst], shell=True).check_returncode()
