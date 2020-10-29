@@ -403,7 +403,7 @@ def write_file_chunk(filepath: str, start: int, stop: int, data: bytes, total: i
         f[start:stop] = data
 
 
-def list_files(src, recursive=False, progress_queue: Queue = None) -> list:
+def list_files(src: str or Iterable or Iterator or Clipboard, recursive=False, progress_queue: Queue = None) -> list:
     recur_kwargs = make_kwargs_dict(recursive=recursive, progress_queue=progress_queue)
     # if src is None:
     #     return list_files(clipboard.list_paths(exist_only=True), recursive=recursive)
@@ -581,3 +581,15 @@ def path_or_glob(pathname, *, recursive=False):
         return [pathname]
     else:
         return glob(pathname, recursive=recursive)
+
+
+def split_filename(path):
+    """path -> parent_dir, name, ext"""
+    p, b = os.path.split(path)
+    n, e = os.path.splitext(b)
+    return p, n, e
+
+
+def join_filename(parent_path, name_without_ext, extension):
+    """parent_dir, name, ext -> path"""
+    return os.path.join(parent_path, name_without_ext + extension)

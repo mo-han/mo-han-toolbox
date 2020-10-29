@@ -14,6 +14,8 @@ class LinePrinter:
     def print(self, text: str = '', **kwargs):
         print(text, file=self.output, flush=True, **kwargs)
 
+    p = print
+
     def clear(self):
         self.line(char=' ', end='\r')
 
