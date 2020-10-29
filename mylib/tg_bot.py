@@ -15,11 +15,11 @@ from .text import split_by_length_and_lf
 from .tricks import Decorator
 
 
-def meta_deco_handler_method(handler_type, is_specialty=False, **handler_kwargs) -> Decorator:
+def meta_deco_handler_method(handler_type, on_menu=False, **handler_kwargs) -> Decorator:
     def deco(handler_method: Callable):
         wrap = handler_method
-        wrap.is_specialty = is_specialty
-        wrap.handler_registry = handler_type, handler_kwargs
+        wrap.on_menu = on_menu
+        wrap.handler = handler_type, handler_kwargs
         return wrap
 
     return deco
@@ -61,8 +61,8 @@ class SimpleBot:
     def __register_handlers__(self):
         self.commands_list = []
         for n, v in getmembers(self):
-            if ismethod(v) and hasattr(v, 'handler_registry'):
-                _type, _kwargs = v.handler_registry
+            if ismethod(v) and hasattr(v, 'handler'):
+                _type, _kwargs = v.handler
                 _kwargs['callback'] = v
                 if _type == CommandHandler:
                     self.commands_list.append((n, v))
@@ -106,10 +106,10 @@ class SimpleBot:
         self.updater.start_polling(**poll_param)
         self.updater.idle()
 
-    def __specialty_menu__(self):
+    def __menu_str__(self):
         lines = [f'try these commands:']
-        specialty_menu = [n for n, v in self.commands_list if v.is_specialty]
-        lines.extend([f'/{e}' for e in specialty_menu])
+        menu = [n for n, v in self.commands_list if v.on_menu]
+        lines.extend([f'/{e}' for e in menu])
         return '\n'.join(lines)
 
     def __about_this_bot__(self):
@@ -118,15 +118,15 @@ class SimpleBot:
                f'running on device:\n' \
                f'{self.device.username} @ {self.device.hostname} ({self.device.osname})'
 
-    @meta_deco_handler_method(CommandHandler, is_specialty=True)
+    @meta_deco_handler_method(CommandHandler, on_menu=True)
     def start(self, update: Update, context: CallbackContext):
         """let's roll out"""
         self.__typing__(update)
         self.__get_me__()
         update.message.reply_text(self.__about_this_bot__())
-        update.message.reply_text(self.__specialty_menu__())
+        update.message.reply_text(self.__menu_str__())
 
-    @meta_deco_handler_method(CommandHandler, is_specialty=True)
+    @meta_deco_handler_method(CommandHandler, on_menu=True)
     def menu(self, update: Update, context: CallbackContext):
         """list commands"""
         self.__typing__(update)

@@ -529,7 +529,7 @@ def kw_video_convert(source, keywords=(), vf=None, cut_points=(), dest=None,
             if not dry_run:
                 ff.convert([fp], output_path, ffmpeg_args, start=start, end=end, **kwargs)
             logger.info(f'+ {output_path}')
-            os.rename(fp, origin_path)
+            shutil.move(fp, origin_path)
         except ff.FFmpegError as e:
             logger.error(f'! {output_path}\n {e}')
             os.remove(output_path)
