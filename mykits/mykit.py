@@ -111,6 +111,29 @@ cmd_mode = add_sub_parser('cmd', ['cli'], 'command line interactive mode')
 cmd_mode.set_defaults(func=cmd_mode_func)
 
 
+def video_guess_crf_func():
+    from mylib.ffmpeg_local_alpha import guess_video_crf, file_is_video
+    args = rtd.args
+    path_l = [path for path in list_files(args.src or clipboard) if file_is_video(path)]
+    codec = args.codec
+    work_dir = args.work_dir
+    redo = args.redo
+    auto_clean = args.auto_clean
+    for path in path_l:
+        tui_lp.l()
+        tui_lp.p(path)
+        tui_lp.p(guess_video_crf(src=path, codec=codec, work_dir=work_dir, redo=redo, auto_clean=auto_clean))
+
+
+video_guess_crf = add_sub_parser('video.crf.guess', ['crf'], 'guess CRF parameter value of video file')
+video_guess_crf.set_defaults(func=video_guess_crf_func)
+video_guess_crf.add_argument('src', nargs='*')
+video_guess_crf.add_argument('-c', '--codec', nargs='?')
+video_guess_crf.add_argument('-w', '--work-dir', nargs='?')
+video_guess_crf.add_argument('-R', '--redo', action='store_true')
+video_guess_crf.add_argument('-L', '--auto-clean', action='store_true')
+
+
 def dir_flatter_func():
     import shutil
     args = rtd.args
@@ -280,35 +303,8 @@ cookies_conv_json.set_defaults(func=ccj_func)
 cookies_conv_json.add_argument('file', nargs='*')
 
 
-def vid_mhc_func():
-    from mylib.ffmpeg_local import mark_high_crf_video_file
-    args = rtd.args
-    threshold = args.crf_threshold
-    codec = args.codec
-    res_limit = args.resolution_limit
-    clean = not args.no_clean
-    work_dir = args.work_dir
-    redo_origin = args.redo_origin
-    src = args.src or clipboard
-    mark_high_crf_video_file(src=src, crf_thres=threshold, codec=codec, res_limit=res_limit,
-                             redo=redo_origin, work_dir=work_dir, auto_clean=clean)
-
-
-vid_mhc = add_sub_parser('video.mark.high.crf', ['vmhc'],
-                         'mark video file with high crf (estimated), '
-                         'by appending ".origin" in its filename (before file extension)')
-vid_mhc.set_defaults(func=vid_mhc_func)
-vid_mhc.add_argument('-t', '--crf-threshold', type=float, default=22)
-vid_mhc.add_argument('-c', '--codec', choices=('a', 'h'))
-vid_mhc.add_argument('-m', '--resolution-limit')
-vid_mhc.add_argument('-L', '--no-clean', action='store_true', help='not clean temp files in work dir')
-vid_mhc.add_argument('-W', '--work-dir')
-vid_mhc.add_argument('-R', '--redo', action='store_true', dest='redo_origin')
-vid_mhc.add_argument('src', nargs='*')
-
-
 def ffmpeg_img2vid_func():
-    from mylib.ffmpeg_local import FFmpegRunnerAlpha, FFmpegArgsList, parse_kw_opt_str
+    from mylib.ffmpeg_local_alpha import FFmpegRunnerAlpha, FFmpegArgsList, parse_kw_opt_str
     ff = FFmpegRunnerAlpha(banner=False, overwrite=True)
     ff.logger.setLevel('INFO')
     args = rtd.args
@@ -349,7 +345,7 @@ ffmpeg_img2vid.add_argument('opt', help='ffmpeg options (better insert -- before
 
 
 def ffmpeg_func():
-    from mylib.ffmpeg_local import kw_video_convert
+    from mylib.ffmpeg_local_alpha import kw_video_convert
     args = rtd.args
     source = args.source or clipboard
     keywords = args.keywords or ()

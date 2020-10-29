@@ -14,10 +14,10 @@ import filetype
 
 from .tui import LinePrinter
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
-from .os_util import ctx_pushd, write_json_file, read_json_file, SubscriptableFileIO, ensure_open_file, \
-    fs_find_iter, \
-    fs_rename, fs_touch, shlex_double_quotes_join, list_files, split_filename_tail
-from .tricks import hex_hash, meta_deco_args_choices, remove_from_list, seconds_from_colon_time
+from .os_util import shlex_double_quotes_join, list_files, split_filename_tail, read_json_file, write_json_file, \
+    SubscriptableFileIO, ctx_pushd, fs_find_iter, fs_rename, fs_touch, ensure_open_file
+from .tricks import meta_deco_args_choices, seconds_from_colon_time, hex_hash, remove_from_list
+from .filename_tags import SuffixListFilenameTags
 
 S_ORIGINAL = 'original'
 S_SEGMENT = 'segment'
@@ -49,6 +49,8 @@ OLD_TAILS = ['.__origin__', '.hevc8b']
 TAILS_D = {'o': '.origin', 'a8': '.avc8b', 'h8': '.hevc8b', 'aq8': '.qsvavc8b', 'hq8': '.qsvhevc8b'}
 TAILS_L = TAILS_D.values()
 VALID_TAILS = OLD_TAILS + list(TAILS_L)
+CODEC_TAGS_DICT = {'o': 'origin', 'a8': 'avc8b', 'h8': 'hevc8b', 'aq8': 'qsvavc8b', 'hq8': 'qsvhevc8b'}
+CODEC_TAGS_SET = set(CODEC_TAGS_DICT.values())
 VIDEO_CODECS_A10N = {'a': 'h264', 'h': 'hevc'}
 
 decorator_choose_map_preset = meta_deco_args_choices({'map_preset': STREAM_MAP_PRESET_TABLE.keys()})
@@ -353,6 +355,219 @@ class FFmpegRunnerAlpha:
                 vf=f'scale={width}:{height}:force_original_aspect_ratio=1,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2',
                 *output_args, **output_kwargs),
             input_args=FFmpegArgsList(r=fps))
+
+
+def get_width_height(filepath) -> (int, int):
+    d = ffmpeg.probe(filepath, select_streams='V')['streams'][0]
+    return d['width'], d['height']
+
+
+@meta_deco_args_choices({'res_limit': (None, 'FHD', 'HD', 'qHD', 'QHD', '4K')})
+def get_vf_res_scale_down(width: int, height: int, res_limit='FHD', vf: str = None) -> str or None:
+    """generate 'scale=<w>:<h>' value for ffmpeg `vf` option, to scale down the given resolution
+    return empty str if the given resolution is enough low thus scaling is not needed"""
+    d = {'FHD': (1920, 1080), 'HD': (1280, 720), 'qHD': (960, 540), 'QHD': (2560, 1440), '4K': (3840, 2160)}
+    auto_calc = -2
+    if not res_limit:
+        return
+    tgt_long, tgt_short = d[res_limit]
+    long = max((width, height))
+    short = min((width, height))
+    if long <= tgt_long and short <= tgt_short:
+        return
+    ratio = short / long
+    tgt_ratio = tgt_short / tgt_long
+    thin = False if ratio > tgt_ratio else True
+    portrait = True if height > width else False
+    baseline = tgt_long if thin else tgt_short
+    res_scale = 'scale=' + (f'{baseline}:{auto_calc}' if thin ^ portrait else f'{auto_calc}:{baseline}')
+    return f'{res_scale},{vf}' if vf else res_scale
+
+
+def get_filter_list(filters):
+    if not filters:
+        return []
+    elif isinstance(filters, str):
+        return [filters]
+    elif isinstance(filters, (Iterator, Iterable)):
+        return list(filters)
+    else:
+        return []
+
+
+def get_filter_str(filters):
+    return ','.join(get_filter_list(filters))
+
+
+def kw_video_convert(source, keywords=(), vf=None, cut_points=(), dest=None,
+                     overwrite=False, redo=False, ffmpeg_opts=(),
+                     verbose=0, dry_run=False,
+                     **kwargs):
+    ff = FFmpegRunnerAlpha(overwrite=True, banner=False)
+    if verbose > 1:
+        lvl = 'DEBUG'
+    elif verbose > 0:
+        lvl = 'INFO'
+    else:
+        lvl = 'WARNING'
+    ff.logger.setLevel(lvl)
+    vf_list = get_filter_list(vf)
+    logger = get_logger(f'{__name__}.smartconv', fmt=LOG_FMT_MESSAGE_ONLY)
+    codecs_d = {'h': 'hevc', 'a': None, 'hq': 'hevc_qsv', 'aq': 'h264_qsv'}
+
+    ffmpeg_args = FFmpegArgsList(pix_fmt='yuv420p')
+    keywords = set(keywords) or set()
+    res_limit = None
+    codec = 'a'
+    crf = None
+
+    if 'smartblur' in keywords:
+        vf_list.append('smartblur')
+
+    for kw in keywords:
+        if kw[0] + kw[-1] in ('vk', 'vM') and kw[1:-1].isdecimal():
+            ffmpeg_args.add(b__v=kw[1:])
+        elif kw[:3] == 'crf':
+            crf = kw[3:]
+        elif kw[0] + kw[-1] == 'ak' and kw[1:-1].isdecimal():
+            ffmpeg_args.add(b__a=kw[1:])
+        elif kw[:3] == 'fps':
+            ffmpeg_args.add(r=kw[3:])
+        elif kw == 'vcopy':
+            ffmpeg_args.add(c__v='copy')
+        elif kw == 'acopy':
+            ffmpeg_args.add(c__a='copy')
+        elif kw == 'copy':
+            ffmpeg_args.add(c='copy')
+        elif kw in ('FHD', 'fhd'):
+            res_limit = 'FHD'
+        elif kw in ('HD', 'hd'):
+            res_limit = 'HD'
+        elif kw in ('qHD',):
+            res_limit = 'qHD'
+        elif kw in ('QHD', 'qhd'):
+            res_limit = 'QHD'
+        elif kw.lower() == '4k':
+            res_limit = '4K'
+        elif kw in ('2ch', 'stereo'):
+            ffmpeg_args.add(ac=2)
+        elif kw == 'hevc':
+            codec = 'h'
+
+    if 'smallhd' in keywords:
+        codec = 'h'
+        crf = crf or 25
+        res_limit = 'HD'
+    elif 'smallerhd' in keywords:
+        codec = 'h'
+        crf = crf or 28
+        res_limit = 'HD'
+        ffmpeg_args.add(b__a='64k')
+
+    if 'qsv' in keywords:
+        codec += 'q'
+        ffmpeg_args.add(vcodec=codecs_d[codec], global_quality=crf)
+    else:
+        ffmpeg_args.add(vcodec=codecs_d[codec], crf=crf)
+    ffmpeg_args.add(ffmpeg_opts)
+
+    if keywords & {'copy',  'vcopy'}:
+        tag = 'copy'
+    elif keywords & {'m4a', 'aac'}:
+        tag = 'audio'
+    else:
+        tag = CODEC_TAGS_DICT[f'{codec}8']
+
+    cut_points = cut_points or []
+    start = cut_points[0] if cut_points else 0
+    end = cut_points[1] if len(cut_points) >= 2 else 0
+
+    def conv_one_file(fp):
+        lp = LinePrinter()
+        lp.l()
+        if not os.path.isfile(fp):
+            logger.info(f'# skip non-file\n  {fp}')
+        if not file_is_video(fp):
+            logger.info(f'# skip non-video\n  {fp}')
+            return
+
+        input_ft = SuffixListFilenameTags(fp)
+        origin_ft = SuffixListFilenameTags(fp).tag('origin')
+        output_ft = SuffixListFilenameTags(fp).tag(tag).untag('crf', 'origin')
+        if not redo and 'origin' in input_ft.tags:
+            logger.info(f'# skip origin\n  {fp}')
+            return
+        codec_tags = input_ft.tags & CODEC_TAGS_SET - {'origin'}
+        if codec_tags:
+            logger.info(f'# skip {codec_tags}\n  {fp}')
+            return
+        if 'mp4' in keywords:
+            output_ft.extension = '.mp4'
+        if 'mkv' in keywords:
+            output_ft.extension = '.mkv'
+        if 'm4a' in keywords:
+            output_ft.extension = '.m4a'
+            ffmpeg_args.add(map=STREAM_MAP_PRESET_TABLE[S_NO_VIDEO])
+        if 'aac' in keywords:
+            output_ft.extension = '.aac'
+
+        origin_path = origin_ft.path
+        output_path = output_ft.path
+        if os.path.isfile(output_path) and not overwrite:
+            logger.info(f'# skip existing\n  {output_path}')
+            return
+        logger.info(f'* {tag}\n  {fp}')
+        lp.l()
+
+        try:
+            if res_limit:
+                w, h = get_width_height(fp)
+                ffmpeg_args.add(
+                    vf=get_vf_res_scale_down(
+                        w, h, res_limit,
+                        vf=get_filter_str(vf_list)))
+            if not dry_run:
+                ff.convert([fp], output_path, ffmpeg_args, start=start, end=end, **kwargs)
+            logger.info(f'+ {output_path}')
+            os.rename(fp, origin_path)
+        except ff.FFmpegError as e:
+            logger.error(f'! {output_path}\n {e}')
+            os.remove(output_path)
+        except KeyboardInterrupt:
+            logger.warning(f'- {output_path}')
+            os.remove(output_path)
+            sys.exit(2)
+
+    for filepath in list_files(source, recursive=False):
+        conv_one_file(filepath)
+
+
+def parse_kw_opt_str(kw: str):
+    if kw[:3] == 'crf' and kw[3:].isdecimal():
+        return FFmpegArgsList(crf=float(kw[3:]))
+    if kw == 'hevc':
+        return FFmpegArgsList(c__v='hevc')
+    if f'{kw[:1]}{kw[-1:]}'.lower() in ('vk', 'vm') and kw[1:-1].isdecimal():
+        return FFmpegArgsList(b__v=0 if kw[1:-1] == '0' else kw[1:])
+    if f'{kw[:1]}{kw[-1:]}'.lower() in ('ak', 'am') and kw[1:-1].isdecimal():
+        return FFmpegArgsList(b__a=0 if kw[1:-1] == '0' else kw[1:])
+    if kw == '10bit':
+        return FFmpegArgsList(pix_fmt='yuv420p10le')
+
+
+def guess_video_crf(src, codec, *, redo=False, work_dir=None, auto_clean=True):
+    tf = SuffixListFilenameTags(src)
+    if not redo and 'crf' in tf.keys:
+        return float(tf.tags_dict['crf'])
+    c = FFmpegSegmentsContainer(src, work_dir=work_dir, log_lvl='WARNING')
+    try:
+        crf_guess = c.guess_crf(codec)
+        tf.tag(crf=crf_guess)
+        shutil.move(src, tf.path)
+        return crf_guess
+    finally:
+        if auto_clean:
+            c.purge()
 
 
 class FFmpegSegmentsContainer:
@@ -924,7 +1139,7 @@ class FFmpegSegmentsContainer:
                             os.remove(o_seg + self.suffix_delete)
                 segments = self.list_lock_segments() + self.list_done_segments()
 
-    def vf_res_scale_down(self, res_limit=None, vf=None):
+    def vf_res_scale_down(self, res_limit='FHD', vf=None):
         width, height = self.width_height
         return get_vf_res_scale_down(width, height, res_limit=res_limit, vf=None)
 
@@ -961,241 +1176,3 @@ class FFmpegSegmentsContainer:
         e = self.estimate()
         r = e[i]
         return round(crf0 + 6 * log(r, 2), 2)
-
-
-def get_width_height(filepath) -> (int, int):
-    d = ffmpeg.probe(filepath, select_streams='V')['streams'][0]
-    return d['width'], d['height']
-
-
-@meta_deco_args_choices({'res_limit': (None, 'FHD', 'HD', 'qHD', 'QHD', '4K')})
-def get_vf_res_scale_down(width: int, height: int, res_limit='FHD', vf: str = None) -> str or None:
-    """generate 'scale=<w>:<h>' value for ffmpeg `vf` option, to scale down the given resolution
-    return empty str if the given resolution is enough low thus scaling is not needed"""
-    d = {'FHD': (1920, 1080), 'HD': (1280, 720), 'qHD': (960, 540), 'QHD': (2560, 1440), '4K': (3840, 2160)}
-    auto_calc = -2
-    if not res_limit:
-        return
-    tgt_long, tgt_short = d[res_limit]
-    long = max((width, height))
-    short = min((width, height))
-    if long <= tgt_long and short <= tgt_short:
-        return
-    ratio = short / long
-    tgt_ratio = tgt_short / tgt_long
-    thin = False if ratio > tgt_ratio else True
-    portrait = True if height > width else False
-    baseline = tgt_long if thin else tgt_short
-    res_scale = 'scale=' + (f'{baseline}:{auto_calc}' if thin ^ portrait else f'{auto_calc}:{baseline}')
-    return f'{res_scale},{vf}' if vf else res_scale
-
-
-def get_filter_list(filters):
-    if not filters:
-        return []
-    elif isinstance(filters, str):
-        return [filters]
-    elif isinstance(filters, (Iterator, Iterable)):
-        return list(filters)
-    else:
-        return []
-
-
-def get_filter_str(filters):
-    return ','.join(get_filter_list(filters))
-
-
-def kw_video_convert(source, keywords=(), vf=None, cut_points=(), dest=None,
-                     overwrite=False, redo=False, ffmpeg_opts=(),
-                     verbose=0, dry_run=False,
-                     **kwargs):
-    ff = FFmpegRunnerAlpha(overwrite=True, banner=False)
-    if verbose > 1:
-        lvl = 'DEBUG'
-    elif verbose > 0:
-        lvl = 'INFO'
-    else:
-        lvl = 'WARNING'
-    ff.logger.setLevel(lvl)
-    vf_list = get_filter_list(vf)
-    logger = get_logger(f'{__name__}.smartconv', fmt=LOG_FMT_MESSAGE_ONLY)
-    codecs_d = {'h': 'hevc', 'a': None, 'hq': 'hevc_qsv', 'aq': 'h264_qsv'}
-
-    ffmpeg_args = FFmpegArgsList(pix_fmt='yuv420p')
-    keywords = set(keywords) or set()
-    res_limit = None
-    codec = 'a'
-    crf = None
-
-    if 'smartblur' in keywords:
-        vf_list.append('smartblur')
-
-    for kw in keywords:
-        if kw[0] + kw[-1] in ('vk', 'vM') and kw[1:-1].isdecimal():
-            ffmpeg_args.add(b__v=kw[1:])
-        elif kw[:3] == 'crf':
-            crf = kw[3:]
-        elif kw[0] + kw[-1] == 'ak' and kw[1:-1].isdecimal():
-            ffmpeg_args.add(b__a=kw[1:])
-        elif kw[:3] == 'fps':
-            ffmpeg_args.add(r=kw[3:])
-        elif kw == 'vcopy':
-            ffmpeg_args.add(c__v='copy')
-        elif kw == 'acopy':
-            ffmpeg_args.add(c__a='copy')
-        elif kw == 'copy':
-            ffmpeg_args.add(c='copy')
-        elif kw in ('FHD', 'fhd'):
-            res_limit = 'FHD'
-        elif kw in ('HD', 'hd'):
-            res_limit = 'HD'
-        elif kw in ('qHD',):
-            res_limit = 'qHD'
-        elif kw in ('QHD', 'qhd'):
-            res_limit = 'QHD'
-        elif kw.lower() == '4k':
-            res_limit = '4K'
-        elif kw in ('2ch', 'stereo'):
-            ffmpeg_args.add(ac=2)
-        elif kw == 'hevc':
-            codec = 'h'
-
-    if 'smallhd' in keywords:
-        codec = 'h'
-        crf = crf or 25
-        res_limit = 'HD'
-    elif 'smallerhd' in keywords:
-        codec = 'h'
-        crf = crf or 28
-        res_limit = 'HD'
-        ffmpeg_args.add(b__a='64k')
-
-    if 'qsv' in keywords:
-        codec += 'q'
-        ffmpeg_args.add(vcodec=codecs_d[codec], global_quality=crf)
-    else:
-        ffmpeg_args.add(vcodec=codecs_d[codec], crf=crf)
-    ffmpeg_args.add(ffmpeg_opts)
-
-    tail = TAILS_D[f'{codec}8']
-    if keywords & {'copy', 'm4a', 'aac', 'vcopy'}:
-        tail = ''
-
-    cut_points = cut_points or []
-    start = cut_points[0] if cut_points else 0
-    end = cut_points[1] if len(cut_points) >= 2 else 0
-
-    def conv_one_file(fp):
-        lp = LinePrinter()
-        lp.l()
-        if not os.path.isfile(fp):
-            logger.info(f'# skip non-file\n  {fp}')
-        if not file_is_video(fp):
-            logger.info(f'# skip non-video\n  {fp}')
-            return
-
-        dirname, input_basename = os.path.split(fp)
-        input_non_ext, input_ext = os.path.splitext(input_basename)
-        input_name, input_tail = os.path.splitext(input_non_ext)
-        if input_tail in TAILS_L or input_tail in OLD_TAILS:
-            if 'origin' in input_tail:
-                if not redo:
-                    logger.info(f'# skip origin\n  {fp}')
-                    return
-            else:
-                logger.info(f'# skip {input_tail}\n  {fp}')
-                return
-        else:
-            input_name = input_non_ext
-            input_tail = ''
-        output_ext = input_ext
-        if 'mp4' in keywords:
-            output_ext = '.mp4'
-        if 'mkv' in keywords:
-            output_ext = '.mkv'
-        if 'm4a' in keywords:
-            output_ext = '.m4a'
-            ffmpeg_args.add(map=STREAM_MAP_PRESET_TABLE[S_NO_VIDEO])
-        if 'aac' in keywords:
-            output_ext = '.aac'
-
-        origin_path = os.path.join(dirname, input_name + '.origin' + input_ext)
-        output_path = dest or os.path.join(dirname, input_name + tail + output_ext)
-        if os.path.isfile(output_path) and not overwrite:
-            logger.info(f'# skip tail\n  {output_path}')
-            return
-        logger.info(f'* {tail}\n  {fp}')
-        lp.l()
-
-        try:
-            if res_limit:
-                w, h = get_width_height(fp)
-                ffmpeg_args.add(
-                    vf=get_vf_res_scale_down(
-                        w, h, res_limit,
-                        vf=get_filter_str(vf_list)))
-            if not dry_run:
-                ff.convert([fp], output_path, ffmpeg_args, start=start, end=end, **kwargs)
-            logger.info(f'+ {output_path}')
-            os.rename(fp, origin_path)
-        except ff.FFmpegError as e:
-            logger.error(f'! {output_path}\n {e}')
-            os.remove(output_path)
-        except KeyboardInterrupt:
-            logger.warning(f'- {output_path}')
-            os.remove(output_path)
-            sys.exit(2)
-
-    for filepath in list_files(source, recursive=False):
-        conv_one_file(filepath)
-
-
-def mark_high_crf_video_file(src, crf_thres, codec='a' or 'h', res_limit=None,
-                             redo=True, recursive=False,
-                             work_dir=None, auto_clean=True):
-    logger = get_logger(f'{__name__}.markhighcrf', fmt=LOG_FMT_MESSAGE_ONLY)
-    lp = LinePrinter()
-
-    for filepath in list_files(src, recursive=recursive):
-        if not file_is_video(filepath):
-            continue
-        lp.l()
-        logger.info(f'+ {filepath}')
-        dirname, name, tail, ext = split_filename_tail(filepath, VALID_TAILS)
-        if tail and (not redo or 'origin' not in tail):
-            logger.info(f'# skip tail={tail}')
-            continue
-        try:
-            c = FFmpegSegmentsContainer(filepath, work_dir=work_dir, log_lvl='WARNING')
-        except FFmpegSegmentsContainer.ContainerError as e:
-            logger.error(f'! {e.args}')
-            sys.exit(2)
-        try:
-            # set_logger_level(c.ff.logger, 'INFO')
-            crf_guess = c.guess_crf(codec, res_limit=res_limit)
-            if crf_guess >= crf_thres:
-                origin_marked = os.path.join(dirname, name + '.origin' + ext)
-                logger.info(f'* rename crf={crf_guess} tail=.origin')
-                os.rename(filepath, origin_marked)
-            else:
-                logger.info(f'# skip crf={crf_guess}')
-        except KeyboardInterrupt:
-            if auto_clean:
-                c.purge()
-            sys.exit(2)
-        finally:
-            if auto_clean:
-                c.purge()
-
-
-def parse_kw_opt_str(kw: str):
-    if kw[:3] == 'crf' and kw[3:].isdecimal():
-        return FFmpegArgsList(crf=float(kw[3:]))
-    if kw == 'hevc':
-        return FFmpegArgsList(c__v='hevc')
-    if f'{kw[:1]}{kw[-1:]}'.lower() in ('vk', 'vm') and kw[1:-1].isdecimal():
-        return FFmpegArgsList(b__v=0 if kw[1:-1] == '0' else kw[1:])
-    if f'{kw[:1]}{kw[-1:]}'.lower() in ('ak', 'am') and kw[1:-1].isdecimal():
-        return FFmpegArgsList(b__a=0 if kw[1:-1] == '0' else kw[1:])
-    if kw == '10bit':
-        return FFmpegArgsList(pix_fmt='yuv420p10le')
