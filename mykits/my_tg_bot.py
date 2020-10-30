@@ -90,7 +90,7 @@ def main():
             self.__typing__(update)
             for name in ('effective_message', 'effective_user'):
                 self.__reply_md_code_block__(f'{name}\n{pformat(getattr(update, name).to_dict())}', update)
-            self.__reply_md_code_block__(f'bot.get_me()\n{pformat(self.bot.get_me().to_dict())}', update)
+            self.__reply_md_code_block__(f'bot.get_me()\n{pformat(self.__bot__.get_me().to_dict())}', update)
 
         def __about_this_bot__(self):
             return f'{super().__about_this_bot__()}\n\n' \

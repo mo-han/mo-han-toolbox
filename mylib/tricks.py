@@ -2,9 +2,11 @@
 # encoding=utf8
 
 import argparse
+import functools
 import hashlib
 import importlib.util
 import sys
+import sqlite3
 from collections import defaultdict
 from functools import wraps
 from inspect import signature
@@ -713,3 +715,29 @@ class NonBlockingCaller:
             sleep(wait)
             target, args, kwargs = self.triple
             raise self.StillRunning(target, *args, **kwargs)
+
+
+def deco_meta_copy_signature(signature_source: Callable):
+    # https://stackoverflow.com/a/58989918/7966259
+    def deco(target: Callable):
+        @functools.wraps(target)
+        def tgt(*args, **kwargs):
+            signature(signature_source).bind(*args, **kwargs)
+            return target(*args, **kwargs)
+        tgt.__signature__ = signature(signature_source)
+        return tgt
+    return deco
+
+
+class SimpleSQLite:
+    def __init__(self, db_path=':memory:'):
+        self.conn = sqlite3.connect(db_path)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+    def close(self):
+        self.conn.close()
