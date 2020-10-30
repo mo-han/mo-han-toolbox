@@ -39,51 +39,50 @@ class SimpleBot:
     def __init__(self, token, *, timeout=None, whitelist=None, auto_run=True,
                  filters=None, update_queue: Queue = None,
                  **kwargs):
-        self.failed_updates = []
-        self.device = get_names()
-        self.updater = Updater(token, use_context=True,
-                               request_kwargs={'read_timeout': timeout, 'connect_timeout': timeout},
-                               **kwargs)
-        self.bot: Bot = self.updater.bot
+        self.__device__ = get_names()
+        self.__updater__ = Updater(token, use_context=True,
+                                   request_kwargs={'read_timeout': timeout, 'connect_timeout': timeout},
+                                   **kwargs)
+        self.__bot__: Bot = self.__updater__.bot
         self.__get_me__(timeout=timeout)
-        self.common_filters = filters
+        self.__filters__ = filters
         if whitelist:
             chat_id_filter = Filters.chat(filter(lambda x: isinstance(x, int), whitelist))
             chat_username_filter = Filters.chat(filter(lambda x: isinstance(x, str), whitelist))
-            self.common_filters = merge_filters_and(self.common_filters, chat_id_filter | chat_username_filter)
+            self.__filters__ = merge_filters_and(self.__filters__, chat_id_filter | chat_username_filter)
             for u in whitelist:
                 if isinstance(u, int):
-                    self.bot.send_message(u, self.__about_this_bot__())
+                    self.__bot__.send_message(u, self.__about_this_bot__())
         self.__register_handlers__()
         if auto_run:
             self.__run__(poll_timeout=timeout)
 
     def __register_handlers__(self):
-        self.commands_list = []
+        self.__commands_list__ = []
         for n, v in getmembers(self):
             if ismethod(v) and hasattr(v, 'handler'):
                 _type, _kwargs = v.handler
                 _kwargs['callback'] = v
                 if _type == CommandHandler:
-                    self.commands_list.append((n, v))
+                    self.__commands_list__.append((n, v))
                     if 'command' not in _kwargs:
                         _kwargs['command'] = n
-                if self.common_filters:
+                if self.__filters__:
                     _filters = _kwargs.get('filters')
-                    _kwargs['filters'] = merge_filters_and(self.common_filters, _filters)
-                self.updater.dispatcher.add_handler(_type(**_kwargs))
+                    _kwargs['filters'] = merge_filters_and(self.__filters__, _filters)
+                self.__updater__.dispatcher.add_handler(_type(**_kwargs))
 
     def __get_me__(self, timeout=None):
-        self.me = self.bot.get_me(timeout=timeout)
-        fullname = self.me.first_name or ''
-        last_name = self.me.last_name
+        me = self.__bot__.get_me(timeout=timeout)
+        fullname = me.first_name or ''
+        last_name = me.last_name
         if last_name:
             fullname += f' {last_name}'
-        self.fullname = fullname
-        self.username = self.me.username
+        self.__fullname__ = fullname
+        self.__username__ = me.username
 
     def __typing__(self, update: Update):
-        self.bot.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING)
+        self.__bot__.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING)
 
     @staticmethod
     def __reply_text__(text, update: Update, **kwargs):
@@ -103,20 +102,20 @@ class SimpleBot:
         poll_param = {}
         if poll_timeout is not None:
             poll_param['timeout'] = poll_timeout
-        self.updater.start_polling(**poll_param)
-        self.updater.idle()
+        self.__updater__.start_polling(**poll_param)
+        self.__updater__.idle()
 
     def __menu_str__(self):
         lines = [f'try these commands:']
-        menu = [n for n, v in self.commands_list if v.on_menu]
+        menu = [n for n, v in self.__commands_list__ if v.on_menu]
         lines.extend([f'/{e}' for e in menu])
         return '\n'.join(lines)
 
     def __about_this_bot__(self):
         return f'bot:\n' \
-               f'{self.fullname} @{self.username}\n\n' \
+               f'{self.__fullname__} @{self.__username__}\n\n' \
                f'running on device:\n' \
-               f'{self.device.username} @ {self.device.hostname} ({self.device.osname})'
+               f'{self.__device__.__username__} @ {self.__device__.hostname} ({self.__device__.osname})'
 
     @meta_deco_handler_method(CommandHandler, on_menu=True)
     def start(self, update: Update, context: CallbackContext):
@@ -131,7 +130,7 @@ class SimpleBot:
         """list commands"""
         self.__typing__(update)
         lines = []
-        for n, v in self.commands_list:
+        for n, v in self.__commands_list__:
             if n.startswith('_'):
                 continue
             doc = (v.__doc__ or '...').split('\n', maxsplit=1)[0].strip()
