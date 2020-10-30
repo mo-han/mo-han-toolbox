@@ -97,7 +97,7 @@ def main():
                    f'script modified time:\n' \
                    f'{mt}'
 
-        @meta_deco_handler_method(CommandHandler, is_specialty=True, pass_args=True)
+        @meta_deco_handler_method(CommandHandler, on_menu=True, pass_args=True)
         def sleep(self, u: Update, c: CallbackContext):
             """sleep some time (unit: sec)"""
             args = c.args or [0]

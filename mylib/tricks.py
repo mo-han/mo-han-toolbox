@@ -673,8 +673,8 @@ class NonBlockingCaller:
     class Stopped(Exception):
         pass
 
-    def __init__(self, callee: Callable, *args, **kwargs):
-        self.triple = callee, args, kwargs
+    def __init__(self, target: Callable, *args, **kwargs):
+        self.triple = target, args, kwargs
         self._running = False
         self.run()
 
@@ -702,7 +702,7 @@ class NonBlockingCaller:
         return True
 
     def get(self, wait):
-        """return callee result, or raise callee exception, or raise NonBlockingCaller.StillRunning"""
+        """return target result, or raise target exception, or raise NonBlockingCaller.StillRunning"""
         rq = self._result_queue
         eq = self._exception_queue
         if rq.qsize():
@@ -711,5 +711,5 @@ class NonBlockingCaller:
             raise rq.get(block=False)
         else:
             sleep(wait)
-            callee, args, kwargs = self.triple
-            raise self.StillRunning(callee, *args, **kwargs)
+            target, args, kwargs = self.triple
+            raise self.StillRunning(target, *args, **kwargs)
