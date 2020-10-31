@@ -17,6 +17,7 @@ from typing import Dict, Iterable, Callable, Generator, Tuple, Union, Mapping, L
 
 import inflection
 
+from .log import get_logger
 from .number import int_is_power_of_2
 
 Decorator = Callable[[Callable], Callable]
@@ -724,14 +725,51 @@ def deco_meta_copy_signature(signature_source: Callable):
         def tgt(*args, **kwargs):
             signature(signature_source).bind(*args, **kwargs)
             return target(*args, **kwargs)
+
         tgt.__signature__ = signature(signature_source)
         return tgt
+
     return deco
 
 
-class SimpleSQLite:
-    def __init__(self, db_path=':memory:'):
-        self.conn = sqlite3.connect(db_path)
+class SimpleSQLiteTable:
+    def __init__(self, db_path: str, table_name: str, table_columns: list or tuple, *,
+                 converters: dict = None, adapters: dict = None):
+        logger = get_logger(f'{__name__}.{self.__class__.__name__}')
+        db_path = db_path or ':memory:'
+        if converters:
+            self.connection = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+        else:
+            self.connection = sqlite3.connect(db_path)
+        self.cursor = self.connection.cursor()
+        for k, v in (converters or {}).items():
+            sqlite3.register_converter(k, v)
+        for k, v in (adapters or {}).items():
+            sqlite3.register_adapter(k, v)
+        self.table_name = table_name
+        self.cursor.execute(f'create table if not exists {self.table_name} ({", ".join(table_columns)})')
+        self._insert_sql_qmark = f'insert into {self.table_name} values ({", ".join("?" * len(table_columns))})'
+
+    def insert(self, *values):
+        self.cursor.execute(self._insert_sql_qmark, values)
+        return self
+
+    def update(self, where: str = None, **data):
+        keys_qmark = [f'{k}=?' for k in data.keys()]
+        sql = f'update {self.table_name} set {", ".join(keys_qmark)}'
+        if where:
+            sql = f'{sql} where {where}'
+        self.cursor.execute(sql, tuple(data.values()))
+        return self
+
+    def select(self, where: str = None, *columns):
+        sql = f'select {", ".join(columns or "*")} from {self.table_name}'
+        if where:
+            sql = f'{sql} where {where}'
+        self.cursor.execute(sql)
+        return self.cursor.fetchall()
+
+    get = select
 
     def __enter__(self):
         return self
@@ -740,4 +778,5 @@ class SimpleSQLite:
         self.close()
 
     def close(self):
-        self.conn.close()
+        self.cursor.close()
+        self.connection.close()
