@@ -1180,4 +1180,4 @@ class FFmpegSegmentsContainer:
         config_func(crf=crf0, res_limit=res_limit)
         e = self.estimate()
         r = e[i]
-        return round(crf0 + 6 * log(r, 2), 2)
+        return round(crf0 + 6 * log(r, 2), 1)
