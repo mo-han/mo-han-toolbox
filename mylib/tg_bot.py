@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # encoding=utf8
 """telegram bot utilities"""
+import time
+from abc import ABC
 from functools import reduce
 from inspect import getmembers, ismethod
 from queue import Queue
@@ -35,27 +37,32 @@ def merge_filters_or(*filters):
     return reduce(lambda x, y: MergedFilter(x, or_filter=y), filters)
 
 
-class SimpleBot:
-    def __init__(self, token, *, timeout=None, whitelist=None, auto_run=True,
-                 filters=None, update_queue: Queue = None,
+class SimpleBot(ABC):
+    def __init__(self, token, *, timeout=None, whitelist=None, auto_run=True, data: dict = None, filters=None,
                  **kwargs):
+        self.__data__ = data or {}
+        self.__filters__ = filters
         self.__device__ = get_names()
         self.__updater__ = Updater(token, use_context=True,
                                    request_kwargs={'read_timeout': timeout, 'connect_timeout': timeout},
                                    **kwargs)
         self.__bot__: Bot = self.__updater__.bot
         self.__get_me__(timeout=timeout)
-        self.__filters__ = filters
+        self.__data_init__()
+        print(self.__about_this_bot__())
+        self.__register_whitelist__(whitelist)
+        self.__register_handlers__()
+        if auto_run:
+            self.__run__(poll_timeout=timeout)
+
+    def __register_whitelist__(self, whitelist):
         if whitelist:
-            chat_id_filter = Filters.chat(filter(lambda x: isinstance(x, int), whitelist))
-            chat_username_filter = Filters.chat(filter(lambda x: isinstance(x, str), whitelist))
+            chat_id_filter = Filters.chat(list(filter(lambda x: isinstance(x, int), whitelist)))
+            chat_username_filter = Filters.chat(list(filter(lambda x: isinstance(x, str), whitelist)))
             self.__filters__ = merge_filters_and(self.__filters__, chat_id_filter | chat_username_filter)
             for u in whitelist:
                 if isinstance(u, int):
                     self.__bot__.send_message(u, self.__about_this_bot__())
-        self.__register_handlers__()
-        if auto_run:
-            self.__run__(poll_timeout=timeout)
 
     def __register_handlers__(self):
         self.__commands_list__ = []
@@ -80,6 +87,7 @@ class SimpleBot:
             fullname += f' {last_name}'
         self.__fullname__ = fullname
         self.__username__ = me.username
+        return me
 
     def __typing__(self, update: Update):
         self.__bot__.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING)
@@ -115,7 +123,8 @@ class SimpleBot:
         return f'bot:\n' \
                f'{self.__fullname__} @{self.__username__}\n\n' \
                f'running on device:\n' \
-               f'{self.__device__.__username__} @ {self.__device__.hostname} ({self.__device__.osname})'
+               f'{self.__device__.username} @ {self.__device__.hostname} ({self.__device__.osname})\n\n' \
+               f'resume {self.__data__["update_queue.qsize"]} update(s) from {self.__data__["mtime"]}'
 
     @meta_deco_handler_method(CommandHandler, on_menu=True)
     def start(self, update: Update, context: CallbackContext):
@@ -137,3 +146,29 @@ class SimpleBot:
             lines.append(f'{n} - {doc}')
         menu_str = '\n'.join(lines)
         self.__reply_markdown__(f'```\n{menu_str}```', update)
+
+    def __data_save__(self):
+        self.__data__['mtime'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+
+    def __requeue_failed_update__(self, update: Update, save=False):
+        # failed_updates = self.__data__['failed_updates']
+        # if update not in failed_updates:
+        #     failed_updates.append(update)
+        update_queue = self.__updater__.dispatcher.update_queue
+        update_queue.put(update)
+        qsize = update_queue.qsize()
+        self.__data__['update_queue.qsize'] = qsize
+        s = f'{self.__requeue_failed_update__.__name__}: qsize={qsize}'
+        print(s)
+        self.__reply_md_code_block__(s, update)
+        if save:
+            self.__data_save__()
+
+    def __data_init__(self):
+        # [self.__updater__.dispatcher.update_queue.put(u) for u in self.__data__.setdefault('failed_updates', [])]
+        self.__data__.setdefault('mtime', 'N/A')
+        update_queue = self.__data__.setdefault('update_queue', Queue())
+        self.__data__['update_queue.qsize'] = update_queue.qsize()
+        while update_queue.qsize():
+            update = update_queue.get()
+            self.__updater__.dispatcher.update_queue.put(update)

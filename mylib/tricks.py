@@ -747,11 +747,20 @@ class SimpleSQLiteTable:
         for k, v in (adapters or {}).items():
             sqlite3.register_adapter(k, v)
         self.table_name = table_name
+        self.sql_values_qmark = f'values ({", ".join("?" * len(table_columns))})'
         self.cursor.execute(f'create table if not exists {self.table_name} ({", ".join(table_columns)})')
-        self._insert_sql_qmark = f'insert into {self.table_name} values ({", ".join("?" * len(table_columns))})'
 
-    def insert(self, *values):
-        self.cursor.execute(self._insert_sql_qmark, values)
+    def insert(self, values, replace=True):
+        if replace:
+            sql = f'insert or replace into {self.table_name}'
+        else:
+            sql = f'insert into {self.table_name}'
+        try:
+            col_keys = f'({", ".join(values.keys())})'
+            col_values = f'({", ".join([f":v" for v in values.values()])})'
+            self.cursor.execute(f'{sql} {col_keys} values {col_values}', values)
+        except AttributeError:
+            self.cursor.execute(f'{sql} {self.sql_values_qmark}', values)
         return self
 
     def update(self, where: str = None, **data):
@@ -780,3 +789,12 @@ class SimpleSQLiteTable:
     def close(self):
         self.cursor.close()
         self.connection.close()
+
+
+def module_sqlitedict_with_dill():
+    import dill
+    import sqlitedict
+    sqlitedict.dumps = dill.dumps
+    sqlitedict.loads = dill.loads
+    sqlitedict.PICKLE_PROTOCOL = dill.HIGHEST_PROTOCOL
+    return sqlitedict

@@ -404,7 +404,7 @@ def write_file_chunk(filepath: str, start: int, stop: int, data: bytes, total: i
 
 
 def list_files(src: str or Iterable or Iterator or Clipboard, recursive=False, progress_queue: Queue = None) -> list:
-    recur_kwargs = make_kwargs_dict(recursive=recursive, progress_queue=progress_queue)
+    common_kwargs = make_kwargs_dict(recursive=recursive, progress_queue=progress_queue)
     # if src is None:
     #     return list_files(clipboard.list_paths(exist_only=True), recursive=recursive)
     # elif isinstance(src, str):
@@ -412,16 +412,38 @@ def list_files(src: str or Iterable or Iterator or Clipboard, recursive=False, p
         if os.path.isfile(src):
             return [src]
         elif os.path.isdir(src):
-            return list(fs_find_iter(root=src, strip_root=False, **recur_kwargs))
+            return list(fs_find_iter(root=src, strip_root=False, **common_kwargs))
         else:
             return [fp for fp in glob(src, recursive=recursive) if os.path.isfile(fp)]
     elif isinstance(src, (Iterable, Iterator)):
         r = []
         for s in src:
-            r.extend(list_files(s, **recur_kwargs))
+            r.extend(list_files(s, **common_kwargs))
         return r
     elif isinstance(src, Clipboard):
-        return list_files(src.list_paths(exist_only=True), **recur_kwargs)
+        return list_files(src.list_paths(exist_only=True), **common_kwargs)
+    else:
+        raise TypeError('invalid source', src)
+
+
+def list_dirs(src: str or Iterable or Iterator or Clipboard, recursive=False, progress_queue: Queue = None) -> list:
+    common_kwargs = make_kwargs_dict(recursive=recursive, progress_queue=progress_queue)
+    if isinstance(src, str):
+        if os.path.isdir(src):
+            dirs = [src]
+            if recursive:
+                dirs.extend(
+                    list(fs_find_iter(root=src, strip_root=False, find_dir_instead_of_file=True, **common_kwargs)))
+            return dirs
+        else:
+            return [p for p in glob(src, recursive=recursive) if os.path.isdir(p)]
+    elif isinstance(src, (Iterable, Iterator)):
+        dirs = []
+        for s in src:
+            dirs.extend(list_dirs(s, **common_kwargs))
+        return dirs
+    elif isinstance(src, Clipboard):
+        return list_dirs(src.list_paths(exist_only=True), **common_kwargs)
     else:
         raise TypeError('invalid source', src)
 
@@ -512,6 +534,10 @@ def get_names():
     return r
 
 
+class ProcessTTYFrozen(TimeoutError):
+    pass
+
+
 def monitor_sub_process_tty_frozen(p: subprocess.Popen, timeout=30, wait=1,
                                    encoding=None, ignore_decode_error=True,
                                    ):
@@ -537,12 +563,12 @@ def monitor_sub_process_tty_frozen(p: subprocess.Popen, timeout=30, wait=1,
     t0 = time()
     while 1:
         if time() - t0 > timeout:
-            for cp in psutil.Process(p.pid).children(recursive=True):
-                cp.kill()
+            for p in psutil.Process(p.pid).children(recursive=True):
+                p.kill()
             p.kill()
             _out.seek(0)
             _err.seek(0)
-            raise TimeoutError(p, _out, _err)
+            raise ProcessTTYFrozen(p, _out, _err)
         for nb_reader, decoder, output, inner in monitoring:
             decoder: codecs.IncrementalDecoder
             try:

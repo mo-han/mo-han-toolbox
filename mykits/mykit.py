@@ -458,7 +458,7 @@ ytdl.add_argument('argv', nargs='*', help='argument(s) propagated to youtube-dl,
 
 
 def regex_rename_func():
-    from mylib.os_util import fs_inplace_rename_regex, list_files
+    from mylib.os_util import fs_inplace_rename_regex, list_files, list_dirs
     args = rtd.args
     source = args.source
     recursive = args.recursive
@@ -466,7 +466,12 @@ def regex_rename_func():
     replace = args.replace
     only_basename = args.only_basename
     dry_run = args.dry_run
-    for src in list_files(source or clipboard, recursive=recursive):
+    only_dirs = args.only_dirs
+    if only_dirs:
+        src_l = list_dirs(source or clipboard, recursive=recursive)
+    else:
+        src_l = list_files(source or clipboard, recursive=recursive)
+    for src in src_l:
         try:
             fs_inplace_rename_regex(src, pattern, replace, only_basename, dry_run)
         except OSError as e:
@@ -477,6 +482,7 @@ regex_rename = add_sub_parser('rename.regex', ['regren', 'rern', 'rrn'], 'regex 
 regex_rename.set_defaults(func=regex_rename_func)
 regex_rename.add_argument('-B', '-not-only-basename', dest='only_basename', action='store_false')
 regex_rename.add_argument('-D', '--dry-run', action='store_true')
+regex_rename.add_argument('-d', '--only-dirs', action='store_true')
 regex_rename.add_argument('-s', '--source')
 regex_rename.add_argument('-r', '--recursive', action='store_true')
 regex_rename.add_argument('pattern')
@@ -484,7 +490,7 @@ regex_rename.add_argument('replace')
 
 
 def rename_func():
-    from mylib.os_util import fs_inplace_rename, list_files
+    from mylib.os_util import fs_inplace_rename, list_files, list_dirs
     args = rtd.args
     source = args.source
     recursive = args.recursive
@@ -492,7 +498,14 @@ def rename_func():
     replace = args.replace
     only_basename = args.only_basename
     dry_run = args.dry_run
-    for src in list_files(source or clipboard, recursive=recursive):
+    only_dirs = args.only_dirs
+    if only_dirs:
+        src_l = list_dirs(source or clipboard, recursive=recursive)
+    else:
+        src_l = list_files(source or clipboard, recursive=recursive)
+    # print(source)
+    # print(src_l)
+    for src in src_l:
         try:
             fs_inplace_rename(src, pattern, replace, only_basename, dry_run)
         except OSError as e:
@@ -500,9 +513,10 @@ def rename_func():
 
 
 rename = add_sub_parser('rename', ['ren'], 'rename file(s) or folder(s)')
-rename.set_defaults(func=regex_rename_func)
+rename.set_defaults(func=rename_func)
 rename.add_argument('-B', '-not-only-basename', dest='only_basename', action='store_false')
 rename.add_argument('-D', '--dry-run', action='store_true')
+rename.add_argument('-d', '--only-dirs', action='store_true')
 rename.add_argument('-s', '--source')
 rename.add_argument('-r', '--recursive', action='store_true')
 rename.add_argument('pattern')

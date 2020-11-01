@@ -20,6 +20,7 @@ requests
 selenium<3.8  # phantomjs
 send2trash
 splinter<0.8  # phantomjs
+sqlitedict
 uiautomator2
 you-get
 youtube-dl
