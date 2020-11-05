@@ -454,19 +454,22 @@ def kw_video_convert(source, keywords=(), vf=None, cut_points=(), dest=None,
         elif kw == 'hevc':
             codec = 'h'
 
-    if 'smallhd' in keywords:
+    if 'best' in keywords:
+        codec = 'h'
+        crf = crf or 16
+    if 'better' in keywords:
+        codec = 'h'
+        crf = crf or 19
+    elif 'good' in keywords:
         codec = 'h'
         crf = crf or 22
-        res_limit = 'HD'
-    elif 'smallerhd' in keywords:
+    elif 'bad' in keywords:
         codec = 'h'
         crf = crf or 25
-        res_limit = 'HD'
         ffmpeg_args.add(b__a='96k')
-    elif 'smallesthd' in keywords:
+    elif 'worse' in keywords:
         codec = 'h'
         crf = crf or 28
-        res_limit = 'HD'
         ffmpeg_args.add(b__a='64k')
 
     if 'qsv' in keywords:
@@ -476,7 +479,7 @@ def kw_video_convert(source, keywords=(), vf=None, cut_points=(), dest=None,
         ffmpeg_args.add(vcodec=codecs_d[codec], crf=crf)
     ffmpeg_args.add(ffmpeg_opts)
 
-    if keywords & {'copy',  'vcopy'}:
+    if keywords & {'copy', 'vcopy'}:
         tag = 'copy'
     elif keywords & {'m4a', 'aac'}:
         tag = 'audio'
