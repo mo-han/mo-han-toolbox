@@ -40,13 +40,19 @@ def range_from_expr(expr: str) -> Generator:
         yield from range(s[0], s[-1] + 1)
 
 
-def meta_deco_args_choices(choices: Dict[int or str, Iterable]) -> Decorator:
+def meta_deco_args_choices(choices: Dict[int or str, Iterable] or None, *args, **kwargs) -> Decorator:
     """decorator factory: force arguments of a func limited inside the given choices
 
     :param choices: a dict which describes the choices of arguments
         the key of the dict must be either the index of args or the key(str) of kwargs
-        the value of the dict must be an iterable."""
-    err_fmt = "value of '{}' ({}) is not a valid choice in {}"
+        the value of the dict must be an iterable
+        choices could be supplemented by *args and **kwargs
+        choices could be empty or None"""
+    choices = choices or {}
+    for i in range(len(args)):
+        choices[i] = args[i]
+    choices.update(kwargs)
+    err_fmt = "argument {}={} is not valid, choose from {})"
 
     def decorator(func):
         @wraps(func)

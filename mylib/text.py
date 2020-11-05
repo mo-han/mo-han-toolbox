@@ -78,3 +78,16 @@ def split_by_length_and_lf(x: str, length: int):
             parts.append(x)
             break
     return parts
+
+
+def sub(s: str, pattern: str, replace: str, *, regex=False, ignore_case=False):
+    if regex:
+        if ignore_case:
+            return re.sub(pattern, replace, s, flags=re.IGNORECASE)
+        else:
+            return re.sub(pattern, replace, s)
+    else:
+        if ignore_case:
+            return re.sub(re.escape(pattern), re.escape(replace), s, flags=re.IGNORECASE)
+        else:
+            return s.replace(pattern, replace)

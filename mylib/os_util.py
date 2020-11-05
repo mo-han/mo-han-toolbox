@@ -37,6 +37,7 @@ TEMPDIR = tempfile.gettempdir()
 
 
 def fs_inplace_rename(src: str, pattern: str, replace: str, only_basename: bool = True, dry_run: bool = False):
+    """DEPRECATED NO MORE DEVELOPMENT"""
     if only_basename:
         parent, basename = os.path.split(src)
         dst = os.path.join(parent, basename.replace(pattern, replace))
@@ -49,6 +50,7 @@ def fs_inplace_rename(src: str, pattern: str, replace: str, only_basename: bool 
 
 
 def fs_inplace_rename_regex(src: str, pattern: str, replace: str, only_basename: bool = True, dry_run: bool = False):
+    """DEPRECATED NO MORE DEVELOPMENT"""
     if only_basename:
         parent, basename = os.path.split(src)
         dst = os.path.join(parent, re.sub(pattern, replace, basename))
