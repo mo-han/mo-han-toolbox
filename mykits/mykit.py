@@ -5,14 +5,13 @@
 import cmd
 import os
 import shlex
-import shutil
 import sys
 from argparse import ArgumentParser, REMAINDER
 from pprint import pprint
 
 from send2trash import send2trash
 
-from mylib.os_util import clipboard, list_files, ctx_pushd, fs_find_iter, fs_legal_name, shrink_name_middle, fs_move_cli
+from mylib.os_util import clipboard, list_files, ctx_pushd, fs_find_iter, fs_legal_name, shrink_name_middle
 from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, Attreebute
 from mylib.tui import LinePrinter
 
@@ -109,6 +108,23 @@ def cmd_mode_func():
 
 cmd_mode = add_sub_parser('cmd', ['cli'], 'command line interactive mode')
 cmd_mode.set_defaults(func=cmd_mode_func)
+
+
+def cfip_func():
+    from mylib.websites import get_cloudflare_ipaddr_hostmonit
+    from mylib.os_util import write_json_file
+    from pprint import pformat
+    args = rtd.args
+    file = args.file
+    ip_d = get_cloudflare_ipaddr_hostmonit()
+    if file:
+        write_json_file(file, ip_d, indent=4)
+    print(pformat(ip_d))
+
+
+cfip = add_sub_parser('cloudflare.ipaddr.hostmonit', ['cfip'], 'get recommended ip addresses from hostmonit.com')
+cfip.set_defaults(func=cfip_func)
+cfip.add_argument('file', help='JSON file', nargs='?')
 
 
 def video_guess_crf_func():
