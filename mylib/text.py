@@ -80,7 +80,7 @@ def split_by_length_and_lf(x: str, length: int):
     return parts
 
 
-def sub(s: str, pattern: str, replace: str, *, regex=False, ignore_case=False):
+def replace(s: str, pattern: str, replace: str, *, regex=False, ignore_case=False):
     if regex:
         if ignore_case:
             return re.sub(pattern, replace, s, flags=re.IGNORECASE)
@@ -91,3 +91,13 @@ def sub(s: str, pattern: str, replace: str, *, regex=False, ignore_case=False):
             return re.sub(re.escape(pattern), re.escape(replace), s, flags=re.IGNORECASE)
         else:
             return s.replace(pattern, replace)
+
+
+def find_words(s: str, allow_mix_non_word_chars=True or str):
+    if allow_mix_non_word_chars is True:
+        return [p for p in s.split() if re.search(r'\w', p)]
+    elif allow_mix_non_word_chars:
+        pattern = fr'[\w{allow_mix_non_word_chars}]+'
+        return [p.strip() for p in re.findall(pattern, s)]
+    else:
+        return re.findall(r'\w+', s)

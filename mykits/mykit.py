@@ -629,10 +629,12 @@ def url_from_clipboard():
     elif pattern in ('bilibili', 'bili'):
         from mylib.bili import find_url_in_text
         urls = find_url_in_text(t)
+    elif pattern in ('hc.fyi', 'hentai.cafe', 'hentaicafe'):
+        p = r'https://hentai.cafe/hc.fyi/\d+'
+        urls = regex_find(p, t, dedup=True)
     else:
-        from mylib.text import regex_find
         urls = regex_find(pattern, t)
-    urls = '\n'.join(urls)
+    urls = '\r\n'.join(urls)
     pyperclip.copy(urls)
     print(urls)
 
