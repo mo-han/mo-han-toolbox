@@ -136,7 +136,9 @@ def _fs_move_cli_robocopy(src, dst, quiet=True, verbose=False):
     if os.path.isdir(src):
         args.extend(['/E', '/IS'])
     args.extend(['/MOVE', src, dst])
-    subprocess.run(args, shell=True).check_returncode()
+    proc = subprocess.run(args, shell=True)
+    if proc.returncode > 1:
+        raise subprocess.CalledProcessError(proc.returncode, args, proc.stdout, proc.stderr)
 
 
 def fs_move_cli(src, dst, quiet=True, verbose=False):

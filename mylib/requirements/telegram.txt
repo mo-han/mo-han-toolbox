@@ -1,2 +1,3 @@
-python-telegram-bot  #LGPLv3
 #telethon
+python-telegram-bot  #LGPLv3
+telegraph  #MIT

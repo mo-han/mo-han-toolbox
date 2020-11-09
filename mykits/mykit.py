@@ -129,7 +129,7 @@ video_guess_crf = add_sub_parser('video.crf.guess', ['crf'], 'guess CRF paramete
 video_guess_crf.set_defaults(func=video_guess_crf_func)
 video_guess_crf.add_argument('src', nargs='*')
 video_guess_crf.add_argument('-c', '--codec', nargs='?')
-video_guess_crf.add_argument('-w', '--work-dir', nargs='?')
+video_guess_crf.add_argument('-w', '--work-dir')
 video_guess_crf.add_argument('-R', '--redo', action='store_true')
 video_guess_crf.add_argument('-L', '--auto-clean', action='store_true')
 

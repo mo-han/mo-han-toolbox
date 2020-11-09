@@ -85,12 +85,12 @@ class MyAssistantBot(SimpleBot):
             try:
                 self.__reply_md_code_block__(f'+ {args_s}', update)
                 p, out, err = ytdl_retry_frozen(*args)
+                echo = ''.join([re.sub(r'.*\[download]', '[download]', decode(b).rsplit('\r', maxsplit=1)[-1]) for b in
+                                out.readlines()[-10:]])
                 if p.returncode:
-                    echo = ''.join([decode(b).rsplit('\r', maxsplit=1)[-1] for b in out.readlines()[-10:]])
                     self.__requeue_failed_update__(update)
                     self.__reply_md_code_block__(f'- {args_s}\n{echo}', update)
                 else:
-                    echo = ''.join([s for s in [decode(b) for b in out.readlines()[-10:]]])
                     self.__reply_md_code_block__(f'* {args_s}\n{echo}', update)
             except Exception as e:
                 self.__reply_md_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
