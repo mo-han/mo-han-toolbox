@@ -6,7 +6,7 @@ import re
 import shutil
 from typing import Iterable, Iterator
 
-from .text import sub
+from .text import replace
 from .tricks import meta_deco_args_choices
 import fnmatch
 
@@ -16,9 +16,9 @@ def rename_inplace(src_path: str, pattern: str, replace: str, *,
                    ) -> str or None:
     if only_basename:
         parent, basename = os.path.split(src_path)
-        dst_path = os.path.join(parent, sub(src_path, pattern, replace, regex=regex, ignore_case=ignore_case))
+        dst_path = os.path.join(parent, replace(src_path, pattern, replace, regex=regex, ignore_case=ignore_case))
     else:
-        dst_path = sub(src_path, pattern, replace, regex=regex, ignore_case=ignore_case)
+        dst_path = replace(src_path, pattern, replace, regex=regex, ignore_case=ignore_case)
     if not dry_run:
         shutil.move(src_path, dst_path)
     if src_path != dst_path:
