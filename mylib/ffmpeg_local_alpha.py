@@ -502,6 +502,8 @@ def kw_video_convert(source, keywords=(), vf=None, cut_points=(), dest=None,
         input_ft = SuffixListFilenameTags(fp)
         origin_ft = SuffixListFilenameTags(fp).tag('origin')
         output_ft = SuffixListFilenameTags(fp).tag(tag).untag('crf', 'origin')
+        if crf is not None:
+            output_ft.tag(crf=crf)
         if not redo and 'origin' in input_ft.tags:
             logger.info(f'# skip origin\n  {fp}')
             return

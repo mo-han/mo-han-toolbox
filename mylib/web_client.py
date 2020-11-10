@@ -27,10 +27,6 @@ USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) G
 HTMLElementTree = lxml.html.HtmlElement
 
 
-def decode_html_char_ref(x: str) -> str:
-    return re.sub(r'&amp;', '&', x, flags=re.I)
-
-
 def get_html_element_tree(url, **kwargs) -> HTMLElementTree:
     r = requests.get(url, **kwargs)
     if r.ok:

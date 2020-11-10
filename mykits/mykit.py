@@ -605,7 +605,7 @@ dukto_x.add_argument('ndrop_args', metavar='[--] arguments for ndrop', nargs=REM
 def url_from_clipboard():
     import pyperclip
     from mylib.text import regex_find
-    from mylib.web_client import decode_html_char_ref
+    from html import unescape
     args = rtd.args
     pattern = args.pattern
     t = pyperclip.paste()
@@ -616,7 +616,7 @@ def url_from_clipboard():
         urls = regex_find(p, t, dedup=True)
     elif pattern == 'magnet':
         p = r'magnet:[^\s"]+'
-        urls = regex_find(p, decode_html_char_ref(t), dedup=True)
+        urls = regex_find(p, unescape(t), dedup=True)
     elif pattern == 'iwara':
         from mylib.iwara import find_url_in_text
         urls = find_url_in_text(t)
