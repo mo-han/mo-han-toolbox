@@ -276,7 +276,7 @@ def fs_find_iter(pattern: str or Callable = None, root: str = '.',
 class SubscriptableFileIO(FileIO):
     """slice data in FileIO object"""
 
-    def __init__(self, file, mode='r+b', *args, **kwargs):
+    def __init__(self, file, mode='rb', *args, **kwargs):
         """refer to doc string of io.FileIO"""
         super(SubscriptableFileIO, self).__init__(file, mode=mode, *args, **kwargs)
         try:

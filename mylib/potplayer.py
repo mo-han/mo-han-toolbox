@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # encoding=utf8
+import warnings
 from time import sleep, time
 
 import keyboard
@@ -7,10 +8,10 @@ import mouse
 
 from .gui import rename_dialog
 from .tricks import getitem_default
-from .uia import pywinauto_import
+from .uia import module_pywinauto
 from .os_util import clipboard, fs_rename
 
-pywinauto = pywinauto_import()
+pywinauto = module_pywinauto()
 App = pywinauto.Application
 HwndElementInfo = pywinauto.win32_element_info.HwndElementInfo
 find_elements = pywinauto.findwindows.find_elements
@@ -82,12 +83,15 @@ class PotPlayerKit:
             if time() - t0 > timeout:
                 raise TimeoutError
             self.gasp()
-            data = clipboard.get() or ''
-            lines = data.splitlines()
-            line0 = getitem_default(lines, 0)
-            line1 = getitem_default(lines, 1)
-            if line0 == const_general and (line1.startswith(const_complete_name) or line1.startswith('Unique ID')):
-                break
+            try:
+                data = clipboard.get() or ''
+                lines = data.splitlines()
+                line0 = getitem_default(lines, 0)
+                line1 = getitem_default(lines, 1)
+                if line0 == const_general and (line1.startswith(const_complete_name) or line1.startswith('Unique ID')):
+                    break
+            except clipboard.OpenError:
+                warnings.warn('clipboard open error')
 
         d = {}
         group = ''

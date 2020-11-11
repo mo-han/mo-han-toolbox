@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # encoding=utf8
+import ctypes
 import inspect
 import os
 import re
@@ -21,6 +22,9 @@ ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE = str.maketrans(ILLEGAL_FS_CHARS, ILLEGAL
 class Clipboard(metaclass=Singleton):
     _wcb = win32clipboard
     cf_dict = {n.lstrip('CF_'): m for n, m in inspect.getmembers(_wcb) if n.startswith('CF_')}
+
+    class OpenError(Exception):
+        pass
 
     def __init__(self):
         self.delay = 0
@@ -49,8 +53,11 @@ class Clipboard(metaclass=Singleton):
     def open(self):
         if not self.__opened:
             sleep(self.delay)
-            self._wcb.OpenClipboard()
-            self.__opened = True
+            try:
+                self._wcb.OpenClipboard()
+                self.__opened = True
+            except pywintypes.error:
+                raise self.OpenError
 
     def close(self):
         if self.__opened:
@@ -146,3 +153,13 @@ def fs_move_cli(src, dst, quiet=True, verbose=False):
         _fs_move_cli_robocopy(src, dst, quiet=quiet, verbose=verbose)
     else:
         raise ValueError(src)
+
+
+def set_console_title(title: str, *, shell=True, escape=True):
+    if shell:
+        if escape:
+            title = re.sub(r'([&<>^])', '^\1', title)
+        os.system(f'title {title}')
+    else:
+        # https://stackoverflow.com/a/12626424/7966259
+        ctypes.windll.kernel32.SetConsoleTitleW(title)

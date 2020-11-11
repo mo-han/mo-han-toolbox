@@ -4,7 +4,7 @@
 import mouse
 
 
-def pywinauto_import(disable_warning: bool = False, coinit: int = 2):
+def module_pywinauto(disable_warning: bool = False, coinit: int = 2):
     """sys.coinit_flags=2 before import pywinauto
     https://github.com/pywinauto/pywinauto/issues/472"""
     if disable_warning:

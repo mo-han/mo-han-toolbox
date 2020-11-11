@@ -134,7 +134,7 @@ def video_guess_crf_func():
     codec = args.codec
     work_dir = args.work_dir
     redo = args.redo
-    auto_clean = args.auto_clean
+    auto_clean = not args.no_clean
     for path in path_l:
         tui_lp.l()
         tui_lp.p(path)
@@ -147,7 +147,7 @@ video_guess_crf.add_argument('src', nargs='*')
 video_guess_crf.add_argument('-c', '--codec', nargs='?')
 video_guess_crf.add_argument('-w', '--work-dir', nargs='?')
 video_guess_crf.add_argument('-R', '--redo', action='store_true')
-video_guess_crf.add_argument('-L', '--auto-clean', action='store_true')
+video_guess_crf.add_argument('-L', '--no-clean', action='store_true')
 
 
 def dir_flatter_func():
