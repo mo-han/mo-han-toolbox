@@ -39,3 +39,7 @@ class LinePrinter:
         self.line(char='~')
 
     w = wave_line
+
+
+def choose_prompt_number(choices):
+    ...
