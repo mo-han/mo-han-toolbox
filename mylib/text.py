@@ -55,14 +55,20 @@ def decode(b: bytes, encoding='u8'):
         return b.decode(encoding=locale.getdefaultlocale()[1])
 
 
-class WideLengthString(str):
+class VisualLengthString(str):
     def __len__(self):
-        y = super().__len__()
-        y += sum([1 for c in self if east_asian_width(c) == 'W'])
-        return y
+        n = super().__len__()
+        n += sum([1 for c in self if east_asian_width(c) == 'W'])
+        return n
+
+    def __getitem__(self, item):
+        return VisualLengthString(super().__getitem__(item))
+
+    def __iter__(self):
+        return (VisualLengthString(s) for s in super().__iter__())
 
 
-def split_by_length_and_lf(x: str, length: int):
+def split_by_length_or_lf(x: str, length: int):
     parts = []
     while x:
         if len(x) > length:
@@ -101,3 +107,20 @@ def find_words(s: str, allow_mix_non_word_chars=True or str):
         return [p.strip() for p in re.findall(pattern, s)]
     else:
         return re.findall(r'\w+', s)
+
+
+def list2columns(x: Iterable or Iterator, width, *, horizontal=False, sep=2):
+    vls = VisualLengthString
+    sep_s = ' ' * sep
+    text_l = [vls(s) for s in x]
+    max_len = max([len(s) for s in text_l])
+    n = len(text_l)
+    col_w = max_len + sep
+    col_n = ((width + sep) // col_w) or 1
+    row_n = n // col_n + bool(n % col_n)
+    if horizontal:
+        rows_l = [text_l[i:i + col_n] for i in range(0, n, col_n)]
+    else:
+        rows_l = [text_l[i:i + row_n * col_n + i:row_n] for i in range(0, row_n)]
+    lines_l = [sep_s.join([f'{s}{" " * (max_len - len(s))}' for s in row]) for row in rows_l]
+    return '\n'.join(lines_l)
