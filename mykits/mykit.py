@@ -78,6 +78,11 @@ class MyKitCmd(cmd.Cmd):
 def main():
     # from mylib.os_util import ensure_sigint_signal
     # ensure_sigint_signal()
+    try:
+        from mylib.os_util import set_console_title
+        set_console_title('MyKit')
+    except ImportError:
+        pass
     rtd.args = args = ap.parse_args()
     try:
         func = args.func
@@ -103,6 +108,11 @@ def gui_mode():
 
 
 def cmd_mode_func():
+    try:
+        from mylib.os_util import set_console_title
+        set_console_title(MyKitCmd.__name__)
+    except ImportError:
+        pass
     MyKitCmd().cmdloop()
 
 

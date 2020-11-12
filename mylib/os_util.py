@@ -621,3 +621,10 @@ def split_filename(path):
 def join_filename(parent_path, name_without_ext, extension):
     """parent_dir, name, ext -> path"""
     return os.path.join(parent_path, name_without_ext + extension)
+
+
+def set_console_title___try(title: str):
+    try:
+        set_console_title(title)
+    except NameError:
+        pass

@@ -1,19 +1,20 @@
-#colored  #by-gooey #license-mit
+#colored  #by-gooey #MIT
+#pymediainfo  #MIT
 colorama
 dill
 ffmpeg-python
-filetype  #license-mit
+filetype  #MIT
 gallery-dl
-humanize  #license-mit
+humanize  #MIT
 imagehash
-inflection  #license-mit
+inflection  #MIT
 lxml
 ndrop
 opencv-python
 pillow
 psutil
 pure-python-adb
-pymediainfo  #license-mit
+pynput  #LGPLv3
 pyperclip
 pyreadline
 pyserial
