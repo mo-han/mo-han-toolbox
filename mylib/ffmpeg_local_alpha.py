@@ -466,11 +466,13 @@ def kw_video_convert(source, keywords=(), vf=None, cut_points=(), dest=None,
     elif 'bad' in keywords:
         codec = 'h'
         crf = crf or 25
-        ffmpeg_args.add(b__a='96k')
+        if 'acopy' not in keywords:
+            ffmpeg_args.add(b__a='96k')
     elif 'worse' in keywords:
         codec = 'h'
         crf = crf or 28
-        ffmpeg_args.add(b__a='64k')
+        if 'acopy' not in keywords:
+            ffmpeg_args.add(b__a='64k')
 
     if 'qsv' in keywords:
         codec += 'q'
