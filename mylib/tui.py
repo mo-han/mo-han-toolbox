@@ -4,7 +4,7 @@ import shutil
 import sys
 from typing import List
 
-from .text import VisualLengthString
+from .text import list2col_str
 from .tricks import constrain_value
 
 
@@ -47,5 +47,18 @@ class LinePrinter:
     w = wave_line
 
 
-def choose_prompt_number(choices):
-    ...
+def prompt_select_by_number(title, choices, *, default=None, default_num: int = None):
+    choices_n = len(choices)
+    choices_menu = list2col_str([f'{i + 1}) {choices[i]}' for i in range(choices_n)], get_terminal_width())
+    prompt_end = f' [{default_num}] ' if default_num else ' '
+    n = input(f'{title}:\n{choices_menu}\nEnter the number (max={choices_n}){prompt_end}') or default_num
+    if n:
+        try:
+            i = int(n) - 1
+            if i < 0:
+                raise ValueError
+            return choices[i]
+        except (IndexError, ValueError):
+            return prompt_select_by_number(title, choices, default_num=default_num)
+    else:
+        return default

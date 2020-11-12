@@ -48,26 +48,26 @@ def meta_func_match_pattern(regex: bool, ignore_case: bool):
     }[(bool(regex), bool(ignore_case))]
 
 
-def find_iter(start_path: str, find_files: bool, find_dirs: bool, pattern: str = None, *,
+def find_iter(start_path: str, find_type: str, pattern: str = None, *,
               abspath=False, recursive=True, regex=False, ignore_case=False):
+    find_files = 'f' in find_type
+    find_dirs = 'd' in find_type
     pattern = pattern or ('.*' if regex else '*')
     start_path = os.path.abspath(start_path) if abspath else start_path
     match_func = meta_func_match_pattern(regex=regex, ignore_case=ignore_case)
+    basename = os.path.basename
     if os.path.isfile(start_path):
-        if find_files and match_func(start_path, pattern):
+        if find_files and match_func(basename(start_path), pattern):
             yield start_path
-            return
-        else:
-            return
-    if os.path.isdir(start_path) and not recursive and match_func(start_path, pattern):
-        if find_dirs:
+        return
+    if os.path.isdir(start_path):
+        if find_dirs and match_func(basename(start_path), pattern):
             yield start_path
+        if not recursive:
             return
-        else:
-            return
-    walk_pdf = ((p, d, f) for p, d, f in (os.walk(start_path)))
     # p,d,f = dirpath, dirnames, filenames
     # n = name = dirname/filename from dirnames/filenames
+    walk_pdf = ((p, d, f) for p, d, f in (os.walk(start_path)))
     if find_files and find_dirs:
         chain_iter = itertools.chain
         yield from (os.path.join(p, n) for p, d, f in walk_pdf for n in chain_iter(d, f) if match_func(n, pattern))
@@ -77,3 +77,18 @@ def find_iter(start_path: str, find_files: bool, find_dirs: bool, pattern: str =
         yield from (os.path.join(p, n) for p, d, f in walk_pdf for n in d if match_func(n, pattern))
     else:
         return
+
+
+def get_path(*paths, absolute=False, follow_link=False, relative=False):
+    if absolute and relative:
+        raise ValueError('both `absolute` and `relative` are enabled')
+    path = os.path.join(*paths)
+    if follow_link:
+        path = os.path.realpath(path)
+    if absolute:
+        path = os.path.abspath(path)
+    elif relative is True:
+        path = os.path.relpath(path)
+    elif relative:
+        path = os.path.relpath(path, relative)
+    return path
