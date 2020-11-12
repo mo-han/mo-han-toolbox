@@ -2,8 +2,14 @@
 # encoding=utf8
 import shutil
 import sys
+from typing import List
 
+from .text import VisualLengthString
 from .tricks import constrain_value
+
+
+def get_terminal_width():
+    return shutil.get_terminal_size()[0]
 
 
 class LinePrinter:
@@ -20,7 +26,7 @@ class LinePrinter:
         self.line(char=' ', end='\r')
 
     def line(self, char: str = '-', shorter: int = 1, **kwargs):
-        width = self.width or shutil.get_terminal_size()[0]
+        width = self.width or get_terminal_width()
         self.print(char * (width - shorter), **kwargs)
 
     l = line

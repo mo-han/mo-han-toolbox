@@ -13,7 +13,7 @@ from telegram.ext import Updater, CommandHandler, Filters, CallbackContext
 from telegram.ext.filters import MergedFilter
 
 from .os_util import get_names
-from .text import split_by_length_and_lf
+from .text import split_by_length_or_lf
 from .tricks import Decorator
 
 
@@ -94,7 +94,7 @@ class SimpleBot(ABC):
 
     @staticmethod
     def __reply_text__(text, update: Update, **kwargs):
-        for t in split_by_length_and_lf(text, constants.MAX_MESSAGE_LENGTH):
+        for t in split_by_length_or_lf(text, constants.MAX_MESSAGE_LENGTH):
             update.message.reply_text(t, **kwargs)
 
     def __reply_markdown__(self, md_text, update: Update):
@@ -103,7 +103,7 @@ class SimpleBot(ABC):
     __reply_md__ = __reply_markdown__
 
     def __reply_md_code_block__(self, code_text, update: Update):
-        for ct in split_by_length_and_lf(code_text, constants.MAX_MESSAGE_LENGTH - 7):
+        for ct in split_by_length_or_lf(code_text, constants.MAX_MESSAGE_LENGTH - 7):
             self.__reply_markdown__(f'```\n{ct}```', update)
 
     def __run__(self, poll_timeout=None):
