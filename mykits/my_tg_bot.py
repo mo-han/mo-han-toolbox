@@ -11,7 +11,7 @@ from pprint import pformat
 from telegram.ext import MessageHandler, Filters, CallbackContext
 
 from mylib.log import get_logger
-from mylib.os_util import read_json_file, monitor_sub_process_tty_frozen, ProcessTTYFrozen
+from mylib.os_util import read_json_file, monitor_sub_process_tty_frozen, ProcessTTYFrozen, write_json_file
 from mylib.text import decode
 from mylib.tg_bot import SimpleBot, deco_factory_bot_handler_method, CommandHandler, Update
 from mylib.tricks import ArgParseCompactHelpFormatter, deco_factory_retry, module_sqlitedict_with_dill
@@ -40,13 +40,20 @@ def line2args(line: str):
 
 
 class MyAssistantBot(SimpleBot):
-    def __init__(self, config_file: str, **kwargs):
-        config = read_json_file(config_file)
-        data_file = os.path.splitext(config_file)[0] + '.db'
+    def __init__(self, conf_file: str, **kwargs):
+        self._conf_file = conf_file
+        config = read_json_file(conf_file)
+        data_file = os.path.splitext(conf_file)[0] + '.db'
+        self._data_file = data_file
         with sqlitedict.SqliteDict(data_file) as sd:
             data = dict(sd)
         super().__init__(token=config['token'], whitelist=config.get('user_whitelist'), data=data, **kwargs)
-        self._data_file = data_file
+
+    def __get_conf__(self):
+        return read_json_file(self._conf_file)
+
+    def __set_conf__(self, **kwargs):
+        write_json_file(self._conf_file, kwargs)
 
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(
         re.compile(r'BV[\da-zA-Z]{10}|av\d+')))
@@ -75,6 +82,8 @@ class MyAssistantBot(SimpleBot):
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(
         re.compile(r'youtube|youtu\.be|iwara|pornhub')))
     def _ytdl(self, update: Update, *args):
+        undone = self.__data__['undone']
+        undone[self._ytdl] = update
         try:
             self.__data_save__()
         except TypeError as e:
@@ -88,6 +97,9 @@ class MyAssistantBot(SimpleBot):
                 echo = ''.join([re.sub(r'.*\[download]', '[download]', decode(b).rsplit('\r', maxsplit=1)[-1]) for b in
                                 out.readlines()[-10:]])
                 if p.returncode:
+                    abandon_errors = self.__get_conf__().get('abandon_errors') or []
+                    if any(map(lambda x: x in echo, abandon_errors)):
+                        continue
                     self.__requeue_failed_update__(update)
                     self.__reply_md_code_block__(f'- {args_s}\n{echo}', update)
                 else:
@@ -95,6 +107,11 @@ class MyAssistantBot(SimpleBot):
             except Exception as e:
                 self.__reply_md_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
                 self.__requeue_failed_update__(update)
+        del undone[self._ytdl]
+        try:
+            self.__data_save__()
+        except TypeError as e:
+            self.__reply_md_code_block__(f'{str(e)}\n{repr(e)}', update)
 
     @deco_factory_bot_handler_method(CommandHandler)
     def _secret(self, update: Update, *args):
@@ -112,14 +129,12 @@ class MyAssistantBot(SimpleBot):
         time.sleep(t)
         self.__reply_text__('awoken!', u)
 
-    def __data_save__(self):
-        super().__data_save__()
-        print(f'{self.__updater__.dispatcher.update_queue.qsize()} updates in queue')
-        self.__data__['update_queue'] = self.__updater__.dispatcher.update_queue
-        with sqlitedict.SqliteDict(self._data_file, autocommit=True) as sd:
-            sd.update(self.__data__, mtime=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
-        with sqlitedict.SqliteDict(self._data_file) as sd:
-            print(f"{sd['update_queue'].qsize()} updates saved")
+    def __data_save__(self, data_file_path=None):
+        data_file_path = data_file_path or self._data_file
+        queued = self.__data__['queued'] = list(self.__updater__.dispatcher.update_queue.queue)
+        print(f'{len(self.__data__["undone"])} queued undone')
+        print(f'{len(queued)} queued in queue')
+        super().__data_save__(data_file_path)
 
 
 def main():
