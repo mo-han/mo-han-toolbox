@@ -34,6 +34,9 @@ elif os.name == 'posix':
     from .posix_util import *
 
 TEMPDIR = tempfile.gettempdir()
+HOSTNAME = platform.node()
+OSNAME = platform.system()
+USERNAME = getpass.getuser()
 
 
 def fs_inplace_rename(src: str, pattern: str, replace: str, only_basename: bool = True, dry_run: bool = False):
@@ -521,19 +524,6 @@ def shrink_name_middle(s: str, max_bytes=250, encoding='utf8', add_dots=True):
             return f'{left}...{right}'
     else:
         return f'{left}{right}'
-
-
-def get_names():
-    class Names:
-        hostname: str
-        osname: str
-        username: str
-
-    r = Names()
-    r.hostname = platform.node()
-    r.osname = platform.system()
-    r.username = getpass.getuser()
-    return r
 
 
 class ProcessTTYFrozen(TimeoutError):

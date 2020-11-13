@@ -5,7 +5,6 @@ import time
 from abc import ABC
 from functools import reduce
 from inspect import getmembers, ismethod
-from queue import Queue
 from typing import Callable
 
 import sqlitedict
@@ -13,9 +12,8 @@ from telegram import ChatAction, Bot, Update, ParseMode, constants
 from telegram.ext import Updater, CommandHandler, Filters, CallbackContext
 from telegram.ext.filters import MergedFilter
 
-from .os_util import get_names
+from .os_util import HOSTNAME, OSNAME, USERNAME
 from .text import split_by_length_or_lf
-from .tricks import Decorator
 
 
 class BotHandlerMethod(Callable):
@@ -48,7 +46,6 @@ class SimpleBot(ABC):
                  **kwargs):
         self.__data__ = data or {}
         self.__filters__ = filters
-        self.__device__ = get_names()
         self.__updater__ = Updater(token, use_context=True,
                                    request_kwargs={'read_timeout': timeout, 'connect_timeout': timeout},
                                    **kwargs)
@@ -130,7 +127,7 @@ class SimpleBot(ABC):
         return f'bot:\n' \
                f'{self.__fullname__} @{self.__username__}\n\n' \
                f'running on device:\n' \
-               f'{self.__device__.username} @ {self.__device__.hostname} ({self.__device__.osname})\n\n' \
+               f'{USERNAME} @ {HOSTNAME} ({OSNAME})\n\n' \
                f'resume {len(self.__data__["queued"]) + len(self.__data__["undone"])} update(s) ' \
                f'from {self.__data__["mtime"]}'
 
