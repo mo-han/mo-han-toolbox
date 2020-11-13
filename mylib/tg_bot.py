@@ -17,12 +17,17 @@ from .text import split_by_length_or_lf
 from .tricks import Decorator
 
 
-def meta_deco_handler_method(handler_type, on_menu=False, **handler_kwargs) -> Decorator:
-    def deco(handler_method: Callable):
-        wrap = handler_method
-        wrap.on_menu = on_menu
-        wrap.handler = handler_type, handler_kwargs
-        return wrap
+class BotHandlerMethod(Callable):
+    on_menu: bool
+    handler: tuple
+
+
+def deco_factory_bot_handler_method(handler_type, on_menu=False, **handler_kwargs):
+    def deco(method: BotHandlerMethod) -> BotHandlerMethod:
+        bot_handler_method = method
+        bot_handler_method.on_menu = on_menu
+        bot_handler_method.handler = handler_type, handler_kwargs
+        return bot_handler_method
 
     return deco
 
@@ -67,6 +72,7 @@ class SimpleBot(ABC):
     def __register_handlers__(self):
         self.__commands_list__ = []
         for n, v in getmembers(self):
+            v: BotHandlerMethod
             if ismethod(v) and hasattr(v, 'handler'):
                 _type, _kwargs = v.handler
                 _kwargs['callback'] = v
@@ -126,7 +132,7 @@ class SimpleBot(ABC):
                f'{self.__device__.username} @ {self.__device__.hostname} ({self.__device__.osname})\n\n' \
                f'resume {self.__data__["update_queue.qsize"]} update(s) from {self.__data__["mtime"]}'
 
-    @meta_deco_handler_method(CommandHandler, on_menu=True)
+    @deco_factory_bot_handler_method(CommandHandler, on_menu=True)
     def start(self, update: Update, context: CallbackContext):
         """let's roll out"""
         self.__typing__(update)
@@ -134,7 +140,7 @@ class SimpleBot(ABC):
         update.message.reply_text(self.__about_this_bot__())
         update.message.reply_text(self.__menu_str__())
 
-    @meta_deco_handler_method(CommandHandler, on_menu=True)
+    @deco_factory_bot_handler_method(CommandHandler, on_menu=True)
     def menu(self, update: Update, context: CallbackContext):
         """list commands"""
         self.__typing__(update)

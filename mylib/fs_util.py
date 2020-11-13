@@ -7,7 +7,7 @@ import shutil
 from typing import Iterable, Iterator
 
 from .text import replace
-from .tricks import meta_deco_args_choices
+from .tricks import deco_factory_args_choices
 import fnmatch
 
 
@@ -41,7 +41,7 @@ def regex_match(name: str, pattern: str):
     return bool(re.search(pattern, name))
 
 
-def meta_func_match_pattern(regex: bool, ignore_case: bool):
+def func_factory_match_pattern(regex: bool, ignore_case: bool):
     return {
         (False, False): match, (False, True): match_ignore_case,
         (True, False): regex_match, (True, True): regex_match_ignore_case
@@ -54,7 +54,7 @@ def find_iter(start_path: str, find_type: str, pattern: str = None, *,
     find_dirs = 'd' in find_type
     pattern = pattern or ('.*' if regex else '*')
     start_path = os.path.abspath(start_path) if abspath else start_path
-    match_func = meta_func_match_pattern(regex=regex, ignore_case=ignore_case)
+    match_func = func_factory_match_pattern(regex=regex, ignore_case=ignore_case)
     basename = os.path.basename
     if os.path.isfile(start_path):
         if find_files and match_func(basename(start_path), pattern):

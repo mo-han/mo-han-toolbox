@@ -13,20 +13,20 @@ from telegram.ext import MessageHandler, Filters, CallbackContext
 from mylib.log import get_logger
 from mylib.os_util import read_json_file, monitor_sub_process_tty_frozen, ProcessTTYFrozen
 from mylib.text import decode
-from mylib.tg_bot import SimpleBot, meta_deco_handler_method, CommandHandler, Update
-from mylib.tricks import ArgParseCompactHelpFormatter, meta_deco_retry, module_sqlitedict_with_dill
+from mylib.tg_bot import SimpleBot, deco_factory_bot_handler_method, CommandHandler, Update
+from mylib.tricks import ArgParseCompactHelpFormatter, deco_factory_retry, module_sqlitedict_with_dill
 
 sqlitedict = module_sqlitedict_with_dill()
 mt = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(os.path.getmtime(os.path.realpath(__file__))))
 
 
-@meta_deco_retry(retry_exceptions=ProcessTTYFrozen, max_retries=-1)
+@deco_factory_retry(retry_exceptions=ProcessTTYFrozen, max_retries=-1)
 def bldl_retry_frozen(*args: str):
     p = subprocess.Popen(['bldl.sh.cmd', *args], stdout=subprocess.PIPE)
     return monitor_sub_process_tty_frozen(p, encoding='u8')
 
 
-@meta_deco_retry(retry_exceptions=ProcessTTYFrozen, max_retries=-1)
+@deco_factory_retry(retry_exceptions=ProcessTTYFrozen, max_retries=-1)
 def ytdl_retry_frozen(*args: str):
     p = subprocess.Popen(['ytdl.sh.cmd', *args], stdout=subprocess.PIPE)
     return monitor_sub_process_tty_frozen(p, encoding='u8', timeout=60)
@@ -48,7 +48,7 @@ class MyAssistantBot(SimpleBot):
         super().__init__(token=config['token'], whitelist=config.get('user_whitelist'), data=data, **kwargs)
         self._data_file = data_file
 
-    @meta_deco_handler_method(MessageHandler, filters=Filters.regex(
+    @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(
         re.compile(r'BV[\da-zA-Z]{10}|av\d+')))
     def _bldl(self, update, *args):
         try:
@@ -72,7 +72,7 @@ class MyAssistantBot(SimpleBot):
                 self.__reply_md_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
                 self.__requeue_failed_update__(update)
 
-    @meta_deco_handler_method(MessageHandler, filters=Filters.regex(
+    @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(
         re.compile(r'youtube|youtu\.be|iwara|pornhub')))
     def _ytdl(self, update: Update, *args):
         try:
@@ -96,14 +96,14 @@ class MyAssistantBot(SimpleBot):
                 self.__reply_md_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
                 self.__requeue_failed_update__(update)
 
-    @meta_deco_handler_method(CommandHandler)
+    @deco_factory_bot_handler_method(CommandHandler)
     def _secret(self, update: Update, *args):
         self.__typing__(update)
         for name in ('effective_message', 'effective_user'):
             self.__reply_md_code_block__(f'{name}\n{pformat(getattr(update, name).to_dict())}', update)
         self.__reply_md_code_block__(f'bot.get_me()\n{pformat(self.__bot__.get_me().to_dict())}', update)
 
-    @meta_deco_handler_method(CommandHandler, on_menu=True, pass_args=True)
+    @deco_factory_bot_handler_method(CommandHandler, on_menu=True, pass_args=True)
     def sleep(self, u: Update, c: CallbackContext):
         """sleep some time (unit: sec)"""
         args = c.args or [0]

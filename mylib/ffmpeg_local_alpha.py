@@ -16,7 +16,7 @@ from .tui import LinePrinter
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
 from .os_util import shlex_double_quotes_join, list_files, split_filename_tail, read_json_file, write_json_file, \
     SubscriptableFileIO, ctx_pushd, fs_find_iter, fs_rename, fs_touch, ensure_open_file
-from .tricks import meta_deco_args_choices, seconds_from_colon_time, hex_hash, remove_from_list
+from .tricks import deco_factory_args_choices, seconds_from_colon_time, hex_hash, remove_from_list
 from .filename_tags import SuffixListFilenameTags
 
 S_ORIGINAL = 'original'
@@ -51,9 +51,9 @@ TAILS_L = TAILS_D.values()
 VALID_TAILS = OLD_TAILS + list(TAILS_L)
 CODEC_TAGS_DICT = {'o': 'origin', 'a8': 'avc8b', 'h8': 'hevc8b', 'aq8': 'qsvavc8b', 'hq8': 'qsvhevc8b'}
 CODEC_TAGS_SET = set(CODEC_TAGS_DICT.values())
-VIDEO_CODECS_A10N = {'a': 'h264', 'h': 'hevc'}
+VIDEO_CODECS_A10N = {'a': 'h264', 'h': 'hevc', 'v': 'vp9'}
 
-decorator_choose_map_preset = meta_deco_args_choices({'map_preset': STREAM_MAP_PRESET_TABLE.keys()})
+decorator_choose_map_preset = deco_factory_args_choices({'map_preset': STREAM_MAP_PRESET_TABLE.keys()})
 
 
 def file_is_video(filepath):
@@ -362,7 +362,7 @@ def get_width_height(filepath) -> (int, int):
     return d['width'], d['height']
 
 
-@meta_deco_args_choices({'res_limit': (None, 'FHD', 'HD', 'qHD', 'QHD', '4K')})
+@deco_factory_args_choices({'res_limit': (None, 'FHD', 'HD', 'qHD', 'QHD', '4K')})
 def get_vf_res_scale_down(width: int, height: int, res_limit='FHD', vf: str = None) -> str or None:
     """generate 'scale=<w>:<h>' value for ffmpeg `vf` option, to scale down the given resolution
     return empty str if the given resolution is enough low thus scaling is not needed"""
@@ -467,12 +467,12 @@ def kw_video_convert(source, keywords=(), vf=None, cut_points=(), dest=None,
         codec = 'h'
         crf = crf or 25
         if 'acopy' not in keywords:
-            ffmpeg_args.add(b__a='96k')
+            ffmpeg_args.add(b__a='64k')
     elif 'worse' in keywords:
         codec = 'h'
         crf = crf or 28
         if 'acopy' not in keywords:
-            ffmpeg_args.add(b__a='64k')
+            ffmpeg_args.add(b__a='48k')
 
     if 'qsv' in keywords:
         codec += 'q'
@@ -923,6 +923,18 @@ class FFmpegSegmentsContainer:
         conf[S_ORIGINAL]['video_args'] = video_args
         self.config(**conf[S_ORIGINAL])
 
+    def config_vp9(self, video_args: FFmpegArgsList = None, crf=None, vf=None, res_limit=None,
+                   constrained_quality=False, **kwargs):
+        conf = self.read_output_json()
+        video_args = video_args or FFmpegArgsList()
+        video_args.add(vcodec='libvpx-vp9')
+        vf = self.vf_res_scale_down(res_limit, vf)
+        if not constrained_quality:
+            video_args.add(b__v=0)
+        video_args.add(crf=crf, vf=vf, **kwargs)
+        conf[S_ORIGINAL]['video_args'] = video_args
+        self.config(**conf[S_ORIGINAL])
+
     def config_qsv_avc(self, video_args: FFmpegArgsList = None, crf=None, vf=None, res_limit=None,
                        **kwargs):
         conf = self.read_output_json()
@@ -1180,10 +1192,10 @@ class FFmpegSegmentsContainer:
     def guess_crf(self, codec=None, res_limit=None):
         d = self.excerpt_segments()
         i, d = list(d.items())[0]
-        config_funcs = {'h264': self.config_video, 'hevc': self.config_hevc}
+        config_funcs_d = {'h264': self.config_video, 'hevc': self.config_hevc, 'vp9': self.config_vp9}
         codec = VIDEO_CODECS_A10N.get(codec, codec) or d['codec_name']
-        config_func = config_funcs[codec]
-        crf0 = 25
+        config_func = config_funcs_d[codec]
+        crf0 = {'h264': 23, 'hevc': 28, 'vp9': 31}[codec]
         config_func(crf=crf0, res_limit=res_limit)
         e = self.estimate()
         r = e[i]

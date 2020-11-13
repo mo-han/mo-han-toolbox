@@ -40,7 +40,7 @@ def range_from_expr(expr: str) -> Generator:
         yield from range(s[0], s[-1] + 1)
 
 
-def meta_deco_args_choices(choices: Dict[int or str, Iterable] or None, *args, **kwargs) -> Decorator:
+def deco_factory_args_choices(choices: Dict[int or str, Iterable] or None, *args, **kwargs) -> Decorator:
     """decorator factory: force arguments of a func limited inside the given choices
 
     :param choices: a dict which describes the choices of arguments
@@ -54,11 +54,11 @@ def meta_deco_args_choices(choices: Dict[int or str, Iterable] or None, *args, *
     choices.update(kwargs)
     err_fmt = "argument {}={} is not valid, choose from {})"
 
-    def decorator(func):
-        @wraps(func)
-        def decorated_func(*args, **kwargs):
+    def deco(target):
+        @wraps(target)
+        def tgt(*args, **kwargs):
             for arg_index in range(len(args)):
-                param_name = func.__code__.co_varnames[arg_index]
+                param_name = target.__code__.co_varnames[arg_index]
                 value = args[arg_index]
                 if arg_index in choices and value not in choices[arg_index]:
                     raise ValueError(err_fmt.format(param_name, choices[arg_index]))
@@ -69,17 +69,17 @@ def meta_deco_args_choices(choices: Dict[int or str, Iterable] or None, *args, *
                 if param_name in choices and value not in choices[param_name]:
                     raise ValueError(err_fmt.format(param_name, value, choices[param_name]))
 
-            return func(*args, **kwargs)
+            return target(*args, **kwargs)
 
-        return decorated_func
+        return tgt
 
-    return decorator
+    return deco
 
 
-def meta_deco_retry(retry_exceptions=None, max_retries: int = 3,
-                    enable_default=False, default=None,
-                    exception_predicate: Callable[[Exception], bool] = None,
-                    exception_queue: QueueType = None) -> Decorator:
+def deco_factory_retry(retry_exceptions=None, max_retries: int = 3,
+                       enable_default=False, default=None,
+                       exception_predicate: Callable[[Exception], bool] = None,
+                       exception_queue: QueueType = None) -> Decorator:
     """decorator factory: force a func re-running for several times on exception(s)"""
     retry_exceptions = retry_exceptions or ()
     predicate = exception_predicate or (lambda e: True)
@@ -201,25 +201,25 @@ class ArgParseCompactHelpFormatter(argparse.HelpFormatter):
         return ', '.join(action.option_strings) + '  ' + args_string
 
 
-def decorator_self_context(func):
+def deco_with_self_context(target):
     """decorator: wrap a class method inside a `with self: ...` context"""
 
-    def decorated_func(self, *args, **kwargs):
+    def tgt(self, *args, **kwargs):
         with self:
-            return func(self, *args, **kwargs)
+            return target(self, *args, **kwargs)
 
-    return decorated_func
+    return tgt
 
 
-def decorator_factory_with_context(context_obj) -> Decorator:
-    def decorator_with_context(func):
-        def decorated_func(*args, **kwargs):
+def deco_factory_with_context(context_obj) -> Decorator:
+    def deco(target):
+        def tgt(*args, **kwargs):
             with context_obj:
-                return func(*args, **kwargs)
+                return target(*args, **kwargs)
 
-        return decorated_func
+        return tgt
 
-    return decorator_with_context
+    return deco
 
 
 def getitem_default(x, index_or_key, default=None):
@@ -636,22 +636,6 @@ def meta_wrap_in_process(callee, before=None, after=None):
     return wrap
 
 
-def meta_deco_copy_signature(source: Callable) -> Decorator:
-    # https://stackoverflow.com/questions/42420810/copy-signature-forward-all-arguments-from-wrapper-function
-    src_sig = signature(source)
-
-    def deco_copy_signature(target: Callable) -> Callable:
-        @wraps(target)
-        def wrapper(*args, **kwargs):
-            src_sig.bind(*args, **kwargs)
-            return target(*args, **kwargs)
-
-        wrapper.__signature__ = signature(source)
-        return wrapper
-
-    return deco_copy_signature
-
-
 class ExceptionWithKwargs(Exception):
     def __init__(self, *args, **kwargs):
         super().__init__(*args)
@@ -666,7 +650,7 @@ class ExceptionWithKwargs(Exception):
         return f'{self.__class__.__name__}{self}'
 
 
-def meta_new_thread(group: None = None, name: str = None, daemon: bool = False):
+def thread_factory(group: None = None, name: str = None, daemon: bool = False):
     thread_kwargs = {'group': group, 'name': name, 'daemon': daemon}
 
     def new_thread(callee: Callable, *args, **kwargs):
@@ -706,7 +690,7 @@ class NonBlockingCaller:
         self._running = True
         self._result_queue = Queue(maxsize=1)
         self._exception_queue = Queue(maxsize=1)
-        self._thread = meta_new_thread(daemon=True)(self.thread)
+        self._thread = thread_factory(daemon=True)(self.thread)
         self._thread.start()
         return True
 
@@ -724,7 +708,7 @@ class NonBlockingCaller:
             raise self.StillRunning(target, *args, **kwargs)
 
 
-def deco_meta_copy_signature(signature_source: Callable):
+def deco_factory_copy_signature(signature_source: Callable):
     # https://stackoverflow.com/a/58989918/7966259
     def deco(target: Callable):
         @functools.wraps(target)

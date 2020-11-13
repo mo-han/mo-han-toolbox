@@ -10,7 +10,7 @@ from time import sleep
 import pywintypes
 import win32clipboard
 
-from .tricks import Singleton, decorator_self_context
+from .tricks import Singleton, deco_with_self_context
 
 ILLEGAL_FS_CHARS = r'\/:*?"<>|'
 ILLEGAL_FS_CHARS_LEN = len(ILLEGAL_FS_CHARS)
@@ -78,20 +78,20 @@ class Clipboard(metaclass=Singleton):
             raise TypeError("'{}' is not str or int".format(x))
         return x
 
-    @decorator_self_context
+    @deco_with_self_context
     def clear(self):
         return self._wcb.EmptyClipboard()
 
-    @decorator_self_context
+    @deco_with_self_context
     def set(self, data, cf=_wcb.CF_UNICODETEXT):
         cf = self.valid_format(cf)
         return self._wcb.SetClipboardData(cf, data)
 
-    @decorator_self_context
+    @deco_with_self_context
     def set_text(self, text):
         return self._wcb.SetClipboardText(text)
 
-    @decorator_self_context
+    @deco_with_self_context
     def get(self, cf=_wcb.CF_UNICODETEXT):
         cf = self.valid_format(cf)
         if self._wcb.IsClipboardFormatAvailable(cf):
@@ -111,7 +111,7 @@ class Clipboard(metaclass=Singleton):
             lines = [line.strip() for line in str(self.get()).splitlines()]
             return [line for line in lines if os.path.exists(line)]
 
-    @decorator_self_context
+    @deco_with_self_context
     def get_all(self) -> dict:
         d = {}
         for k, v in self.cf_dict.items():
