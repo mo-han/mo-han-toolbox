@@ -131,9 +131,7 @@ class MyAssistantBot(SimpleBot):
 
     def __data_save__(self, data_file_path=None):
         data_file_path = data_file_path or self._data_file
-        queued = self.__data__['queued'] = list(self.__updater__.dispatcher.update_queue.queue)
-        print(f'{len(self.__data__["undone"])} queued undone')
-        print(f'{len(queued)} queued in queue')
+        self.__data__['queued'] = list(self.__updater__.dispatcher.update_queue.queue)
         super().__data_save__(data_file_path)
 
 
