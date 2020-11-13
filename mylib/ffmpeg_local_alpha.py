@@ -49,9 +49,10 @@ OLD_TAILS = ['.__origin__', '.hevc8b']
 TAILS_D = {'o': '.origin', 'a8': '.avc8b', 'h8': '.hevc8b', 'aq8': '.qsvavc8b', 'hq8': '.qsvhevc8b'}
 TAILS_L = TAILS_D.values()
 VALID_TAILS = OLD_TAILS + list(TAILS_L)
-CODEC_TAGS_DICT = {'o': 'origin', 'a8': 'avc8b', 'h8': 'hevc8b', 'aq8': 'qsvavc8b', 'hq8': 'qsvhevc8b'}
+VIDEO_CODECS_A10N = {'a': 'h264', 'h': 'hevc', 'v': 'vp9', 'aq': 'h264_qsv', 'hq': 'hevc_qsv'}
+CODEC_TAGS_DICT = {'o': 'origin', 'a8': 'avc8b', 'h8': 'hevc8b', 'aq8': 'qsvavc8b', 'hq8': 'qsvhevc8b',
+                   **VIDEO_CODECS_A10N}
 CODEC_TAGS_SET = set(CODEC_TAGS_DICT.values())
-VIDEO_CODECS_A10N = {'a': 'h264', 'h': 'hevc', 'v': 'vp9'}
 
 decorator_choose_map_preset = deco_factory_args_choices({'map_preset': STREAM_MAP_PRESET_TABLE.keys()})
 
@@ -413,9 +414,15 @@ def kw_video_convert(source, keywords=(), vf=None, cut_points=(), dest=None,
     ff.logger.setLevel(lvl)
     vf_list = get_filter_list(vf)
     logger = get_logger(f'{__name__}.smartconv', fmt=LOG_FMT_MESSAGE_ONLY)
-    codecs_d = {'h': 'hevc', 'a': None, 'hq': 'hevc_qsv', 'aq': 'h264_qsv'}
+    codecs_d = {'h': 'hevc', 'a': None, 'hq': 'hevc_qsv', 'aq': 'h264_qsv', 'v': 'vp9'}
+    tags = []
 
-    ffmpeg_args = FFmpegArgsList(pix_fmt='yuv420p')
+    if '10bit' in keywords:
+        ffmpeg_args = FFmpegArgsList(pix_fmt='yuv420p10le')
+        bits_tag = '10bit'
+    else:
+        ffmpeg_args = FFmpegArgsList(pix_fmt='yuv420p')
+        bits_tag = '8bit'
     keywords = set(keywords) or set()
     res_limit = None
     codec = 'a'
@@ -453,6 +460,8 @@ def kw_video_convert(source, keywords=(), vf=None, cut_points=(), dest=None,
             ffmpeg_args.add(ac=2)
         elif kw == 'hevc':
             codec = 'h'
+        elif kw in ('vp9', 'vpx', 'vp90', 'webm'):
+            codec = 'v'
 
     if 'best' in keywords:
         codec = 'h'
@@ -466,15 +475,13 @@ def kw_video_convert(source, keywords=(), vf=None, cut_points=(), dest=None,
     elif 'bad' in keywords:
         codec = 'h'
         crf = crf or 25
-        if 'acopy' not in keywords:
-            ffmpeg_args.add(b__a='64k')
     elif 'worse' in keywords:
         codec = 'h'
         crf = crf or 28
-        if 'acopy' not in keywords:
-            ffmpeg_args.add(b__a='48k')
 
-    if 'qsv' in keywords:
+    codec_tag = CODEC_TAGS_DICT[f'{codec}']
+    if 'qsv' in keywords and codec in ('a', 'h'):
+        tags.append('qsv')
         codec += 'q'
         ffmpeg_args.add(vcodec=codecs_d[codec], global_quality=crf)
     else:
@@ -482,36 +489,37 @@ def kw_video_convert(source, keywords=(), vf=None, cut_points=(), dest=None,
     ffmpeg_args.add(ffmpeg_opts)
 
     if keywords & {'copy', 'vcopy'}:
-        tag = 'copy'
+        tags.append('copy')
     elif keywords & {'m4a', 'aac'}:
-        tag = 'audio'
+        tags.append('audio')
     else:
-        tag = CODEC_TAGS_DICT[f'{codec}8']
+        tags.append(codec_tag)
+        tags.append(bits_tag)
 
     cut_points = cut_points or []
     start = cut_points[0] if cut_points else 0
     end = cut_points[1] if len(cut_points) >= 2 else 0
 
-    def conv_one_file(fp):
+    def conv_one_file(f):
         lp = LinePrinter()
         lp.l()
-        if not os.path.isfile(fp):
-            logger.info(f'# skip non-file\n  {fp}')
-        if not file_is_video(fp):
-            logger.info(f'# skip non-video\n  {fp}')
+        if not os.path.isfile(f):
+            logger.info(f'# skip non-file\n  {f}')
+        if not file_is_video(f):
+            logger.info(f'# skip non-video\n  {f}')
             return
 
-        input_ft = SuffixListFilenameTags(fp)
-        origin_ft = SuffixListFilenameTags(fp).tag('origin')
-        output_ft = SuffixListFilenameTags(fp).tag(tag).untag('crf', 'origin')
+        input_ft = SuffixListFilenameTags(f)
+        origin_ft = SuffixListFilenameTags(f).tag('origin')
+        output_ft = SuffixListFilenameTags(f).untag('crf', 'origin')
         if crf is not None:
             output_ft.tag(crf=crf)
         if not redo and 'origin' in input_ft.tags:
-            logger.info(f'# skip origin\n  {fp}')
+            logger.info(f'# skip origin\n  {f}')
             return
-        codec_tags = input_ft.tags & CODEC_TAGS_SET - {'origin'}
-        if codec_tags:
-            logger.info(f'# skip {codec_tags}\n  {fp}')
+        input_codec_tags = input_ft.tags & CODEC_TAGS_SET - {'origin'}
+        if input_codec_tags:
+            logger.info(f'# skip {input_codec_tags}\n  {f}')
             return
         if 'mp4' in keywords:
             output_ft.extension = '.mp4'
@@ -522,26 +530,29 @@ def kw_video_convert(source, keywords=(), vf=None, cut_points=(), dest=None,
             ffmpeg_args.add(map=STREAM_MAP_PRESET_TABLE[S_NO_VIDEO])
         if 'aac' in keywords:
             output_ft.extension = '.aac'
+        if 'webm' in keywords:
+            output_ft.extension = '.webm'
+        output_ft = output_ft.tag(*tags)
 
         origin_path = origin_ft.path
         output_path = output_ft.path
         if os.path.isfile(output_path) and not overwrite:
             logger.info(f'# skip existing\n  {output_path}')
             return
-        logger.info(f'* {tag}\n  {fp}')
+        logger.info(f'* {tags}\n  {f}')
         lp.l()
 
         try:
             if res_limit:
-                w, h = get_width_height(fp)
+                w, h = get_width_height(f)
                 ffmpeg_args.add(
                     vf=get_vf_res_scale_down(
                         w, h, res_limit,
                         vf=get_filter_str(vf_list)))
             if not dry_run:
-                ff.convert([fp], output_path, ffmpeg_args, start=start, end=end, **kwargs)
+                ff.convert([f], output_path, ffmpeg_args, start=start, end=end, **kwargs)
             logger.info(f'+ {output_path}')
-            shutil.move(fp, origin_path)
+            shutil.move(f, origin_path)
         except ff.FFmpegError as e:
             logger.error(f'! {output_path}\n {e}')
             os.remove(output_path)
