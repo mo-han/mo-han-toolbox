@@ -9,10 +9,13 @@ import sys
 from argparse import ArgumentParser, REMAINDER
 from pprint import pprint
 
+import sqlitedict
 from send2trash import send2trash
 
-from mylib.os_util import clipboard, list_files, ctx_pushd, fs_find_iter, fs_legal_name, shrink_name_middle, \
+from mylib.os_util import clipboard, list_files, shrink_name_middle, \
     set_console_title___try
+from mylib._deprecated import fs_find_iter, real_join_path, fs_inplace_rename, fs_inplace_rename_regex
+from mylib import fs_util
 from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, Attreebute
 from mylib.tui import LinePrinter
 
@@ -114,19 +117,28 @@ cmd_mode.set_defaults(func=cmd_mode_func)
 
 def cfip_func():
     from mylib.websites import get_cloudflare_ipaddr_hostmonit
-    from mylib.os_util import write_json_file
+    from mylib.fs_util import write_json_file
     from pprint import pformat
     args = rtd.args
     file = args.file
+    in_list = args.list
     ip_d = get_cloudflare_ipaddr_hostmonit()
     if file:
         write_json_file(file, ip_d, indent=4)
-    print(pformat(ip_d))
+    if in_list:
+        info: dict = ip_d['info']
+        for isp, ip_l in info.items():
+            print(isp)
+            for ip_d in ip_l:
+                print(ip_d['ip'])
+    else:
+        print(pformat(ip_d))
 
 
 cfip = add_sub_parser('cloudflare.ipaddr.hostmonit', ['cfip'], 'get recommended ip addresses from hostmonit.com')
 cfip.set_defaults(func=cfip_func)
 cfip.add_argument('file', help='JSON file', nargs='?')
+cfip.add_argument('-l', '--list', action='store_true')
 
 
 def video_guess_crf_func():
@@ -160,13 +172,13 @@ def dir_flatter_func():
         if not os.path.isdir(s):
             print(f'! skip non-folder: {s}')
             continue
-        with ctx_pushd(s):
+        with fs_util.ctx_pushd(s):
             dir_l = list(fs_find_iter(find_dir_instead_of_file=True))
             if not dir_l:
                 continue
             file_l = list(fs_find_iter(strip_root=True, recursive=True))
             for fp in file_l:
-                flat_path = shrink_name_middle(fs_legal_name(fp))
+                flat_path = shrink_name_middle(fs_util.safe_name(fp))
                 shutil.move(fp, flat_path)
             for dp in dir_l:
                 os.removedirs(dp)
@@ -179,12 +191,11 @@ dir_flatter.add_argument('src', nargs='*')
 
 
 def put_in_dir_func():
-    from mylib.os_util import read_json_file, real_join_path, write_json_file, path_or_glob, fs_move_cli
+    from mylib.os_util import path_or_glob, fs_move_cli
     from mylib.text import find_words
     from mylib.tui import prompt_select_by_number
-    from mylib.fs_util import get_path
     conf_file = real_join_path('~', '.config', 'fs.put_in_dir.json')
-    conf = read_json_file(conf_file) or {'dst_map': {}}
+    conf = fs_util.read_json_file(conf_file) or {'dst_map': {}}
     dst_map = conf['dst_map']
     args = rtd.args
     src = args.src or clipboard.list_paths()
@@ -211,7 +222,7 @@ def put_in_dir_func():
                 print(f'{k}=')
             else:
                 print(f'{a}={dst_map.get(a, "")}')
-    write_json_file(conf_file, conf, indent=4)
+    fs_util.write_json_file(conf_file, conf, indent=4)
     if not dst:
         return
     dst = dst_map.get(dst, dst)
@@ -219,8 +230,10 @@ def put_in_dir_func():
         print(f'! {dst} is file (should be directory)', file=sys.stderr)
         exit(1)
     os.makedirs(dst, exist_ok=True)
-    sub_dirs_d = {b: set(find_words(b.lower())) for b in os.listdir(dst) if
-                  os.path.isdir(get_path(dst, b))}
+    db_path = fs_util.make_path(dst, '__folder_name_words__.db')
+    db = fs_util.read_sqlite_dict_file(db_path)
+    sub_dirs_d = {b: set(find_words(b.lower())) for b in next(os.walk(dst))[1] if b not in db}
+    sub_dirs_d.update(db)
     for ss in src:
         for s in path_or_glob(ss):
             if sub_dir:
@@ -234,14 +247,14 @@ def put_in_dir_func():
                 ) if similar_l else None) or input(f'\nCreate sub folder for\n{s}: ')
                 if target_dir_name:
                     sub_dirs_d[target_dir_name] = set(find_words(target_dir_name.lower()))
-                    dir_path = get_path(dst, target_dir_name)
+                    dir_path = fs_util.make_path(dst, target_dir_name)
                     if not dry_run:
                         os.makedirs(dir_path, exist_ok=True)
                 else:
                     dir_path = dst
             else:
                 dir_path = dst
-            d = get_path(dir_path, os.path.basename(s))
+            d = fs_util.make_path(dir_path, os.path.basename(s))
             if os.path.exists(d):
                 y = input(f'overwrite {d} ? (y/n): ').lower()
                 if y != 'y':
@@ -249,6 +262,7 @@ def put_in_dir_func():
             if not dry_run:
                 fs_move_cli(s, d)
             print(f'{s} -> {d}')
+    fs_util.write_sqlite_dict_file(db_path, sub_dirs_d, update_only=True)
 
 
 put_in_dir = add_sub_parser('putindir', ['mvd'], 'put files/folders into dest dir')
@@ -501,7 +515,7 @@ ytdl.add_argument('argv', nargs='*', help='argument(s) propagated to youtube-dl,
 
 
 def regex_rename_func():
-    from mylib.os_util import fs_inplace_rename_regex, list_files, list_dirs
+    from mylib.os_util import list_files, list_dirs
     args = rtd.args
     source = args.source
     recursive = args.recursive
@@ -533,7 +547,7 @@ regex_rename.add_argument('replace')
 
 
 def rename_func():
-    from mylib.os_util import fs_inplace_rename, list_files, list_dirs
+    from mylib.os_util import list_files, list_dirs
     args = rtd.args
     source = args.source
     recursive = args.recursive
@@ -645,16 +659,16 @@ def url_from_clipboard():
         p = r'magnet:[^\s"]+'
         urls = regex_find(p, unescape(t), dedup=True)
     elif pattern == 'iwara':
-        from mylib.iwara import find_url_in_text
+        from mylib.website_iwara import find_url_in_text
         urls = find_url_in_text(t)
     elif pattern in ('pornhub', 'ph'):
-        from mylib.pornhub import find_url_in_text
+        from mylib.website_ph import find_url_in_text
         urls = find_url_in_text(t)
     elif pattern in ('youtube', 'ytb'):
-        from mylib.youtube import find_url_in_text
+        from mylib.website_yt import find_url_in_text
         urls = find_url_in_text(t)
     elif pattern in ('bilibili', 'bili'):
-        from mylib.bili import find_url_in_text
+        from mylib.website_bili import find_url_in_text
         urls = find_url_in_text(t)
     elif pattern in ('hc.fyi', 'hentai.cafe', 'hentaicafe'):
         p = r'https://hentai.cafe/hc.fyi/\d+'
@@ -694,7 +708,7 @@ potplayer_rename.add_argument('-F', '--no-keep-front', action='store_true', help
 
 
 def bilibili_download_func():
-    from mylib.bili import download_bilibili_video
+    from mylib.website_bili import download_bilibili_video
     args = rtd.args
     if args.verbose:
         print(args)
@@ -721,7 +735,9 @@ bilibili_download.add_argument('-A', '--no-moderate-audio', dest='moderate_audio
 
 
 def json_edit_func():
-    from mylib.os_util import read_json_file, write_json_file, list_files
+    from mylib.os_util import list_files
+    from mylib.fs_util import write_json_file
+    from mylib.fs_util import read_json_file
     from mylib.tricks import eval_or_str
     args = rtd.args
     file = args.file or list_files(clipboard)[0]
@@ -757,7 +773,7 @@ json_edit.add_argument('item', nargs='+')
 
 
 def json_key_func():
-    from mylib.os_util import read_json_file
+    from mylib.fs_util import read_json_file
     args = rtd.args
     d = read_json_file(args.file)
     print(d[args.key])
@@ -770,7 +786,8 @@ json_key.add_argument('key', help='query key')
 
 
 def update_json_file():
-    from mylib.os_util import read_json_file, write_json_file
+    from mylib.fs_util import write_json_file
+    from mylib.fs_util import read_json_file
     args = rtd.args
     old, new = args.old, args.new
     d = read_json_file(old)
@@ -816,7 +833,7 @@ img_sim_view.add_argument(
 
 
 def move_ehviewer_images():
-    from mylib.ehentai import catalog_ehviewer_images
+    from mylib.website_eh import catalog_ehviewer_images
     args = rtd.args
     catalog_ehviewer_images(dry_run=args.dry_run)
 

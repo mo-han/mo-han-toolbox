@@ -5,7 +5,8 @@ import ndrop.__main__
 import ndrop.netdrop
 import ndrop.shell
 
-from .os_util import clipboard, ensure_open_file
+from .os_util import clipboard
+from .fs_util import ensure_open_file
 from .tricks import modify_and_import, Attreebute
 
 config_at = Attreebute()

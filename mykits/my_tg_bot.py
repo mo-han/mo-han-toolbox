@@ -11,7 +11,8 @@ from pprint import pformat
 from telegram.ext import MessageHandler, Filters, CallbackContext
 
 from mylib.log import get_logger
-from mylib.os_util import read_json_file, monitor_sub_process_tty_frozen, ProcessTTYFrozen, write_json_file
+from mylib.os_util import monitor_sub_process_tty_frozen, ProcessTTYFrozen
+from mylib.fs_util import read_json_file, write_json_file
 from mylib.text import decode
 from mylib.tg_bot import SimpleBot, deco_factory_bot_handler_method, CommandHandler, Update
 from mylib.tricks import ArgParseCompactHelpFormatter, deco_factory_retry, module_sqlitedict_with_dill

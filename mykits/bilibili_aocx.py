@@ -7,7 +7,7 @@ import os
 from glob import glob
 import argparse
 
-from mylib.bili import BilibiliAppCacheEntry
+from mylib.website_bili import BilibiliAppCacheEntry
 from mylib.tricks import ArgParseCompactHelpFormatter
 
 

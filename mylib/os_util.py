@@ -1,31 +1,26 @@
 #!/usr/bin/env python3
 # encoding=utf8
 import codecs
-import fnmatch
 import getpass
-import html
-import json
 import locale
 import os
 import platform
 import shlex
-import shutil
 import signal
 import subprocess
 import sys
 import tempfile
-import urllib.parse
 from collections import defaultdict
-from contextlib import contextmanager
 from glob import glob
 from io import FileIO, BytesIO
 from queue import Queue
 from time import time
-from typing import Iterable, Callable, Generator, Iterator, Tuple, Dict, List
+from typing import Iterable, Iterator, Tuple, Dict, List
 
 import psutil
 from filetype import filetype
 
+from ._deprecated import fs_find_iter
 from .tricks import make_kwargs_dict, NonBlockingCaller
 
 if os.name == 'nt':
@@ -39,241 +34,13 @@ OSNAME = platform.system()
 USERNAME = getpass.getuser()
 
 
-def fs_inplace_rename(src: str, pattern: str, replace: str, only_basename: bool = True, dry_run: bool = False):
-    """DEPRECATED NO MORE DEVELOPMENT"""
-    if only_basename:
-        parent, basename = os.path.split(src)
-        dst = os.path.join(parent, basename.replace(pattern, replace))
-    else:
-        dst = src.replace(pattern, replace)
-    if src != dst:
-        print('* {} ->\n  {}'.format(src, dst))
-    if not dry_run:
-        shutil.move(src, dst)
-
-
-def fs_inplace_rename_regex(src: str, pattern: str, replace: str, only_basename: bool = True, dry_run: bool = False):
-    """DEPRECATED NO MORE DEVELOPMENT"""
-    if only_basename:
-        parent, basename = os.path.split(src)
-        dst = os.path.join(parent, re.sub(pattern, replace, basename))
-    else:
-        dst = re.sub(pattern, replace, src)
-    if src != dst:
-        print('* {} ->\n  {}'.format(src, dst))
-    if not dry_run:
-        shutil.move(src, dst)
-
-
-def fs_legal_name(x: str, repl: str or dict = None, unescape_html=True, decode_url=True) -> str:
-    if unescape_html:
-        x = html.unescape(x)
-    if decode_url:
-        x = urllib.parse.unquote(x)
-    if repl:
-        if isinstance(repl, str):
-            r = ILLEGAL_FS_CHARS_REGEX_PATTERN.sub(repl, x)
-            # rl = len(repl)
-            # if rl > 1:
-            #     r = ILLEGAL_FS_CHARS_REGEX_PATTERN.sub(repl, x)
-            # elif rl == 1:
-            #     r = x.translate(str.maketrans(ILLEGAL_FS_CHARS, repl * ILLEGAL_FS_CHARS_LEN))
-            # else:
-            #     r = x.translate(str.maketrans('', '', ILLEGAL_FS_CHARS))
-        elif isinstance(repl, dict):
-            r = x.translate(repl)
-        else:
-            raise ValueError("Invalid repl '{}'".format(repl))
-    else:
-        r = x.translate(ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE)
-    return r
-
-
-def fs_rename(src_path: str, dst_name_or_path: str = None, dst_ext: str = None, *,
-              move_to_dir: str = None, stay_in_src_dir: bool = True, append_src_ext: bool = True) -> str:
-    src_root, src_basename = os.path.split(src_path)
-    src_before_ext, src_ext = os.path.splitext(src_basename)
-    if dst_ext is not None:
-        if dst_name_or_path is None:
-            dst_name_or_path = src_before_ext + dst_ext
-        else:
-            dst_name_or_path += dst_ext
-    if move_to_dir:
-        dst_path = os.path.join(move_to_dir, dst_name_or_path)
-    elif stay_in_src_dir:
-        dst_path = os.path.join(src_root, dst_name_or_path)
-    else:
-        dst_path = dst_name_or_path
-    if append_src_ext:
-        dst_path = dst_path + src_ext
-    return shutil.move(src_path, dst_path)
-
-
 def ensure_sigint_signal():
     if sys.platform == 'win32':
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # %ERRORLEVEL% = '-1073741510'
 
 
-def real_join_path(path, *paths, expanduser: bool = True, expandvars: bool = True):
-    """realpath(join(...))"""
-    if expanduser:
-        path = os.path.expanduser(path)
-        paths = [os.path.expanduser(p) for p in paths]
-    if expandvars:
-        path = os.path.expandvars(path)
-        paths = [os.path.expandvars(p) for p in paths]
-    return os.path.realpath(os.path.join(path, *paths))
-
-
-def relative_join_path(path, *paths, start_path: str = None, expanduser: bool = True, expandvars: bool = True):
-    """relpath(join(...))"""
-    if expanduser:
-        path = os.path.expanduser(path)
-        paths = [os.path.expanduser(p) for p in paths]
-    if expandvars:
-        path = os.path.expandvars(path)
-        paths = [os.path.expandvars(p) for p in paths]
-    return os.path.relpath(os.path.join(path, *paths), start=start_path)
-
-
-def ensure_chdir(dest: str):
-    if not os.path.isdir(dest):
-        os.makedirs(dest, exist_ok=True)
-    os.chdir(dest)
-
-
-@contextmanager
-def ctx_pushd(dst: str, ensure_dst: bool = False):
-    if ensure_dst:
-        cd = ensure_chdir
-    else:
-        cd = os.chdir
-    prev = os.getcwd()
-    cd(dst)
-    saved_error = None
-    try:
-        yield
-    except Exception as e:
-        saved_error = e
-    finally:
-        cd(prev)
-        if saved_error:
-            raise saved_error
-
-
-def ensure_open_file(filepath, mode='r', **kwargs):
-    parent, basename = os.path.split(filepath)
-    if parent and not os.path.isdir(parent):
-        os.makedirs(parent, exist_ok=True)
-    if not os.path.isfile(filepath):
-        try:
-            open(filepath, 'a').close()
-        except PermissionError as e:
-            if os.path.isdir(filepath):
-                raise FileExistsError("path used by directory '{}'".format(filepath))
-            else:
-                raise e
-    return open(filepath, mode, **kwargs)
-
-
-def fs_touch(filepath):
-    try:
-        os.utime(filepath)
-    except OSError:
-        open(filepath, 'a').close()
-
-
-def read_json_file(file, default=None, utf8: bool = True, **kwargs) -> dict:
-    file_kwargs = {}
-    if utf8:
-        file_kwargs['encoding'] = 'utf8'
-    with ensure_open_file(file, 'r', **file_kwargs) as jf:
-        try:
-            d = json.load(jf, **kwargs)
-        except json.decoder.JSONDecodeError:
-            d = default or {}
-    return d
-
-
-def write_json_file(file, data, utf8: bool = True, **kwargs):
-    file_kwargs = {}
-    if utf8:
-        file_kwargs['encoding'] = 'utf8'
-    with ensure_open_file(file, 'w', **file_kwargs) as jf:
-        json.dump(data, jf, ensure_ascii=not utf8, **kwargs)
-
-
 def check_file_ext(fp: str, ext_list: Iterable):
     return os.path.isfile(fp) and os.path.splitext(fp)[-1].lower() in ext_list
-
-
-def fs_find_iter(pattern: str or Callable = None, root: str = '.',
-                 regex: bool = False, find_dir_instead_of_file: bool = False,
-                 recursive: bool = True, strip_root: bool = True,
-                 progress_queue: Queue = None) -> Generator:
-    if find_dir_instead_of_file:
-        def pick_os_walk_tuple(parent, folder_list, file_list):
-            return parent, folder_list
-
-        def check(x):
-            return os.path.isdir(x)
-    else:
-        def pick_os_walk_tuple(parent, folder_list, file_list):
-            return parent, file_list
-
-        def check(x):
-            return os.path.isfile(x)
-
-    if strip_root:
-        def join_path(path, *paths):
-            return relative_join_path(path, *paths, start_path=root)
-    else:
-        join_path = os.path.join
-
-    if pattern is None:
-        def match(fname):
-            return True
-    elif isinstance(pattern, str):
-        if regex:
-            def match(fname):
-                if re.search(pattern, fname):
-                    return True
-                else:
-                    return False
-        else:
-            def match(fname):
-                return fnmatch.fnmatch(fname, pattern)
-    elif isinstance(pattern, Callable):
-        match = pattern
-    else:
-        raise ValueError("invalid pattern: '{}', should be `str` or `function(fname)`")
-
-    def put_progress(path):
-        progress_queue.put(path)
-
-    def no_progress(path):
-        pass
-
-    if progress_queue:
-        update_progress = put_progress
-    else:
-        update_progress = no_progress
-
-    if recursive:
-        for t3e in os.walk(root):
-            par, fn_list = pick_os_walk_tuple(*t3e)
-            for fn in fn_list:
-                if match(fn):
-                    output_path = join_path(par, fn)
-                    update_progress(output_path)
-                    yield output_path
-    else:
-        for basename in os.listdir(root):
-            real_path = os.path.join(root, basename)
-            output_path = join_path(root, basename)
-            if check(real_path) and match(basename):
-                update_progress(output_path)
-                yield output_path
 
 
 class SubscriptableFileIO(FileIO):

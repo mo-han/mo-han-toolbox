@@ -14,8 +14,9 @@ import filetype
 
 from .tui import LinePrinter
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
-from .os_util import shlex_double_quotes_join, list_files, split_filename_tail, read_json_file, write_json_file, \
-    SubscriptableFileIO, ctx_pushd, fs_find_iter, fs_rename, fs_touch, ensure_open_file
+from .os_util import shlex_double_quotes_join, list_files, split_filename_tail, SubscriptableFileIO
+from ._deprecated import fs_find_iter
+from .fs_util import read_json_file, write_json_file, touch, x_rename, ensure_open_file, ctx_pushd
 from .tricks import deco_factory_args_choices, seconds_from_colon_time, hex_hash, remove_from_list
 from .filename_tags import SuffixListFilenameTags
 
@@ -705,10 +706,10 @@ class FFmpegSegmentsContainer:
         with ctx_pushd(self.root):
             prefix = self.input_filename_prefix
             for f in fs_find_iter(pattern=prefix + '*', recursive=False, strip_root=True):
-                fs_rename(f, prefix + fn, append_src_ext=False)
+                x_rename(f, prefix + fn, append_src_ext=False)
                 break
             else:
-                fs_touch(prefix + fn)
+                touch(prefix + fn)
             write_json_file(self.input_json, self.input_data, indent=4)
 
     def read_filename(self):
@@ -938,7 +939,7 @@ class FFmpegSegmentsContainer:
                    constrained_quality=False, **kwargs):
         conf = self.read_output_json()
         video_args = video_args or FFmpegArgsList()
-        video_args.add(vcodec='libvpx-vp9')
+        video_args.add(threads=4, vcodec='libvpx-vp9')
         vf = self.vf_res_scale_down(res_limit, vf)
         if not constrained_quality:
             video_args.add(b__v=0)
@@ -1053,7 +1054,7 @@ class FFmpegSegmentsContainer:
         if self.file_has_lock(filepath) or self.file_has_done(filepath):
             return
         else:
-            fs_touch(filepath + self.suffix_lock)
+            touch(filepath + self.suffix_lock)
 
     def file_tag_unlock(self, filepath):
         if self.file_has_lock(filepath):
@@ -1063,11 +1064,11 @@ class FFmpegSegmentsContainer:
         if self.file_has_done(filepath):
             return
         if self.file_has_lock(filepath):
-            fs_rename(filepath + self.suffix_lock, filepath + self.suffix_done,
-                      stay_in_src_dir=False, append_src_ext=False)
+            x_rename(filepath + self.suffix_lock, filepath + self.suffix_done,
+                     stay_in_src_dir=False, append_src_ext=False)
 
     def file_tag_delete(self, filepath):
-        fs_touch(filepath + self.suffix_delete)
+        touch(filepath + self.suffix_delete)
 
     def convert_one_segment(self, stream_id, segment_file, overwrite=False) -> dict:
         segment_path_no_prefix = os.path.join(stream_id, segment_file)
@@ -1166,7 +1167,7 @@ class FFmpegSegmentsContainer:
                         os.remove(o_seg + self.suffix_done)
                     elif self.file_has_lock(o_seg):
                         self.logger.info('request delete locked segment {}'.format(o_seg))
-                        fs_touch(o_seg + self.suffix_delete)
+                        touch(o_seg + self.suffix_delete)
                     else:
                         self.logger.info('delete stub segment{}'.format(o_seg))
                         os.remove(o_seg)

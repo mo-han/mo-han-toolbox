@@ -18,7 +18,8 @@ import lxml.html
 import requests.utils
 
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
-from .os_util import SubscriptableFileIO, fs_touch, write_file_chunk
+from .os_util import SubscriptableFileIO, write_file_chunk
+from .fs_util import touch, ensure_open_file
 from .tricks import JSONType, meta_retry_iter, singleton, thread_factory
 
 MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE = '# Netscape HTTP Cookie File'
@@ -36,7 +37,7 @@ def get_html_element_tree(url, **kwargs) -> HTMLElementTree:
 
 
 def convert_cookies_json_to_netscape(json_data_or_filepath: JSONType or str, disable_filepath: bool = False) -> str:
-    from .os_util import read_json_file
+    from .fs_util import read_json_file
     if not disable_filepath and os.path.isfile(json_data_or_filepath):
         json_data = read_json_file(json_data_or_filepath)
     else:
@@ -64,7 +65,6 @@ def convert_cookies_json_to_netscape(json_data_or_filepath: JSONType or str, dis
 
 
 def convert_cookies_file_json_to_netscape(src, dst=None) -> str:
-    from .os_util import ensure_open_file
     if not os.path.isfile(src):
         raise FileNotFoundError(src)
     dst = dst or src + '.txt'
@@ -90,7 +90,7 @@ def ensure_json_cookies(json_data) -> list:
 
 
 def cookies_dict_from_json(json_data_or_filepath: JSONType or str, disable_filepath: bool = False) -> dict:
-    from .os_util import read_json_file
+    from .fs_util import read_json_file
     if not disable_filepath and os.path.isfile(json_data_or_filepath):
         json_data = read_json_file(json_data_or_filepath)
     else:
@@ -455,7 +455,7 @@ class DownloadPool(ThreadPoolExecutor):
 
     def download(self, url, filepath, retry, **kwargs_for_requests):
         tmpfile = filepath + self.tmpfile_suffix
-        fs_touch(tmpfile)
+        touch(tmpfile)
         for cnt, x in meta_retry_iter(retry)(self.request_data, url, tmpfile, **kwargs_for_requests):
             if isinstance(x, Exception):
                 self.logger.warning('! <{}> {}'.format(type(x).__name__, x))

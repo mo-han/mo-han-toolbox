@@ -5,8 +5,10 @@ import re
 import shutil
 from collections import defaultdict
 
-from .tricks import remove_from_list, dedup_list, meta_deco_retry, singleton
-from .os_util import ensure_sigint_signal, real_join_path, write_json_file, read_json_file
+from .tricks import remove_from_list, dedup_list, deco_factory_retry, singleton
+from .os_util import ensure_sigint_signal
+from ._deprecated import real_join_path
+from .fs_util import read_json_file, write_json_file
 
 
 @singleton
@@ -69,7 +71,7 @@ def rename_dialog(src: str):
     old_root, old_base = os.path.split(src)
     old_fn, old_ext = os.path.splitext(old_base)
     info_file_base = [f for f in os.listdir(old_root) if
-                     f.endswith('.info') and (f.startswith(old_fn) or old_fn.startswith(f.rstrip('.info')))]
+                      f.endswith('.info') and (f.startswith(old_fn) or old_fn.startswith(f.rstrip('.info')))]
     has_info = True if info_file_base else False
 
     # sg.theme('SystemDefaultForReal')
@@ -112,7 +114,7 @@ def rename_dialog(src: str):
     data = {fname: old_fn, ext: old_ext, pattern: tmp_pl[0], replace: tmp_rl[0], root: old_root,
             new_root: '', new_base: ''}
 
-    @meta_deco_retry(Exception, 0, enable_default=True, default=None)
+    @deco_factory_retry(Exception, 0, enable_default=True, default=None)
     def re_sub():
         return re.sub(data[pattern], data[replace], data[fname] + data[ext])
 

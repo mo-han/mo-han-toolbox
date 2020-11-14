@@ -18,7 +18,7 @@ from typing import Dict, Iterable, Callable, Generator, Tuple, Union, Mapping, L
 import inflection
 
 from .log import get_logger
-from .number import int_is_power_of_2
+from .math import int_is_power_of_2
 
 Decorator = Callable[[Callable], Callable]
 
@@ -285,14 +285,14 @@ class Attreebute:
             self.__update_data__(k, self[k])
 
     def __from_json__(self, json_filepath: str):
-        from mylib.os_util import read_json_file
+        from .fs_util import read_json_file
         self.__from_dict__(read_json_file(json_filepath))
 
     def __to_dict__(self):
         return self.__data__
 
     def __to_json__(self, json_filepath: str):
-        from mylib.os_util import write_json_file
+        from .fs_util import write_json_file
         write_json_file(json_filepath, self.__data__, indent=4)
 
     def __query__(self, *args, **kwargs):

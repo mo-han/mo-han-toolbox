@@ -86,7 +86,7 @@ def split_by_length_or_lf(x: str, length: int):
     return parts
 
 
-def replace(s: str, pattern: str, replace: str, *, regex=False, ignore_case=False):
+def pattern_replace(s: str, pattern: str, replace: str, *, regex=False, ignore_case=False):
     if regex:
         if ignore_case:
             return re.sub(pattern, replace, s, flags=re.IGNORECASE)

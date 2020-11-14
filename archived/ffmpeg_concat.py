@@ -3,7 +3,7 @@
 
 import sys
 
-from mylib.lamb_av_util import _concat_videos_deprecated
+from mylib._deprecated import _concat_videos_deprecated
 
 args = sys.argv[1:]
 if args:

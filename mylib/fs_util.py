@@ -1,24 +1,30 @@
 #!/usr/bin/env python3
 # encoding=utf8
+import html
 import itertools
+import json
 import os
 import re
 import shutil
+import urllib.parse
+from contextlib import contextmanager
 from typing import Iterable, Iterator
 
-from .text import replace
-from .tricks import deco_factory_args_choices
+from sqlitedict import SqliteDict
+
+from .nt_util import ILLEGAL_FS_CHARS_REGEX_PATTERN, ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE
+from .text import pattern_replace
 import fnmatch
 
 
-def rename_inplace(src_path: str, pattern: str, replace: str, *,
-                   only_basename=True, ignore_case=False, regex=False, dry_run=False
-                   ) -> str or None:
+def inplace_pattern_rename(src_path: str, pattern: str, repl: str, *,
+                           only_basename=True, ignore_case=False, regex=False, dry_run=False
+                           ) -> str or None:
     if only_basename:
         parent, basename = os.path.split(src_path)
-        dst_path = os.path.join(parent, replace(src_path, pattern, replace, regex=regex, ignore_case=ignore_case))
+        dst_path = os.path.join(parent, pattern_replace(src_path, pattern, repl, regex=regex, ignore_case=ignore_case))
     else:
-        dst_path = replace(src_path, pattern, replace, regex=regex, ignore_case=ignore_case)
+        dst_path = pattern_replace(src_path, pattern, repl, regex=regex, ignore_case=ignore_case)
     if not dry_run:
         shutil.move(src_path, dst_path)
     if src_path != dst_path:
@@ -79,7 +85,7 @@ def find_iter(start_path: str, find_type: str, pattern: str = None, *,
         return
 
 
-def get_path(*paths, absolute=False, follow_link=False, relative=False):
+def make_path(*paths, absolute=False, follow_link=False, relative=False, user_home=True, env_var=True):
     if absolute and relative:
         raise ValueError('both `absolute` and `relative` are enabled')
     path = os.path.join(*paths)
@@ -91,4 +97,131 @@ def get_path(*paths, absolute=False, follow_link=False, relative=False):
         path = os.path.relpath(path)
     elif relative:
         path = os.path.relpath(path, relative)
+    if user_home:
+        path = os.path.expanduser(path)
+    if env_var:
+        path = os.path.expandvars(path)
     return path
+
+
+def read_json_file(file, default=None, utf8: bool = True, **kwargs) -> dict:
+    file_kwargs = {}
+    if utf8:
+        file_kwargs['encoding'] = 'utf8'
+    with ensure_open_file(file, 'r', **file_kwargs) as jf:
+        try:
+            d = json.load(jf, **kwargs)
+        except json.decoder.JSONDecodeError:
+            d = default or {}
+    return d
+
+
+def write_json_file(file, data, utf8: bool = True, **kwargs):
+    file_kwargs = {}
+    if utf8:
+        file_kwargs['encoding'] = 'utf8'
+    with ensure_open_file(file, 'w', **file_kwargs) as jf:
+        json.dump(data, jf, ensure_ascii=not utf8, **kwargs)
+
+
+def touch(filepath):
+    try:
+        os.utime(filepath)
+    except OSError:
+        open(filepath, 'a').close()
+
+
+def x_rename(src_path: str, dst_name_or_path: str = None, dst_ext: str = None, *,
+             move_to_dir: str = None, stay_in_src_dir: bool = True, append_src_ext: bool = True) -> str:
+    src_root, src_basename = os.path.split(src_path)
+    src_before_ext, src_ext = os.path.splitext(src_basename)
+    if dst_ext is not None:
+        if dst_name_or_path is None:
+            dst_name_or_path = src_before_ext + dst_ext
+        else:
+            dst_name_or_path += dst_ext
+    if move_to_dir:
+        dst_path = os.path.join(move_to_dir, dst_name_or_path)
+    elif stay_in_src_dir:
+        dst_path = os.path.join(src_root, dst_name_or_path)
+    else:
+        dst_path = dst_name_or_path
+    if append_src_ext:
+        dst_path = dst_path + src_ext
+    return shutil.move(src_path, dst_path)
+
+
+def safe_name(name: str, repl: str or dict = None, unescape_html=True, decode_url=True) -> str:
+    if unescape_html:
+        name = html.unescape(name)
+    if decode_url:
+        name = urllib.parse.unquote(name)
+    if repl:
+        if isinstance(repl, str):
+            r = ILLEGAL_FS_CHARS_REGEX_PATTERN.sub(repl, name)
+            # rl = len(repl)
+            # if rl > 1:
+            #     r = ILLEGAL_FS_CHARS_REGEX_PATTERN.sub(repl, x)
+            # elif rl == 1:
+            #     r = x.translate(str.maketrans(ILLEGAL_FS_CHARS, repl * ILLEGAL_FS_CHARS_LEN))
+            # else:
+            #     r = x.translate(str.maketrans('', '', ILLEGAL_FS_CHARS))
+        elif isinstance(repl, dict):
+            r = name.translate(repl)
+        else:
+            raise TypeError("Invalid repl '{}'".format(repl))
+    else:
+        r = name.translate(ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE)
+    return r
+
+
+def read_sqlite_dict_file(filepath, **kwargs):
+    with SqliteDict(filepath, **kwargs) as sd:
+        return dict(sd)
+
+
+def write_sqlite_dict_file(filepath, data, *, update_only=False, **kwargs):
+    with SqliteDict(filepath, autocommit=True, **kwargs) as sd:
+        if not update_only:
+            sd.clear()
+        sd.update(data)
+
+
+def ensure_open_file(filepath, mode='r', **kwargs):
+    parent, basename = os.path.split(filepath)
+    if parent and not os.path.isdir(parent):
+        os.makedirs(parent, exist_ok=True)
+    if not os.path.isfile(filepath):
+        try:
+            open(filepath, 'a').close()
+        except PermissionError as e:
+            if os.path.isdir(filepath):
+                raise FileExistsError("path used by directory '{}'".format(filepath))
+            else:
+                raise e
+    return open(filepath, mode, **kwargs)
+
+
+@contextmanager
+def ctx_pushd(dst: str, ensure_dst: bool = False):
+    if ensure_dst:
+        cd = ensure_chdir
+    else:
+        cd = os.chdir
+    prev = os.getcwd()
+    cd(dst)
+    saved_error = None
+    try:
+        yield
+    except Exception as e:
+        saved_error = e
+    finally:
+        cd(prev)
+        if saved_error:
+            raise saved_error
+
+
+def ensure_chdir(dest: str):
+    if not os.path.isdir(dest):
+        os.makedirs(dest, exist_ok=True)
+    os.chdir(dest)

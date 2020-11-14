@@ -21,7 +21,7 @@ from .tui import LinePrinter
 from .misc import safe_print, safe_basename
 from .os_util import ensure_sigint_signal
 from .tricks import modify_and_import, until_return_try, range_from_expr
-from .lamb_av_util import concat_videos, merge_m4s
+from ._deprecated import concat_videos, merge_m4s
 from .web_client import cookie_str_from_dict, cookies_dict_from_netscape_file, get_html_element_tree, HTMLElementTree, \
     make_kwargs_for_lib_requests
 

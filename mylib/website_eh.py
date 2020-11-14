@@ -9,7 +9,8 @@ from time import sleep
 import requests
 
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
-from .os_util import fs_legal_name, shrink_name, write_json_file, read_json_file
+from .os_util import shrink_name
+from .fs_util import read_json_file, write_json_file, safe_name
 from .tricks import VoidDuck, str_ishex
 from .web_client import cookies_dict_from_netscape_file, get_html_element_tree
 
@@ -120,12 +121,12 @@ def catalog_ehviewer_images(dry_run: bool = False):
                 folder = '[]'
         else:
             folder = '[{}]'.format(', '.join(creators))
-        folder = fs_legal_name(folder)
+        folder = safe_name(folder)
         parent, basename = os.path.split(f)
         fn, ext = os.path.splitext(basename)
         # fn = ' '.join(core_title_l) + ' ' + fn.split()[-1]
         fn = shrink_name(core_title, 200, add_dots=True).strip() + ' ' + fn.split()[-1]
-        nf = os.path.join(folder, fs_legal_name(fn + ext))
+        nf = os.path.join(folder, safe_name(fn + ext))
         logger.info(logmsg_move.format(f, nf))
         if not dry_run:
             if not os.path.isdir(folder):
