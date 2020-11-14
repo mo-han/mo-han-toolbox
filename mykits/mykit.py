@@ -11,7 +11,8 @@ from pprint import pprint
 
 from send2trash import send2trash
 
-from mylib.os_util import clipboard, list_files, ctx_pushd, fs_find_iter, fs_legal_name, shrink_name_middle
+from mylib.os_util import clipboard, list_files, ctx_pushd, fs_find_iter, fs_legal_name, shrink_name_middle, \
+    set_console_title___try
 from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, Attreebute
 from mylib.tui import LinePrinter
 
@@ -78,11 +79,6 @@ class MyKitCmd(cmd.Cmd):
 def main():
     # from mylib.os_util import ensure_sigint_signal
     # ensure_sigint_signal()
-    try:
-        from mylib.os_util import set_console_title
-        set_console_title('MyKit')
-    except ImportError:
-        pass
     rtd.args = args = ap.parse_args()
     try:
         func = args.func
@@ -108,11 +104,7 @@ def gui_mode():
 
 
 def cmd_mode_func():
-    try:
-        from mylib.os_util import set_console_title
-        set_console_title(MyKitCmd.__name__)
-    except ImportError:
-        pass
+    set_console_title___try(MyKitCmd.__name__)
     MyKitCmd().cmdloop()
 
 
