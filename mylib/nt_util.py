@@ -88,7 +88,7 @@ class Clipboard(metaclass=Singleton):
         return self._wcb.SetClipboardData(cf, data)
 
     @deco_with_self_context
-    def set_text(self, text):
+    def _set_text__x(self, text):
         return self._wcb.SetClipboardText(text)
 
     @deco_with_self_context
