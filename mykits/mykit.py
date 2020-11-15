@@ -4,19 +4,20 @@
 
 import cmd
 import os
+import re
 import shlex
 import sys
 from argparse import ArgumentParser, REMAINDER
 from pprint import pprint
 
-import sqlitedict
 from send2trash import send2trash
 
+from mylib import fs_util
+from mylib._deprecated import fs_find_iter, real_join_path, fs_inplace_rename, fs_inplace_rename_regex
 from mylib.os_util import clipboard, list_files, shrink_name_middle, \
     set_console_title___try
-from mylib._deprecated import fs_find_iter, real_join_path, fs_inplace_rename, fs_inplace_rename_regex
-from mylib import fs_util
-from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, Attreebute
+from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, Attreebute, \
+    deco_factory_keyboard_interrupt
 from mylib.tui import LinePrinter
 
 rtd = Attreebute()  # runtime data
@@ -190,6 +191,7 @@ dir_flatter.set_defaults(func=dir_flatter_func)
 dir_flatter.add_argument('src', nargs='*')
 
 
+@deco_factory_keyboard_interrupt(2)
 def put_in_dir_func():
     from mylib.os_util import path_or_glob, fs_move_cli
     from mylib.text import find_words
@@ -203,6 +205,12 @@ def put_in_dir_func():
     alias = args.alias
     dry_run = args.dry_run
     sub_dir = args.sub_dir
+    pattern = args.pattern
+    if pattern:
+        def filename_words(fn: str):
+            return find_words(re.findall(pattern, fn)[0])
+    else:
+        filename_words = find_words
     if alias is None:
         pass
     elif not alias:
@@ -237,7 +245,7 @@ def put_in_dir_func():
     for ss in src:
         for s in path_or_glob(ss):
             if sub_dir:
-                source_words_l = find_words(os.path.basename(s).lower())
+                source_words_l = filename_words(os.path.basename(s).lower())
                 source_words_set = set(source_words_l)
                 similar_d = {basename: source_words_set & words_set for basename, words_set in sub_dirs_d.items()}
                 similar_d = {k: v for k, v in similar_d.items() if v}
@@ -270,6 +278,7 @@ put_in_dir.set_defaults(func=put_in_dir_func)
 put_in_dir.add_argument('-D', '--dry-run', action='store_true')
 put_in_dir.add_argument('-a', '--alias', nargs='*', help='list, show, set or delete dst mapping aliases')
 put_in_dir.add_argument('-d', '--sub-dir', action='store_true', help='into sub-directory by name')
+put_in_dir.add_argument('-p', '--pattern')
 put_in_dir.add_argument('dst', nargs='?', help='dest dir')
 put_in_dir.add_argument('src', nargs='*')
 

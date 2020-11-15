@@ -5,6 +5,7 @@ import argparse
 import functools
 import hashlib
 import importlib.util
+import os
 import sys
 import sqlite3
 from collections import defaultdict
@@ -32,6 +33,22 @@ class QueueType:
 
 
 JSONType = Union[str, int, float, bool, None, Mapping[str, 'JSON'], List['JSON']]
+
+
+class VoidDuck:
+    """a void, versatile, useless and quiet duck, called in any way, return nothing, raise nothing"""
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __getattr__(self, item):
+        return self
+
+    def __call__(self, *args, **kwargs):
+        return self
+
+    def __bool__(self):
+        return False
 
 
 def range_from_expr(expr: str) -> Generator:
@@ -146,22 +163,6 @@ def singleton(cls):
         return _instances[cls]
 
     return get_instance
-
-
-class VoidDuck:
-    """a void, versatile, useless and quiet duck, called in any way, return nothing, raise nothing"""
-
-    def __init__(self, *args, **kwargs):
-        pass
-
-    def __getattr__(self, item):
-        return self
-
-    def __call__(self, *args, **kwargs):
-        return self
-
-    def __bool__(self):
-        return False
 
 
 def str_ishex(s):
@@ -788,3 +789,22 @@ def module_sqlitedict_with_dill():
     sqlitedict.loads = dill.loads
     sqlitedict.PICKLE_PROTOCOL = dill.HIGHEST_PROTOCOL
     return sqlitedict
+
+
+def deco_factory_keyboard_interrupt(exit_code,
+                                    called_in_except_block: Any = VoidDuck,
+                                    called_in_finally_block: Any = VoidDuck):
+    def deco(target):
+        @deco_factory_copy_signature(target)
+        def tgt(*args, **kwargs):
+            try:
+                return target(*args, **kwargs)
+            except KeyboardInterrupt:
+                called_in_except_block()
+                sys.exit(exit_code)
+            finally:
+                called_in_finally_block()
+
+        return tgt
+
+    return deco
