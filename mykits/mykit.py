@@ -123,23 +123,37 @@ def cfip_func():
     args = rtd.args
     file = args.file
     in_list = args.list
-    ip_d = get_cloudflare_ipaddr_hostmonit()
-    if file:
-        write_json_file(file, ip_d, indent=4)
+    isp = args.isp
+    hostname = args.hostname
+
+    data = get_cloudflare_ipaddr_hostmonit()
+    info: dict = data['info']
+    if isp:
+        info = {isp: info[isp]}
     if in_list:
-        info: dict = ip_d['info']
-        for isp, ip_l in info.items():
-            print(isp)
+        lines = []
+        for ip_isp, ip_l in info.items():
+            lines.append(ip_isp)
             for ip_d in ip_l:
-                print(ip_d['ip'])
+                li = ip_d['ip']
+                if hostname:
+                    li = f'{li}  {hostname}'
+                lines.append(li)
+        output = '\r\n'.join(lines)
     else:
-        print(pformat(ip_d))
+        output = pformat(info)
+    if file:
+        write_json_file(file, data, indent=4)
+    clipboard.set(output)
+    print(output)
 
 
 cfip = add_sub_parser('cloudflare.ipaddr.hostmonit', ['cfip'], 'get recommended ip addresses from hostmonit.com')
 cfip.set_defaults(func=cfip_func)
-cfip.add_argument('file', help='JSON file', nargs='?')
-cfip.add_argument('-l', '--list', action='store_true')
+cfip.add_argument('file', help='write whole data to JSON file', nargs='?')
+cfip.add_argument('-L', '--list', action='store_true')
+cfip.add_argument('-P', '--isp', choices=('CM', 'CT', 'CU'))
+cfip.add_argument('-H', '--hostname')
 
 
 def video_guess_crf_func():
