@@ -51,7 +51,7 @@ class SimpleBot(ABC):
                                    **kwargs)
         self.__bot__: Bot = self.__updater__.bot
         self.__get_me__(timeout=timeout)
-        self.__data_init__()
+        self.__init_data__()
         print(self.__about_this_bot__())
         self.__register_whitelist__(whitelist)
         self.__register_handlers__()
@@ -152,7 +152,7 @@ class SimpleBot(ABC):
         menu_str = '\n'.join(lines)
         self.__reply_markdown__(f'```\n{menu_str}```', update)
 
-    def __data_save__(self, data_file_path=None):
+    def __save_data__(self, data_file_path=None):
         self.__data__['mtime'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
         if data_file_path:
             with sqlitedict.SqliteDict(data_file_path, autocommit=True) as sd:
@@ -168,9 +168,9 @@ class SimpleBot(ABC):
         print(s)
         self.__reply_md_code_block__(s, update)
         if save:
-            self.__data_save__()
+            self.__save_data__()
 
-    def __data_init__(self):
+    def __init_data__(self):
         self.__data__.setdefault('mtime', 'N/A')
         queued = self.__data__.setdefault('queued', [])
         undone = self.__data__.setdefault('undone', {})

@@ -190,6 +190,10 @@ class ArgParseCompactHelpFormatter(argparse.HelpFormatter):
         return ', '.join(action.option_strings) + '  ' + args_string
 
 
+def new_argument_parser(formatter_class=ArgParseCompactHelpFormatter):
+    return argparse.ArgumentParser(formatter_class=formatter_class)
+
+
 def deco_with_self_context(target):
     """decorator: wrap a class method inside a `with self: ...` context"""
 

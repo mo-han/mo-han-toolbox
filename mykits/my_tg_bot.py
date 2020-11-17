@@ -15,7 +15,7 @@ from mylib.os_util import monitor_sub_process_tty_frozen, ProcessTTYFrozen
 from mylib.fs_util import read_json_file, write_json_file
 from mylib.text import decode
 from mylib.tg_bot import SimpleBot, deco_factory_bot_handler_method, CommandHandler, Update
-from mylib.tricks import ArgParseCompactHelpFormatter, deco_factory_retry, module_sqlitedict_with_dill
+from mylib.tricks import new_argument_parser, deco_factory_retry, module_sqlitedict_with_dill
 
 sqlitedict = module_sqlitedict_with_dill()
 mt = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(os.path.getmtime(os.path.realpath(__file__))))
@@ -60,7 +60,7 @@ class MyAssistantBot(SimpleBot):
         re.compile(r'BV[\da-zA-Z]{10}|av\d+')))
     def _bldl(self, update, *args):
         try:
-            self.__data_save__()
+            self.__save_data__()
         except TypeError as e:
             self.__reply_md_code_block__(f'{str(e)}\n{repr(e)}', update)
         args_l = [line2args(line) for line in update.message.text.splitlines()]
@@ -86,7 +86,7 @@ class MyAssistantBot(SimpleBot):
         undone = self.__data__['undone']
         undone[self._ytdl] = update
         try:
-            self.__data_save__()
+            self.__save_data__()
         except TypeError as e:
             self.__reply_md_code_block__(f'{str(e)}\n{repr(e)}', update)
         args_l = [line2args(line) for line in update.message.text.splitlines()]
@@ -110,7 +110,7 @@ class MyAssistantBot(SimpleBot):
                 self.__requeue_failed_update__(update)
         del undone[self._ytdl]
         try:
-            self.__data_save__()
+            self.__save_data__()
         except TypeError as e:
             self.__reply_md_code_block__(f'{str(e)}\n{repr(e)}', update)
 
@@ -130,14 +130,14 @@ class MyAssistantBot(SimpleBot):
         time.sleep(t)
         self.__reply_text__('awoken!', u)
 
-    def __data_save__(self, data_file_path=None):
+    def __save_data__(self, data_file_path=None):
         data_file_path = data_file_path or self._data_file
         self.__data__['queued'] = list(self.__updater__.dispatcher.update_queue.queue)
-        super().__data_save__(data_file_path)
+        super().__save_data__(data_file_path)
 
 
 def main():
-    ap = argparse.ArgumentParser(formatter_class=ArgParseCompactHelpFormatter)
+    ap = new_argument_parser()
     ap.add_argument('-c', '--config-file', metavar='path', required=True)
     ap.add_argument('-v', '--verbose', action='store_true')
     ap.add_argument('-T', '--timeout', type=float)
