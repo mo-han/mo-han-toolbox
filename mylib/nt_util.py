@@ -10,7 +10,8 @@ from time import sleep
 import pywintypes
 import win32clipboard
 
-from .tricks import Singleton, deco_with_self_context
+from .tricks import deco_with_self_context
+from .tricks_ import SingletonMeta
 
 ILLEGAL_FS_CHARS = r'\/:*?"<>|'
 ILLEGAL_FS_CHARS_LEN = len(ILLEGAL_FS_CHARS)
@@ -19,7 +20,7 @@ ILLEGAL_FS_CHARS_UNICODE_REPLACE = r'⧹⧸꞉∗？″﹤﹥￨'
 ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE = str.maketrans(ILLEGAL_FS_CHARS, ILLEGAL_FS_CHARS_UNICODE_REPLACE)
 
 
-class Clipboard(metaclass=Singleton):
+class Clipboard(metaclass=SingletonMeta):
     _wcb = win32clipboard
     cf_dict = {n.lstrip('CF_'): m for n, m in inspect.getmembers(_wcb) if n.startswith('CF_')}
 

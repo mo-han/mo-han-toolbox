@@ -12,7 +12,7 @@ from typing import Iterable, Iterator
 import ffmpeg
 import filetype
 
-from .tui import LinePrinter
+from .tui_ import LinePrinter
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
 from .os_util import shlex_double_quotes_join, list_files, split_filename_tail, SubscriptableFileIO
 from ._deprecated import fs_find_iter

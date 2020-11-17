@@ -18,7 +18,7 @@ from mylib.os_util import clipboard, list_files, shrink_name_middle, \
     set_console_title___try
 from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, Attreebute, \
     deco_factory_keyboard_interrupt
-from mylib.tui import LinePrinter
+from mylib.tui_ import LinePrinter
 
 rtd = Attreebute()  # runtime data
 tui_lp = LinePrinter()
@@ -209,7 +209,7 @@ dir_flatter.add_argument('src', nargs='*')
 def put_in_dir_func():
     from mylib.os_util import path_or_glob, fs_move_cli
     from mylib.text import find_words
-    from mylib.tui import prompt_select_by_number
+    from mylib.tui_ import prompt_choose_number
     conf_file = real_join_path('~', '.config', 'fs.put_in_dir.json')
     conf = fs_util.read_json_file(conf_file) or {'dst_map': {}}
     dst_map = conf['dst_map']
@@ -264,9 +264,8 @@ def put_in_dir_func():
                 similar_d = {basename: source_words_set & words_set for basename, words_set in sub_dirs_d.items()}
                 similar_d = {k: v for k, v in similar_d.items() if v}
                 similar_l = sorted(similar_d, key=lambda x: similar_d[x], reverse=True)
-                target_dir_name = (prompt_select_by_number(
-                    f'\nSelect sub folder for\n{s}', similar_l
-                ) if similar_l else None) or input(f'\nCreate sub folder for\n{s}: ')
+                target_dir_name = (prompt_choose_number(f'\nSelect sub folder for\n{s}',
+                                                        similar_l) if similar_l else None) or input(f'\nCreate sub folder for\n{s}: ')
                 if target_dir_name:
                     sub_dirs_d[target_dir_name] = set(find_words(target_dir_name.lower()))
                     dir_path = fs_util.make_path(dst, target_dir_name)

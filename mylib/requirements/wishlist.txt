@@ -1,2 +1,5 @@
 av  # PyAV
 fs  # PyFilesystem
+picotui  #MIT
+asciimatics  #Apache2
+termgraph  #MIT

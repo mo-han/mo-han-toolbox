@@ -20,7 +20,8 @@ import requests.utils
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
 from .os_util import SubscriptableFileIO, write_file_chunk
 from .fs_util import touch, ensure_open_file
-from .tricks import JSONType, meta_retry_iter, singleton, thread_factory
+from .tricks import meta_retry_iter, singleton, thread_factory
+from .type import JSONType
 
 MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE = '# Netscape HTTP Cookie File'
 USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'

@@ -5,34 +5,22 @@ import argparse
 import functools
 import hashlib
 import importlib.util
-import os
-import sys
 import sqlite3
+import sys
 from collections import defaultdict
 from functools import wraps
 from inspect import signature
 from queue import Queue
 from threading import Thread
 from time import sleep
-from typing import Dict, Iterable, Callable, Generator, Tuple, Union, Mapping, List, Iterator, Any
+from typing import Dict, Iterable, Generator, Tuple, Iterator, Any
 
 import inflection
 
 from .log import get_logger
 from .math import int_is_power_of_2
-
-Decorator = Callable[[Callable], Callable]
-
-
-class QueueType:
-    def put(self, *args, **kwargs):
-        ...
-
-    def get(self, *args, **kwargs):
-        ...
-
-
-JSONType = Union[str, int, float, bool, None, Mapping[str, 'JSON'], List['JSON']]
+from .tricks_ import *
+from .type import Decorator, QueueType
 
 
 class VoidDuck:
@@ -239,21 +227,6 @@ def dedup_list(source: Iterable) -> list:
     r = []
     [r.append(e) for e in source if e not in r]
     return r
-
-
-def constrain_value(x, x_type: Callable, x_constraint: str or Callable = None, enable_default=False, default=None):
-    x = x_type(x)
-    if x_constraint:
-        if isinstance(x_constraint, str) and eval(x_constraint):
-            return x
-        elif isinstance(x_constraint, Callable) and x_constraint(x):
-            return x
-        elif enable_default:
-            return default
-        else:
-            raise ValueError("'{}' conflicts with '{}'".format(x, x_constraint))
-    else:
-        return x
 
 
 def get_kwargs(**kwargs):
@@ -598,15 +571,6 @@ class CLIArgumentList(list):
         return k, value
 
 
-class Singleton(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
-
-
 def make_kwargs_dict(**kwargs):
     return kwargs
 
@@ -808,3 +772,10 @@ def deco_factory_keyboard_interrupt(exit_code,
         return tgt
 
     return deco
+
+
+def ensure_import_package(name: str, package: str = None, *, notify=True, prompt=True):
+    try:
+        return importlib.import_module(name, package)
+    except:
+        ...

@@ -4,7 +4,7 @@ import os
 import re
 import subprocess
 
-from .tricks import Singleton
+from .tricks_ import SingletonMeta
 
 ILLEGAL_FS_CHARS = r'/'
 ILLEGAL_FS_CHARS_LEN = len(ILLEGAL_FS_CHARS)
@@ -13,7 +13,7 @@ ILLEGAL_FS_CHARS_SUBSTITUTES_UNICODE = r'⧸'
 ILLEGAL_FS_CHARS_SUBSTITUTES_UNICODE_TABLE = str.maketrans(ILLEGAL_FS_CHARS, ILLEGAL_FS_CHARS_SUBSTITUTES_UNICODE)
 
 
-class Clipboard(metaclass=Singleton):
+class Clipboard(metaclass=SingletonMeta):
     import pyperclip as _cb
 
     def __init__(self, *args, **kwargs):
