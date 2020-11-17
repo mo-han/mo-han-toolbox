@@ -17,5 +17,6 @@ mykit ytdl -- $* 2>&1 || exit 3
 
 bldl.sh.cmd
 ```shell script
+#!/bin/sh
 mykit bldl -c .config/cookies.bilibili.txt $* 2>&1 || exit 3
 ```
