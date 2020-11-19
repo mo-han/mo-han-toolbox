@@ -181,10 +181,11 @@ def read_sqlite_dict_file(filepath, **kwargs):
 
 
 def write_sqlite_dict_file(filepath, data, *, update_only=False, **kwargs):
-    with SqliteDict(filepath, autocommit=True, **kwargs) as sd:
+    with SqliteDict(filepath, **kwargs) as sd:
         if not update_only:
             sd.clear()
         sd.update(data)
+        sd.commit()
 
 
 def ensure_open_file(filepath, mode='r', **kwargs):

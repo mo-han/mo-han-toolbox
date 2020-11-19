@@ -209,7 +209,7 @@ dir_flatter.add_argument('src', nargs='*')
 def put_in_dir_func():
     from mylib.os_util import path_or_glob, fs_move_cli
     from mylib.text import find_words
-    from mylib.tui_ import prompt_choose_number
+    from mylib.tui_ import prompt_choose_number, prompt_confirm
     conf_file = real_join_path('~', '.config', 'fs.put_in_dir.json')
     conf = fs_util.read_json_file(conf_file) or {'dst_map': {}}
     dst_map = conf['dst_map']
@@ -222,7 +222,7 @@ def put_in_dir_func():
     pattern = args.pattern
     if pattern:
         def filename_words(fn: str):
-            return find_words(re.findall(pattern, fn)[0])
+            return find_words(' '.join(re.findall(pattern, fn)))
     else:
         filename_words = find_words
     if alias is None:
@@ -258,14 +258,19 @@ def put_in_dir_func():
     sub_dirs_d.update(db)
     for ss in src:
         for s in path_or_glob(ss):
+            tui_lp.d()
             if sub_dir:
                 source_words_l = filename_words(os.path.basename(s).lower())
                 source_words_set = set(source_words_l)
                 similar_d = {basename: source_words_set & words_set for basename, words_set in sub_dirs_d.items()}
                 similar_d = {k: v for k, v in similar_d.items() if v}
                 similar_l = sorted(similar_d, key=lambda x: similar_d[x], reverse=True)
-                target_dir_name = (prompt_choose_number(f'\nSelect sub folder for\n{s}',
-                                                        similar_l) if similar_l else None) or input(f'\nCreate sub folder for\n{s}: ')
+                if similar_l:
+                    target_dir_name = prompt_choose_number(f'Select probable folder for\n{s}', similar_l)
+                    tui_lp.l()
+                else:
+                    target_dir_name = None
+                target_dir_name = target_dir_name or input(f'Create folder for\n{s}: ')
                 if target_dir_name:
                     sub_dirs_d[target_dir_name] = set(find_words(target_dir_name.lower()))
                     dir_path = fs_util.make_path(dst, target_dir_name)
@@ -277,8 +282,7 @@ def put_in_dir_func():
                 dir_path = dst
             d = fs_util.make_path(dir_path, os.path.basename(s))
             if os.path.exists(d):
-                y = input(f'overwrite {d} ? (y/n): ').lower()
-                if y != 'y':
+                if not prompt_confirm(f'Overwrite {d}?', default=False):
                     continue
             if not dry_run:
                 fs_move_cli(s, d)
