@@ -19,3 +19,26 @@ bldl.sh.cmd
 ```shell script
 mykit bldl -c .config/cookies.bilibili.txt $* 2>&1 || exit 3
 ```
+
+tree2path.py
+```python
+"""convert fs tree to full path (from stdin)"""
+import sys
+
+HEAD = '│   '
+TAIL = '── '
+IGNORE_DIR = True
+
+parts = []
+for line in sys.stdin:
+    clean_line = line.rstrip('\n').encode(errors='surrogateescape', encoding='ansi').decode()
+    name = clean_line.split(TAIL)[-1]
+    is_dir = name.endswith('/')
+    if is_dir:
+        name = name[:-1]
+    indent = clean_line.count(HEAD)
+    parts = [*parts[:indent], name]
+    if is_dir and IGNORE_DIR:
+        continue
+    print('/'.join(parts))
+```
