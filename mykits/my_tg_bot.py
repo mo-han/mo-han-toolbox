@@ -128,7 +128,7 @@ class MyAssistantBot(SimpleBot):
         t = float(args[0])
         self.__reply_text__(f'sleep {t} seconds', u)
         time.sleep(t)
-        self.__reply_text__('awoken!', u)
+        self.__reply_text__('awake...', u)
 
     def __save_data__(self, data_file_path=None):
         data_file_path = data_file_path or self._data_file

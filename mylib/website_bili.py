@@ -17,7 +17,7 @@ import you_get.util.strings
 from lxml import html
 
 from .text import regex_find
-from .tui import LinePrinter
+from .tui_ import LinePrinter
 from .misc import safe_print, safe_basename
 from .os_util import ensure_sigint_signal
 from .tricks import modify_and_import, until_return_try, range_from_expr

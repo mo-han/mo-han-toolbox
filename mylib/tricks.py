@@ -781,5 +781,5 @@ def deco_factory_keyboard_interrupt(exit_code,
 def ensure_import_package(name: str, package: str = None, *, notify=True, prompt=True):
     try:
         return importlib.import_module(name, package)
-    except:
+    except ModuleNotFoundError:
         ...
