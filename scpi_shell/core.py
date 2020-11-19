@@ -41,7 +41,7 @@ def str2eval(x: str):
         return x
 
 
-def str2float(s: str):
+def str2float2str(s: str):
     try:
         return str(float(s))
     except ValueError:
