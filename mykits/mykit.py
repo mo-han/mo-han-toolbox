@@ -260,9 +260,8 @@ def put_in_dir_func():
         for s in path_or_glob(ss):
             tui_lp.d()
             if sub_dir:
-                source_words_l = filename_words(os.path.basename(s).lower())
-                source_words_set = set(source_words_l)
-                similar_d = {basename: source_words_set & words_set for basename, words_set in sub_dirs_d.items()}
+                similar_d = {basename: words_set & set(filename_words(os.path.basename(s).lower()))
+                             for basename, words_set in sub_dirs_d.items()}
                 similar_d = {k: v for k, v in similar_d.items() if v}
                 similar_l = sorted(similar_d, key=lambda x: similar_d[x], reverse=True)
                 if similar_l:
@@ -270,6 +269,16 @@ def put_in_dir_func():
                     tui_lp.l()
                 else:
                     target_dir_name = None
+                if not target_dir_name:
+                    keywords = input('Input custom keywords or leave it empty: ')
+                    if keywords:
+                        similar_d = {basename: words_set & set(filename_words(keywords.lower()))
+                                     for basename, words_set in sub_dirs_d.items()}
+                        similar_d = {k: v for k, v in similar_d.items() if v}
+                        similar_l = sorted(similar_d, key=lambda x: similar_d[x], reverse=True)
+                        if similar_l:
+                            target_dir_name = prompt_choose_number(f'Select probable folder for\n{keywords}', similar_l)
+                            tui_lp.l()
                 target_dir_name = target_dir_name or input(f'Create folder for\n{s}: ')
                 if target_dir_name:
                     sub_dirs_d[target_dir_name] = set(find_words(target_dir_name.lower()))
