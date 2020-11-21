@@ -6,9 +6,9 @@ import shutil
 from collections import defaultdict
 
 from .tricks import remove_from_list, dedup_list, deco_factory_retry, singleton
-from .os_util import ensure_sigint_signal
+from .osutil import ensure_sigint_signal
 from ._deprecated import real_join_path
-from .fs_util import read_json_file, write_json_file
+from .fsutil import read_json_file, write_json_file
 
 
 @singleton

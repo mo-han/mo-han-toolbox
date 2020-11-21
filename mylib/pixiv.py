@@ -5,7 +5,7 @@ import os
 import requests
 
 from .log import get_logger
-from .fs_util import write_json_file
+from .fsutil import write_json_file
 from .tricks import AttributeInflection, width_of_int, Attreebute
 from .web_client import HTTPResponseInspection, parse_https_url, make_kwargs_for_lib_requests, DownloadPool
 

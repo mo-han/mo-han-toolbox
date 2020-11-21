@@ -18,8 +18,8 @@ import lxml.html
 import requests.utils
 
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
-from .os_util import SubscriptableFileIO, write_file_chunk
-from .fs_util import touch, ensure_open_file
+from .osutil import SubscriptableFileIO, write_file_chunk
+from .fsutil import touch, ensure_open_file
 from .tricks import meta_retry_iter, singleton, thread_factory
 from .type import JSONType
 
@@ -38,7 +38,7 @@ def get_html_element_tree(url, **kwargs) -> HTMLElementTree:
 
 
 def convert_cookies_json_to_netscape(json_data_or_filepath: JSONType or str, disable_filepath: bool = False) -> str:
-    from .fs_util import read_json_file
+    from .fsutil import read_json_file
     if not disable_filepath and os.path.isfile(json_data_or_filepath):
         json_data = read_json_file(json_data_or_filepath)
     else:
@@ -91,7 +91,7 @@ def ensure_json_cookies(json_data) -> list:
 
 
 def cookies_dict_from_json(json_data_or_filepath: JSONType or str, disable_filepath: bool = False) -> dict:
-    from .fs_util import read_json_file
+    from .fsutil import read_json_file
     if not disable_filepath and os.path.isfile(json_data_or_filepath):
         json_data = read_json_file(json_data_or_filepath)
     else:
@@ -171,7 +171,7 @@ def headers_from_cookies(cookies_data: dict or str, headers: dict = None) -> dic
 
 def get_phantomjs_splinter(proxy=None, show_image=False, window_size=(1024, 1024)):
     import splinter
-    from .os_util import TEMPDIR
+    from .osutil import TEMPDIR
 
     extra_argv = ['--webdriver-loglevel=WARN']
     if proxy:
@@ -191,7 +191,7 @@ def get_phantomjs_splinter(proxy=None, show_image=False, window_size=(1024, 1024
 
 def get_firefox_splinter(headless=True, proxy: str = None, **kwargs):
     import splinter
-    from .os_util import TEMPDIR
+    from .osutil import TEMPDIR
     config = {'service_log_path': os.path.join(TEMPDIR, 'geckodriver.log'),
               'headless': headless}
     config.update(kwargs)

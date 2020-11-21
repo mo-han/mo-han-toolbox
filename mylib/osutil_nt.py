@@ -11,7 +11,7 @@ import pywintypes
 import win32clipboard
 
 from .tricks import deco_with_self_context
-from .tricks_ import SingletonMeta
+from .tricks_base import SingletonMeta
 
 ILLEGAL_FS_CHARS = r'\/:*?"<>|'
 ILLEGAL_FS_CHARS_LEN = len(ILLEGAL_FS_CHARS)

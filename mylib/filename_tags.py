@@ -4,7 +4,7 @@ import os
 import re
 from abc import ABC
 
-from .os_util import split_filename
+from .osutil import split_filename
 
 
 class ListFilenameTags(ABC):

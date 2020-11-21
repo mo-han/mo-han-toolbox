@@ -19,7 +19,7 @@ import inflection
 
 from .log import get_logger
 from .math import int_is_power_of_2
-from .tricks_ import *
+from .tricks_base import *
 from .type import Decorator, QueueType
 
 
@@ -263,14 +263,14 @@ class Attreebute:
             self.__update_data__(k, self[k])
 
     def __from_json__(self, json_filepath: str):
-        from .fs_util import read_json_file
+        from .fsutil import read_json_file
         self.__from_dict__(read_json_file(json_filepath))
 
     def __to_dict__(self):
         return self.__data__
 
     def __to_json__(self, json_filepath: str):
-        from .fs_util import write_json_file
+        from .fsutil import write_json_file
         write_json_file(json_filepath, self.__data__, indent=4)
 
     def __query__(self, *args, **kwargs):

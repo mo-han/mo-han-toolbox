@@ -12,7 +12,7 @@ from telegram import ChatAction, Bot, Update, ParseMode, constants
 from telegram.ext import Updater, CommandHandler, Filters, CallbackContext
 from telegram.ext.filters import MergedFilter
 
-from .os_util import HOSTNAME, OSNAME, USERNAME
+from .osutil import HOSTNAME, OSNAME, USERNAME
 from .text import split_by_length_or_lf
 
 

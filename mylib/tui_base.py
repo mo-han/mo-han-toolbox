@@ -3,8 +3,8 @@
 import shutil
 import sys
 
-from .text_ import list2col_str
-from .tricks_ import constrained
+from .text_base import list2col_str
+from .tricks_base import constrained
 
 CRLF = f'\r\n'
 

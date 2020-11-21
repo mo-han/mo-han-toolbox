@@ -12,13 +12,13 @@ from pprint import pprint
 
 from send2trash import send2trash
 
-from mylib import fs_util
+from mylib import fsutil
 from mylib._deprecated import fs_find_iter, real_join_path, fs_inplace_rename, fs_inplace_rename_regex
-from mylib.os_util import clipboard, list_files, shrink_name_middle, \
+from mylib.osutil import clipboard, list_files, shrink_name_middle, \
     set_console_title___try
 from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, Attreebute, \
     deco_factory_keyboard_interrupt
-from mylib.tui_ import LinePrinter
+from mylib.tui_base import LinePrinter
 
 rtd = Attreebute()  # runtime data
 tui_lp = LinePrinter()
@@ -118,7 +118,7 @@ cmd_mode.set_defaults(func=cmd_mode_func)
 
 def cfip_func():
     from mylib.websites import get_cloudflare_ipaddr_hostmonit
-    from mylib.fs_util import write_json_file
+    from mylib.fsutil import write_json_file
     from pprint import pformat
     args = rtd.args
     file = args.file
@@ -187,13 +187,13 @@ def dir_flatter_func():
         if not os.path.isdir(s):
             print(f'! skip non-folder: {s}')
             continue
-        with fs_util.ctx_pushd(s):
+        with fsutil.ctx_pushd(s):
             dir_l = list(fs_find_iter(find_dir_instead_of_file=True))
             if not dir_l:
                 continue
             file_l = list(fs_find_iter(strip_root=True, recursive=True))
             for fp in file_l:
-                flat_path = shrink_name_middle(fs_util.safe_name(fp))
+                flat_path = shrink_name_middle(fsutil.safe_name(fp))
                 shutil.move(fp, flat_path)
             for dp in dir_l:
                 os.removedirs(dp)
@@ -207,11 +207,11 @@ dir_flatter.add_argument('src', nargs='*')
 
 @deco_factory_keyboard_interrupt(2)
 def put_in_dir_func():
-    from mylib.os_util import path_or_glob, fs_move_cli
+    from mylib.osutil import path_or_glob, fs_move_cli
     from mylib.text import find_words
-    from mylib.tui_ import prompt_choose_number, prompt_confirm
+    from mylib.tui_base import prompt_choose_number, prompt_confirm
     conf_file = real_join_path('~', '.config', 'fs.put_in_dir.json')
-    conf = fs_util.read_json_file(conf_file) or {'dst_map': {}}
+    conf = fsutil.read_json_file(conf_file) or {'dst_map': {}}
     dst_map = conf['dst_map']
     args = rtd.args
     src = args.src or clipboard.list_paths()
@@ -244,7 +244,7 @@ def put_in_dir_func():
                 print(f'{k}=')
             else:
                 print(f'{a}={dst_map.get(a, "")}')
-    fs_util.write_json_file(conf_file, conf, indent=4)
+    fsutil.write_json_file(conf_file, conf, indent=4)
     if not dst:
         return
     dst = dst_map.get(dst, dst)
@@ -252,8 +252,8 @@ def put_in_dir_func():
         print(f'! {dst} is file (should be directory)', file=sys.stderr)
         exit(1)
     os.makedirs(dst, exist_ok=True)
-    db_path = fs_util.make_path(dst, '__folder_name_words__.db')
-    db = fs_util.read_sqlite_dict_file(db_path)
+    db_path = fsutil.make_path(dst, '__folder_name_words__.db')
+    db = fsutil.read_sqlite_dict_file(db_path)
     sub_dirs_d = {b: set(find_words(b.lower())) for b in next(os.walk(dst))[1] if b not in db}
     sub_dirs_d.update(db)
     for ss in src:
@@ -282,21 +282,21 @@ def put_in_dir_func():
                 target_dir_name = target_dir_name or input(f'Create folder for\n{s}: ')
                 if target_dir_name:
                     sub_dirs_d[target_dir_name] = set(find_words(target_dir_name.lower()))
-                    dir_path = fs_util.make_path(dst, target_dir_name)
+                    dir_path = fsutil.make_path(dst, target_dir_name)
                     if not dry_run:
                         os.makedirs(dir_path, exist_ok=True)
                 else:
                     dir_path = dst
             else:
                 dir_path = dst
-            d = fs_util.make_path(dir_path, os.path.basename(s))
+            d = fsutil.make_path(dir_path, os.path.basename(s))
             if os.path.exists(d):
                 if not prompt_confirm(f'Overwrite {d}?', default=False):
                     continue
             if not dry_run:
                 fs_move_cli(s, d)
             print(f'{s} -> {d}')
-    fs_util.write_sqlite_dict_file(db_path, sub_dirs_d, update_only=True)
+    fsutil.write_sqlite_dict_file(db_path, sub_dirs_d, update_only=True)
 
 
 put_in_dir = add_sub_parser('putindir', ['mvd'], 'put files/folders into dest dir')
@@ -310,7 +310,7 @@ put_in_dir.add_argument('src', nargs='*')
 
 
 def clear_redundant_files_func():
-    from mylib.os_util import filter_filename_tail, join_filename_tail
+    from mylib.osutil import filter_filename_tail, join_filename_tail
     lp = LinePrinter()
     args = rtd.args
     tk = set(args.tails_keep or [])
@@ -550,7 +550,7 @@ ytdl.add_argument('argv', nargs='*', help='argument(s) propagated to youtube-dl,
 
 
 def regex_rename_func():
-    from mylib.os_util import list_files, list_dirs
+    from mylib.osutil import list_files, list_dirs
     args = rtd.args
     source = args.source
     recursive = args.recursive
@@ -582,7 +582,7 @@ regex_rename.add_argument('replace')
 
 
 def rename_func():
-    from mylib.os_util import list_files, list_dirs
+    from mylib.osutil import list_files, list_dirs
     args = rtd.args
     source = args.source
     recursive = args.recursive
@@ -770,9 +770,9 @@ bilibili_download.add_argument('-A', '--no-moderate-audio', dest='moderate_audio
 
 
 def json_edit_func():
-    from mylib.os_util import list_files
-    from mylib.fs_util import write_json_file
-    from mylib.fs_util import read_json_file
+    from mylib.osutil import list_files
+    from mylib.fsutil import write_json_file
+    from mylib.fsutil import read_json_file
     from mylib.tricks import eval_or_str
     args = rtd.args
     file = args.file or list_files(clipboard)[0]
@@ -808,7 +808,7 @@ json_edit.add_argument('item', nargs='+')
 
 
 def json_key_func():
-    from mylib.fs_util import read_json_file
+    from mylib.fsutil import read_json_file
     args = rtd.args
     d = read_json_file(args.file)
     print(d[args.key])
@@ -821,8 +821,8 @@ json_key.add_argument('key', help='query key')
 
 
 def update_json_file():
-    from mylib.fs_util import write_json_file
-    from mylib.fs_util import read_json_file
+    from mylib.fsutil import write_json_file
+    from mylib.fsutil import read_json_file
     args = rtd.args
     old, new = args.old, args.new
     d = read_json_file(old)

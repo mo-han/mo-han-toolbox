@@ -13,7 +13,7 @@ from disjoint_set import DisjointSet
 from imagehash import average_hash, dhash, phash, whash, hex_to_hash
 
 from mylib.tricks import percentage
-from mylib.os_util import check_file_ext
+from mylib.osutil import check_file_ext
 
 AHASH = 'ahash'
 DHASH = 'dhash'

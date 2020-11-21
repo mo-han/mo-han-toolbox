@@ -1,11 +1,11 @@
-#### [SubscriptableFileIO](mylib/os_util.py#L274)
+#### [SubscriptableFileIO](mylib/osutil.py#L274)
 
 read/write file with slice
 
 切片式文件读写
 
 ```python
-from mylib.os_util import SubscriptableFileIO
+from mylib.osutil import SubscriptableFileIO
 with SubscriptableFileIO('filepath') as f:
     f[-10:] = b'123abc'
     print(f[123:456])

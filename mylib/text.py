@@ -5,7 +5,7 @@ import re
 from typing import Iterable, Iterator
 
 from .tricks import dedup_list, deco_factory_args_choices
-from .text_ import *
+from .text_base import *
 
 
 def regex_find(pattern, source, dedup: bool = False):

@@ -12,7 +12,7 @@ from typing import Iterable, Iterator
 
 from sqlitedict import SqliteDict
 
-from .os_util import ILLEGAL_FS_CHARS_REGEX_PATTERN, ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE
+from .osutil import ILLEGAL_FS_CHARS_REGEX_PATTERN, ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE
 from .text import pattern_replace
 import fnmatch
 

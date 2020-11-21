@@ -9,8 +9,8 @@ from time import sleep
 import requests
 
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
-from .os_util import shrink_name
-from .fs_util import read_json_file, write_json_file, safe_name
+from .osutil import shrink_name
+from .fsutil import read_json_file, write_json_file, safe_name
 from .tricks import VoidDuck, str_ishex
 from .web_client import cookies_dict_from_netscape_file, get_html_element_tree
 

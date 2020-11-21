@@ -6,13 +6,14 @@ import re
 import shlex
 import subprocess
 import time
+import traceback
 from pprint import pformat
 
 from telegram.ext import MessageHandler, Filters, CallbackContext
 
 from mylib.log import get_logger
-from mylib.os_util import monitor_sub_process_tty_frozen, ProcessTTYFrozen
-from mylib.fs_util import read_json_file, write_json_file
+from mylib.osutil import monitor_sub_process_tty_frozen, ProcessTTYFrozen
+from mylib.fsutil import read_json_file, write_json_file
 from mylib.text import decode
 from mylib.tg_bot import SimpleBot, deco_factory_bot_handler_method, CommandHandler, Update
 from mylib.tricks import new_argument_parser, deco_factory_retry, module_sqlitedict_with_dill
@@ -59,10 +60,6 @@ class MyAssistantBot(SimpleBot):
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(
         re.compile(r'BV[\da-zA-Z]{10}|av\d+')))
     def _bldl(self, update, *args):
-        try:
-            self.__save_data__()
-        except TypeError as e:
-            self.__reply_md_code_block__(f'{str(e)}\n{repr(e)}', update)
         args_l = [line2args(line) for line in update.message.text.splitlines()]
         for args in args_l:
             args_s = ' '.join([shlex.quote(a) for a in args])
@@ -87,8 +84,9 @@ class MyAssistantBot(SimpleBot):
         undone[self._ytdl] = update
         try:
             self.__save_data__()
-        except TypeError as e:
-            self.__reply_md_code_block__(f'{str(e)}\n{repr(e)}', update)
+        except Exception:
+            self.__reply_md_code_block__(f'{traceback.format_exc()}', update)
+
         args_l = [line2args(line) for line in update.message.text.splitlines()]
         for args in args_l:
             args_s = ' '.join([shlex.quote(a) for a in args])
@@ -100,19 +98,21 @@ class MyAssistantBot(SimpleBot):
                 if p.returncode:
                     abandon_errors = self.__get_conf__().get('abandon_errors') or []
                     if any(map(lambda x: x in echo, abandon_errors)):
+                        self.__reply_md_code_block__(f'- {args_s}\n{echo}', update)
                         continue
+                    self.__reply_md_code_block__(f'! {args_s}\n{echo}', update)
                     self.__requeue_failed_update__(update)
-                    self.__reply_md_code_block__(f'- {args_s}\n{echo}', update)
                 else:
                     self.__reply_md_code_block__(f'* {args_s}\n{echo}', update)
             except Exception as e:
                 self.__reply_md_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
                 self.__requeue_failed_update__(update)
+
         del undone[self._ytdl]
         try:
             self.__save_data__()
-        except TypeError as e:
-            self.__reply_md_code_block__(f'{str(e)}\n{repr(e)}', update)
+        except Exception:
+            self.__reply_md_code_block__(f'{traceback.format_exc()}', update)
 
     @deco_factory_bot_handler_method(CommandHandler)
     def _secret(self, update: Update, *args):
@@ -141,9 +141,19 @@ def main():
     ap.add_argument('-c', '--config-file', metavar='path', required=True)
     ap.add_argument('-v', '--verbose', action='store_true')
     ap.add_argument('-T', '--timeout', type=float)
+    ap.add_argument('--add-abandon-error')
     parsed_args = ap.parse_args()
     config_file = parsed_args.config_file
     timeout = parsed_args.timeout
+    add_abandon_error = parsed_args.add_abandon_error
+
+    if add_abandon_error:
+        config = read_json_file(config_file)
+        abandon_errors = set(config.get('abandon_errors', []))
+        abandon_errors.add(add_abandon_error)
+        config['abandon_errors'] = sorted(abandon_errors)
+        write_json_file(config_file, config, indent=4)
+        return
 
     if parsed_args.verbose:
         log_lvl = 'DEBUG'

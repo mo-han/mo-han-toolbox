@@ -5,9 +5,9 @@ import os
 from time import time
 from zipfile import ZipFile, BadZipFile
 import shutil
-from mylib.os_util import clipboard as cb
+from mylib.osutil import clipboard as cb
 from mylib.tricks import thread_factory
-from mylib.os_util import list_files
+from mylib.osutil import list_files
 from queue import Queue
 from threading import Thread
 

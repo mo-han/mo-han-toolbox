@@ -24,9 +24,9 @@ from ._deprecated import fs_find_iter
 from .tricks import make_kwargs_dict, NonBlockingCaller
 
 if os.name == 'nt':
-    from .nt_util import *
+    from .osutil_nt import *
 elif os.name == 'posix':
-    from .posix_util import *
+    from .osutil_posix import *
 
 TEMPDIR = tempfile.gettempdir()
 HOSTNAME = platform.node()

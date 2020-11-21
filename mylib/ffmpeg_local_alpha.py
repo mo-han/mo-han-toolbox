@@ -12,11 +12,11 @@ from typing import Iterable, Iterator
 import ffmpeg
 import filetype
 
-from .tui_ import LinePrinter
+from .tui_base import LinePrinter
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
-from .os_util import shlex_double_quotes_join, list_files, split_filename_tail, SubscriptableFileIO
+from .osutil import shlex_double_quotes_join, list_files, split_filename_tail, SubscriptableFileIO
 from ._deprecated import fs_find_iter
-from .fs_util import read_json_file, write_json_file, touch, x_rename, ensure_open_file, ctx_pushd
+from .fsutil import read_json_file, write_json_file, touch, x_rename, ensure_open_file, ctx_pushd
 from .tricks import deco_factory_args_choices, seconds_from_colon_time, hex_hash, remove_from_list
 from .filename_tags import SuffixListFilenameTags
 
