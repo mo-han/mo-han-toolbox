@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 # encoding=utf8
 """telegram bot utilities"""
+import itertools
 import time
 from abc import ABC
 from functools import reduce
 from inspect import getmembers, ismethod
 from typing import Callable
 
-import sqlitedict
+
 from telegram import ChatAction, Bot, Update, ParseMode, constants
 from telegram.ext import Updater, CommandHandler, Filters, CallbackContext
 from telegram.ext.filters import MergedFilter
 
 from .osutil import HOSTNAME, OSNAME, USERNAME
 from .text import split_by_length_or_lf
+from .fsutil import write_sqlite_dict_file, read_sqlite_dict_file
 
 
 class BotHandlerMethod(Callable):
@@ -128,8 +130,8 @@ class SimpleBot(ABC):
                f'{self.__fullname__} @{self.__username__}\n\n' \
                f'running on device:\n' \
                f'{USERNAME} @ {HOSTNAME} ({OSNAME})\n\n' \
-               f'resume {len(self.__data__["queued"]) + len(self.__data__["undone"])} update(s) ' \
-               f'from {self.__data__["mtime"]}'
+               f'load {len(self.__data__["queued"]) + len(self.__data__["undone"])} update(s) ' \
+               f'since {self.__data__["mtime"]}'
 
     @deco_factory_bot_handler_method(CommandHandler, on_menu=True)
     def start(self, update: Update, context: CallbackContext):
@@ -155,11 +157,15 @@ class SimpleBot(ABC):
     def __save_data__(self, data_file_path=None):
         self.__data__['mtime'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
         if data_file_path:
-            with sqlitedict.SqliteDict(data_file_path, autocommit=True) as sd:
-                sd.update(self.__data__, mtime=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
-            with sqlitedict.SqliteDict(data_file_path) as sd:
-                print(f'{len(sd["undone"])} undone saved')
-                print(f"{len(sd['queued'])} queued saved")
+            undone = self.__data__.setdefault('undone', {})
+            queued = self.__data__.setdefault('queued', [])
+            for update in itertools.chain(undone.values(), queued):
+                update.message.bot = None
+            write_sqlite_dict_file(data_file_path, self.__data__, with_dill=True)
+            for update in itertools.chain(undone.values(), queued):
+                update.message.bot = self.__bot__
+            read_data = read_sqlite_dict_file(data_file_path, with_dill=True)
+            print(f'saved: {len(read_data["undone"])} undone, {len(read_data["queued"])} queued')
 
     def __requeue_failed_update__(self, update: Update, save=False):
         update_queue = self.__updater__.dispatcher.update_queue
@@ -172,7 +178,9 @@ class SimpleBot(ABC):
 
     def __init_data__(self):
         self.__data__.setdefault('mtime', 'N/A')
-        queued = self.__data__.setdefault('queued', [])
         undone = self.__data__.setdefault('undone', {})
-        [self.__updater__.dispatcher.update_queue.put(v) for k, v in undone.items()]
+        queued = self.__data__.setdefault('queued', [])
+        for update in itertools.chain(undone.values(), queued):
+            update.message.bot = self.__bot__
         [self.__updater__.dispatcher.update_queue.put(u) for u in queued]
+        [self.__updater__.dispatcher.update_queue.put(v) for k, v in undone.items()]

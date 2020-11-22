@@ -13,12 +13,11 @@ from telegram.ext import MessageHandler, Filters, CallbackContext
 
 from mylib.log import get_logger
 from mylib.osutil import monitor_sub_process_tty_frozen, ProcessTTYFrozen
-from mylib.fsutil import read_json_file, write_json_file
+from mylib.fsutil import read_json_file, write_json_file, read_sqlite_dict_file, write_sqlite_dict_file
 from mylib.text import decode
 from mylib.tg_bot import SimpleBot, deco_factory_bot_handler_method, CommandHandler, Update
-from mylib.tricks import new_argument_parser, deco_factory_retry, module_sqlitedict_with_dill
+from mylib.tricks import new_argument_parser, deco_factory_retry
 
-sqlitedict = module_sqlitedict_with_dill()
 mt = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(os.path.getmtime(os.path.realpath(__file__))))
 
 
@@ -47,15 +46,16 @@ class MyAssistantBot(SimpleBot):
         config = read_json_file(conf_file)
         data_file = os.path.splitext(conf_file)[0] + '.db'
         self._data_file = data_file
-        with sqlitedict.SqliteDict(data_file) as sd:
-            data = dict(sd)
+        data = read_sqlite_dict_file(data_file, with_dill=True)
         super().__init__(token=config['token'], whitelist=config.get('user_whitelist'), data=data, **kwargs)
 
     def __get_conf__(self):
         return read_json_file(self._conf_file)
 
     def __set_conf__(self, **kwargs):
-        write_json_file(self._conf_file, kwargs)
+        conf = self.__get_conf__()
+        conf.update(kwargs)
+        write_json_file(self._conf_file, conf, indent=4)
 
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(
         re.compile(r'BV[\da-zA-Z]{10}|av\d+')))
@@ -81,7 +81,7 @@ class MyAssistantBot(SimpleBot):
         re.compile(r'youtube|youtu\.be|iwara|pornhub')))
     def _ytdl(self, update: Update, *args):
         undone = self.__data__['undone']
-        undone[self._ytdl] = update
+        undone[self._ytdl.__name__] = update
         try:
             self.__save_data__()
         except Exception:
@@ -108,7 +108,7 @@ class MyAssistantBot(SimpleBot):
                 self.__reply_md_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
                 self.__requeue_failed_update__(update)
 
-        del undone[self._ytdl]
+        del undone[self._ytdl.__name__]
         try:
             self.__save_data__()
         except Exception:
@@ -130,6 +130,30 @@ class MyAssistantBot(SimpleBot):
         time.sleep(t)
         self.__reply_text__('awake...', u)
 
+    @deco_factory_bot_handler_method(CommandHandler, on_menu=True, pass_args=True)
+    def errors(self, u: Update, c: CallbackContext):
+        """manage subprocess errors"""
+        args = c.args
+        print(args)
+        if not args:
+            usage_s = '/errors {+,-,:} [T]'
+            self.__reply_md_code_block__(usage_s, u)
+            return
+        arg0, arg1 = args[0], ' '.join(args[1:])
+        errors = self.__get_conf__().get('abandon_errors', [])
+        if arg0 == ':':
+            self.__reply_md_code_block__(pformat(errors), u)
+        elif arg0 == '+':
+            errors = sorted(set(errors) | {arg1})
+            self.__set_conf__(abandon_errors=errors)
+            self.__reply_md_code_block__(pformat(errors), u)
+        elif arg0 == '-':
+            errors = sorted(set(errors) - {arg1})
+            self.__set_conf__(abandon_errors=errors)
+            self.__reply_md_code_block__(pformat(errors), u)
+        else:
+            self.__reply_md_code_block__(pformat(errors), u)
+
     def __save_data__(self, data_file_path=None):
         data_file_path = data_file_path or self._data_file
         self.__data__['queued'] = list(self.__updater__.dispatcher.update_queue.queue)
@@ -141,19 +165,9 @@ def main():
     ap.add_argument('-c', '--config-file', metavar='path', required=True)
     ap.add_argument('-v', '--verbose', action='store_true')
     ap.add_argument('-T', '--timeout', type=float)
-    ap.add_argument('--add-abandon-error')
     parsed_args = ap.parse_args()
     config_file = parsed_args.config_file
     timeout = parsed_args.timeout
-    add_abandon_error = parsed_args.add_abandon_error
-
-    if add_abandon_error:
-        config = read_json_file(config_file)
-        abandon_errors = set(config.get('abandon_errors', []))
-        abandon_errors.add(add_abandon_error)
-        config['abandon_errors'] = sorted(abandon_errors)
-        write_json_file(config_file, config, indent=4)
-        return
 
     if parsed_args.verbose:
         log_lvl = 'DEBUG'

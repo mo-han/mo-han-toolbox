@@ -259,13 +259,15 @@ def put_in_dir_func():
     for ss in src:
         for s in path_or_glob(ss):
             tui_lp.d()
+            print(s)
+            tui_lp.l()
             if sub_dir:
                 similar_d = {basename: words_set & set(filename_words(os.path.basename(s).lower()))
                              for basename, words_set in sub_dirs_d.items()}
                 similar_d = {k: v for k, v in similar_d.items() if v}
                 similar_l = sorted(similar_d, key=lambda x: similar_d[x], reverse=True)
                 if similar_l:
-                    target_dir_name = prompt_choose_number(f'Select probable folder for\n{s}', similar_l)
+                    target_dir_name = prompt_choose_number(f'Select probable folder:', similar_l)
                     tui_lp.l()
                 else:
                     target_dir_name = None
@@ -277,9 +279,9 @@ def put_in_dir_func():
                         similar_d = {k: v for k, v in similar_d.items() if v}
                         similar_l = sorted(similar_d, key=lambda x: similar_d[x], reverse=True)
                         if similar_l:
-                            target_dir_name = prompt_choose_number(f'Select probable folder for\n{keywords}', similar_l)
+                            target_dir_name = prompt_choose_number(f'Select probable folder for\n{keywords}:', similar_l)
                             tui_lp.l()
-                target_dir_name = target_dir_name or input(f'Create folder for\n{s}: ')
+                target_dir_name = target_dir_name or input(f'Create folder: ')
                 if target_dir_name:
                     sub_dirs_d[target_dir_name] = set(find_words(target_dir_name.lower()))
                     dir_path = fsutil.make_path(dst, target_dir_name)

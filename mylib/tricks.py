@@ -750,8 +750,9 @@ class SimpleSQLiteTable:
         self.connection.close()
 
 
-def module_sqlitedict_with_dill():
+def module_sqlitedict_with_dill(*, dill_detect_trace=False):
     import dill
+    dill.detect.trace(dill_detect_trace)
     import sqlitedict
     sqlitedict.dumps = dill.dumps
     sqlitedict.loads = dill.loads
@@ -783,3 +784,14 @@ def ensure_import_package(name: str, package: str = None, *, notify=True, prompt
         return importlib.import_module(name, package)
     except ModuleNotFoundError:
         ...
+
+
+def is_picklable_with_dill_trace(obj, exact=False, safe=False, **kwds):
+    import dill
+    args = (obj,)
+    kwargs = make_kwargs_dict(exact=exact, safe=safe, **kwds)
+    if dill.pickles(*args, **kwargs):
+        return True
+    else:
+        dill.detect.trace(True)
+        return dill.pickles(*args, **kwargs)

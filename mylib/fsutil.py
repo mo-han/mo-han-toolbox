@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # encoding=utf8
+import fnmatch
 import html
 import itertools
 import json
@@ -8,13 +9,9 @@ import re
 import shutil
 import urllib.parse
 from contextlib import contextmanager
-from typing import Iterable, Iterator
-
-from sqlitedict import SqliteDict
 
 from .osutil import ILLEGAL_FS_CHARS_REGEX_PATTERN, ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE
 from .text import pattern_replace
-import fnmatch
 
 
 def inplace_pattern_rename(src_path: str, pattern: str, repl: str, *,
@@ -116,12 +113,12 @@ def read_json_file(file, default=None, utf8: bool = True, **kwargs) -> dict:
     return d
 
 
-def write_json_file(file, data, utf8: bool = True, **kwargs):
+def write_json_file(file, data, *, indent=None, utf8: bool = True, **kwargs):
     file_kwargs = {}
     if utf8:
         file_kwargs['encoding'] = 'utf8'
     with ensure_open_file(file, 'w', **file_kwargs) as jf:
-        json.dump(data, jf, ensure_ascii=not utf8, **kwargs)
+        json.dump(data, jf, indent=indent, ensure_ascii=not utf8, **kwargs)
 
 
 def touch(filepath):
@@ -175,13 +172,23 @@ def safe_name(name: str, repl: str or dict = None, unescape_html=True, decode_ur
     return r
 
 
-def read_sqlite_dict_file(filepath, **kwargs):
-    with SqliteDict(filepath, **kwargs) as sd:
+def read_sqlite_dict_file(filepath, *, with_dill=False, **kwargs):
+    if with_dill:
+        from .tricks import module_sqlitedict_with_dill
+        sqlitedict = module_sqlitedict_with_dill(dill_detect_trace=True)
+    else:
+        import sqlitedict
+    with sqlitedict.SqliteDict(filepath, **kwargs) as sd:
         return dict(sd)
 
 
-def write_sqlite_dict_file(filepath, data, *, update_only=False, **kwargs):
-    with SqliteDict(filepath, **kwargs) as sd:
+def write_sqlite_dict_file(filepath, data, *, with_dill=False, dill_detect_trace=False, update_only=False, **kwargs):
+    if with_dill:
+        from .tricks import module_sqlitedict_with_dill
+        sqlitedict = module_sqlitedict_with_dill(dill_detect_trace=dill_detect_trace)
+    else:
+        import sqlitedict
+    with sqlitedict.SqliteDict(filepath, **kwargs) as sd:
         if not update_only:
             sd.clear()
         sd.update(data)
