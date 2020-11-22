@@ -134,7 +134,6 @@ class MyAssistantBot(SimpleBot):
     def errors(self, u: Update, c: CallbackContext):
         """manage subprocess errors"""
         args = c.args
-        print(args)
         if not args:
             usage_s = '/errors {+,-,:} [T]'
             self.__reply_md_code_block__(usage_s, u)
