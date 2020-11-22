@@ -120,8 +120,8 @@ def deco_factory_retry(retry_exceptions=None, max_retries: int = 3,
     return decorator
 
 
-def modify_and_import(module_path: str, code_modifier: str or Callable, package_path: str = None,
-                      output: bool = False, output_file: str = 'tmp.py'):
+def modify_module(module_path: str, code_modifier: str or Callable, package_path: str = None,
+                  output: bool = False, output_file: str = 'tmp.py'):
     # How to modify imported source code on-the-fly?
     #     https://stackoverflow.com/a/41863728/7966259  (answered by Martin Valgur)
     # Modules and Packages: Live and Let Die!  (by David Beazley)

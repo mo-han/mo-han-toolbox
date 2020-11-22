@@ -7,7 +7,7 @@ import ndrop.shell
 
 from .osutil import clipboard
 from .fsutil import ensure_open_file
-from .tricks import modify_and_import, Attreebute
+from .tricks import modify_module, Attreebute
 
 config_at = Attreebute()
 config_at.server.text.queue = None
@@ -105,7 +105,7 @@ def get_system_symbol(system):
     return symbols.get(system.lower(), system)
 
 
-ndrop.netdrop.dukto = modify_and_import('ndrop.dukto', code_modify_ndrop_dukto)
+ndrop.netdrop.dukto = modify_module('ndrop.dukto', code_modify_ndrop_dukto)
 ndrop.netdrop.dukto.echo_after_recv = echo_after_recv
 ndrop.netdrop.dukto.get_system_symbol = ndrop.netdrop.nitroshare.get_system_symbol = get_system_symbol
 ndrop.__main__.NetDropServer = NetDropServerX

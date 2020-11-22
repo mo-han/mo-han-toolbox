@@ -20,7 +20,7 @@ from .text import regex_find
 from .tui_base import LinePrinter
 from .misc import safe_print, safe_basename
 from .osutil import ensure_sigint_signal
-from .tricks import modify_and_import, until_return_try, range_from_expr
+from .tricks import modify_module, until_return_try, range_from_expr
 from ._deprecated import concat_videos, merge_m4s
 from .web_client import cookie_str_from_dict, cookies_dict_from_netscape_file, get_html_element_tree, HTMLElementTree, \
     make_kwargs_for_lib_requests
@@ -166,11 +166,11 @@ def code_modify_you_get_extractor(x: str):
     return x
 
 
-you_get.extractor = modify_and_import('you_get.extractor', code_modify_you_get_extractor)
+you_get.extractor = modify_module('you_get.extractor', code_modify_you_get_extractor)
 you_get.extractor.quality_desc_priority_index = quality_desc_priority_index
 # 上面已经导入了原版的`you_get.util.strings`，这条模块路径很重要，另有几个模块依赖它
 # 在此基础上，下面一行代码将原版的`you_get.util.fs`替换成修改版
-you_get.util.fs = modify_and_import('you_get.util.fs', code_modify_you_get_fs)
+you_get.util.fs = modify_module('you_get.util.fs', code_modify_you_get_fs)
 # 接着把原版中的`you_get.util.strings.legitimize`函数替换成修改版`you_get.util.fs`中的对应函数
 you_get.util.strings.legitimize = you_get.util.fs.legitimize
 # （上面的`code_modify_you_get_fs`修改的正是`legitimize`）
@@ -183,7 +183,7 @@ you_get.util.strings.legitimize = you_get.util.fs.legitimize
 # 综上所述，下面这行可以注释掉了（已经注释掉了）
 # you_get.extractor.get_filename = you_get.common.get_filename = you_get.util.strings.get_filename
 # 下面则是将B站下载模块替换成修改版，所用的源码替换函数是`code_modify_you_get_bilibili`
-you_get.extractors.bilibili = modify_and_import('you_get.extractors.bilibili', code_modify_you_get_bilibili)
+you_get.extractors.bilibili = modify_module('you_get.extractors.bilibili', code_modify_you_get_bilibili)
 you_get_filename = you_get.util.strings.get_filename
 
 

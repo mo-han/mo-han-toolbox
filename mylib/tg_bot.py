@@ -7,15 +7,29 @@ from abc import ABC
 from functools import reduce
 from inspect import getmembers, ismethod
 from typing import Callable
+import shlex
 
-
-from telegram import ChatAction, Bot, Update, ParseMode, constants
-from telegram.ext import Updater, CommandHandler, Filters, CallbackContext
+from telegram import ChatAction, Bot, Update, ParseMode, constants, Message
+from telegram.ext import Updater, Filters, CallbackContext
 from telegram.ext.filters import MergedFilter
 
 from .osutil import HOSTNAME, OSNAME, USERNAME
 from .text import split_by_length_or_lf
 from .fsutil import write_sqlite_dict_file, read_sqlite_dict_file
+from .tricks import modify_module
+
+
+def modify_telegram_ext_commandhandler(s: str) -> str:
+    return s.replace('args = message.text.split()[1:]', 'args = self._get_args(message)')
+
+
+telegram_ext_commandhandler = modify_module('telegram.ext.commandhandler', modify_telegram_ext_commandhandler)
+
+
+class CommandHandler(telegram_ext_commandhandler.CommandHandler):
+    @staticmethod
+    def _get_args(message: Message):
+        return shlex.split(message.text)[1:]
 
 
 class BotHandlerMethod(Callable):

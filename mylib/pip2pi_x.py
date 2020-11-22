@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # encoding=utf8
-from .tricks import modify_and_import
+from .tricks import modify_module
 
 
 def code_modify_pip2pi(x: str) -> str:
@@ -27,4 +27,4 @@ def code_modify_pip2pi(x: str) -> str:
     return x
 
 
-libpip2pi_commands_x = modify_and_import('libpip2pi.commands', code_modify_pip2pi)
+libpip2pi_commands_x = modify_module('libpip2pi.commands', code_modify_pip2pi)
