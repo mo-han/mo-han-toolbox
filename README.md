@@ -5,7 +5,8 @@ read/write file with slice
 切片式文件读写
 
 ```python
-from mylib.osutil import SubscriptableFileIO
+
+from mylib.osutil_base import SubscriptableFileIO
 with SubscriptableFileIO('filepath') as f:
     f[-10:] = b'123abc'
     print(f[123:456])

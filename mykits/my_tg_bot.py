@@ -16,7 +16,8 @@ from mylib.osutil import monitor_sub_process_tty_frozen, ProcessTTYFrozen
 from mylib.fsutil import read_json_file, write_json_file, read_sqlite_dict_file, write_sqlite_dict_file
 from mylib.text import decode
 from mylib.tg_bot import SimpleBot, deco_factory_bot_handler_method, CommandHandler, Update
-from mylib.tricks import new_argument_parser, deco_factory_retry
+from mylib.cli import new_argument_parser
+from mylib.tricks_base import deco_factory_retry
 
 mt = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(os.path.getmtime(os.path.realpath(__file__))))
 

@@ -7,7 +7,8 @@ import ndrop.shell
 
 from .osutil import clipboard
 from .fsutil import ensure_open_file
-from .tricks import modify_module, Attreebute
+from .tricks import modify_module
+from .tricks_base import Attreebute
 
 config_at = Attreebute()
 config_at.server.text.queue = None

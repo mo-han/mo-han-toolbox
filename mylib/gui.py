@@ -5,8 +5,8 @@ import re
 import shutil
 from collections import defaultdict
 
-from .tricks import remove_from_list, dedup_list, deco_factory_retry, singleton
-from .osutil import ensure_sigint_signal
+from .tricks_base import deco_factory_retry, singleton, remove_from_list, dedup_list
+from .osutil_base import ensure_sigint_signal
 from ._deprecated import real_join_path
 from .fsutil import read_json_file, write_json_file
 

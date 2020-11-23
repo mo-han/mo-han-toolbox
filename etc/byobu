@@ -1,0 +1,3 @@
+# ~/.byobu/keybindings
+# disable fn keys
+source $BYOBU_PREFIX/share/byobu/keybindings/f-keys.screen.disable

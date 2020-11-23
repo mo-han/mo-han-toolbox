@@ -18,9 +18,10 @@ import lxml.html
 import requests.utils
 
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
-from .osutil import SubscriptableFileIO, write_file_chunk
+from .osutil import write_file_chunk
+from .osutil_base import SubscriptableFileIO
 from .fsutil import touch, ensure_open_file
-from .tricks import meta_retry_iter, singleton, thread_factory
+from .tricks_base import singleton, thread_factory, iter_factory_retry
 from .type import JSONType
 
 MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE = '# Netscape HTTP Cookie File'
@@ -457,7 +458,7 @@ class DownloadPool(ThreadPoolExecutor):
     def download(self, url, filepath, retry, **kwargs_for_requests):
         tmpfile = filepath + self.tmpfile_suffix
         touch(tmpfile)
-        for cnt, x in meta_retry_iter(retry)(self.request_data, url, tmpfile, **kwargs_for_requests):
+        for cnt, x in iter_factory_retry(retry)(self.request_data, url, tmpfile, **kwargs_for_requests):
             if isinstance(x, Exception):
                 self.logger.warning('! <{}> {}'.format(type(x).__name__, x))
                 if cnt:
@@ -523,12 +524,12 @@ def parse_http_url(url: str, allow_fragments=True):
 def make_kwargs_for_lib_requests(params=None, cookies=None, headers=None, user_agent=None, proxies=None,
                                  **kwargs):
     user_agent = user_agent or USER_AGENT_FIREFOX_WIN10
-    r = {'headers': headers_from_user_agent(user_agent=user_agent, headers=headers)}
+    d = dict(headers=headers_from_user_agent(user_agent=user_agent, headers=headers))
     if params:
-        r['params'] = params
+        d.update(params=params)
     if cookies:
-        r['cookies'] = cookies
+        d.update(cookies=cookies)
     if proxies:
-        r['proxies'] = proxies
-    r.update(**kwargs)
-    return r
+        d.update(proxies=proxies)
+    d.update(**kwargs)
+    return d

@@ -6,7 +6,8 @@ import requests
 
 from .log import get_logger
 from .fsutil import write_json_file
-from .tricks import AttributeInflection, width_of_int, Attreebute
+from .tricks import AttributeInflection
+from .tricks_base import Attreebute, width_of_int
 from .web_client import HTTPResponseInspection, parse_https_url, make_kwargs_for_lib_requests, DownloadPool
 
 FANBOX_DOMAIN = 'fanbox.cc'

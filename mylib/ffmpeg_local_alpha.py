@@ -14,10 +14,11 @@ import filetype
 
 from .tui_base import LinePrinter
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
-from .osutil import shlex_double_quotes_join, list_files, split_filename_tail, SubscriptableFileIO
+from .osutil import shlex_double_quotes_join, list_files, split_filename_tail
+from .osutil_base import SubscriptableFileIO
 from ._deprecated import fs_find_iter
 from .fsutil import read_json_file, write_json_file, touch, x_rename, ensure_open_file, ctx_pushd
-from .tricks import deco_factory_args_choices, seconds_from_colon_time, hex_hash, remove_from_list
+from .tricks_base import deco_factory_args_choices, remove_from_list, hex_hash, seconds_from_colon_time
 from .filename_tags import SuffixListFilenameTags
 
 S_ORIGINAL = 'original'

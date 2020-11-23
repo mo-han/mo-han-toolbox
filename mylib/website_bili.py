@@ -19,8 +19,9 @@ from lxml import html
 from .text import regex_find
 from .tui_base import LinePrinter
 from .misc import safe_print, safe_basename
-from .osutil import ensure_sigint_signal
-from .tricks import modify_module, until_return_try, range_from_expr
+from .osutil_base import ensure_sigint_signal
+from .tricks import get_first_return
+from .tricks_base import str2range, modify_module
 from ._deprecated import concat_videos, merge_m4s
 from .web_client import cookie_str_from_dict, cookies_dict_from_netscape_file, get_html_element_tree, HTMLElementTree, \
     make_kwargs_for_lib_requests
@@ -290,10 +291,10 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     def get_title(self):
         self.update_html()
         _, h = self.html
-        t = until_return_try((
-            {'callable': lambda: h.xpath('//*[@class="video-title"]')[0].attrib['title']},
-            {'callable': lambda: h.xpath('//meta[@property="og:title"]')[0].attrib['content']}
-        ), unified_exception=IndexError)
+        t = get_first_return((
+            {'target': lambda: h.xpath('//*[@class="video-title"]')[0].attrib['title']},
+            {'target': lambda: h.xpath('//meta[@property="og:title"]')[0].attrib['content']}
+        ), common_exception=IndexError)
         t += ' ' + self.get_vid_label() + self.get_author_label()
         return t
 
@@ -311,9 +312,9 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     def get_desc(self):
         self.update_html()
         _, h = self.html
-        desc = until_return_try((
-            {'callable': lambda: h.xpath('//div[@id="v_desc"]')[0].text_content()},
-            {'callable': lambda: h.xpath('//meta[@name="description"]')[0].attrib['content']}
+        desc = get_first_return((
+            {'target': lambda: h.xpath('//div[@id="v_desc"]')[0].text_content()},
+            {'target': lambda: h.xpath('//meta[@name="description"]')[0].attrib['content']}
         ))
         return desc
 
@@ -411,7 +412,7 @@ def download_bilibili_video(url: str or int,
     else:
         if parts:
             base_url = url
-            parts = range_from_expr(','.join(parts))
+            parts = str2range(','.join(parts))
             for p in parts:
                 url = base_url + '?p={}'.format(p)
                 lp.print()

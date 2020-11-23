@@ -6,13 +6,12 @@ import locale
 import os
 import platform
 import shlex
-import signal
 import subprocess
 import sys
 import tempfile
 from collections import defaultdict
 from glob import glob
-from io import FileIO, BytesIO
+from io import BytesIO
 from queue import Queue
 from time import time
 from typing import Iterable, Iterator, Tuple, Dict, List
@@ -21,7 +20,8 @@ import psutil
 from filetype import filetype
 
 from ._deprecated import fs_find_iter
-from .tricks import make_kwargs_dict, NonBlockingCaller
+from .osutil_base import SubscriptableFileIO
+from .tricks_base import NonBlockingCaller
 
 if os.name == 'nt':
     from .osutil_nt import *
@@ -34,97 +34,8 @@ OSNAME = platform.system()
 USERNAME = getpass.getuser()
 
 
-def ensure_sigint_signal():
-    if sys.platform == 'win32':
-        signal.signal(signal.SIGINT, signal.SIG_DFL)  # %ERRORLEVEL% = '-1073741510'
-
-
 def check_file_ext(fp: str, ext_list: Iterable):
     return os.path.isfile(fp) and os.path.splitext(fp)[-1].lower() in ext_list
-
-
-class SubscriptableFileIO(FileIO):
-    """slice data in FileIO object"""
-
-    def __init__(self, file, mode='rb', *args, **kwargs):
-        """refer to doc string of io.FileIO"""
-        super(SubscriptableFileIO, self).__init__(file, mode=mode, *args, **kwargs)
-        try:
-            self._size = os.path.getsize(file)
-        except TypeError:
-            self._size = os.path.getsize(self.name)
-
-    def __len__(self):
-        return self._size
-
-    @property
-    def size(self):
-        return self._size
-
-    def __getitem__(self, key: int or slice):
-        orig_pos = self.tell()
-        if isinstance(key, int):
-            if key < 0:
-                key = self.size + key
-            self.seek(key)
-            r = self.read(1)
-        elif isinstance(key, slice):
-            start, stop, step = key.start, key.stop, key.step
-            if not start:
-                start = 0
-            elif start < 0:
-                start = self.size + start
-            if not stop:
-                stop = self.size
-            elif stop < 0:
-                stop = self.size + stop
-            size = stop - start
-            if size <= 0:
-                r = b''
-            elif not step or step == 1:
-                self.seek(start)
-                r = self.read(size)
-            else:
-                r = self.read(size)[::step]
-        else:
-            raise TypeError("'{}' is not int or slice".format(key))
-        self.seek(orig_pos)
-        return r
-
-    def __setitem__(self, key: int or slice, value: bytes):
-        orig_pos = self.tell()
-        if isinstance(key, int):
-            if len(value) != 1:
-                raise ValueError("overflow write", value)
-            if key < 0:
-                key = self.size + key
-            self.seek(key)
-            r = self.write(value)
-        elif isinstance(key, slice):
-            start, stop, step = key.start, key.stop, key.step
-            if not start:
-                start = 0
-            elif start < 0:
-                start = self.size + start
-            if not stop:
-                stop = self.size
-            elif stop < 0:
-                stop = self.size + stop
-            size = stop - start
-            if size <= 0:
-                r = 0
-            elif not step or step == 1:
-                if len(value) <= size:
-                    self.seek(start)
-                    r = self.write(value)
-                else:
-                    raise NotImplementedError('overflow write')
-            else:
-                raise NotImplementedError('non-sequential write')
-        else:
-            raise TypeError("'{}' is not int or slice".format(key))
-        self.seek(orig_pos)
-        return r
 
 
 def shlex_join(split):
@@ -176,7 +87,7 @@ def write_file_chunk(filepath: str, start: int, stop: int, data: bytes, total: i
 
 
 def list_files(src: str or Iterable or Iterator or Clipboard, recursive=False, progress_queue: Queue = None) -> list:
-    common_kwargs = make_kwargs_dict(recursive=recursive, progress_queue=progress_queue)
+    common_kwargs = dict(recursive=recursive, progress_queue=progress_queue)
     # if src is None:
     #     return list_files(clipboard.list_paths(exist_only=True), recursive=recursive)
     # elif isinstance(src, str):
@@ -199,7 +110,7 @@ def list_files(src: str or Iterable or Iterator or Clipboard, recursive=False, p
 
 
 def list_dirs(src: str or Iterable or Iterator or Clipboard, recursive=False, progress_queue: Queue = None) -> list:
-    common_kwargs = make_kwargs_dict(recursive=recursive, progress_queue=progress_queue)
+    common_kwargs = dict(recursive=recursive, progress_queue=progress_queue)
     if isinstance(src, str):
         if os.path.isdir(src):
             dirs = [src]
@@ -254,43 +165,6 @@ def filter_filename_tail(filepath_list, valid_tails, filter_tails, filter_extens
 def filetype_is(filepath, keyword):
     guess = filetype.guess(filepath)
     return guess and keyword in guess.mime
-
-
-def shrink_name(s: str, max_bytes=250, encoding='utf8', add_dots=True, from_left=False):
-    if from_left:
-        def strip(x: str):
-            return x[1:]
-    else:
-        def strip(x: str):
-            return x[:-1]
-    shrunk = False
-    limit = max_bytes - 3 if add_dots else max_bytes
-    while len(s.encode(encoding=encoding)) > limit:
-        s = strip(s)
-        shrunk = True
-    if shrunk:
-        if from_left:
-            return '...' + s
-        else:
-            return s + '...'
-    else:
-        return s
-
-
-def shrink_name_middle(s: str, max_bytes=250, encoding='utf8', add_dots=True):
-    half_max_bytes = (max_bytes - 3 if add_dots else max_bytes) // 2
-    common_params = make_kwargs_dict(encoding=encoding, add_dots=False)
-    half_s_len = len(s) // 2 + 1
-    left = shrink_name(s[:half_s_len], half_max_bytes, **common_params)
-    right = shrink_name(s[half_s_len:], half_max_bytes, **common_params)
-    lr = f'{left}{right}'
-    if add_dots:
-        if len(lr) == len(s):
-            return s
-        else:
-            return f'{left}...{right}'
-    else:
-        return f'{left}{right}'
 
 
 class ProcessTTYFrozen(TimeoutError):
@@ -359,13 +233,6 @@ def monitor_sub_process_tty_frozen(p: subprocess.Popen, timeout=30, wait=1,
                 pass
             except Exception as e:
                 raise e
-
-
-def path_or_glob(pathname, *, recursive=False):
-    if os.path.exists(pathname):
-        return [pathname]
-    else:
-        return glob(pathname, recursive=recursive)
 
 
 def split_filename(path):

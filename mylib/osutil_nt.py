@@ -10,8 +10,8 @@ from time import sleep
 import pywintypes
 import win32clipboard
 
-from .tricks import deco_with_self_context
-from .tricks_base import SingletonMeta
+from .tricks import SingletonMeta
+from .tricks_base import deco_with_self_context
 
 ILLEGAL_FS_CHARS = r'\/:*?"<>|'
 ILLEGAL_FS_CHARS_LEN = len(ILLEGAL_FS_CHARS)

@@ -8,7 +8,7 @@ from glob import glob
 import argparse
 
 from mylib.website_bili import BilibiliAppCacheEntry
-from mylib.tricks import ArgParseCompactHelpFormatter
+from mylib.cli import ArgParseCompactHelpFormatter
 
 
 def parse_args():

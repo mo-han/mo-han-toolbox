@@ -14,10 +14,10 @@ from send2trash import send2trash
 
 from mylib import fsutil
 from mylib._deprecated import fs_find_iter, real_join_path, fs_inplace_rename, fs_inplace_rename_regex
-from mylib.osutil import clipboard, list_files, shrink_name_middle, \
-    set_console_title___try
-from mylib.tricks import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, Attreebute, \
-    deco_factory_keyboard_interrupt
+from mylib.osutil import clipboard, list_files, set_console_title___try
+from mylib.fsutil import shrink_name_middle, path_or_glob
+from mylib.tricks_base import Attreebute, eval_or_str, deco_factory_keyboard_interrupt
+from mylib.cli import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter
 from mylib.tui_base import LinePrinter
 
 rtd = Attreebute()  # runtime data
@@ -207,7 +207,7 @@ dir_flatter.add_argument('src', nargs='*')
 
 @deco_factory_keyboard_interrupt(2)
 def put_in_dir_func():
-    from mylib.osutil import path_or_glob, fs_move_cli
+    from mylib.osutil import fs_move_cli
     from mylib.text import find_words
     from mylib.tui_base import prompt_choose_number, prompt_confirm
     conf_file = real_join_path('~', '.config', 'fs.put_in_dir.json')
@@ -775,7 +775,6 @@ def json_edit_func():
     from mylib.osutil import list_files
     from mylib.fsutil import write_json_file
     from mylib.fsutil import read_json_file
-    from mylib.tricks import eval_or_str
     args = rtd.args
     file = args.file or list_files(clipboard)[0]
     indent = args.indent
@@ -870,9 +869,9 @@ img_sim_view.add_argument(
 
 
 def move_ehviewer_images():
-    from mylib.website_eh import catalog_ehviewer_images
+    from mylib.website_eh import ehviewer_images_catalog
     args = rtd.args
-    catalog_ehviewer_images(dry_run=args.dry_run)
+    ehviewer_images_catalog(dry_run=args.dry_run)
 
 
 ehv_img_mv = add_sub_parser('ehv.img.mv', ['ehvmv'],

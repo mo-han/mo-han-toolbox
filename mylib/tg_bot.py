@@ -16,7 +16,7 @@ from telegram.ext.filters import MergedFilter
 from .osutil import HOSTNAME, OSNAME, USERNAME
 from .text import split_by_length_or_lf
 from .fsutil import write_sqlite_dict_file, read_sqlite_dict_file
-from .tricks import modify_module
+from .tricks_base import modify_module
 
 
 def modify_telegram_ext_commandhandler(s: str) -> str:

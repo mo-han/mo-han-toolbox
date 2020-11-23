@@ -7,7 +7,6 @@ import keyboard
 import mouse
 
 from .gui import rename_dialog
-from .tricks import getitem_default
 from .uia import module_pywinauto
 from .osutil import clipboard
 from .fsutil import x_rename
@@ -156,3 +155,10 @@ class PotPlayerKit:
             return
         src = fileinfo['path']
         rename_dialog(src)
+
+
+def getitem_default(x, index_or_key, default=None):
+    try:
+        return x[index_or_key]
+    except (IndexError, KeyError):
+        return default

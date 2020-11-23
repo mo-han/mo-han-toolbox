@@ -9,6 +9,7 @@ import re
 import shutil
 import urllib.parse
 from contextlib import contextmanager
+from glob import glob
 
 from .osutil import ILLEGAL_FS_CHARS_REGEX_PATTERN, ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE
 from .text import pattern_replace
@@ -233,3 +234,47 @@ def ensure_chdir(dest: str):
     if not os.path.isdir(dest):
         os.makedirs(dest, exist_ok=True)
     os.chdir(dest)
+
+
+def shrink_name(s: str, max_bytes=250, encoding='utf8', add_dots=True, from_left=False):
+    if from_left:
+        def strip(x: str):
+            return x[1:]
+    else:
+        def strip(x: str):
+            return x[:-1]
+    shrunk = False
+    limit = max_bytes - 3 if add_dots else max_bytes
+    while len(s.encode(encoding=encoding)) > limit:
+        s = strip(s)
+        shrunk = True
+    if shrunk:
+        if from_left:
+            return '...' + s
+        else:
+            return s + '...'
+    else:
+        return s
+
+
+def shrink_name_middle(s: str, max_bytes=250, encoding='utf8', add_dots=True):
+    half_max_bytes = (max_bytes - 3 if add_dots else max_bytes) // 2
+    common_params = dict(encoding=encoding, add_dots=False)
+    half_s_len = len(s) // 2 + 1
+    left = shrink_name(s[:half_s_len], half_max_bytes, **common_params)
+    right = shrink_name(s[half_s_len:], half_max_bytes, **common_params)
+    lr = f'{left}{right}'
+    if add_dots:
+        if len(lr) == len(s):
+            return s
+        else:
+            return f'{left}...{right}'
+    else:
+        return f'{left}{right}'
+
+
+def path_or_glob(pathname, *, recursive=False):
+    if os.path.exists(pathname):
+        return [pathname]
+    else:
+        return glob(pathname, recursive=recursive)

@@ -9,9 +9,8 @@ from time import sleep
 import requests
 
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
-from .osutil import shrink_name
-from .fsutil import read_json_file, write_json_file, safe_name
-from .tricks import VoidDuck, str_ishex
+from .fsutil import read_json_file, write_json_file, safe_name, ctx_pushd, shrink_name
+from .tricks_base import VoidDuck, is_hex
 from .web_client import cookies_dict_from_netscape_file, get_html_element_tree
 
 EH_TITLE_REGEX_PATTERN = re.compile(
@@ -24,7 +23,7 @@ EH_TITLE_REGEX_PATTERN = re.compile(
 )
 
 
-def catalog_ehviewer_images(dry_run: bool = False):
+def ehviewer_images_catalog(dry_run: bool = False):
     logger = get_logger('ehvimg', fmt=LOG_FMT_MESSAGE_ONLY)
     logmsg_move = '* move {} -> {}'
     logmsg_skip = '# skip {}'
@@ -149,7 +148,7 @@ class EHentaiGallery:
             raise ValueError("invalid e-hentai gallery identity: '{}'".format(gallery_identity))
         if not gid.isdecimal():
             raise ValueError("invalid e-hentai gallery id: '{}'".format(gid))
-        if not str_ishex(token):
+        if not is_hex(token):
             raise ValueError("invalid e-hentai gallery token: '{}'".format(token))
         self._gid = gid
         self._token = token
@@ -318,3 +317,8 @@ class EHentaiError(Exception):
             return 'EHentai Error {}: {}, {}'.format(self.code, self.reason, self.comment)
         else:
             return 'EHentai Error {}: {}'.format(self.code, self.reason)
+
+
+def ehviewer_download_folder_rename(folder_path: str):
+    with ctx_pushd(folder_path):
+        ...
