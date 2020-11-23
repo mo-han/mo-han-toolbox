@@ -22,7 +22,7 @@ from .osutil import write_file_chunk
 from .osutil_base import SubscriptableFileIO
 from .fsutil import touch, ensure_open_file
 from .tricks_base import singleton, thread_factory, iter_factory_retry
-from .type import JSONType
+from .custom_typing import JSONType
 
 MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE = '# Netscape HTTP Cookie File'
 USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'

@@ -2,11 +2,11 @@
 # encoding=utf8
 
 import inflection
-
+from . import custom_typing as Types
 from .tricks_base import *
 
 
-def get_first_return(tasks: Iterable[dict], common_exception=Exception):
+def get_first_return(tasks: Types.Iterable[dict], common_exception=Exception):
     """try through a sequence of calling, until anyone returns, then stop and return that value.
 
     Args:

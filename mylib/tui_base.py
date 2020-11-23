@@ -16,7 +16,7 @@ def get_terminal_width():
 class LinePrinter:
     def __init__(self, width: int = 0, output=sys.stdout):
         self.output = output
-        self.width = constrained(width, int, 'x > 0', True, 0)
+        self.width = constrained(width, int, 'x > 0', enable_default=True, default=0)
 
     def print(self, text: str = '', **kwargs):
         print(text, file=self.output, flush=True, **kwargs)
