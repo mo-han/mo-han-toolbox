@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 # encoding=utf8
 import json
-import os
-import re
-import shutil
-from time import sleep
 
 import requests
 
-from .log import get_logger, LOG_FMT_MESSAGE_ONLY
-from .fs import read_json_file, write_json_file, safe_name, ctx_pushd, shrink_name
+from . import fs
+from . import log
+from .ez import *
 from .tricks_ez import VoidDuck, is_hex
 from .web_client import cookies_dict_from_netscape_file, get_html_element_tree
 
@@ -24,7 +21,7 @@ EH_TITLE_REGEX_PATTERN = re.compile(
 
 
 def ehviewer_images_catalog(dry_run: bool = False):
-    logger = get_logger('ehvimg', fmt=LOG_FMT_MESSAGE_ONLY)
+    logger = log.get_logger('ehvimg', fmt=log.LOG_FMT_MESSAGE_ONLY)
     logmsg_move = '* move {} -> {}'
     logmsg_skip = '# skip {}'
     logmsg_data = '+ /g/{}/{}'
@@ -33,7 +30,7 @@ def ehviewer_images_catalog(dry_run: bool = False):
 
     if os.path.isfile(dbf):
         logger.info('@ using DB file: {}'.format(dbf))
-        db = read_json_file(dbf)
+        db = fs.read_json_file(dbf)
     else:
         db = {}
     skipped_gid_l = []
@@ -59,7 +56,7 @@ def ehviewer_images_catalog(dry_run: bool = False):
             logger.info(logmsg_data.format(g.gid, g.token))
             d = g.data
             db[gid] = d
-            write_json_file(dbf, db, indent=4)
+            fs.write_json_file(dbf, db, indent=4)
             sleep(1)
 
         creators = []
@@ -120,12 +117,12 @@ def ehviewer_images_catalog(dry_run: bool = False):
                 folder = '[]'
         else:
             folder = '[{}]'.format(', '.join(creators))
-        folder = safe_name(folder)
+        folder = fs.safe_name(folder)
         parent, basename = os.path.split(f)
         fn, ext = os.path.splitext(basename)
         # fn = ' '.join(core_title_l) + ' ' + fn.split()[-1]
-        fn = shrink_name(core_title, 200, add_dots=True).strip() + ' ' + fn.split()[-1]
-        nf = os.path.join(folder, safe_name(fn + ext))
+        fn = fs.shrink_name(core_title, 200, add_dots=True).strip() + ' ' + fn.split()[-1]
+        nf = os.path.join(folder, fs.safe_name(fn + ext))
         logger.info(logmsg_move.format(f, nf))
         if not dry_run:
             if not os.path.isdir(folder):
@@ -319,6 +316,18 @@ class EHentaiError(Exception):
             return 'EHentai Error {}: {}'.format(self.code, self.reason)
 
 
-def ehviewer_download_folder_rename(folder_path: str):
-    with ctx_pushd(folder_path):
-        ...
+def ehviewer_dl_folder_rename(folder_path: str, *, db: dict = None, update_db=False):
+    db = db or {}
+    with fs.ctx_pushd(folder_path):
+        with open('.ehviewer') as info_file:
+            info_lines = info_file.readlines()
+    gid = info_lines[2].strip()
+    token = info_lines[3].strip()
+    d = db.get(gid) or EHentaiGallery(f'{gid}/{token}').data
+    if update_db:
+        db[gid] = d
+    title = d.get('title') or d.get('original title')
+    if not title:
+        return
+    title = fs.safe_name(title)
+    return fs.x_rename(folder_path, title)
