@@ -18,7 +18,7 @@ from . import tricks_ez
 from ._deprecated import fs_find_iter
 from .os_ez import *
 
-assert (tricks_ez,)
+assert tricks_ez
 
 if os.name == 'nt':
     from .os_nt import *

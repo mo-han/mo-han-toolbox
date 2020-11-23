@@ -8,7 +8,12 @@ import sys
 from time import time, sleep
 from typing import *
 
-assert (os, sys, time, sleep, shutil, re)
+assert os
+assert sys
+assert time
+assert sleep
+assert shutil
+assert re
 
 Decorator = Callable[[Callable], Callable]
 
