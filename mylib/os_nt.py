@@ -2,16 +2,13 @@
 # encoding=utf8
 import ctypes
 import inspect
-import os
-import re
 import subprocess
-from time import sleep
 
 import pywintypes
 import win32clipboard
 
-from .tricks import SingletonMeta
-from .tricks_base import deco_with_self_context
+from . import tricks_ez
+from .ez import *
 
 ILLEGAL_FS_CHARS = r'\/:*?"<>|'
 ILLEGAL_FS_CHARS_LEN = len(ILLEGAL_FS_CHARS)
@@ -79,20 +76,20 @@ class Clipboard(metaclass=SingletonMeta):
             raise TypeError("'{}' is not str or int".format(x))
         return x
 
-    @deco_with_self_context
+    @tricks_ez.deco_with_self_context
     def clear(self):
         return self._wcb.EmptyClipboard()
 
-    @deco_with_self_context
+    @tricks_ez.deco_with_self_context
     def set(self, data, cf=_wcb.CF_UNICODETEXT):
         cf = self.valid_format(cf)
         return self._wcb.SetClipboardData(cf, data)
 
-    @deco_with_self_context
+    @tricks_ez.deco_with_self_context
     def _set_text__x(self, text):
         return self._wcb.SetClipboardText(text)
 
-    @deco_with_self_context
+    @tricks_ez.deco_with_self_context
     def get(self, cf=_wcb.CF_UNICODETEXT):
         cf = self.valid_format(cf)
         if self._wcb.IsClipboardFormatAvailable(cf):
@@ -112,7 +109,7 @@ class Clipboard(metaclass=SingletonMeta):
             lines = [line.strip() for line in str(self.get()).splitlines()]
             return [line for line in lines if os.path.exists(line)]
 
-    @deco_with_self_context
+    @tricks_ez.deco_with_self_context
     def get_all(self) -> dict:
         d = {}
         for k, v in self.cf_dict.items():

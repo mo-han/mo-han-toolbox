@@ -18,11 +18,11 @@ import lxml.html
 import requests.utils
 
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
-from .osutil import write_file_chunk
-from .osutil_base import SubscriptableFileIO
-from .fsutil import touch, ensure_open_file
-from .tricks_base import singleton, thread_factory, iter_factory_retry
-from .custom_typing import JSONType
+from .os_xp import write_file_chunk
+from .os_ez import SubscriptableFileIO
+from .fs import touch, ensure_open_file
+from .tricks_ez import singleton, thread_factory, iter_factory_retry
+from .ez import JSONType
 
 MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE = '# Netscape HTTP Cookie File'
 USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'
@@ -39,7 +39,7 @@ def get_html_element_tree(url, **kwargs) -> HTMLElementTree:
 
 
 def convert_cookies_json_to_netscape(json_data_or_filepath: JSONType or str, disable_filepath: bool = False) -> str:
-    from .fsutil import read_json_file
+    from .fs import read_json_file
     if not disable_filepath and os.path.isfile(json_data_or_filepath):
         json_data = read_json_file(json_data_or_filepath)
     else:
@@ -92,7 +92,7 @@ def ensure_json_cookies(json_data) -> list:
 
 
 def cookies_dict_from_json(json_data_or_filepath: JSONType or str, disable_filepath: bool = False) -> dict:
-    from .fsutil import read_json_file
+    from .fs import read_json_file
     if not disable_filepath and os.path.isfile(json_data_or_filepath):
         json_data = read_json_file(json_data_or_filepath)
     else:
@@ -172,7 +172,7 @@ def headers_from_cookies(cookies_data: dict or str, headers: dict = None) -> dic
 
 def get_phantomjs_splinter(proxy=None, show_image=False, window_size=(1024, 1024)):
     import splinter
-    from .osutil import TEMPDIR
+    from .os_xp import TEMPDIR
 
     extra_argv = ['--webdriver-loglevel=WARN']
     if proxy:
@@ -192,7 +192,7 @@ def get_phantomjs_splinter(proxy=None, show_image=False, window_size=(1024, 1024
 
 def get_firefox_splinter(headless=True, proxy: str = None, **kwargs):
     import splinter
-    from .osutil import TEMPDIR
+    from .os_xp import TEMPDIR
     config = {'service_log_path': os.path.join(TEMPDIR, 'geckodriver.log'),
               'headless': headless}
     config.update(kwargs)

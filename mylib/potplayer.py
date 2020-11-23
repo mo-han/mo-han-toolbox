@@ -8,8 +8,8 @@ import mouse
 
 from .gui import rename_dialog
 from .uia import module_pywinauto
-from .osutil import clipboard
-from .fsutil import x_rename
+from .os_xp import clipboard
+from .fs import x_rename
 
 pywinauto = module_pywinauto()
 App = pywinauto.Application

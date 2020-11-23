@@ -17,11 +17,11 @@ import you_get.util.strings
 from lxml import html
 
 from .text import regex_find
-from .tui_base import LinePrinter
-from .misc import safe_print, safe_basename
-from .osutil_base import ensure_sigint_signal
+from .tui_ez import LinePrinter
+from ._misc import safe_print, safe_basename
+from .os_ez import ensure_sigint_signal
 from .tricks import get_first_return
-from .tricks_base import str2range, modify_module
+from .tricks_ez import str2range, modify_module
 from ._deprecated import concat_videos, merge_m4s
 from .web_client import cookie_str_from_dict, cookies_dict_from_netscape_file, get_html_element_tree, HTMLElementTree, \
     make_kwargs_for_lib_requests

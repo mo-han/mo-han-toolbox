@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 # encoding=utf8
-import os
-import re
 import subprocess
+import pyperclip
 
-from .tricks_base import SingletonMeta
+from .ez import *
 
 ILLEGAL_FS_CHARS = r'/'
 ILLEGAL_FS_CHARS_LEN = len(ILLEGAL_FS_CHARS)
@@ -14,10 +13,7 @@ ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE = str.maketrans(ILLEGAL_FS_CHARS, ILLEGAL
 
 
 class Clipboard(metaclass=SingletonMeta):
-    import pyperclip as _cb
-
-    def __init__(self, *args, **kwargs):
-        pass
+    _cb = pyperclip
 
     def __enter__(self):
         return self

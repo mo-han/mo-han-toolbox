@@ -8,8 +8,8 @@ import re
 import shutil
 import subprocess
 
-from mylib.misc import random_fname
-from mylib.osutil_base import ensure_sigint_signal
+from mylib._misc import random_fname
+from mylib.os_ez import ensure_sigint_signal
 
 
 def auto_complete_url(url: str):

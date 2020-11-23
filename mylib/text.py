@@ -4,7 +4,7 @@ import locale
 import re
 from typing import Iterable, Iterator
 
-from .tricks_base import deco_factory_args_choices, dedup_list
+from .tricks_ez import deco_factory_args_choices, dedup_list
 from .text_base import *
 
 

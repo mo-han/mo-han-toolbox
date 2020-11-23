@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
 # encoding=utf8
+import contextlib
 import fnmatch
+import glob
 import html
 import itertools
 import json
-import os
-import re
-import shutil
 import urllib.parse
-from contextlib import contextmanager
-from glob import glob
 
-from .osutil import ILLEGAL_FS_CHARS_REGEX_PATTERN, ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE
-from .text import pattern_replace
+from . import os_xp
+from . import text
+from .ez import *
 
 
 def inplace_pattern_rename(src_path: str, pattern: str, repl: str, *,
@@ -20,9 +18,10 @@ def inplace_pattern_rename(src_path: str, pattern: str, repl: str, *,
                            ) -> str or None:
     if only_basename:
         parent, basename = os.path.split(src_path)
-        dst_path = os.path.join(parent, pattern_replace(src_path, pattern, repl, regex=regex, ignore_case=ignore_case))
+        dst_path = os.path.join(parent,
+                                text.pattern_replace(src_path, pattern, repl, regex=regex, ignore_case=ignore_case))
     else:
-        dst_path = pattern_replace(src_path, pattern, repl, regex=regex, ignore_case=ignore_case)
+        dst_path = text.pattern_replace(src_path, pattern, repl, regex=regex, ignore_case=ignore_case)
     if not dry_run:
         shutil.move(src_path, dst_path)
     if src_path != dst_path:
@@ -156,7 +155,7 @@ def safe_name(name: str, repl: str or dict = None, unescape_html=True, decode_ur
         name = urllib.parse.unquote(name)
     if repl:
         if isinstance(repl, str):
-            r = ILLEGAL_FS_CHARS_REGEX_PATTERN.sub(repl, name)
+            r = os_xp.ILLEGAL_FS_CHARS_REGEX_PATTERN.sub(repl, name)
             # rl = len(repl)
             # if rl > 1:
             #     r = ILLEGAL_FS_CHARS_REGEX_PATTERN.sub(repl, x)
@@ -169,7 +168,7 @@ def safe_name(name: str, repl: str or dict = None, unescape_html=True, decode_ur
         else:
             raise TypeError("Invalid repl '{}'".format(repl))
     else:
-        r = name.translate(ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE)
+        r = name.translate(os_xp.ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE)
     return r
 
 
@@ -211,7 +210,7 @@ def ensure_open_file(filepath, mode='r', **kwargs):
     return open(filepath, mode, **kwargs)
 
 
-@contextmanager
+@contextlib.contextmanager
 def ctx_pushd(dst: str, ensure_dst: bool = False):
     if ensure_dst:
         cd = ensure_chdir
@@ -277,4 +276,4 @@ def path_or_glob(pathname, *, recursive=False):
     if os.path.exists(pathname):
         return [pathname]
     else:
-        return glob(pathname, recursive=recursive)
+        return glob.glob(pathname, recursive=recursive)

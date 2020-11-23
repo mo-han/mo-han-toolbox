@@ -5,10 +5,10 @@ import ndrop.__main__
 import ndrop.netdrop
 import ndrop.shell
 
-from .osutil import clipboard
-from .fsutil import ensure_open_file
+from .os_xp import clipboard
+from .fs import ensure_open_file
 from .tricks import modify_module
-from .tricks_base import Attreebute
+from .tricks_ez import Attreebute
 
 config_at = Attreebute()
 config_at.server.text.queue = None

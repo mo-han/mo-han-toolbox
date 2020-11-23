@@ -8,21 +8,21 @@ import importlib.util
 import inspect
 import queue
 import sqlite3
-import sys
 import threading
-import time
 
-from . import custom_typing as Types
 from . import log
+from .ez import *
+
+ATTENTION_DO_NO_USE_THIS = __name__
 
 
-def constrained(x, x_type: Types.Callable, x_condition: str or Types.Callable = None, *,
+def constrained(x, x_type: Callable, x_condition: str or Callable = None, *,
                 enable_default=False, default=None):
     x = x_type(x)
     if x_condition:
         if isinstance(x_condition, str) and eval(x_condition):
             return x
-        elif isinstance(x_condition, Types.Callable) and x_condition(x):
+        elif isinstance(x_condition, Callable) and x_condition(x):
             return x
         elif enable_default:
             return default
@@ -30,15 +30,6 @@ def constrained(x, x_type: Types.Callable, x_condition: str or Types.Callable = 
             raise ValueError("'{}' conflicts with '{}'".format(x, x_condition))
     else:
         return x
-
-
-class SingletonMeta(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(SingletonMeta, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
 
 
 class VoidDuck:
@@ -57,14 +48,14 @@ class VoidDuck:
         return False
 
 
-def str2range(expr: str) -> Types.Generator:
+def str2range(expr: str) -> Generator:
     sections = [[int(n.strip() or 1) for n in e.split('-')] for e in expr.split(',')]
     for s in sections:
         yield from range(s[0], s[-1] + 1)
 
 
-def deco_factory_args_choices(choices: Types.Dict[int or str, Types.Iterable] or None, *args,
-                              **kwargs) -> Types.Decorator:
+def deco_factory_args_choices(choices: Dict[int or str, Iterable] or None, *args,
+                              **kwargs) -> Decorator:
     """decorator factory: force arguments of a func limited inside the given choices
 
     :param choices: a dict which describes the choices of arguments
@@ -102,8 +93,8 @@ def deco_factory_args_choices(choices: Types.Dict[int or str, Types.Iterable] or
 
 def deco_factory_retry(retry_exceptions=None, max_retries: int = 3,
                        enable_default=False, default=None,
-                       exception_predicate: Types.Callable[[Exception], bool] = None,
-                       exception_queue: Types.QueueType = None) -> Types.Decorator:
+                       exception_predicate: Callable[[Exception], bool] = None,
+                       exception_queue: QueueType = None) -> Decorator:
     """decorator factory: force a func re-running for several times on exception(s)"""
     retry_exceptions = retry_exceptions or ()
     predicate = exception_predicate or (lambda e: True)
@@ -139,7 +130,7 @@ def deco_factory_retry(retry_exceptions=None, max_retries: int = 3,
     return decorator
 
 
-def modify_module(module_path: str, code_modifier: str or Types.Callable, package_path: str = None,
+def modify_module(module_path: str, code_modifier: str or Callable, package_path: str = None,
                   output: bool = False, output_file: str = 'tmp.py'):
     # How to modify imported source code on-the-fly?
     #     https://stackoverflow.com/a/41863728/7966259  (answered by Martin Valgur)
@@ -190,7 +181,7 @@ def deco_with_self_context(target):
     return tgt
 
 
-def deco_factory_with_context(context_obj) -> Types.Decorator:
+def deco_factory_with_context(context_obj) -> Decorator:
     def deco(target):
         def tgt(*args, **kwargs):
             with context_obj:
@@ -201,12 +192,12 @@ def deco_factory_with_context(context_obj) -> Types.Decorator:
     return deco
 
 
-def remove_from_list(source: Types.Iterable, rmv_set: Types.Iterable) -> list:
+def remove_from_list(source: Iterable, rmv_set: Iterable) -> list:
     """return a list, which contains elements in source but not in rmv_set"""
     return [x for x in source if x not in rmv_set]
 
 
-def dedup_list(source: Types.Iterable) -> list:
+def dedup_list(source: Iterable) -> list:
     r = []
     [r.append(e) for e in source if e not in r]
     return r
@@ -238,14 +229,14 @@ class Attreebute:
             self.__update_data__(k, self[k])
 
     def __from_json__(self, json_filepath: str):
-        from .fsutil import read_json_file
+        from .fs import read_json_file
         self.__from_dict__(read_json_file(json_filepath))
 
     def __to_dict__(self):
         return self.__data__
 
     def __to_json__(self, json_filepath: str):
-        from .fsutil import write_json_file
+        from .fs import write_json_file
         write_json_file(json_filepath, self.__data__, indent=4)
 
     def __query__(self, *args, **kwargs):
@@ -385,7 +376,7 @@ class ExceptionWithKwargs(Exception):
 def thread_factory(group: None = None, name: str = None, daemon: bool = False):
     thread_kwargs = {'group': group, 'name': name, 'daemon': daemon}
 
-    def new_thread(callee: Types.Callable, *args, **kwargs):
+    def new_thread(callee: Callable, *args, **kwargs):
         return threading.Thread(target=callee, args=args, kwargs=kwargs, **thread_kwargs)
 
     return new_thread
@@ -398,7 +389,7 @@ class NonBlockingCaller:
     class Stopped(Exception):
         pass
 
-    def __init__(self, target: Types.Callable, *args, **kwargs):
+    def __init__(self, target: Callable, *args, **kwargs):
         self.triple = target, args, kwargs
         self._running = False
         self.run()
@@ -435,14 +426,14 @@ class NonBlockingCaller:
         elif eq.qsize():
             raise rq.get(block=False)
         else:
-            time.sleep(wait)
+            sleep(wait)
             target, args, kwargs = self.triple
             raise self.StillRunning(target, *args, **kwargs)
 
 
-def deco_factory_copy_signature(signature_source: Types.Callable):
+def deco_factory_copy_signature(signature_source: Callable):
     # https://stackoverflow.com/a/58989918/7966259
-    def deco(target: Types.Callable):
+    def deco(target: Callable):
         @functools.wraps(target)
         def tgt(*args, **kwargs):
             inspect.signature(signature_source).bind(*args, **kwargs)
@@ -514,8 +505,8 @@ class SimpleSQLiteTable:
 
 
 def deco_factory_keyboard_interrupt(exit_code,
-                                    called_in_except_block: Types.Any = VoidDuck,
-                                    called_in_finally_block: Types.Any = VoidDuck):
+                                    called_in_except_block: Any = VoidDuck,
+                                    called_in_finally_block: Any = VoidDuck):
     def deco(target):
         @deco_factory_copy_signature(target)
         def tgt(*args, **kwargs):
@@ -619,8 +610,8 @@ def iter_factory_retry(max_retries=0,
     else:
         max_try = max_retries
 
-    def iter_retry(callee: Types.Callable, *args, **kwargs) -> Types.Generator[
-        Types.Tuple[int, Exception or Types.Any], None, None]:
+    def iter_retry(callee: Callable, *args, **kwargs) -> Generator[
+        Tuple[int, Exception or Any], None, None]:
         cnt = max_try
         while cnt:
             try:
@@ -642,7 +633,7 @@ class CLIArgumentList(list):
     def add_arg(self, arg):
         if isinstance(arg, str):
             self.append(arg)
-        elif isinstance(arg, (Types.Iterable, Types.Iterator)):
+        elif isinstance(arg, (Iterable, Iterator)):
             for a in arg:
                 self.add_arg(a)
         else:
@@ -654,7 +645,7 @@ class CLIArgumentList(list):
             if isinstance(value, str):
                 self.append(key)
                 self.append(value)
-            elif isinstance(value, (Types.Iterable, Types.Iterator)):
+            elif isinstance(value, (Iterable, Iterator)):
                 for v in value:
                     self.add_kwarg(key, v)
             elif value is True:

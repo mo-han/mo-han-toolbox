@@ -13,9 +13,9 @@ import json
 from requests import get, head
 from bs4 import BeautifulSoup
 
-from mylib.misc import ExitCode, rectify_basename
+from mylib._misc import ExitCode, rectify_basename
 from mylib.log import LOG_FMT_MESSAGE_ONLY, LOG_FMT
-from mylib.osutil_base import ensure_sigint_signal
+from mylib.os_ez import ensure_sigint_signal
 
 DB_FILE = 'db.json'
 INFO_FILE = 'info.txt'

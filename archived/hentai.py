@@ -12,7 +12,7 @@ from time import sleep
 import requests
 from bs4 import BeautifulSoup
 
-from mylib.misc import rectify_basename
+from mylib._misc import rectify_basename
 
 DRAW_LINE_LENGTH = 32
 

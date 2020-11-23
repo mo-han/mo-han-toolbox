@@ -3,30 +3,29 @@
 import codecs
 import getpass
 import locale
-import os
 import platform
 import shlex
-import subprocess
-import sys
 import tempfile
 from collections import defaultdict
 from glob import glob
 from io import BytesIO
 from queue import Queue
-from time import time
-from typing import Iterable, Iterator, Tuple, Dict, List
 
 import psutil
 from filetype import filetype
 
+from . import tricks_ez
 from ._deprecated import fs_find_iter
-from .osutil_base import SubscriptableFileIO
-from .tricks_base import NonBlockingCaller
+from .os_ez import *
+
+assert (tricks_ez,)
 
 if os.name == 'nt':
-    from .osutil_nt import *
+    from .os_nt import *
 elif os.name == 'posix':
-    from .osutil_posix import *
+    from .os_posix import *
+else:
+    raise NotImplementedError(os.name)
 
 TEMPDIR = tempfile.gettempdir()
 HOSTNAME = platform.node()
@@ -187,12 +186,13 @@ def monitor_sub_process_tty_frozen(p: subprocess.Popen, timeout=30, wait=1,
     monitoring = []
     monitor_stdout = bool(p.stdout)
     monitor_stderr = bool(p.stderr)
+    nb_caller = tricks_ez.NonBlockingCaller
     if monitor_stdout:
         monitoring.append(
-            (NonBlockingCaller(p.stdout.read, 1), codecs.getincrementaldecoder(encoding)(), sys.stdout, _out))
+            (nb_caller(p.stdout.read, 1), codecs.getincrementaldecoder(encoding)(), sys.stdout, _out))
     if monitor_stderr:
         monitoring.append(
-            (NonBlockingCaller(p.stderr.read, 1), codecs.getincrementaldecoder(encoding)(), sys.stderr, _err))
+            (nb_caller(p.stderr.read, 1), codecs.getincrementaldecoder(encoding)(), sys.stderr, _err))
     t0 = time()
     while 1:
         if time() - t0 > timeout:
@@ -202,13 +202,13 @@ def monitor_sub_process_tty_frozen(p: subprocess.Popen, timeout=30, wait=1,
             _out.seek(0)
             _err.seek(0)
             raise ProcessTTYFrozen(p, _out, _err)
-        for nb_reader, decoder, output, inner in monitoring:
+        for nb_reader, decoder, output, bytes_io in monitoring:
             decoder: codecs.IncrementalDecoder
             try:
                 b = nb_reader.get(wait)
                 if b:
                     t0 = time()
-                    inner.write(b)
+                    bytes_io.write(b)
                     nb_reader.run()
                     if output:
                         try:

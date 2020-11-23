@@ -1,16 +1,9 @@
 #!/usr/bin/env python3
 # encoding=utf8
-import os
 import signal
-import sys
 from io import FileIO
 
-if os.name == 'nt':
-    from .osutil_nt import *
-elif os.name == 'posix':
-    from .osutil_posix import *
-else:
-    raise NotImplementedError(os.name)
+from .ez import *
 
 
 def ensure_sigint_signal():

@@ -12,13 +12,13 @@ from pprint import pprint
 
 from send2trash import send2trash
 
-from mylib import fsutil
+from mylib import fs
 from mylib._deprecated import fs_find_iter, real_join_path, fs_inplace_rename, fs_inplace_rename_regex
-from mylib.osutil import clipboard, list_files, set_console_title___try
-from mylib.fsutil import shrink_name_middle, path_or_glob
-from mylib.tricks_base import Attreebute, eval_or_str, deco_factory_keyboard_interrupt
+from mylib.os_xp import clipboard, list_files, set_console_title___try
+from mylib.fs import shrink_name_middle, path_or_glob
+from mylib.tricks_ez import Attreebute, eval_or_str, deco_factory_keyboard_interrupt
 from mylib.cli import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter
-from mylib.tui_base import LinePrinter
+from mylib.tui_ez import LinePrinter
 
 rtd = Attreebute()  # runtime data
 tui_lp = LinePrinter()
@@ -117,8 +117,8 @@ cmd_mode.set_defaults(func=cmd_mode_func)
 
 
 def cfip_func():
-    from mylib.websites import get_cloudflare_ipaddr_hostmonit
-    from mylib.fsutil import write_json_file
+    from mylib.sites import get_cloudflare_ipaddr_hostmonit
+    from mylib.fs import write_json_file
     from pprint import pformat
     args = rtd.args
     file = args.file
@@ -157,7 +157,7 @@ cfip.add_argument('-H', '--hostname')
 
 
 def video_guess_crf_func():
-    from mylib.ffmpeg_local_alpha import guess_video_crf, file_is_video
+    from mylib.ffmpeg_alpha import guess_video_crf, file_is_video
     args = rtd.args
     path_l = [path for path in list_files(args.src or clipboard) if file_is_video(path)]
     codec = args.codec
@@ -187,13 +187,13 @@ def dir_flatter_func():
         if not os.path.isdir(s):
             print(f'! skip non-folder: {s}')
             continue
-        with fsutil.ctx_pushd(s):
+        with fs.ctx_pushd(s):
             dir_l = list(fs_find_iter(find_dir_instead_of_file=True))
             if not dir_l:
                 continue
             file_l = list(fs_find_iter(strip_root=True, recursive=True))
             for fp in file_l:
-                flat_path = shrink_name_middle(fsutil.safe_name(fp))
+                flat_path = shrink_name_middle(fs.safe_name(fp))
                 shutil.move(fp, flat_path)
             for dp in dir_l:
                 os.removedirs(dp)
@@ -207,11 +207,11 @@ dir_flatter.add_argument('src', nargs='*')
 
 @deco_factory_keyboard_interrupt(2)
 def put_in_dir_func():
-    from mylib.osutil import fs_move_cli
+    from mylib.os_xp import fs_move_cli
     from mylib.text import find_words
-    from mylib.tui_base import prompt_choose_number, prompt_confirm
+    from mylib.tui_ez import prompt_choose_number, prompt_confirm
     conf_file = real_join_path('~', '.config', 'fs.put_in_dir.json')
-    conf = fsutil.read_json_file(conf_file) or {'dst_map': {}}
+    conf = fs.read_json_file(conf_file) or {'dst_map': {}}
     dst_map = conf['dst_map']
     args = rtd.args
     src = args.src or clipboard.list_paths()
@@ -244,7 +244,7 @@ def put_in_dir_func():
                 print(f'{k}=')
             else:
                 print(f'{a}={dst_map.get(a, "")}')
-    fsutil.write_json_file(conf_file, conf, indent=4)
+    fs.write_json_file(conf_file, conf, indent=4)
     if not dst:
         return
     dst = dst_map.get(dst, dst)
@@ -252,8 +252,8 @@ def put_in_dir_func():
         print(f'! {dst} is file (should be directory)', file=sys.stderr)
         exit(1)
     os.makedirs(dst, exist_ok=True)
-    db_path = fsutil.make_path(dst, '__folder_name_words__.db')
-    db = fsutil.read_sqlite_dict_file(db_path)
+    db_path = fs.make_path(dst, '__folder_name_words__.db')
+    db = fs.read_sqlite_dict_file(db_path)
     sub_dirs_d = {b: set(find_words(b.lower())) for b in next(os.walk(dst))[1] if b not in db}
     sub_dirs_d.update(db)
     for ss in src:
@@ -284,21 +284,21 @@ def put_in_dir_func():
                 target_dir_name = target_dir_name or input(f'Create folder: ')
                 if target_dir_name:
                     sub_dirs_d[target_dir_name] = set(find_words(target_dir_name.lower()))
-                    dir_path = fsutil.make_path(dst, target_dir_name)
+                    dir_path = fs.make_path(dst, target_dir_name)
                     if not dry_run:
                         os.makedirs(dir_path, exist_ok=True)
                 else:
                     dir_path = dst
             else:
                 dir_path = dst
-            d = fsutil.make_path(dir_path, os.path.basename(s))
+            d = fs.make_path(dir_path, os.path.basename(s))
             if os.path.exists(d):
                 if not prompt_confirm(f'Overwrite {d}?', default=False):
                     continue
             if not dry_run:
                 fs_move_cli(s, d)
             print(f'{s} -> {d}')
-    fsutil.write_sqlite_dict_file(db_path, sub_dirs_d, update_only=True)
+    fs.write_sqlite_dict_file(db_path, sub_dirs_d, update_only=True)
 
 
 put_in_dir = add_sub_parser('putindir', ['mvd'], 'put files/folders into dest dir')
@@ -312,7 +312,7 @@ put_in_dir.add_argument('src', nargs='*')
 
 
 def clear_redundant_files_func():
-    from mylib.osutil import filter_filename_tail, join_filename_tail
+    from mylib.os_xp import filter_filename_tail, join_filename_tail
     lp = LinePrinter()
     args = rtd.args
     tk = set(args.tails_keep or [])
@@ -398,7 +398,7 @@ cookies_conv_json.add_argument('file', nargs='*')
 
 
 def ffmpeg_img2vid_func():
-    from mylib.ffmpeg_local_alpha import FFmpegRunnerAlpha, FFmpegArgsList, parse_kw_opt_str
+    from mylib.ffmpeg_alpha import FFmpegRunnerAlpha, FFmpegArgsList, parse_kw_opt_str
     ff = FFmpegRunnerAlpha(banner=False, overwrite=True)
     ff.logger.setLevel('INFO')
     args = rtd.args
@@ -439,7 +439,7 @@ ffmpeg_img2vid.add_argument('opt', help='ffmpeg options (better insert -- before
 
 
 def ffmpeg_func():
-    from mylib.ffmpeg_local_alpha import kw_video_convert
+    from mylib.ffmpeg_alpha import kw_video_convert
     args = rtd.args
     source = args.source or clipboard
     keywords = args.keywords or ()
@@ -539,7 +539,7 @@ dir2pi.add_argument('arg', nargs='*', help='arguments propagated to dir2pi, put 
 
 
 def ytdl_func():
-    from mylib.ytdl import youtube_dl_main_x
+    from mylib.youtube_dl_x import youtube_dl_main_x
     import sys
     argv0 = ' '.join(sys.argv[:2]) + ' --'
     sys.argv = [argv0] + rtd.args.argv
@@ -552,7 +552,7 @@ ytdl.add_argument('argv', nargs='*', help='argument(s) propagated to youtube-dl,
 
 
 def regex_rename_func():
-    from mylib.osutil import list_files, list_dirs
+    from mylib.os_xp import list_files, list_dirs
     args = rtd.args
     source = args.source
     recursive = args.recursive
@@ -584,7 +584,7 @@ regex_rename.add_argument('replace')
 
 
 def rename_func():
-    from mylib.osutil import list_files, list_dirs
+    from mylib.os_xp import list_files, list_dirs
     args = rtd.args
     source = args.source
     recursive = args.recursive
@@ -696,16 +696,16 @@ def url_from_clipboard():
         p = r'magnet:[^\s"]+'
         urls = regex_find(p, unescape(t), dedup=True)
     elif pattern == 'iwara':
-        from mylib.website_iwara import find_url_in_text
+        from mylib.site_iwara import find_url_in_text
         urls = find_url_in_text(t)
     elif pattern in ('pornhub', 'ph'):
-        from mylib.website_ph import find_url_in_text
+        from mylib.site_pornhub import find_url_in_text
         urls = find_url_in_text(t)
     elif pattern in ('youtube', 'ytb'):
-        from mylib.website_yt import find_url_in_text
+        from mylib.site_youtube import find_url_in_text
         urls = find_url_in_text(t)
     elif pattern in ('bilibili', 'bili'):
-        from mylib.website_bili import find_url_in_text
+        from mylib.site_bilibili import find_url_in_text
         urls = find_url_in_text(t)
     elif pattern in ('hc.fyi', 'hentai.cafe', 'hentaicafe'):
         p = r'https://hentai.cafe/hc.fyi/\d+'
@@ -745,7 +745,7 @@ potplayer_rename.add_argument('-F', '--no-keep-front', action='store_true', help
 
 
 def bilibili_download_func():
-    from mylib.website_bili import download_bilibili_video
+    from mylib.site_bilibili import download_bilibili_video
     args = rtd.args
     if args.verbose:
         print(args)
@@ -772,9 +772,9 @@ bilibili_download.add_argument('-A', '--no-moderate-audio', dest='moderate_audio
 
 
 def json_edit_func():
-    from mylib.osutil import list_files
-    from mylib.fsutil import write_json_file
-    from mylib.fsutil import read_json_file
+    from mylib.os_xp import list_files
+    from mylib.fs import write_json_file
+    from mylib.fs import read_json_file
     args = rtd.args
     file = args.file or list_files(clipboard)[0]
     indent = args.indent
@@ -809,7 +809,7 @@ json_edit.add_argument('item', nargs='+')
 
 
 def json_key_func():
-    from mylib.fsutil import read_json_file
+    from mylib.fs import read_json_file
     args = rtd.args
     d = read_json_file(args.file)
     print(d[args.key])
@@ -822,8 +822,8 @@ json_key.add_argument('key', help='query key')
 
 
 def update_json_file():
-    from mylib.fsutil import write_json_file
-    from mylib.fsutil import read_json_file
+    from mylib.fs import write_json_file
+    from mylib.fs import read_json_file
     args = rtd.args
     old, new = args.old, args.new
     d = read_json_file(old)
@@ -869,7 +869,7 @@ img_sim_view.add_argument(
 
 
 def move_ehviewer_images():
-    from mylib.website_eh import ehviewer_images_catalog
+    from mylib.site_ehentai import ehviewer_images_catalog
     args = rtd.args
     ehviewer_images_catalog(dry_run=args.dry_run)
 

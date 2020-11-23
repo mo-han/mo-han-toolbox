@@ -2,8 +2,8 @@
 # encoding=utf8
 import youtube_dl.extractor
 
-from mylib.website_iwara import IwaraIE
-from mylib.website_ph import PornHubIE
+from mylib.site_iwara import IwaraIE
+from mylib.site_pornhub import PornHubIE
 
 
 def youtube_dl_main_x(argv=None):

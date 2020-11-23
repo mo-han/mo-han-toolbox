@@ -9,8 +9,8 @@ from time import sleep
 import requests
 
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
-from .fsutil import read_json_file, write_json_file, safe_name, ctx_pushd, shrink_name
-from .tricks_base import VoidDuck, is_hex
+from .fs import read_json_file, write_json_file, safe_name, ctx_pushd, shrink_name
+from .tricks_ez import VoidDuck, is_hex
 from .web_client import cookies_dict_from_netscape_file, get_html_element_tree
 
 EH_TITLE_REGEX_PATTERN = re.compile(
