@@ -2,11 +2,11 @@
 # encoding=utf8
 from abc import ABCMeta
 
-import youtube_dl.extractor.pornhub
+import youtube_dl.extractor.pornhub as ytdl_ex_pornhub
+from .youtube_dl_x import ytdl_ex_common
 
-from .text_ez import regex_find, ellipt_end
+from .text_ez import regex_find
 from .web_client import get_html_element_tree
-from .fs import safe_name
 
 
 def find_url_in_text(text: str) -> list:
@@ -15,7 +15,10 @@ def find_url_in_text(text: str) -> list:
     return [prefix + e for e in regex_find(pattern, text, dedup=True)]
 
 
-class PornHubIE(youtube_dl.extractor.pornhub.PornHubIE, metaclass=ABCMeta):
+ytdl_ex_pornhub.InfoExtractor = ytdl_ex_common.InfoExtractor
+
+
+class PornHubIE(ytdl_ex_pornhub.PornHubIE, metaclass=ABCMeta):
     def _real_extract(self, url):
         data = super()._real_extract(url)
         try:
