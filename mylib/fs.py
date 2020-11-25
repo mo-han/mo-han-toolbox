@@ -8,8 +8,8 @@ import itertools
 import json
 import urllib.parse
 
+import mylib.text_ez
 from . import os_xp
-from . import text
 from .ez import *
 
 
@@ -19,9 +19,9 @@ def inplace_pattern_rename(src_path: str, pattern: str, repl: str, *,
     if only_basename:
         parent, basename = os.path.split(src_path)
         dst_path = os.path.join(parent,
-                                text.pattern_replace(src_path, pattern, repl, regex=regex, ignore_case=ignore_case))
+                                mylib.text_ez.pattern_replace(src_path, pattern, repl, regex=regex, ignore_case=ignore_case))
     else:
-        dst_path = text.pattern_replace(src_path, pattern, repl, regex=regex, ignore_case=ignore_case)
+        dst_path = mylib.text_ez.pattern_replace(src_path, pattern, repl, regex=regex, ignore_case=ignore_case)
     if not dry_run:
         shutil.move(src_path, dst_path)
     if src_path != dst_path:
@@ -233,43 +233,6 @@ def ensure_chdir(dest: str):
     if not os.path.isdir(dest):
         os.makedirs(dest, exist_ok=True)
     os.chdir(dest)
-
-
-def shrink_name(s: str, max_bytes=250, encoding='utf8', add_dots=True, from_left=False):
-    if from_left:
-        def strip(x: str):
-            return x[1:]
-    else:
-        def strip(x: str):
-            return x[:-1]
-    shrunk = False
-    limit = max_bytes - 3 if add_dots else max_bytes
-    while len(s.encode(encoding=encoding)) > limit:
-        s = strip(s)
-        shrunk = True
-    if shrunk:
-        if from_left:
-            return '...' + s
-        else:
-            return s + '...'
-    else:
-        return s
-
-
-def shrink_name_middle(s: str, max_bytes=250, encoding='utf8', add_dots=True):
-    half_max_bytes = (max_bytes - 3 if add_dots else max_bytes) // 2
-    common_params = dict(encoding=encoding, add_dots=False)
-    half_s_len = len(s) // 2 + 1
-    left = shrink_name(s[:half_s_len], half_max_bytes, **common_params)
-    right = shrink_name(s[half_s_len:], half_max_bytes, **common_params)
-    lr = f'{left}{right}'
-    if add_dots:
-        if len(lr) == len(s):
-            return s
-        else:
-            return f'{left}...{right}'
-    else:
-        return f'{left}{right}'
 
 
 def path_or_glob(pathname, *, recursive=False):

@@ -4,7 +4,7 @@ from abc import ABCMeta
 
 import youtube_dl.extractor.pornhub
 
-from .text import regex_find
+from .text_ez import regex_find, ellipt_end
 from .web_client import get_html_element_tree
 
 
@@ -17,6 +17,8 @@ def find_url_in_text(text: str) -> list:
 class PornHubIE(youtube_dl.extractor.pornhub.PornHubIE, metaclass=ABCMeta):
     def _real_extract(self, url):
         data = super()._real_extract(url)
+        title = data['title']
+        data['title'] = ellipt_end(title, 210, encoding='utf8')
         try:
             if data.get('uploader'):
                 return data

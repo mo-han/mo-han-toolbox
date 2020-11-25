@@ -1,5 +1,6 @@
+asciimatics  #Apache2
 av  # PyAV
 fs  # PyFilesystem
 picotui  #MIT
-asciimatics  #Apache2
+pyyaml  #YAML #MIT
 termgraph  #MIT

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # encoding=utf8
-import argparse
 import os
 import re
 import shlex
@@ -11,12 +10,12 @@ from pprint import pformat
 
 from telegram.ext import MessageHandler, Filters, CallbackContext
 
+from mylib.cli import new_argument_parser
+from mylib.fs import read_json_file, write_json_file, read_sqlite_dict_file
 from mylib.log import get_logger
 from mylib.os_xp import monitor_sub_process_tty_frozen, ProcessTTYFrozen
-from mylib.fs import read_json_file, write_json_file, read_sqlite_dict_file, write_sqlite_dict_file
-from mylib.text import decode
+from mylib.text import decode_locale
 from mylib.tg_bot import SimpleBot, deco_factory_bot_handler_method, CommandHandler, Update
-from mylib.cli import new_argument_parser
 from mylib.tricks_ez import deco_factory_retry
 
 mt = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(os.path.getmtime(os.path.realpath(__file__))))
@@ -68,11 +67,11 @@ class MyAssistantBot(SimpleBot):
                 self.__reply_md_code_block__(f'+ {args_s}', update)
                 p, out, err = bldl_retry_frozen(*args)
                 if p.returncode:
-                    echo = ''.join([decode(b).rsplit('\r', maxsplit=1)[-1] for b in out.readlines()[-5:]])
+                    echo = ''.join([decode_locale(b).rsplit('\r', maxsplit=1)[-1] for b in out.readlines()[-5:]])
                     self.__requeue_failed_update__(update)
                     self.__reply_md_code_block__(f'- {args_s}\n{echo}', update)
                 else:
-                    echo = ''.join([s for s in [decode(b) for b in out.readlines()] if '─┤' not in s])
+                    echo = ''.join([s for s in [decode_locale(b) for b in out.readlines()] if '─┤' not in s])
                     self.__reply_md_code_block__(f'* {args_s}\n{echo}', update)
             except Exception as e:
                 self.__reply_md_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
@@ -94,7 +93,7 @@ class MyAssistantBot(SimpleBot):
             try:
                 self.__reply_md_code_block__(f'+ {args_s}', update)
                 p, out, err = ytdl_retry_frozen(*args)
-                echo = ''.join([re.sub(r'.*\[download]', '[download]', decode(b).rsplit('\r', maxsplit=1)[-1]) for b in
+                echo = ''.join([re.sub(r'.*\[download]', '[download]', decode_locale(b).rsplit('\r', maxsplit=1)[-1]) for b in
                                 out.readlines()[-10:]])
                 if p.returncode:
                     abandon_errors = self.__get_conf__().get('abandon_errors') or []

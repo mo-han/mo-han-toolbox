@@ -15,7 +15,8 @@ from send2trash import send2trash
 from mylib import fs
 from mylib._deprecated import fs_find_iter, real_join_path, fs_inplace_rename, fs_inplace_rename_regex
 from mylib.os_xp import clipboard, list_files, set_console_title___try
-from mylib.fs import shrink_name_middle, path_or_glob
+from mylib.fs import path_or_glob
+from mylib.text_ez import ellipt_middle
 from mylib.tricks_ez import Attreebute, eval_or_str, deco_factory_keyboard_interrupt
 from mylib.cli import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter
 from mylib.tui_ez import LinePrinter
@@ -193,7 +194,7 @@ def dir_flatter_func():
                 continue
             file_l = list(fs_find_iter(strip_root=True, recursive=True))
             for fp in file_l:
-                flat_path = shrink_name_middle(fs.safe_name(fp))
+                flat_path = ellipt_middle(fs.safe_name(fp), count_bytes=True)
                 shutil.move(fp, flat_path)
             for dp in dir_l:
                 os.removedirs(dp)
@@ -208,7 +209,7 @@ dir_flatter.add_argument('src', nargs='*')
 @deco_factory_keyboard_interrupt(2)
 def put_in_dir_func():
     from mylib.os_xp import fs_move_cli
-    from mylib.text import find_words
+    from mylib.text_ez import find_words
     from mylib.tui_ez import prompt_choose_number, prompt_confirm
     conf_file = real_join_path('~', '.config', 'fs.put_in_dir.json')
     conf = fs.read_json_file(conf_file) or {'dst_map': {}}
@@ -682,7 +683,7 @@ dukto_x.add_argument('ndrop_args', metavar='[--] arguments for ndrop', nargs=REM
 
 def url_from_clipboard():
     import pyperclip
-    from mylib.text import regex_find
+    from mylib.text_ez import regex_find
     from html import unescape
     args = rtd.args
     pattern = args.pattern

@@ -16,7 +16,7 @@ import requests
 import you_get.util.strings
 from lxml import html
 
-from .text import regex_find
+from .text_ez import regex_find
 from .tui_ez import LinePrinter
 from ._misc import safe_print, safe_basename
 from .os_ez import ensure_sigint_signal

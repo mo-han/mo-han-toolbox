@@ -397,7 +397,7 @@ def get_filter_str(filters):
     return ','.join(get_filter_list(filters))
 
 
-def kw_video_convert(source, keywords=(), vf=None, cut_points=(), dest=None,
+def kw_video_convert(source, keywords=(), vf=None, cut_points=(),
                      overwrite=False, redo=False, ffmpeg_opts=(),
                      verbose=0, dry_run=False,
                      **kwargs):

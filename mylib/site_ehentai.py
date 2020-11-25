@@ -4,6 +4,7 @@ import json
 
 import requests
 
+from . import text_ez
 from . import fs
 from . import log
 from .ez import *
@@ -121,7 +122,7 @@ def ehviewer_images_catalog(dry_run: bool = False):
         parent, basename = os.path.split(f)
         fn, ext = os.path.splitext(basename)
         # fn = ' '.join(core_title_l) + ' ' + fn.split()[-1]
-        fn = fs.shrink_name(core_title, 200, add_dots=True).strip() + ' ' + fn.split()[-1]
+        fn = text_ez.ellipt_end(core_title, 210, encoding='utf8').strip() + ' ' + fn.split()[-1]
         nf = os.path.join(folder, fs.safe_name(fn + ext))
         logger.info(logmsg_move.format(f, nf))
         if not dry_run:
