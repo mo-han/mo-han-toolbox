@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # encoding=utf8
-import youtube_dl.extractor
+import youtube_dl.extractor.common
 import youtube_dl.utils
+import youtube_dl.YoutubeDL
 
 from .fs import safe_name
 from .site_iwara import IwaraIE
@@ -16,6 +17,8 @@ def safe_filename(s, restricted=False, is_id=False):
 
 
 def youtube_dl_main_x(argv=None):
+    youtube_dl.YoutubeDL.sanitize_filename = safe_filename
+    youtube_dl.extractor.common.sanitize_filename = safe_filename
     youtube_dl.extractor.IwaraIE = IwaraIE
     youtube_dl.extractor.PornHubIE = PornHubIE
     youtube_dl.utils.sanitize_filename = safe_filename
