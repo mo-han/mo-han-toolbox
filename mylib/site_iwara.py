@@ -4,8 +4,9 @@ from abc import ABCMeta
 
 import youtube_dl.extractor.iwara
 
-from .text_ez import regex_find
+from .text_ez import regex_find, ellipt_end
 from .web_client import get_html_element_tree
+from .fs import safe_name
 
 
 def find_url_in_text(text: str) -> list:
@@ -18,6 +19,8 @@ def find_url_in_text(text: str) -> list:
 class IwaraIE(youtube_dl.extractor.iwara.IwaraIE, metaclass=ABCMeta):
     def _real_extract(self, url):
         data = super()._real_extract(url)
+        title = data['title']
+        data['title'] = ellipt_end(safe_name(title), 210, encoding='utf8')
         try:
             html = get_html_element_tree(url)
             uploader = html.xpath('//div[@class="node-info"]//div[@class="submitted"]//a[@class="username"]')[0].text
