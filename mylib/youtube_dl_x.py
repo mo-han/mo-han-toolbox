@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # encoding=utf8
-import youtube_dl.YoutubeDL as ytdl_YoutubeDL
+from importlib import import_module
+
 import youtube_dl.extractor.common as ytdl_ex_common
 import youtube_dl.utils
 
@@ -16,6 +17,7 @@ def safe_filename(s, restricted=False, is_id=False):
     return youtube_dl.utils.sanitize_filename(s, restricted=restricted, is_id=is_id)
 
 
+ytdl_YoutubeDL = import_module('youtube_dl.YoutubeDL')
 ytdl_YoutubeDL.sanitize_filename = safe_filename
 youtube_dl.YoutubeDL = ytdl_YoutubeDL.YoutubeDL
 ytdl_ex_common.sanitize_filename = safe_filename
