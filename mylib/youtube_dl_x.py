@@ -16,8 +16,10 @@ ytdl_YoutubeDL = import_module('youtube_dl.YoutubeDL')
 
 
 def safe_filename(s, restricted=False, is_id=False):
+    print('before:', s)
     if not is_id:
         s = ellipt_end(safe_name(s), 210)
+        print('after:', s)
     return sanitize_filename(s, restricted=restricted, is_id=is_id)
 
 

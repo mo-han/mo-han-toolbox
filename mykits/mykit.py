@@ -543,13 +543,13 @@ def ytdl_func():
     from mylib.youtube_dl_x import youtube_dl_main_x
     import sys
     argv0 = ' '.join(sys.argv[:2]) + ' --'
-    sys.argv = [argv0] + rtd.args.argv
+    sys.argv = [argv0] + rtd.args.param
     youtube_dl_main_x()
 
 
 ytdl = add_sub_parser('ytdl', [], 'youtube-dl with modifications: [iwara.tv] fix missing uploader')
 ytdl.set_defaults(func=ytdl_func)
-ytdl.add_argument('argv', nargs='*', help='argument(s) propagated to youtube-dl, better put a -- before it')
+ytdl.add_argument('param', nargs='*', help='argument(s) propagated to youtube-dl, better put a -- before it')
 
 
 def regex_rename_func():
