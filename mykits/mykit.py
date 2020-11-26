@@ -194,7 +194,7 @@ def dir_flatter_func():
                 continue
             file_l = list(fs_find_iter(strip_root=True, recursive=True))
             for fp in file_l:
-                flat_path = ellipt_middle(fs.safe_name(fp), count_bytes=True)
+                flat_path = ellipt_middle(fs.safe_name(fp), encoding='utf8')
                 shutil.move(fp, flat_path)
             for dp in dir_l:
                 os.removedirs(dp)
