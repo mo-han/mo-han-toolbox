@@ -89,7 +89,7 @@ class MyAssistantBot(SimpleBot):
 
         args_l = [line2args(line) for line in update.message.text.splitlines()]
         for args in args_l:
-            args = [re.sub(r'\[(ph[\da-f]{13})]', 'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in args]
+            args = [re.sub(r'\[(ph[\da-f]{13})]', r'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in args]
             args_s = ' '.join([shlex.quote(a) for a in args])
             try:
                 self.__reply_md_code_block__(f'+ {args_s}', update)
