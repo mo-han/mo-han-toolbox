@@ -78,7 +78,7 @@ class MyAssistantBot(SimpleBot):
                 self.__requeue_failed_update__(update)
 
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(
-        re.compile(r'youtube|youtu\.be|iwara|pornhub')))
+        re.compile(r'youtube|youtu\.be|iwara|pornhub|\[ph[\da-f]{13}]')))
     def _ytdl(self, update: Update, *args):
         undone = self.__data__['undone']
         undone[self._ytdl.__name__] = update
@@ -89,12 +89,14 @@ class MyAssistantBot(SimpleBot):
 
         args_l = [line2args(line) for line in update.message.text.splitlines()]
         for args in args_l:
+            args = [re.sub(r'\[(ph[\da-f]{13})]', 'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in args]
             args_s = ' '.join([shlex.quote(a) for a in args])
             try:
                 self.__reply_md_code_block__(f'+ {args_s}', update)
                 p, out, err = ytdl_retry_frozen(*args)
-                echo = ''.join([re.sub(r'.*\[download]', '[download]', decode_locale(b).rsplit('\r', maxsplit=1)[-1]) for b in
-                                out.readlines()[-10:]])
+                echo = ''.join(
+                    [re.sub(r'.*\[download]', '[download]', decode_locale(b).rsplit('\r', maxsplit=1)[-1]) for b in
+                     out.readlines()[-10:]])
                 if p.returncode:
                     abandon_errors = self.__get_conf__().get('abandon_errors') or []
                     if any(map(lambda x: x in echo, abandon_errors)):
