@@ -1,4 +1,4 @@
-#### [SubscriptableFileIO](mylib/os_xp.py#L274)
+#### [SubscriptableFileIO](mylib/os_auto.py#L274)
 
 read/write file with slice
 

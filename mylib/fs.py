@@ -9,8 +9,21 @@ import json
 import urllib.parse
 
 import mylib.text_ez
-from . import os_xp
+from . import os_auto
 from .ez import *
+
+
+POTENTIAL_INVALID_CHARS_MAP = {
+    '<': '﹤',  # U+FE64 (small less-than sign)
+    '>': '﹥',  # U+FE65 (small greater-than sign)
+    ':': '꞉',   # U+A789 (modifier letter colon, sometimes used in Windows filenames)
+    '"': '″',   # U+2033 (DOUBLE PRIME)
+    '/': '⧸',   # U+29F8 (big solidus, permitted in Windows file and folder names）
+    '\\': '⧹',  # U+29F9 (big reverse solidus)
+    '|': '￨',   # U+FFE8 (halfwidth forms light vertical)
+    '?': '？',  # U+FF1F (full-width question mark)
+    '*': '∗',   # U+2217 (asterisk operator)
+}
 
 
 def inplace_pattern_rename(src_path: str, pattern: str, repl: str, *,
@@ -148,14 +161,14 @@ def x_rename(src_path: str, dst_name_or_path: str = None, dst_ext: str = None, *
     return shutil.move(src_path, dst_path)
 
 
-def safe_name(name: str, repl: str or dict = None, unescape_html=True, decode_url=True) -> str:
+def safe_name(name: str, repl: str or dict = None, *, unescape_html=True, decode_url=True) -> str:
     if unescape_html:
         name = html.unescape(name)
     if decode_url:
         name = urllib.parse.unquote(name)
     if repl:
         if isinstance(repl, str):
-            r = os_xp.ILLEGAL_FS_CHARS_REGEX_PATTERN.sub(repl, name)
+            r = os_auto.ILLEGAL_FS_CHARS_REGEX_PATTERN.sub(repl, name)
             # rl = len(repl)
             # if rl > 1:
             #     r = ILLEGAL_FS_CHARS_REGEX_PATTERN.sub(repl, x)
@@ -164,11 +177,11 @@ def safe_name(name: str, repl: str or dict = None, unescape_html=True, decode_ur
             # else:
             #     r = x.translate(str.maketrans('', '', ILLEGAL_FS_CHARS))
         elif isinstance(repl, dict):
-            r = name.translate(repl)
+            r = name.translate(str.maketrans(repl))
         else:
-            raise TypeError("Invalid repl '{}'".format(repl))
+            raise TypeError('invalid repl', (str, dict), repl)
     else:
-        r = name.translate(os_xp.ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE)
+        r = name.translate(os_auto.ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE)
     return r
 
 

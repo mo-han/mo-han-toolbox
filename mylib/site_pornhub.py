@@ -3,10 +3,12 @@
 from abc import ABCMeta
 
 import youtube_dl.extractor.pornhub as ytdl_pornhub
-from .youtube_dl_x import ytdl_common
 
-from .text_ez import regex_find
+from . import youtube_dl_x
+from .text import regex_find
 from .web_client import get_html_element_tree
+
+assert youtube_dl_x
 
 
 def find_url_in_text(text: str) -> list:
@@ -15,12 +17,13 @@ def find_url_in_text(text: str) -> list:
     return [prefix + e for e in regex_find(pattern, text, dedup=True)]
 
 
-ytdl_pornhub.InfoExtractor = ytdl_common.InfoExtractor
+# ytdl_pornhub.InfoExtractor = youtube_dl_x.ytdl_common.InfoExtractor  # SEEMINGLY NO EFFECT
 
 
 class PornHubIE(ytdl_pornhub.PornHubIE, metaclass=ABCMeta):
     def _real_extract(self, url):
         data = super()._real_extract(url)
+        # youtube_dl_x.safe_title(data)
         try:
             if data.get('uploader'):
                 return data

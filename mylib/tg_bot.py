@@ -13,7 +13,7 @@ from telegram import ChatAction, Bot, Update, ParseMode, constants, Message
 from telegram.ext import Updater, Filters, CallbackContext
 from telegram.ext.filters import MergedFilter
 
-from .os_xp import HOSTNAME, OSNAME, USERNAME
+from .os_auto import HOSTNAME, OSNAME, USERNAME
 from .text_ez import split_by_length_or_newline
 from .fs import write_sqlite_dict_file, read_sqlite_dict_file
 from .tricks_ez import modify_module

@@ -8,7 +8,7 @@ import ffmpeg
 import filetype
 
 from . import fs
-from . import os_xp
+from . import os_auto
 from . import tricks
 from . import tui
 from ._deprecated import fs_find_iter
@@ -207,7 +207,7 @@ class FFmpegRunnerAlpha:
 
     def proc_comm(self, input_bytes: bytes) -> bytes:
         cmd = self.cmd
-        self.logger.info(os_xp.shlex_double_quotes_join(cmd))
+        self.logger.info(os_auto.shlex_double_quotes_join(cmd))
         if self.capture_stdout_stderr:
             p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         else:
@@ -223,7 +223,7 @@ class FFmpegRunnerAlpha:
 
     def proc_run(self) -> bytes:
         cmd = self.cmd
-        self.logger.info(os_xp.shlex_double_quotes_join(cmd))
+        self.logger.info(os_auto.shlex_double_quotes_join(cmd))
         if self.capture_stdout_stderr:
             p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         else:
@@ -558,7 +558,7 @@ def kw_video_convert(source, keywords=(), vf=None, cut_points=(),
             os.remove(output_path)
             sys.exit(2)
 
-    for filepath in os_xp.list_files(source, recursive=False):
+    for filepath in os_auto.list_files(source, recursive=False):
         conv_one_file(filepath)
 
 
@@ -652,7 +652,7 @@ class FFmpegSegmentsContainer:
             if file_is_video(_path):
                 d, b = os.path.split(_path)
                 self.input_data = {S_FILENAME: b, S_SEGMENT: {}, S_NON_SEGMENT: {}}
-                with os_xp.SubscriptableFileIO(_path) as f:
+                with os_auto.SubscriptableFileIO(_path) as f:
                     middle = f.size // 2
                     root_base = '.{}-{}'.format(self.nickname, tricks.hex_hash(
                         f[:4096] + f[middle - 2048:middle + 2048] + f[-4096:])[:8])

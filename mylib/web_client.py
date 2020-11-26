@@ -18,7 +18,7 @@ import lxml.html
 import requests.utils
 
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
-from .os_xp import write_file_chunk
+from .os_auto import write_file_chunk
 from .os_ez import SubscriptableFileIO
 from .fs import touch, ensure_open_file
 from .tricks_ez import singleton, thread_factory, iter_factory_retry
@@ -172,7 +172,7 @@ def headers_from_cookies(cookies_data: dict or str, headers: dict = None) -> dic
 
 def get_phantomjs_splinter(proxy=None, show_image=False, window_size=(1024, 1024)):
     import splinter
-    from .os_xp import TEMPDIR
+    from .os_auto import TEMPDIR
 
     extra_argv = ['--webdriver-loglevel=WARN']
     if proxy:
@@ -192,7 +192,7 @@ def get_phantomjs_splinter(proxy=None, show_image=False, window_size=(1024, 1024
 
 def get_firefox_splinter(headless=True, proxy: str = None, **kwargs):
     import splinter
-    from .os_xp import TEMPDIR
+    from .os_auto import TEMPDIR
     config = {'service_log_path': os.path.join(TEMPDIR, 'geckodriver.log'),
               'headless': headless}
     config.update(kwargs)

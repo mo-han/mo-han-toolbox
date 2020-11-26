@@ -3,10 +3,12 @@
 from abc import ABCMeta
 
 import youtube_dl.extractor.iwara as ytdl_iwara
-from .youtube_dl_x import ytdl_common
 
+from . import youtube_dl_x
 from .text_ez import regex_find
 from .web_client import get_html_element_tree
+
+assert youtube_dl_x
 
 
 def find_url_in_text(text: str) -> list:
@@ -16,12 +18,13 @@ def find_url_in_text(text: str) -> list:
     return urls
 
 
-ytdl_iwara.InfoExtractor = ytdl_common.InfoExtractor
+# ytdl_iwara.InfoExtractor = youtube_dl_x.ytdl_common.InfoExtractor  # SEEMINGLY NO EFFECT
 
 
 class IwaraIE(ytdl_iwara.IwaraIE, metaclass=ABCMeta):
     def _real_extract(self, url):
         data = super()._real_extract(url)
+        # youtube_dl_x.safe_title(data)
         try:
             html = get_html_element_tree(url)
             uploader = html.xpath('//div[@class="node-info"]//div[@class="submitted"]//a[@class="username"]')[0].text

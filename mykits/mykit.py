@@ -14,7 +14,7 @@ from send2trash import send2trash
 
 from mylib import fs
 from mylib._deprecated import fs_find_iter, real_join_path, fs_inplace_rename, fs_inplace_rename_regex
-from mylib.os_xp import clipboard, list_files, set_console_title___try
+from mylib.os_auto import clipboard, list_files, set_console_title___try
 from mylib.fs import path_or_glob
 from mylib.text_ez import ellipt_middle
 from mylib.tricks_ez import Attreebute, eval_or_str, deco_factory_keyboard_interrupt
@@ -208,7 +208,7 @@ dir_flatter.add_argument('src', nargs='*')
 
 @deco_factory_keyboard_interrupt(2)
 def put_in_dir_func():
-    from mylib.os_xp import fs_move_cli
+    from mylib.os_auto import fs_move_cli
     from mylib.text_ez import find_words
     from mylib.tui_ez import prompt_choose_number, prompt_confirm
     conf_file = real_join_path('~', '.config', 'fs.put_in_dir.json')
@@ -313,7 +313,7 @@ put_in_dir.add_argument('src', nargs='*')
 
 
 def clear_redundant_files_func():
-    from mylib.os_xp import filter_filename_tail, join_filename_tail
+    from mylib.os_auto import filter_filename_tail, join_filename_tail
     lp = LinePrinter()
     args = rtd.args
     tk = set(args.tails_keep or [])
@@ -553,7 +553,7 @@ ytdl.add_argument('param', nargs='*', help='argument(s) propagated to youtube-dl
 
 
 def regex_rename_func():
-    from mylib.os_xp import list_files, list_dirs
+    from mylib.os_auto import list_files, list_dirs
     args = rtd.args
     source = args.source
     recursive = args.recursive
@@ -585,7 +585,7 @@ regex_rename.add_argument('replace')
 
 
 def rename_func():
-    from mylib.os_xp import list_files, list_dirs
+    from mylib.os_auto import list_files, list_dirs
     args = rtd.args
     source = args.source
     recursive = args.recursive
@@ -773,7 +773,7 @@ bilibili_download.add_argument('-A', '--no-moderate-audio', dest='moderate_audio
 
 
 def json_edit_func():
-    from mylib.os_xp import list_files
+    from mylib.os_auto import list_files
     from mylib.fs import write_json_file
     from mylib.fs import read_json_file
     args = rtd.args
