@@ -12,7 +12,7 @@ from pprint import pprint
 
 from send2trash import send2trash
 
-from mylib import fs
+from mylib import fs, os_auto
 from mylib._deprecated import fs_find_iter, real_join_path, fs_inplace_rename, fs_inplace_rename_regex
 from mylib.os_auto import clipboard, list_files, set_console_title___try
 from mylib.fs import path_or_glob
@@ -454,8 +454,9 @@ def ffmpeg_func():
     opts = args.opts
     if verbose:
         print(args)
-    kw_video_convert(source=source, keywords=keywords, vf=video_filters, cut_points=cut_points, dest=output_path,
-                     overwrite=overwrite, redo=redo_origin, verbose=verbose, dry_run=dry_run, ffmpeg_opts=opts)
+    for filepath in os_auto.list_files(source, recursive=False):
+        kw_video_convert(filepath, keywords=keywords, vf=video_filters, cut_points=cut_points, dest=output_path,
+                         overwrite=overwrite, redo=redo_origin, verbose=verbose, dry_run=dry_run, ffmpeg_opts=opts)
 
 
 ffmpeg = add_sub_parser('wrap.ffmpeg', ['ffmpeg', 'ff'], 'convert video file using ffmpeg')

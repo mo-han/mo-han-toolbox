@@ -397,7 +397,7 @@ def get_filter_str(filters):
     return ','.join(get_filter_list(filters))
 
 
-def kw_video_convert(source, keywords=(), vf=None, cut_points=(),
+def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
                      overwrite=False, redo=False, ffmpeg_opts=(),
                      verbose=0, dry_run=False,
                      **kwargs):
@@ -497,69 +497,65 @@ def kw_video_convert(source, keywords=(), vf=None, cut_points=(),
     start = cut_points[0] if cut_points else 0
     end = cut_points[1] if len(cut_points) >= 2 else 0
 
-    def conv_one_file(f):
-        lp = tui.LinePrinter()
-        lp.l()
-        if not os.path.isfile(f):
-            logger.info(f'# skip non-file\n  {f}')
-        if not file_is_video(f):
-            logger.info(f'# skip non-video\n  {f}')
-            return
+    lp = tui.LinePrinter()
+    lp.l()
+    if not os.path.isfile(filepath):
+        logger.info(f'# skip non-file\n  {filepath}')
+    if not file_is_video(filepath):
+        logger.info(f'# skip non-video\n  {filepath}')
+        return
 
-        input_ft = SuffixListFilenameTags(f)
-        origin_ft = SuffixListFilenameTags(f).tag('origin')
-        output_ft = SuffixListFilenameTags(f).untag('crf', 'origin')
-        if crf is not None:
-            output_ft.tag(crf=crf)
-        if not redo and 'origin' in input_ft.tags:
-            logger.info(f'# skip origin\n  {f}')
-            return
-        input_codec_tags = input_ft.tags & CODEC_TAGS_SET - {'origin'}
-        if input_codec_tags:
-            logger.info(f'# skip {input_codec_tags}\n  {f}')
-            return
-        if 'mp4' in keywords:
-            output_ft.extension = '.mp4'
-        if 'mkv' in keywords:
-            output_ft.extension = '.mkv'
-        if 'm4a' in keywords:
-            output_ft.extension = '.m4a'
-            ffmpeg_args.add(map=STREAM_MAP_PRESET_TABLE[S_NO_VIDEO])
-        if 'aac' in keywords:
-            output_ft.extension = '.aac'
-        if 'webm' in keywords:
-            output_ft.extension = '.webm'
-        output_ft = output_ft.tag(*tags)
+    input_ft = SuffixListFilenameTags(filepath)
+    origin_ft = SuffixListFilenameTags(filepath).tag('origin')
+    output_ft = SuffixListFilenameTags(filepath).untag('crf', 'origin')
+    if crf is not None:
+        output_ft.tag(crf=crf)
+    if not redo and 'origin' in input_ft.tags:
+        logger.info(f'# skip origin\n  {filepath}')
+        return
+    input_codec_tags = input_ft.tags & CODEC_TAGS_SET - {'origin'}
+    if input_codec_tags:
+        logger.info(f'# skip {input_codec_tags}\n  {filepath}')
+        return
+    if 'mp4' in keywords:
+        output_ft.extension = '.mp4'
+    if 'mkv' in keywords:
+        output_ft.extension = '.mkv'
+    if 'm4a' in keywords:
+        output_ft.extension = '.m4a'
+        ffmpeg_args.add(map=STREAM_MAP_PRESET_TABLE[S_NO_VIDEO])
+    if 'aac' in keywords:
+        output_ft.extension = '.aac'
+    if 'webm' in keywords:
+        output_ft.extension = '.webm'
+    output_ft = output_ft.tag(*tags)
 
-        origin_path = origin_ft.path
-        output_path = output_ft.path
-        if os.path.isfile(output_path) and not overwrite:
-            logger.info(f'# skip existing\n  {output_path}')
-            return
-        logger.info(f'* {tags}\n  {f}')
-        lp.l()
+    origin_path = origin_ft.path
+    output_path = output_ft.path
+    if os.path.isfile(output_path) and not overwrite:
+        logger.info(f'# skip existing\n  {output_path}')
+        return
+    logger.info(f'* {tags}\n  {filepath}')
+    lp.l()
 
-        try:
-            if res_limit:
-                w, h = get_width_height(f)
-                ffmpeg_args.add(
-                    vf=get_vf_res_scale_down(
-                        w, h, res_limit,
-                        vf=get_filter_str(vf_list)))
-            if not dry_run:
-                ff.convert([f], output_path, ffmpeg_args, start=start, end=end, **kwargs)
-            logger.info(f'+ {output_path}')
-            shutil.move(f, origin_path)
-        except ff.FFmpegError as e:
-            logger.error(f'! {output_path}\n {e}')
-            os.remove(output_path)
-        except KeyboardInterrupt:
-            logger.warning(f'- {output_path}')
-            os.remove(output_path)
-            sys.exit(2)
-
-    for filepath in os_auto.list_files(source, recursive=False):
-        conv_one_file(filepath)
+    try:
+        if res_limit:
+            w, h = get_width_height(filepath)
+            ffmpeg_args.add(
+                vf=get_vf_res_scale_down(
+                    w, h, res_limit,
+                    vf=get_filter_str(vf_list)))
+        if not dry_run:
+            ff.convert([filepath], output_path, ffmpeg_args, start=start, end=end, **kwargs)
+        logger.info(f'+ {output_path}')
+        shutil.move(filepath, origin_path)
+    except ff.FFmpegError as e:
+        logger.error(f'! {output_path}\n {e}')
+        os.remove(output_path)
+    except KeyboardInterrupt:
+        logger.warning(f'- {output_path}')
+        os.remove(output_path)
+        sys.exit(2)
 
 
 def parse_kw_opt_str(kw: str):
