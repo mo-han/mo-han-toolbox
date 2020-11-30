@@ -16,15 +16,14 @@ import requests
 import you_get.util.strings
 from lxml import html
 
-from .text_ez import regex_find
-from .tui_ez import LinePrinter
-from ._misc import safe_print, safe_basename
-from .os_ez import ensure_sigint_signal
-from .tricks import get_first_return
-from .tricks_ez import str2range, modify_module
+from . import web_client
 from ._deprecated import concat_videos, merge_m4s
-from .web_client import cookie_str_from_dict, cookies_dict_from_netscape_file, get_html_element_tree, HTMLElementTree, \
-    make_kwargs_for_lib_requests
+from ._misc import safe_print, safe_basename
+from .os_auto import ensure_sigint_signal
+from . import fs
+from .text import regex_find, ellipt_end
+from .tricks import get_first_return, str2range, modify_module
+from .tui import LinePrinter
 
 BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'
 BILIBILI_EPISODE_URL_PREFIX = 'https://www.bilibili.com/bangumi/play/'
@@ -167,13 +166,17 @@ def code_modify_you_get_extractor(x: str):
     return x
 
 
+def new_legitimize(text: str, os=...):
+    return ellipt_end(fs.safe_name(text, fs.POTENTIAL_INVALID_CHARS_MAP), 240, encoding='u8').lstrip('.')
+
+
 you_get.extractor = modify_module('you_get.extractor', code_modify_you_get_extractor)
 you_get.extractor.quality_desc_priority_index = quality_desc_priority_index
 # 上面已经导入了原版的`you_get.util.strings`，这条模块路径很重要，另有几个模块依赖它
-# 在此基础上，下面一行代码将原版的`you_get.util.fs`替换成修改版
-you_get.util.fs = modify_module('you_get.util.fs', code_modify_you_get_fs)
+# 在此基础上，下面一行代码将原版的`you_get.util.fs`模块替换成修改版（弃用，不再修改原版模块，换用新的`new_legitimize`函数）
+# you_get.util.fs = modify_module('you_get.util.fs', code_modify_you_get_fs)
 # 接着把原版中的`you_get.util.strings.legitimize`函数替换成修改版`you_get.util.fs`中的对应函数
-you_get.util.strings.legitimize = you_get.util.fs.legitimize
+you_get.util.strings.legitimize = you_get.util.fs.legitimize = new_legitimize
 # （上面的`code_modify_you_get_fs`修改的正是`legitimize`）
 # 在原版的you-get中，`.util.string`从`.util.fs`中导入了`legitimize`这个函数
 # `.util.string`又利用这个导入的`legitimize`和其他几个函数，构建了一个`get_filename`函数
@@ -220,7 +223,7 @@ def vid_to_bvid_web_api(vid: str or int, cookies: dict = None) -> str or None:
     else:
         raise TypeError('avid must be str or int')
     url = 'https://api.bilibili.com/x/web-interface/archive/stat'
-    r = requests.get(url, params={'aid': aid}, **make_kwargs_for_lib_requests(cookies=cookies))
+    r = requests.get(url, params={'aid': aid}, **web_client.make_kwargs_for_lib_requests(cookies=cookies))
     j = r.json()
     if j['code'] == 0 and j['data']:
         return j['data']['bvid']
@@ -250,7 +253,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         self.qn_max = qn_max
         self.qn_want = qn_want
         # noinspection PyTypeChecker
-        self.html: Tuple[str, HTMLElementTree] = (None, None)
+        self.html: Tuple[str, web_client.HTMLElementTree] = (None, None)
 
     # B站视频的音频流分不同档次，选择中档128kbps就足够了，也可以选择最高音质
     # 低档30216码率偏低，30232约128kbps，30280可能是320kbps也可能是128kbps，貌似跟4K有关，尚不确定
@@ -264,7 +267,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         if url != self.url:
             url = self.url
             headers = self.bilibili_headers()
-            doc = get_html_element_tree(url, headers=headers)
+            doc = web_client.get_html_element_tree(url, headers=headers)
             self.html = url, doc
 
     # 设置cookies，大会员用得着
@@ -272,10 +275,10 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     # 前者将cookies字典变成单字符串，后者负责读取cookies文件
     def set_cookie(self, cookies: str or dict):
         if isinstance(cookies, dict):
-            c = cookie_str_from_dict(cookies)
+            c = web_client.cookie_str_from_dict(cookies)
         elif isinstance(cookies, str):
             if os.path.isfile(cookies):
-                c = cookie_str_from_dict(cookies_dict_from_netscape_file(cookies))
+                c = web_client.cookie_str_from_dict(web_client.cookies_dict_from_netscape_file(cookies))
             else:
                 c = cookies
         else:
