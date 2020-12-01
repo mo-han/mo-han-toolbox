@@ -1,8 +1,9 @@
 cython>=3a
+ipython
+objbrowser
 pip-autoremove
 pip-chill
 pipdeptree
 pipenv
 ptpython
 pyinstaller
-objbrowser
