@@ -14,9 +14,9 @@ from telegram.ext import Updater, Filters, CallbackContext
 from telegram.ext.filters import MergedFilter
 
 from .os_auto import HOSTNAME, OSNAME, USERNAME
-from .text_ez import split_by_length_or_newline
+from .text import split_by_length_or_newline
 from .fs import write_sqlite_dict_file, read_sqlite_dict_file
-from .tricks_ez import modify_module
+from .tricks import is_picklable_with_dill_trace, modify_module
 
 
 def modify_telegram_ext_commandhandler(s: str) -> str:
@@ -174,10 +174,15 @@ class SimpleBot(ABC):
             undone = self.__data__.setdefault('undone', {})
             queued = self.__data__.setdefault('queued', [])
             for update in itertools.chain(undone.values(), queued):
-                update.message.bot = None
+                update: Update
+                msg = update.message
+                msg.bot = msg.from_user.bot = msg.chat.bot = None
+                is_picklable_with_dill_trace(update)
             write_sqlite_dict_file(data_file_path, self.__data__, with_dill=True)
             for update in itertools.chain(undone.values(), queued):
-                update.message.bot = self.__bot__
+                update: Update
+                msg = update.message
+                msg.bot = msg.from_user.bot = msg.chat.bot = self.__bot__
             read_data = read_sqlite_dict_file(data_file_path, with_dill=True)
             print(f'saved: {len(read_data["undone"])} undone, {len(read_data["queued"])} queued')
 

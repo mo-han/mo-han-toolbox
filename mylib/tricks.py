@@ -59,6 +59,7 @@ def module_sqlitedict_with_dill(*, dill_detect_trace=False):
 
 def is_picklable_with_dill_trace(obj, exact=False, safe=False, **kwds):
     import dill
+    dill.detect.trace(False)
     args = (obj,)
     kwargs = dict(exact=exact, safe=safe, **kwds)
     if dill.pickles(*args, **kwargs):
