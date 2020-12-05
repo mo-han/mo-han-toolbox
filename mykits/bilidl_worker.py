@@ -9,7 +9,7 @@ import shutil
 import subprocess
 
 from mylib._misc import random_fname
-from mylib.os_ez import ensure_sigint_signal
+from mylib.os_lite import ensure_sigint_signal
 
 
 def auto_complete_url(url: str):

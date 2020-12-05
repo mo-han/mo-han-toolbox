@@ -3,7 +3,7 @@
 
 import inflection
 
-from .tricks_ez import *
+from .tricks_lite import *
 
 assert ATTENTION_DO_NO_USE_THIS
 

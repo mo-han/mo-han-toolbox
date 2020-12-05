@@ -16,10 +16,10 @@ from mylib import fs, os_auto
 from mylib._deprecated import fs_find_iter, real_join_path, fs_inplace_rename, fs_inplace_rename_regex
 from mylib.os_auto import clipboard, list_files, set_console_title___try
 from mylib.fs import path_or_glob
-from mylib.text_ez import ellipt_middle
-from mylib.tricks_ez import Attreebute, eval_or_str, deco_factory_keyboard_interrupt
+from mylib.text_lite import ellipt_middle
+from mylib.tricks_lite import Attreebute, eval_or_str, deco_factory_keyboard_interrupt
 from mylib.cli import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter
-from mylib.tui_ez import LinePrinter
+from mylib.tui_lite import LinePrinter
 
 rtd = Attreebute()  # runtime data
 tui_lp = LinePrinter()
@@ -209,8 +209,8 @@ dir_flatter.add_argument('src', nargs='*')
 @deco_factory_keyboard_interrupt(2)
 def put_in_dir_func():
     from mylib.os_auto import fs_move_cli
-    from mylib.text_ez import find_words
-    from mylib.tui_ez import prompt_choose_number, prompt_confirm
+    from mylib.text_lite import find_words
+    from mylib.tui_lite import prompt_choose_number, prompt_confirm
     conf_file = real_join_path('~', '.config', 'fs.put_in_dir.json')
     conf = fs.read_json_file(conf_file) or {'dst_map': {}}
     dst_map = conf['dst_map']
@@ -684,7 +684,7 @@ dukto_x.add_argument('ndrop_args', metavar='[--] arguments for ndrop', nargs=REM
 
 def url_from_clipboard():
     import pyperclip
-    from mylib.text_ez import regex_find
+    from mylib.text_lite import regex_find
     from html import unescape
     args = rtd.args
     pattern = args.pattern

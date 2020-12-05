@@ -5,7 +5,7 @@ from abc import ABCMeta
 import youtube_dl.extractor.iwara as ytdl_iwara
 
 from . import youtube_dl_x
-from .text_ez import regex_find
+from .text_lite import regex_find
 from .web_client import get_html_element_tree
 
 assert youtube_dl_x

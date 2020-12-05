@@ -14,11 +14,11 @@ from queue import Queue
 import psutil
 from filetype import filetype
 
-from . import tricks_ez
+from . import tricks_lite
 from ._deprecated import fs_find_iter
-from .os_ez import *
+from .os_lite import *
 
-assert tricks_ez
+assert tricks_lite
 
 if os.name == 'nt':
     from .os_nt import *
@@ -186,7 +186,7 @@ def monitor_sub_process_tty_frozen(p: subprocess.Popen, timeout=30, wait=1,
     monitoring = []
     monitor_stdout = bool(p.stdout)
     monitor_stderr = bool(p.stderr)
-    nb_caller = tricks_ez.NonBlockingCaller
+    nb_caller = tricks_lite.NonBlockingCaller
     if monitor_stdout:
         monitoring.append(
             (nb_caller(p.stdout.read, 1), codecs.getincrementaldecoder(encoding)(), sys.stdout, _out))

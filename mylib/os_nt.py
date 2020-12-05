@@ -7,7 +7,7 @@ import subprocess
 import pywintypes
 import win32clipboard
 
-from . import tricks_ez
+from . import tricks_lite
 from .ez import *
 
 ILLEGAL_FS_CHARS = r'\/:*?"<>|'
@@ -76,20 +76,20 @@ class Clipboard(metaclass=SingletonMeta):
             raise TypeError("'{}' is not str or int".format(x))
         return x
 
-    @tricks_ez.deco_with_self_context
+    @tricks_lite.deco_with_self_context
     def clear(self):
         return self._wcb.EmptyClipboard()
 
-    @tricks_ez.deco_with_self_context
+    @tricks_lite.deco_with_self_context
     def set(self, data, cf=_wcb.CF_UNICODETEXT):
         cf = self.valid_format(cf)
         return self._wcb.SetClipboardData(cf, data)
 
-    @tricks_ez.deco_with_self_context
+    @tricks_lite.deco_with_self_context
     def _set_text__x(self, text):
         return self._wcb.SetClipboardText(text)
 
-    @tricks_ez.deco_with_self_context
+    @tricks_lite.deco_with_self_context
     def get(self, cf=_wcb.CF_UNICODETEXT):
         cf = self.valid_format(cf)
         if self._wcb.IsClipboardFormatAvailable(cf):
@@ -109,7 +109,7 @@ class Clipboard(metaclass=SingletonMeta):
             lines = [line.strip() for line in str(self.get()).splitlines()]
             return [line for line in lines if os.path.exists(line)]
 
-    @tricks_ez.deco_with_self_context
+    @tricks_lite.deco_with_self_context
     def get_all(self) -> dict:
         d = {}
         for k, v in self.cf_dict.items():

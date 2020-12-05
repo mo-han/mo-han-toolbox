@@ -19,9 +19,9 @@ import requests.utils
 
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
 from .os_auto import write_file_chunk
-from .os_ez import SubscriptableFileIO
+from .os_lite import SubscriptableFileIO
 from .fs import touch, ensure_open_file
-from .tricks_ez import singleton, thread_factory, iter_factory_retry
+from .tricks_lite import singleton, thread_factory, iter_factory_retry
 from .ez import JSONType
 
 MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE = '# Netscape HTTP Cookie File'

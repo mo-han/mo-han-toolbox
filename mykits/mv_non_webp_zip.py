@@ -6,7 +6,7 @@ from time import time
 from zipfile import ZipFile, BadZipFile
 import shutil
 from mylib.os_auto import clipboard as cb
-from mylib.tricks_ez import thread_factory
+from mylib.tricks_lite import thread_factory
 from mylib.os_auto import list_files
 from queue import Queue
 from threading import Thread
