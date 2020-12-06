@@ -280,7 +280,8 @@ def put_in_dir_func():
                         similar_d = {k: v for k, v in similar_d.items() if v}
                         similar_l = sorted(similar_d, key=lambda x: similar_d[x], reverse=True)
                         if similar_l:
-                            target_dir_name = prompt_choose_number(f'Select probable folder for\n{keywords}:', similar_l)
+                            target_dir_name = prompt_choose_number(f'Select probable folder for\n{keywords}:',
+                                                                   similar_l)
                             tui_lp.l()
                 target_dir_name = target_dir_name or input(f'Create folder: ')
                 if target_dir_name:
@@ -763,7 +764,8 @@ bilibili_download.add_argument('-i', '--info', action='store_true')
 bilibili_download.add_argument('-l', '--playlist', action='store_true', help='BUGGY! DO NOT USE!')
 bilibili_download.add_argument('-o', '--output', metavar='dir')
 bilibili_download.add_argument('-p', '--parts', nargs='*', metavar='N')
-bilibili_download.add_argument('-q', '--qn-want', type=int, metavar='N')
+bilibili_download.add_argument('-q', '--qn-want', type=int, metavar='N',
+                               choices=(120, 116, 112, 80, 74, 64, 48, 32, 16, 0))
 bilibili_download.add_argument('-Q', '--qn-max', type=int, metavar='N', default=116,
                                help='max qn (quality number), default to 116 (1080P60), while qn of 4K is 120.')
 bilibili_download.add_argument('-C', '--no-caption', dest='caption', action='store_false')
