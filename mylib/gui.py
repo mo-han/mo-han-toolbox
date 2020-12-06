@@ -94,7 +94,7 @@ def rename_dialog(src: str):
                 d[c] = len(b)
             except UnicodeEncodeError:
                 pass
-        return f'Basename Length: {", ".join([f"{k.upper()}  {v} bytes" for k, v in d.items()])}'
+        return f'Basename Length: {", ".join([f"{k.upper()} {v} bytes" for k, v in d.items()])}'
 
     # sg.theme('SystemDefaultForReal')
     layout = [
