@@ -120,15 +120,15 @@ def ehviewer_images_catalog(dry_run: bool = False):
             folder = '[{}]'.format(', '.join(creators))
         folder = fs.sanitize(folder)
         parent, basename = os.path.split(f)
-        fn, ext = os.path.splitext(basename)
-        # fn = ' '.join(core_title_l) + ' ' + fn.split()[-1]
-        fn = text_lite.ellipt_end(core_title, 210, encoding='utf8').strip() + ' ' + fn.split()[-1]
-        nf = os.path.join(folder, fs.safe_name(fn + ext))
-        logger.info(logmsg_move.format(f, nf))
+        no_ext, ext = os.path.splitext(basename)
+        # no_ext = ' '.join(core_title_l) + ' ' + no_ext.split()[-1]
+        no_ext = text_lite.ellipt_end(core_title, 210, encoding='utf8').strip() + ' ' + no_ext.split()[-1]
+        new_path = os.path.join(folder, fs.sanitize_potential_unicode(no_ext + ext))
+        logger.info(logmsg_move.format(f, new_path))
         if not dry_run:
             if not os.path.isdir(folder):
                 os.mkdir(folder)
-            shutil.move(f, nf)
+            shutil.move(f, new_path)
 
 
 class EHentaiGallery:

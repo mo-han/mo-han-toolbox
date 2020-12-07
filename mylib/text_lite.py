@@ -133,7 +133,7 @@ def regex_find(pattern, source, dedup: bool = False):
     return r
 
 
-def ellipt_middle(s: str, limit=250, *, the_ellipsis: str = '...', encoding: str = None):
+def ellipt_middle(s: str, limit: int, *, the_ellipsis: str = '...', encoding: str = None):
     half_limit = (limit - len(the_ellipsis.encode(encoding=encoding) if encoding else the_ellipsis)) // 2
     common_params = dict(encoding=encoding, the_ellipsis='', limit=half_limit)
     half_s_len = len(s) // 2 + 1
@@ -149,7 +149,7 @@ def ellipt_middle(s: str, limit=250, *, the_ellipsis: str = '...', encoding: str
         return f'{left}{right}'
 
 
-def ellipt_end(s: str, limit=250, *, the_ellipsis: str = '...', encoding: str = None, left_side=False):
+def ellipt_end(s: str, limit: int, *, the_ellipsis: str = '...', encoding: str = None, left_side=False):
     if encoding:
         def length(x: str):
             return len(x.encode(encoding=encoding))

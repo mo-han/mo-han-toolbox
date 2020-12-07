@@ -8,29 +8,33 @@ from .tricks_lite import *
 assert ATTENTION_DO_NO_USE_THIS
 
 
-def get_first_return(tasks: Iterable[dict], common_exception=Exception):
-    """try through a sequence of calling, until anyone returns, then stop and return that value.
+def sequential_try(tasks: Iterable[dict], common_exception=Exception):
+    """try through a sequence of calling, until sth returned, then stop and return that value.
 
     Args:
-        tasks: a sequence of task,
-            which is a dict, consisting of a callable ``target`` (required),
-            with optional items ``args``, ``kwargs``, ``exceptions``, see below,
-            {'target': ``target``, 'args': ``args``, 'kwargs': ``kwargs``, 'exceptions': ``exceptions``}.
-            every task is called like `target(*args, **kwargs)`, if
+        tasks: a sequence of task, which is a dict
+            consisting of a callable ``target`` (required)
+            with optional ``args``, ``kwargs``, ``exceptions``:
+            {'target': ``target``, 'args': ``args``, 'kwargs': ``kwargs``, 'exceptions': ``exceptions``}
+            every task is called like `target(*args, **kwargs)`
+        common_exception: Exception(s) for all tasks, could be overrode per tasks.
 
-
-    during the calling sequence, if the target raise any error, it will be handled in two ways:
-        if the error fit the given exception type, it will be ignored;
-        else, it will be raised, which will stop the whole calling sequence.
+    during the calling sequence, if the target raises any error, it will be handled in two ways:
+        - if the error fit the given exception, it will be ignored
+        - else, it will be raised, which will stop the whole sequence
+    however, if the whole sequence failed (no return), the last exception will be raised
     """
+    e = None
     for task in tasks:
         exception = task.get('exception', common_exception)
         args = task.get('args', ())
         kwargs = task.get('kwargs', {})
         try:
             return task['target'](*args, **kwargs)
-        except exception:
+        except exception as e:
             pass
+    if e:
+        raise e
 
 
 class AttributeInflection:

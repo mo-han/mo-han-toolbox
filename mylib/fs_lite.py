@@ -8,8 +8,8 @@ import itertools
 import json
 import urllib.parse
 
-import mylib.text_lite
 from . import os_auto
+from . import text_lite
 from .ez import *
 
 ATTENTION_DO_NO_USE_THIS = __name__
@@ -21,7 +21,7 @@ POTENTIAL_INVALID_CHARS_MAP = {
     '"': '″',  # U+2033 (DOUBLE PRIME)
     '/': '⧸',  # U+29F8 (big solidus, permitted in Windows file and folder names）
     '\\': '⧹',  # U+29F9 (big reverse solidus)
-    '|': '￨',  # U+FFE8 (halfwidth forms light vertical)
+    '|': '￨',  # U+FFE8 (half-width forms light vertical)
     '?': '？',  # U+FF1F (full-width question mark)
     '*': '∗',  # U+2217 (asterisk operator)
 }
@@ -33,10 +33,10 @@ def inplace_pattern_rename(src_path: str, pattern: str, repl: str, *,
     if only_basename:
         parent, basename = os.path.split(src_path)
         dst_path = os.path.join(parent,
-                                mylib.text_lite.pattern_replace(src_path, pattern, repl, regex=regex,
-                                                                ignore_case=ignore_case))
+                                text_lite.pattern_replace(src_path, pattern, repl, regex=regex,
+                                                          ignore_case=ignore_case))
     else:
-        dst_path = mylib.text_lite.pattern_replace(src_path, pattern, repl, regex=regex, ignore_case=ignore_case)
+        dst_path = text_lite.pattern_replace(src_path, pattern, repl, regex=regex, ignore_case=ignore_case)
     if not dry_run:
         shutil.move(src_path, dst_path)
     if src_path != dst_path:
@@ -163,7 +163,7 @@ def x_rename(src_path: str, dst_name_or_path: str = None, dst_ext: str = None, *
     return shutil.move(src_path, dst_path)
 
 
-def safe_name(name: str, repl: str or dict = None, *, unescape_html=True, decode_url=True) -> str:
+def sanitize(name: str, repl: str or dict = None, *, unescape_html=True, decode_url=True) -> str:
     if unescape_html:
         name = html.unescape(name)
     if decode_url:
@@ -185,6 +185,14 @@ def safe_name(name: str, repl: str or dict = None, *, unescape_html=True, decode
     else:
         r = name.translate(os_auto.ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE)
     return r
+
+
+def sanitize_potential_unicode(name: str, *, unescape_html=True, decode_url=True) -> str:
+    return sanitize(name, POTENTIAL_INVALID_CHARS_MAP, unescape_html=unescape_html, decode_url=decode_url)
+
+
+def sanitize_pu_200(name: str, encoding: str = 'utf8') -> str:
+    return text_lite.ellipt_end(sanitize_potential_unicode(name), 200, encoding=encoding)
 
 
 def read_sqlite_dict_file(filepath, *, with_dill=False, **kwargs):

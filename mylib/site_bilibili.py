@@ -22,7 +22,7 @@ from ._misc import safe_print, safe_basename
 from .os_auto import ensure_sigint_signal
 from . import fs
 from .text import regex_find, ellipt_end
-from .tricks import get_first_return, str2range, modify_module
+from .tricks import sequential_try, str2range, modify_module
 from .tui import LinePrinter
 
 BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'
@@ -294,7 +294,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     def get_title(self):
         self.update_html()
         _, h = self.html
-        t = get_first_return((
+        t = sequential_try((
             {'target': lambda: h.xpath('//*[@class="video-title"]')[0].attrib['title']},
             {'target': lambda: h.xpath('//meta[@property="og:title"]')[0].attrib['content']}
         ), common_exception=IndexError)
@@ -316,7 +316,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     def get_desc(self):
         self.update_html()
         _, h = self.html
-        desc = get_first_return((
+        desc = sequential_try((
             {'target': lambda: h.xpath('//div[@id="v_desc"]')[0].text_content()},
             {'target': lambda: h.xpath('//meta[@name="description"]')[0].attrib['content']}
         ))
