@@ -167,7 +167,7 @@ def code_modify_you_get_extractor(x: str):
 
 
 def new_legitimize(text: str, os=...):
-    return ellipt_end(fs.safe_name(text, fs.POTENTIAL_INVALID_CHARS_MAP), 240, encoding='u8').lstrip('.')
+    return ellipt_end(fs.sanitize(text, fs.POTENTIAL_INVALID_CHARS_MAP), 240, encoding='u8').lstrip('.')
 
 
 you_get.extractor = modify_module('you_get.extractor', code_modify_you_get_extractor)

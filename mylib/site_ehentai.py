@@ -118,12 +118,12 @@ def ehviewer_images_catalog(dry_run: bool = False):
                 folder = '[]'
         else:
             folder = '[{}]'.format(', '.join(creators))
-        folder = fs.safe_name(folder)
+        folder = fs.sanitize(folder)
         parent, basename = os.path.split(f)
         fn, ext = os.path.splitext(basename)
         # fn = ' '.join(core_title_l) + ' ' + fn.split()[-1]
         fn = text_ez.ellipt_end(core_title, 210, encoding='utf8').strip() + ' ' + fn.split()[-1]
-        nf = os.path.join(folder, fs.safe_name(fn + ext))
+        nf = os.path.join(folder, fs.sanitize(fn + ext))
         logger.info(logmsg_move.format(f, nf))
         if not dry_run:
             if not os.path.isdir(folder):
@@ -330,5 +330,5 @@ def ehviewer_dl_folder_rename(folder_path: str, *, db: dict = None, update_db=Fa
     title = d.get('title') or d.get('original title')
     if not title:
         return
-    title = fs.safe_name(title)
+    title = fs.sanitize(title)
     return fs.x_rename(folder_path, title)

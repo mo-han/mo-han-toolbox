@@ -12,17 +12,16 @@ import mylib.text_ez
 from . import os_auto
 from .ez import *
 
-
 POTENTIAL_INVALID_CHARS_MAP = {
     '<': '﹤',  # U+FE64 (small less-than sign)
     '>': '﹥',  # U+FE65 (small greater-than sign)
-    ':': '꞉',   # U+A789 (modifier letter colon, sometimes used in Windows filenames)
-    '"': '″',   # U+2033 (DOUBLE PRIME)
-    '/': '⧸',   # U+29F8 (big solidus, permitted in Windows file and folder names）
+    ':': '꞉',  # U+A789 (modifier letter colon, sometimes used in Windows filenames)
+    '"': '″',  # U+2033 (DOUBLE PRIME)
+    '/': '⧸',  # U+29F8 (big solidus, permitted in Windows file and folder names）
     '\\': '⧹',  # U+29F9 (big reverse solidus)
-    '|': '￨',   # U+FFE8 (halfwidth forms light vertical)
+    '|': '￨',  # U+FFE8 (halfwidth forms light vertical)
     '?': '？',  # U+FF1F (full-width question mark)
-    '*': '∗',   # U+2217 (asterisk operator)
+    '*': '∗',  # U+2217 (asterisk operator)
 }
 
 
@@ -32,7 +31,8 @@ def inplace_pattern_rename(src_path: str, pattern: str, repl: str, *,
     if only_basename:
         parent, basename = os.path.split(src_path)
         dst_path = os.path.join(parent,
-                                mylib.text_ez.pattern_replace(src_path, pattern, repl, regex=regex, ignore_case=ignore_case))
+                                mylib.text_ez.pattern_replace(src_path, pattern, repl, regex=regex,
+                                                              ignore_case=ignore_case))
     else:
         dst_path = mylib.text_ez.pattern_replace(src_path, pattern, repl, regex=regex, ignore_case=ignore_case)
     if not dry_run:
@@ -161,7 +161,7 @@ def x_rename(src_path: str, dst_name_or_path: str = None, dst_ext: str = None, *
     return shutil.move(src_path, dst_path)
 
 
-def safe_name(name: str, repl: str or dict = None, *, unescape_html=True, decode_url=True) -> str:
+def sanitize(name: str, repl: str or dict = None, *, unescape_html=True, decode_url=True) -> str:
     if unescape_html:
         name = html.unescape(name)
     if decode_url:
@@ -183,6 +183,10 @@ def safe_name(name: str, repl: str or dict = None, *, unescape_html=True, decode
     else:
         r = name.translate(os_auto.ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE)
     return r
+
+
+def sanitize_agrsv_u(name: str, *, unescape_html=True, decode_url=True) -> str:
+    return sanitize(name, POTENTIAL_INVALID_CHARS_MAP, unescape_html=unescape_html, decode_url=decode_url)
 
 
 def read_sqlite_dict_file(filepath, *, with_dill=False, **kwargs):
