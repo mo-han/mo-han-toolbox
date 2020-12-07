@@ -29,7 +29,7 @@ def safe_title(extracted_data: dict):
 
 
 class NewInfoExtractor(InfoExtractor, metaclass=ABCMeta):
-    """SEEMINGLY NO EFFECT"""
+    """SEEMS LIKE NO EFFECT"""
 
     def extract(self, url):
         data = super().extract(url)

@@ -18,6 +18,8 @@ pynput  #LGPLv3
 pyperclip
 pyreadline
 pyserial
+python-i18n  #MIT
+pyyaml  #MIT
 requests
 selenium<3.8  # phantomjs
 send2trash

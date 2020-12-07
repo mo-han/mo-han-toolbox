@@ -333,8 +333,8 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         for m in [
             re.search(r'/(bv\w{10})', url, flags=re.I),
             re.search(r'/(av\d+)', url),
-            re.search(r'/bangumi/play/(ep\d+)', url),
-            re.search(r'/bangumi/play/(ss\d+)', url)
+            re.search(r'/(ep\d+)', url),
+            re.search(r'/(ss\d+)', url)
         ]:
             if m:
                 vid = m.group(1)
@@ -344,6 +344,14 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         else:
             vid = ''
         return vid
+
+    def get_real_url(self):
+        vid = self.get_vid()
+        if vid[:2] in ('ep', 'ss',):
+            prefix = BILIBILI_EPISODE_URL_PREFIX
+        else:
+            prefix = BILIBILI_VIDEO_URL_PREFIX
+        return prefix + vid
 
     # [av号][BV号]
     def get_vid_label(self, fmt='[{}]'):
@@ -390,15 +398,12 @@ def download_bilibili_video(url: str or int,
     # 确保在Windows操作系统中，SIGINT信号能够被传递到下层扩展中，从而确保Ctrl+C能够立即停止程序
     ensure_sigint_signal()
     lp = LinePrinter()
+    b = YouGetBilibiliX(cookies=cookies, qn_max=qn_max, qn_want=qn_want)
 
     if not output:
         output = '.'
     if '://' not in url:
         url = bilibili_url_from_vid(vid_to_bvid_web_api(find_bilibili_vid(url) or url))
-
-    lp.print(url)
-    lp.l(shorter=1)
-    b = YouGetBilibiliX(cookies=cookies, qn_max=qn_max, qn_want=qn_want)
 
     if info:
         dl_kwargs = {'info_only': True}
@@ -410,6 +415,9 @@ def download_bilibili_video(url: str or int,
         b.set_audio_qn(30232)
 
     b.url = url
+    b.url = url = b.get_real_url()
+    lp.print(url)
+    lp.l(shorter=1)
     b.write_info_file()
     if playlist:
         b.download_playlist_by_url(url, **dl_kwargs)

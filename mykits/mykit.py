@@ -765,9 +765,9 @@ bilibili_download.add_argument('-l', '--playlist', action='store_true', help='BU
 bilibili_download.add_argument('-o', '--output', metavar='dir')
 bilibili_download.add_argument('-p', '--parts', nargs='*', metavar='N')
 bilibili_download.add_argument('-q', '--qn-want', type=int, metavar='N',
-                               choices=(120, 116, 112, 80, 74, 64, 48, 32, 16, 0))
+                               help='120, 116, 112, 80, 74, 64, 48, 32, 16, 0')
 bilibili_download.add_argument('-Q', '--qn-max', type=int, metavar='N', default=116,
-                               help='max qn (quality number), default to 116 (1080P60), while qn of 4K is 120.')
+                               help='max qn (quality number), default to 116 (1080P60), not 120 (4K).')
 bilibili_download.add_argument('-C', '--no-caption', dest='caption', action='store_false')
 bilibili_download.add_argument('-A', '--no-moderate-audio', dest='moderate_audio', action='store_false',
                                help='by default the best quality audio is NOT used, '

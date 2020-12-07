@@ -58,7 +58,7 @@ class MyAssistantBot(SimpleBot):
         write_json_file(self._conf_file, conf, indent=4)
 
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(
-        re.compile(r'BV[\da-zA-Z]{10}|av\d+')))
+        re.compile(r'BV[\da-zA-Z]{10}|av\d+|ep\d+|ss\d+')))
     def _bldl(self, update, *args):
         args_l = [line2args(line) for line in update.message.text.splitlines()]
         for args in args_l:
