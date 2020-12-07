@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # encoding=utf8
 
-from .text_ez import regex_find
+from .text_lite import regex_find
 
 
 def find_url_in_text(text: str) -> list:

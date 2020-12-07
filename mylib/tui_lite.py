@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # encoding=utf8
-from . import text_ez
-from . import tricks_ez
+from . import text_lite
+from . import tricks_lite
 from .ez import *
 
 ATTENTION_DO_NO_USE_THIS = __name__
@@ -16,7 +16,7 @@ def get_terminal_width():
 class LinePrinter:
     def __init__(self, width: int = 0, output=sys.stdout):
         self.output = output
-        self.width = tricks_ez.constrained(width, int, 'x > 0', enable_default=True, default=0)
+        self.width = tricks_lite.constrained(width, int, 'x > 0', enable_default=True, default=0)
 
     def print(self, text: str = '', **kwargs):
         print(text, file=self.output, flush=True, **kwargs)
@@ -52,7 +52,7 @@ def prompt_choose_number(header: str, choices, default_num: int = None, *, in_co
     choices_n = len(choices)
     choices_menu = [f'  {i + 1}) {choices[i]}' for i in range(choices_n)]
     if in_columns:
-        choices_menu = text_ez.list2col_str(choices_menu, get_terminal_width() - 2, sep=0)
+        choices_menu = text_lite.list2col_str(choices_menu, get_terminal_width() - 2, sep=0)
     else:
         choices_menu = CRLF.join(choices_menu)
     prompt_end = f' [{default_num}]: ' if default_num else ': '
@@ -70,7 +70,7 @@ def prompt_choose_number(header: str, choices, default_num: int = None, *, in_co
 def prompt_choose(header: str, choices: dict, default_key=None, *, in_columns=True):
     choices_menu = [f'  {x}) {y}' for x, y in choices.items()]
     if in_columns:
-        choices_menu = text_ez.list2col_str(choices_menu, get_terminal_width() - 2, sep=0)
+        choices_menu = text_lite.list2col_str(choices_menu, get_terminal_width() - 2, sep=0)
     else:
         choices_menu = CRLF.join(choices_menu)
     input_choices = '/'.join(

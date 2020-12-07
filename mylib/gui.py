@@ -5,10 +5,11 @@ import re
 import shutil
 from collections import defaultdict
 
-from .tricks_ez import deco_factory_retry, singleton, remove_from_list, dedup_list
-from .os_ez import ensure_sigint_signal
+from .tricks_lite import deco_factory_retry, singleton, remove_from_list, dedup_list
+from .os_lite import ensure_sigint_signal
 from ._deprecated import real_join_path
 from .fs import read_json_file, write_json_file
+from .text import encode_default_locale
 
 
 @singleton
@@ -51,8 +52,8 @@ def rename_dialog(src: str):
     root = 'root'
     fname = 'fname'
     ext = 'ext'
-    new_root = 'new_root'
-    new_base = 'new_base'
+    key_new_root = 'key_new_root'
+    key_new_base = 'key_new_base'
     ok = 'OK'
     cancel = 'Cancel'
     pattern = 'pattern'
@@ -62,6 +63,7 @@ def rename_dialog(src: str):
     save_pattern = 'save_pattern'
     add_root = 'add_root'
     rename_info_file = 'rename_info_file'
+    bytes_count = 'bytes_count'
     title = 'Rename - {}'.format(src)
     h = .7
 
@@ -73,6 +75,26 @@ def rename_dialog(src: str):
     info_file_base = [f for f in os.listdir(old_root) if
                       f.endswith('.info') and (f.startswith(old_fn) or old_fn.startswith(f.rstrip('.info')))]
     has_info = True if info_file_base else False
+
+    @deco_factory_retry(Exception, 0, enable_default=True, default=None)
+    def re_sub():
+        return re.sub(data[pattern], data[replace], data[fname] + data[ext])
+
+    def count_name_bytes(name: str):
+        d = {}
+        try:
+            c, b = encode_default_locale(name)
+            d[c] = len(b)
+        except UnicodeEncodeError:
+            pass
+        u8 = 'utf-8'
+        if u8 not in d:
+            try:
+                c, b = encode_default_locale(name, u8)
+                d[c] = len(b)
+            except UnicodeEncodeError:
+                pass
+        return f'Basename Length: {", ".join([f"{k.upper()} {v} bytes" for k, v in d.items()])}'
 
     # sg.theme('SystemDefaultForReal')
     layout = [
@@ -92,10 +114,10 @@ def rename_dialog(src: str):
          sg.CB('', default=True, key=save_replace, enable_events=True, size=(2, h)),
          sg.B('Go', key=substitute, size=(3, h))],
         [sg.HorizontalSeparator()],
-        [sg.I(old_root, key=new_root)],
-        [sg.I(old_fn + old_ext, key=new_base)],
+        [sg.I(old_root, key=key_new_root)],
+        [sg.I(old_base, key=key_new_base)],
         [sg.Submit(ok, size=(10, 1)),
-         sg.Stretch(),
+         sg.Stretch(), sg.T(count_name_bytes(old_base), key=bytes_count), sg.Stretch(),
          sg.Cancel(cancel, size=(10, 1))]]
     if has_info:
         info_file_base = info_file_base[0]
@@ -112,14 +134,10 @@ def rename_dialog(src: str):
 
     loop = True
     data = {fname: old_fn, ext: old_ext, pattern: tmp_pl[0], replace: tmp_rl[0], root: old_root,
-            new_root: '', new_base: ''}
-
-    @deco_factory_retry(Exception, 0, enable_default=True, default=None)
-    def re_sub():
-        return re.sub(data[pattern], data[replace], data[fname] + data[ext])
+            key_new_root: '', key_new_base: ''}
 
     while loop:
-        dst_from_data = os.path.join(data[new_root], data[new_base])
+        dst_from_data = os.path.join(data[key_new_root], data[key_new_base])
         try:
             tmp_fname = re_sub() or data[fname] + data[ext]
             dst = os.path.realpath(os.path.join(data[root], tmp_fname))
@@ -127,12 +145,12 @@ def rename_dialog(src: str):
             dst = src
         if dst != dst_from_data:
             nr, nb = os.path.split(dst)
-            window[new_root].update(nr)
-            window[new_base].update(nb)
+            window[key_new_root].update(nr)
+            window[key_new_base].update(nb)
+            window[bytes_count].update(count_name_bytes(nb))
 
         event, data = window.read()
-        f = window.find_element_with_focus()
-        for k in (root, fname, ext, new_root, new_base):
+        for k in (root, fname, ext, key_new_root, key_new_base):
             window[k].update(text_color=None)
         cur_p = data[pattern]
         cur_r = data[replace]
@@ -173,7 +191,7 @@ def rename_dialog(src: str):
                 for k in (root, fname, ext):
                     window[k].update(text_color='red')
             except FileExistsError:
-                for k in (new_root, new_base):
+                for k in (key_new_root, key_new_base):
                     window[k].update(text_color='red')
             except OSError as e:
                 sg.PopupError(str(e))

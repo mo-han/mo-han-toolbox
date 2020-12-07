@@ -12,7 +12,7 @@ from PIL import Image
 from disjoint_set import DisjointSet
 from imagehash import average_hash, dhash, phash, whash, hex_to_hash
 
-from mylib.tricks_ez import percentage
+from mylib.tricks_lite import percentage
 from mylib.os_auto import check_file_ext
 
 AHASH = 'ahash'

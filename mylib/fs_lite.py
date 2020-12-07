@@ -1,10 +1,18 @@
 #!/usr/bin/env python3
 # encoding=utf8
-from .fs_lite import *
+import contextlib
+import fnmatch
+import glob
+import html
+import itertools
+import json
+import urllib.parse
 
-from . import text_lite
+import mylib.text_lite
 from . import os_auto
 from .ez import *
+
+ATTENTION_DO_NO_USE_THIS = __name__
 
 POTENTIAL_INVALID_CHARS_MAP = {
     '<': '﹤',  # U+FE64 (small less-than sign)
@@ -25,10 +33,10 @@ def inplace_pattern_rename(src_path: str, pattern: str, repl: str, *,
     if only_basename:
         parent, basename = os.path.split(src_path)
         dst_path = os.path.join(parent,
-                                text_lite.pattern_replace(src_path, pattern, repl, regex=regex,
-                                                              ignore_case=ignore_case))
+                                mylib.text_lite.pattern_replace(src_path, pattern, repl, regex=regex,
+                                                                ignore_case=ignore_case))
     else:
-        dst_path = text_lite.pattern_replace(src_path, pattern, repl, regex=regex, ignore_case=ignore_case)
+        dst_path = mylib.text_lite.pattern_replace(src_path, pattern, repl, regex=regex, ignore_case=ignore_case)
     if not dry_run:
         shutil.move(src_path, dst_path)
     if src_path != dst_path:
@@ -155,7 +163,7 @@ def x_rename(src_path: str, dst_name_or_path: str = None, dst_ext: str = None, *
     return shutil.move(src_path, dst_path)
 
 
-def sanitize(name: str, repl: str or dict = None, *, unescape_html=True, decode_url=True) -> str:
+def safe_name(name: str, repl: str or dict = None, *, unescape_html=True, decode_url=True) -> str:
     if unescape_html:
         name = html.unescape(name)
     if decode_url:
@@ -177,10 +185,6 @@ def sanitize(name: str, repl: str or dict = None, *, unescape_html=True, decode_
     else:
         r = name.translate(os_auto.ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE)
     return r
-
-
-def sanitize_agrsv_u(name: str, *, unescape_html=True, decode_url=True) -> str:
-    return sanitize(name, POTENTIAL_INVALID_CHARS_MAP, unescape_html=unescape_html, decode_url=decode_url)
 
 
 def read_sqlite_dict_file(filepath, *, with_dill=False, **kwargs):

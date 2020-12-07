@@ -4,11 +4,11 @@ import json
 
 import requests
 
-from . import text_ez
+from . import text_lite
 from . import fs
 from . import log
 from .ez import *
-from .tricks_ez import VoidDuck, is_hex
+from .tricks_lite import VoidDuck, is_hex
 from .web_client import cookies_dict_from_netscape_file, get_html_element_tree
 
 EH_TITLE_REGEX_PATTERN = re.compile(
@@ -122,8 +122,8 @@ def ehviewer_images_catalog(dry_run: bool = False):
         parent, basename = os.path.split(f)
         fn, ext = os.path.splitext(basename)
         # fn = ' '.join(core_title_l) + ' ' + fn.split()[-1]
-        fn = text_ez.ellipt_end(core_title, 210, encoding='utf8').strip() + ' ' + fn.split()[-1]
-        nf = os.path.join(folder, fs.sanitize(fn + ext))
+        fn = text_lite.ellipt_end(core_title, 210, encoding='utf8').strip() + ' ' + fn.split()[-1]
+        nf = os.path.join(folder, fs.safe_name(fn + ext))
         logger.info(logmsg_move.format(f, nf))
         if not dry_run:
             if not os.path.isdir(folder):

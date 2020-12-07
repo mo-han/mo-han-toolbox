@@ -6,7 +6,7 @@ read/write file with slice
 
 ```python
 
-from mylib.os_ez import SubscriptableFileIO
+from mylib.os_lite import SubscriptableFileIO
 with SubscriptableFileIO('filepath') as f:
     f[-10:] = b'123abc'
     print(f[123:456])

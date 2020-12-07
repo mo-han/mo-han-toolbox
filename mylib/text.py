@@ -2,6 +2,6 @@
 # encoding=utf8
 
 
-from .text_ez import *
+from .text_lite import *
 
 assert ATTENTION_DO_NO_USE_THIS

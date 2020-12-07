@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # encoding=utf8
+import codecs
 import locale
 import unicodedata
 
 from .ez import *
-from .tricks_ez import deco_factory_args_choices, dedup_list
+from .tricks_lite import deco_factory_args_choices, dedup_list
 
 ATTENTION_DO_NO_USE_THIS = __name__
 
@@ -37,11 +38,18 @@ def list2col_str(x: Iterable or Iterator, width, *, horizontal=False, sep=2):
     return '\n'.join(lines_l)
 
 
-def decode_locale(b: bytes, encoding='u8'):
+def decode_fallback_locale(b: bytes, encoding='u8'):
     try:
         return b.decode(encoding=encoding)
     except UnicodeDecodeError:
         return b.decode(encoding=locale.getdefaultlocale()[1])
+
+
+def encode_default_locale(s: str, encoding: str = locale.getdefaultlocale()[1], **kwargs) -> (str, bytes):
+    """str -> (encoding: str, encoded_bytes)"""
+    c = codecs.lookup(encoding)
+    cn = c.name
+    return cn, s.encode(cn, **kwargs)
 
 
 def find_words(s: str, allow_mix_non_word_chars='\''):

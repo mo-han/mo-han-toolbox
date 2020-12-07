@@ -16,10 +16,10 @@ from mylib import fs, os_auto
 from mylib._deprecated import fs_find_iter, real_join_path, fs_inplace_rename, fs_inplace_rename_regex
 from mylib.os_auto import clipboard, list_files, set_console_title___try
 from mylib.fs import path_or_glob
-from mylib.text_ez import ellipt_middle
-from mylib.tricks_ez import Attreebute, eval_or_str, deco_factory_keyboard_interrupt
+from mylib.text_lite import ellipt_middle
+from mylib.tricks_lite import Attreebute, eval_or_str, deco_factory_keyboard_interrupt
 from mylib.cli import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter
-from mylib.tui_ez import LinePrinter
+from mylib.tui_lite import LinePrinter
 
 rtd = Attreebute()  # runtime data
 tui_lp = LinePrinter()
@@ -209,8 +209,8 @@ dir_flatter.add_argument('src', nargs='*')
 @deco_factory_keyboard_interrupt(2)
 def put_in_dir_func():
     from mylib.os_auto import fs_move_cli
-    from mylib.text_ez import find_words
-    from mylib.tui_ez import prompt_choose_number, prompt_confirm
+    from mylib.text_lite import find_words
+    from mylib.tui_lite import prompt_choose_number, prompt_confirm
     conf_file = real_join_path('~', '.config', 'fs.put_in_dir.json')
     conf = fs.read_json_file(conf_file) or {'dst_map': {}}
     dst_map = conf['dst_map']
@@ -280,7 +280,8 @@ def put_in_dir_func():
                         similar_d = {k: v for k, v in similar_d.items() if v}
                         similar_l = sorted(similar_d, key=lambda x: similar_d[x], reverse=True)
                         if similar_l:
-                            target_dir_name = prompt_choose_number(f'Select probable folder for\n{keywords}:', similar_l)
+                            target_dir_name = prompt_choose_number(f'Select probable folder for\n{keywords}:',
+                                                                   similar_l)
                             tui_lp.l()
                 target_dir_name = target_dir_name or input(f'Create folder: ')
                 if target_dir_name:
@@ -684,7 +685,7 @@ dukto_x.add_argument('ndrop_args', metavar='[--] arguments for ndrop', nargs=REM
 
 def url_from_clipboard():
     import pyperclip
-    from mylib.text_ez import regex_find
+    from mylib.text_lite import regex_find
     from html import unescape
     args = rtd.args
     pattern = args.pattern
@@ -763,7 +764,8 @@ bilibili_download.add_argument('-i', '--info', action='store_true')
 bilibili_download.add_argument('-l', '--playlist', action='store_true', help='BUGGY! DO NOT USE!')
 bilibili_download.add_argument('-o', '--output', metavar='dir')
 bilibili_download.add_argument('-p', '--parts', nargs='*', metavar='N')
-bilibili_download.add_argument('-q', '--qn-want', type=int, metavar='N')
+bilibili_download.add_argument('-q', '--qn-want', type=int, metavar='N',
+                               choices=(120, 116, 112, 80, 74, 64, 48, 32, 16, 0))
 bilibili_download.add_argument('-Q', '--qn-max', type=int, metavar='N', default=116,
                                help='max qn (quality number), default to 116 (1080P60), while qn of 4K is 120.')
 bilibili_download.add_argument('-C', '--no-caption', dest='caption', action='store_false')
