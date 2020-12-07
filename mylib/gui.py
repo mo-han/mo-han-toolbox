@@ -129,7 +129,7 @@ def rename_dialog(src: str):
         layout.insert(4, [sg.HorizontalSeparator()])
 
     ensure_sigint_signal()
-    window = sg.Window(title, return_keyboard_events=True).layout(layout).finalize()
+    window = sg.Window(title, layout, return_keyboard_events=True, finalize=True, font='arial 10')
     window.bring_to_front()
 
     loop = True
