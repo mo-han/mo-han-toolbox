@@ -17,12 +17,12 @@ import humanize
 import lxml.html
 import requests.utils
 
+from .T import JSONType
+from .fs import touch, ensure_open_file
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
 from .os_auto import write_file_chunk
 from .os_lite import SubscriptableFileIO
-from .fs import touch, ensure_open_file
 from .tricks_lite import singleton, thread_factory, iter_factory_retry
-from .ez import JSONType
 
 MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE = '# Netscape HTTP Cookie File'
 USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'

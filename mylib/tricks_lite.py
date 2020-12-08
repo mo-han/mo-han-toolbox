@@ -10,19 +10,20 @@ import queue
 import sqlite3
 import threading
 
+from . import T
 from . import log
 from .ez import *
 
 ATTENTION_DO_NO_USE_THIS = __name__
 
 
-def constrained(x, x_type: Callable, x_condition: str or Callable = None, *,
+def constrained(x, x_type: T.Callable, x_condition: str or T.Callable = None, *,
                 enable_default=False, default=None):
     x = x_type(x)
     if x_condition:
         if isinstance(x_condition, str) and eval(x_condition):
             return x
-        elif isinstance(x_condition, Callable) and x_condition(x):
+        elif isinstance(x_condition, T.Callable) and x_condition(x):
             return x
         elif enable_default:
             return default
@@ -48,14 +49,14 @@ class VoidDuck:
         return False
 
 
-def str2range(expr: str) -> Generator:
+def str2range(expr: str) -> T.Generator:
     sections = [[int(n.strip() or 1) for n in e.split('-')] for e in expr.split(',')]
     for s in sections:
         yield from range(s[0], s[-1] + 1)
 
 
-def deco_factory_args_choices(choices: Dict[int or str, Iterable] or None, *args,
-                              **kwargs) -> Decorator:
+def deco_factory_args_choices(choices: T.Dict[int or str, T.Iterable] or None, *args,
+                              **kwargs) -> T.Decorator:
     """decorator factory: force arguments of a func limited inside the given choices
 
     :param choices: a dict which describes the choices of arguments
@@ -93,8 +94,8 @@ def deco_factory_args_choices(choices: Dict[int or str, Iterable] or None, *args
 
 def deco_factory_retry(retry_exceptions=None, max_retries: int = 3,
                        enable_default=False, default=None,
-                       exception_predicate: Callable[[Exception], bool] = None,
-                       exception_queue: QueueType = None) -> Decorator:
+                       exception_predicate: T.Callable[[Exception], bool] = None,
+                       exception_queue: T.QueueType = None) -> T.Decorator:
     """decorator factory: force a func re-running for several times on exception(s)"""
     retry_exceptions = retry_exceptions or ()
     predicate = exception_predicate or (lambda e: True)
@@ -130,7 +131,7 @@ def deco_factory_retry(retry_exceptions=None, max_retries: int = 3,
     return decorator
 
 
-def modify_module(module_path: str, code_modifier: str or Callable, package_path: str = None,
+def modify_module(module_path: str, code_modifier: str or T.Callable, package_path: str = None,
                   output: bool = False, output_file: str = 'tmp.py'):
     # How to modify imported source code on-the-fly?
     #     https://stackoverflow.com/a/41863728/7966259  (answered by Martin Valgur)
@@ -181,7 +182,7 @@ def deco_with_self_context(target):
     return tgt
 
 
-def deco_factory_with_context(context_obj) -> Decorator:
+def deco_factory_with_context(context_obj) -> T.Decorator:
     def deco(target):
         def tgt(*args, **kwargs):
             with context_obj:
@@ -192,12 +193,12 @@ def deco_factory_with_context(context_obj) -> Decorator:
     return deco
 
 
-def remove_from_list(source: Iterable, rmv_set: Iterable) -> list:
+def remove_from_list(source: T.Iterable, rmv_set: T.Iterable) -> list:
     """return a list, which contains elements in source but not in rmv_set"""
     return [x for x in source if x not in rmv_set]
 
 
-def dedup_list(source: Iterable) -> list:
+def dedup_list(source: T.Iterable) -> list:
     r = []
     [r.append(e) for e in source if e not in r]
     return r
@@ -376,7 +377,7 @@ class ExceptionWithKwargs(Exception):
 def thread_factory(group: None = None, name: str = None, daemon: bool = False):
     thread_kwargs = {'group': group, 'name': name, 'daemon': daemon}
 
-    def new_thread(callee: Callable, *args, **kwargs):
+    def new_thread(callee: T.Callable, *args, **kwargs):
         return threading.Thread(target=callee, args=args, kwargs=kwargs, **thread_kwargs)
 
     return new_thread
@@ -389,7 +390,7 @@ class NonBlockingCaller:
     class Stopped(Exception):
         pass
 
-    def __init__(self, target: Callable, *args, **kwargs):
+    def __init__(self, target: T.Callable, *args, **kwargs):
         self.triple = target, args, kwargs
         self._running = False
         self.run()
@@ -431,9 +432,9 @@ class NonBlockingCaller:
             raise self.StillRunning(target, *args, **kwargs)
 
 
-def deco_factory_copy_signature(signature_source: Callable):
+def deco_factory_copy_signature(signature_source: T.Callable):
     # https://stackoverflow.com/a/58989918/7966259
-    def deco(target: Callable):
+    def deco(target: T.Callable):
         @functools.wraps(target)
         def tgt(*args, **kwargs):
             inspect.signature(signature_source).bind(*args, **kwargs)
@@ -505,8 +506,8 @@ class SimpleSQLiteTable:
 
 
 def deco_factory_keyboard_interrupt(exit_code,
-                                    called_in_except_block: Any = VoidDuck,
-                                    called_in_finally_block: Any = VoidDuck):
+                                    called_in_except_block: T.Any = VoidDuck,
+                                    called_in_finally_block: T.Any = VoidDuck):
     def deco(target):
         @deco_factory_copy_signature(target)
         def tgt(*args, **kwargs):
@@ -610,8 +611,8 @@ def iter_factory_retry(max_retries=0,
     else:
         max_try = max_retries
 
-    def iter_retry(callee: Callable, *args, **kwargs) -> Generator[
-        Tuple[int, Exception or Any], None, None]:
+    def iter_retry(callee: T.Callable, *args, **kwargs) -> T.Generator[
+        T.Tuple[int, Exception or T.Any], None, None]:
         cnt = max_try
         while cnt:
             try:
@@ -633,7 +634,7 @@ class CLIArgumentList(list):
     def add_arg(self, arg):
         if isinstance(arg, str):
             self.append(arg)
-        elif isinstance(arg, (Iterable, Iterator)):
+        elif isinstance(arg, T.Iterable):
             for a in arg:
                 self.add_arg(a)
         else:
@@ -645,7 +646,7 @@ class CLIArgumentList(list):
             if isinstance(value, str):
                 self.append(key)
                 self.append(value)
-            elif isinstance(value, (Iterable, Iterator)):
+            elif isinstance(value, T.Iterable):
                 for v in value:
                     self.add_kwarg(key, v)
             elif value is True:
@@ -671,3 +672,32 @@ class CLIArgumentList(list):
         else:
             k = '-' + key
         return k, value
+
+
+def sequential_try(tasks: T.Iterable[dict], common_exception=Exception):
+    """try through a sequence of calling, until sth returned, then stop and return that value.
+
+    Args:
+        tasks: a sequence of task, which is a dict
+            consisting of a callable ``target`` (required)
+            with optional ``args``, ``kwargs``, ``exceptions``:
+            {'target': ``target``, 'args': ``args``, 'kwargs': ``kwargs``, 'exceptions': ``exceptions``}
+            every task is called like `target(*args, **kwargs)`
+        common_exception: Exception(s) for all tasks, could be overrode per tasks.
+
+    during the calling sequence, if the target raises any error, it will be handled in two ways:
+        - if the error fit the given exception, it will be ignored
+        - else, it will be raised, which will stop the whole sequence
+    however, if the whole sequence failed (no return), the last exception will be raised
+    """
+    e = None
+    for task in tasks:
+        exception = task.get('exception', common_exception)
+        args = task.get('args', ())
+        kwargs = task.get('kwargs', {})
+        try:
+            return task['target'](*args, **kwargs)
+        except exception as e:
+            pass
+    if e:
+        raise e

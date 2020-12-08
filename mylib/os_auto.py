@@ -15,6 +15,7 @@ import psutil
 from filetype import filetype
 
 from . import tricks_lite
+from . import T
 from ._deprecated import fs_find_iter
 from .os_lite import *
 
@@ -33,7 +34,7 @@ OSNAME = platform.system()
 USERNAME = getpass.getuser()
 
 
-def check_file_ext(fp: str, ext_list: Iterable):
+def check_file_ext(fp: str, ext_list: T.Iterable):
     return os.path.isfile(fp) and os.path.splitext(fp)[-1].lower() in ext_list
 
 
@@ -85,7 +86,7 @@ def write_file_chunk(filepath: str, start: int, stop: int, data: bytes, total: i
         f[start:stop] = data
 
 
-def list_files(src: str or Iterable or Iterator or Clipboard, recursive=False, progress_queue: Queue = None) -> list:
+def list_files(src: str or T.Iterable or Clipboard, recursive=False, progress_queue: Queue = None) -> list:
     common_kwargs = dict(recursive=recursive, progress_queue=progress_queue)
     # if src is None:
     #     return list_files(clipboard.list_paths(exist_only=True), recursive=recursive)
@@ -97,7 +98,7 @@ def list_files(src: str or Iterable or Iterator or Clipboard, recursive=False, p
             return list(fs_find_iter(root=src, strip_root=False, **common_kwargs))
         else:
             return [fp for fp in glob(src, recursive=recursive) if os.path.isfile(fp)]
-    elif isinstance(src, (Iterable, Iterator)):
+    elif isinstance(src, T.Iterable):
         r = []
         for s in src:
             r.extend(list_files(s, **common_kwargs))
@@ -108,7 +109,7 @@ def list_files(src: str or Iterable or Iterator or Clipboard, recursive=False, p
         raise TypeError('invalid source', src)
 
 
-def list_dirs(src: str or Iterable or Iterator or Clipboard, recursive=False, progress_queue: Queue = None) -> list:
+def list_dirs(src: str or T.Iterable or Clipboard, recursive=False, progress_queue: Queue = None) -> list:
     common_kwargs = dict(recursive=recursive, progress_queue=progress_queue)
     if isinstance(src, str):
         if os.path.isdir(src):
@@ -119,7 +120,7 @@ def list_dirs(src: str or Iterable or Iterator or Clipboard, recursive=False, pr
             return dirs
         else:
             return [p for p in glob(src, recursive=recursive) if os.path.isdir(p)]
-    elif isinstance(src, (Iterable, Iterator)):
+    elif isinstance(src, T.Iterable):
         dirs = []
         for s in src:
             dirs.extend(list_dirs(s, **common_kwargs))
@@ -130,7 +131,7 @@ def list_dirs(src: str or Iterable or Iterator or Clipboard, recursive=False, pr
         raise TypeError('invalid source', src)
 
 
-def split_filename_tail(filepath, valid_tails) -> Tuple[str, str, str, str]:
+def split_filename_tail(filepath, valid_tails) -> T.Tuple[str, str, str, str]:
     dirname, basename = os.path.split(filepath)
     file_non_ext, file_ext = os.path.splitext(basename)
     file_name, file_tail = os.path.splitext(file_non_ext)
@@ -144,7 +145,7 @@ def join_filename_tail(dirname, name_without_tail, tail, ext):
     return os.path.join(dirname, f'{name_without_tail}{tail}{ext}')
 
 
-def group_filename_tail(filepath_list, valid_tails) -> Dict[Tuple[str, str], List[Tuple[str, str]]]:
+def group_filename_tail(filepath_list, valid_tails) -> T.Dict[T.Tuple[str, str], T.List[T.Tuple[str, str]]]:
     rv = defaultdict(list)
     for fp in filepath_list:
         dn, fn, tail, ext = split_filename_tail(fp, valid_tails)

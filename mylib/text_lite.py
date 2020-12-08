@@ -4,6 +4,7 @@ import codecs
 import locale
 import unicodedata
 
+from . import T
 from .ez import *
 from .tricks_lite import deco_factory_args_choices, dedup_list
 
@@ -21,7 +22,7 @@ def visual_len(s: str):
     return n
 
 
-def list2col_str(x: Iterable or Iterator, width, *, horizontal=False, sep=2):
+def list2col_str(x: T.Iterable, width, *, horizontal=False, sep=2):
     """transfer list items into a single `str` in format of columns"""
     sep_s = ' ' * sep
     text_l = [s for s in x]
@@ -103,7 +104,7 @@ def dedup_periodical_str(s):
 
 
 @deco_factory_args_choices({'logic': ('and', '&', 'AND', 'or', '|', 'OR')})
-def simple_partial_query(pattern_list: Iterable[str], source_pool: Iterator[str],
+def simple_partial_query(pattern_list: T.Iterable[str], source_pool: T.Iterable[str],
                          logic: str = 'and',
                          ignore_case: bool = True, enable_regex: bool = False):
     if not enable_regex:

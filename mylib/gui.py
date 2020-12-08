@@ -65,7 +65,7 @@ def rename_dialog(src: str):
     rename_info_file = 'rename_info_file'
     bytes_count = 'bytes_count'
     title = 'Rename - {}'.format(src)
-    h = .7
+    h = None
 
     conf = read_json_file(conf_file, default={pattern: [''], replace: ['']})
     tmp_pl = conf[pattern] or ['']
@@ -94,25 +94,25 @@ def rename_dialog(src: str):
                 d[c] = len(b)
             except UnicodeEncodeError:
                 pass
-        return f'Basename Length: {", ".join([f"{k.upper()} {v} bytes" for k, v in d.items()])}'
+        return f'Basename Length: {len(name)}, {", ".join([f"{k.upper()} {v} bytes" for k, v in d.items()])}'
 
     # sg.theme('SystemDefaultForReal')
     layout = [
         [sg.T(src, key='src')],
         [sg.HorizontalSeparator()],
         [sg.I(old_fn, key=fname, focus=True),
-         sg.I(old_ext, key=ext, size=(6, h))],
+         sg.I(old_ext, key=ext, size=(42, h))],
         [sg.I(old_root, key=root),
-         sg.B('+', key=add_root, size=(3, h)),
-         sg.FolderBrowse('...', target=root, initial_folder=old_root, size=(6, h))],
+         sg.B('+', key=add_root, size=(20, h)),
+         sg.FolderBrowse('...', target=root, initial_folder=old_root, size=(20, h))],
         [sg.HorizontalSeparator()],
-        [sg.T('Regular Expression Substitution Pattern & Replacement')],
+        [sg.T('Regular Expression Pattern & Replacement')],
         [sg.T(size=(0, h)),
          sg.Drop(tmp_pl, key=pattern, enable_events=True, text_color='blue'),
-         sg.CB('', default=True, key=save_pattern, enable_events=True, size=(2, h)),
+         sg.CB('', default=True, key=save_pattern, enable_events=True, size=(15, h)),
          sg.Drop(tmp_rl, key=replace, enable_events=True, text_color='blue'),
-         sg.CB('', default=True, key=save_replace, enable_events=True, size=(2, h)),
-         sg.B('Go', key=substitute, size=(3, h))],
+         sg.CB('', default=True, key=save_replace, enable_events=True, size=(15, h)),
+         sg.B('Go', key=substitute, size=(25, h))],
         [sg.HorizontalSeparator()],
         [sg.I(old_root, key=key_new_root)],
         [sg.I(old_base, key=key_new_base)],
@@ -129,7 +129,8 @@ def rename_dialog(src: str):
         layout.insert(4, [sg.HorizontalSeparator()])
 
     ensure_sigint_signal()
-    window = sg.Window(title, layout, return_keyboard_events=True, finalize=True, font='arial 10')
+    window = sg.Window(title, layout, return_keyboard_events=True, finalize=True, font='arial 10',
+                       element_padding=(1,1))
     window.bring_to_front()
 
     loop = True

@@ -22,7 +22,8 @@ from ._misc import safe_print, safe_basename
 from .os_auto import ensure_sigint_signal
 from . import fs
 from .text import regex_find, ellipt_end
-from .tricks import sequential_try, str2range, modify_module
+from .tricks import str2range, modify_module
+from .tricks_lite import sequential_try
 from .tui import LinePrinter
 
 BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'
