@@ -57,9 +57,29 @@ class MyAssistantBot(SimpleBot):
         conf.update(kwargs)
         write_json_file(self._conf_file, conf, indent=4)
 
+    def __undone_add__(self, key, update):
+        self.__data__['undone'][key] = update
+        try:
+            self.__save_data__()
+        except:
+            self.__reply_md_code_block__(f'{traceback.format_exc()}', update)
+
+    def __undone_del__(self, key, update):
+        del self.__data__['undone'][key]
+        try:
+            self.__save_data__()
+        except Exception:
+            self.__reply_md_code_block__(f'{traceback.format_exc()}', update)
+
+    def __str_contain_abandon_errors__(self, s):
+        abandon_errors = self.__get_conf__().get('abandon_errors') or []
+        return any(map(lambda x: x in s, abandon_errors))
+
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(
         re.compile(r'BV[\da-zA-Z]{10}|av\d+|ep\d+|ss\d+')))
     def _bldl(self, update, *args):
+        undone_key = self._bldl.__name__
+        self.__undone_add__(undone_key, update)
         args_l = [line2args(line) for line in update.message.text.splitlines()]
         for args in args_l:
             args_s = ' '.join([shlex.quote(a) for a in args])
@@ -67,7 +87,11 @@ class MyAssistantBot(SimpleBot):
                 self.__reply_md_code_block__(f'+ {args_s}', update)
                 p, out, err = bldl_retry_frozen(*args)
                 if p.returncode:
-                    echo = ''.join([decode_fallback_locale(b).rsplit('\r', maxsplit=1)[-1] for b in out.readlines()[-5:]])
+                    echo = ''.join(
+                        [decode_fallback_locale(b).rsplit('\r', maxsplit=1)[-1] for b in out.readlines()[-5:]])
+                    if self.__str_contain_abandon_errors__(echo):
+                        self.__reply_md_code_block__(f'- {args_s}\n{echo}', update)
+                        continue
                     self.__requeue_failed_update__(update)
                     self.__reply_md_code_block__(f'- {args_s}\n{echo}', update)
                 else:
@@ -76,30 +100,27 @@ class MyAssistantBot(SimpleBot):
             except Exception as e:
                 self.__reply_md_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
                 self.__requeue_failed_update__(update)
+        self.__undone_del__(undone_key, update)
 
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(
         re.compile(r'youtube|youtu\.be|iwara|pornhub|\[ph[\da-f]{13}]')))
     def _ytdl(self, update: Update, *args):
-        undone = self.__data__['undone']
-        undone[self._ytdl.__name__] = update
-        try:
-            self.__save_data__()
-        except Exception:
-            self.__reply_md_code_block__(f'{traceback.format_exc()}', update)
-
+        undone_key = self._ytdl.__name__
+        self.__undone_add__(undone_key, update)
         args_l = [line2args(line) for line in update.message.text.splitlines()]
         for args in args_l:
-            args = [re.sub(r'\[(ph[\da-f]{13})]', r'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in args]
+            args = [re.sub(r'\[(ph[\da-f]{13})]', r'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in
+                    args]
             args_s = ' '.join([shlex.quote(a) for a in args])
             try:
                 self.__reply_md_code_block__(f'+ {args_s}', update)
                 p, out, err = ytdl_retry_frozen(*args)
                 echo = ''.join(
-                    [re.sub(r'.*\[download]', '[download]', decode_fallback_locale(b).rsplit('\r', maxsplit=1)[-1]) for b in
+                    [re.sub(r'.*\[download]', '[download]', decode_fallback_locale(b).rsplit('\r', maxsplit=1)[-1]) for
+                     b in
                      out.readlines()[-10:]])
                 if p.returncode:
-                    abandon_errors = self.__get_conf__().get('abandon_errors') or []
-                    if any(map(lambda x: x in echo, abandon_errors)):
+                    if self.__str_contain_abandon_errors__(echo):
                         self.__reply_md_code_block__(f'- {args_s}\n{echo}', update)
                         continue
                     self.__reply_md_code_block__(f'! {args_s}\n{echo}', update)
@@ -109,12 +130,7 @@ class MyAssistantBot(SimpleBot):
             except Exception as e:
                 self.__reply_md_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
                 self.__requeue_failed_update__(update)
-
-        del undone[self._ytdl.__name__]
-        try:
-            self.__save_data__()
-        except Exception:
-            self.__reply_md_code_block__(f'{traceback.format_exc()}', update)
+        self.__undone_del__(undone_key, update)
 
     @deco_factory_bot_handler_method(CommandHandler)
     def _secret(self, update: Update, *args):
