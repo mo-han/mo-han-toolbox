@@ -5,3 +5,4 @@ mouse
 pyautogui  # pyautogui==0.9.39
 pysimpleguiqt
 pywinauto<0.6.7
+traitsui
