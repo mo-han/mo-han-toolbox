@@ -60,6 +60,7 @@ def hash_image_file(
         trans: bool = True,
         **kwargs
 ):
+    hash_func = HASH_FUNC[hashtype]
     if hash_db:
         try:
             return hash_db[hashtype + str(hashsize)][image_path]
@@ -68,14 +69,18 @@ def hash_image_file(
     image_o = open_image_file(image_path)
     variants_l = [image_o]
     if trans:
-        variants_l += [
-            image_o.transpose(Image.ROTATE_90),
-            image_o.transpose(Image.ROTATE_180),
-            image_o.transpose(Image.ROTATE_270),
-            image_o.transpose(Image.FLIP_LEFT_RIGHT),
-            image_o.transpose(Image.FLIP_TOP_BOTTOM),
-        ]
-    return [HASH_FUNC[hashtype](v, hash_size=hashsize, **kwargs) for v in variants_l]
+        for t in (Image.ROTATE_90, Image.ROTATE_180, Image.ROTATE_270, Image.FLIP_LEFT_RIGHT, Image.FLIP_TOP_BOTTOM):
+            try:
+                variants_l.append(image_o.transpose(t))
+            except MemoryError:
+                continue
+    hash_l = []
+    for v in variants_l:
+        try:
+            hash_l.append(hash_func(v, hash_size=hashsize, **kwargs))
+        except MemoryError:
+            pass
+    return hash_l
 
 
 def write_imagehash_file(hash_db: dict = None, path: str = IMAGEHASH_FILENAME):
