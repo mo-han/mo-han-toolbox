@@ -8,12 +8,15 @@ gallery-dl
 humanize  #MIT
 imagehash
 inflection  #MIT
+keyboard
 lxml
+mouse
 ndrop
 opencv-python
 pillow
 psutil
 pure-python-adb
+pyautogui  # pyautogui==0.9.39
 pynput  #LGPLv3
 pyperclip
 pyreadline

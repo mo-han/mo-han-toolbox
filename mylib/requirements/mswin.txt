@@ -1,3 +1,4 @@
 -r common.txt
 pywin32
+pywinauto
 winshell
