@@ -13,12 +13,12 @@ from pprint import pprint
 from send2trash import send2trash
 
 from mylib import fs, os_auto
-from mylib._deprecated import fs_find_iter, real_join_path, fs_inplace_rename, fs_inplace_rename_regex
-from mylib.os_auto import clipboard, list_files, set_console_title___try
+from mylib._deprecated import real_join_path, fs_inplace_rename, fs_inplace_rename_regex
+from mylib.cli import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter
 from mylib.fs import path_or_glob
+from mylib.os_auto import clipboard, list_files, set_console_title___try
 from mylib.text_lite import ellipt_middle
 from mylib.tricks_lite import Attreebute, eval_or_str, deco_factory_keyboard_interrupt
-from mylib.cli import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter
 from mylib.tui_lite import LinePrinter
 
 rtd = Attreebute()  # runtime data
@@ -182,6 +182,7 @@ video_guess_crf.add_argument('-L', '--no-clean', action='store_true')
 
 def dir_flatter_func():
     import shutil
+    is_win32 = os.name == 'nt'
     args = rtd.args
     src = args.src or clipboard.list_paths()
     for s in src:
@@ -189,14 +190,14 @@ def dir_flatter_func():
             print(f'! skip non-folder: {s}')
             continue
         with fs.ctx_pushd(s):
-            dir_l = list(fs_find_iter(find_dir_instead_of_file=True))
-            if not dir_l:
-                continue
-            file_l = list(fs_find_iter(strip_root=True, recursive=True))
-            for fp in file_l:
-                flat_path = ellipt_middle(fs.sanitize(fp), 250, encoding='utf8')
-                shutil.move(fp, flat_path)
-            for dp in dir_l:
+            for fp in fs.find_iter('.', 'f', win32_unc=is_win32):
+                flat_path = ellipt_middle(
+                    fs.sanitize(
+                        os.path.relpath(fp, fs.make_path('.', win32_unc=is_win32))),
+                    250, encoding='utf8')
+                print(flat_path)
+                shutil.move(fp, fs.make_path(flat_path, win32_unc=is_win32))
+            for dp in fs.find_iter('.', 'd', include_start_dir=False, win32_unc=is_win32):
                 os.removedirs(dp)
 
 

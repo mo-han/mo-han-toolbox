@@ -67,11 +67,15 @@ def func_factory_match_pattern(regex: bool, ignore_case: bool):
 
 
 def find_iter(start_path: str, find_type: str, pattern: str = None, *,
-              abspath=False, recursive=True, regex=False, ignore_case=False):
+              abspath=False, recursive=True, regex=False, ignore_case=False, include_start_dir=True, win32_unc=False):
     find_files = 'f' in find_type
     find_dirs = 'd' in find_type
     pattern = pattern or ('.*' if regex else '*')
-    start_path = os.path.abspath(start_path) if abspath else start_path
+    if win32_unc:
+        start_path = make_path(start_path, win32_unc=True)
+    else:
+        start_path = os.path.abspath(start_path) if abspath else start_path
+    # print(start_path)
     match_func = func_factory_match_pattern(regex=regex, ignore_case=ignore_case)
     basename = os.path.basename
     if os.path.isfile(start_path):
@@ -79,7 +83,7 @@ def find_iter(start_path: str, find_type: str, pattern: str = None, *,
             yield start_path
         return
     if os.path.isdir(start_path):
-        if find_dirs and match_func(basename(start_path), pattern):
+        if find_dirs and match_func(basename(start_path), pattern) and include_start_dir:
             yield start_path
         if not recursive:
             return
@@ -97,7 +101,9 @@ def find_iter(start_path: str, find_type: str, pattern: str = None, *,
         return
 
 
-def make_path(*paths, absolute=False, follow_link=False, relative=False, user_home=True, env_var=True):
+def make_path(*paths, absolute=False, follow_link=False, relative=False, user_home=True, env_var=True, win32_unc):
+    if win32_unc:
+        absolute = True
     if absolute and relative:
         raise ValueError('both `absolute` and `relative` are enabled')
     path = os.path.join(*paths)
@@ -113,6 +119,8 @@ def make_path(*paths, absolute=False, follow_link=False, relative=False, user_ho
         path = os.path.expanduser(path)
     if env_var:
         path = os.path.expandvars(path)
+    if win32_unc:
+        path = rf'\\?\{path}'
     return path
 
 
