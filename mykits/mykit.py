@@ -184,19 +184,21 @@ def dir_flatter_func():
     import shutil
     is_win32 = os.name == 'nt'
     args = rtd.args
+    prefix = args.prefix
     src = args.src or clipboard.list_paths()
     for s in src:
         if not os.path.isdir(s):
             print(f'! skip non-folder: {s}')
             continue
         with fs.ctx_pushd(s):
+            print(s)
             for fp in fs.find_iter('.', 'f', win32_unc=is_win32):
-                flat_path = ellipt_middle(
-                    fs.sanitize(
-                        os.path.relpath(fp, fs.make_path('.', win32_unc=is_win32))),
-                    250, encoding='utf8')
-                print(flat_path)
-                shutil.move(fp, fs.make_path(flat_path, win32_unc=is_win32))
+                new = os.path.relpath(fp, fs.make_path('.', win32_unc=is_win32))
+                if not prefix:
+                    new = os.path.basename(new)
+                new = ellipt_middle(fs.sanitize(new), 250, encoding='utf8')
+                print(new)
+                shutil.move(fp, fs.make_path(new, win32_unc=is_win32))
             for dp in fs.find_iter('.', 'd', include_start_dir=False, win32_unc=is_win32):
                 os.removedirs(dp)
 
@@ -204,6 +206,7 @@ def dir_flatter_func():
 dir_flatter = add_sub_parser('dir.flatter', ['flat.dir', 'flat.folder'],
                              'flatten directory tree inside a directory into files')
 dir_flatter.set_defaults(func=dir_flatter_func)
+dir_flatter.add_argument('-p', '--prefix', action='store_true')
 dir_flatter.add_argument('src', nargs='*')
 
 
