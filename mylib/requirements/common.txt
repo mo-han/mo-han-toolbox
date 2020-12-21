@@ -1,7 +1,8 @@
 #colored  #by-gooey #MIT
 #pymediainfo  #MIT
 colorama
-dill
+dill  #BSD
+disjoint-set  #MIT
 ffmpeg-python
 filetype  #MIT
 gallery-dl
