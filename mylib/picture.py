@@ -63,7 +63,7 @@ def hash_image_file(
     hash_func = HASH_FUNC[hashtype]
     if hash_db:
         try:
-            return hash_db[hashtype + str(hashsize)][image_path]
+            return hash_db[f'{hashtype}-{hashsize}x{hashsize}'][image_path]
         except KeyError:
             pass
     image_o = open_image_file(image_path)
@@ -115,7 +115,7 @@ def hash_all_image_files(
         stat: bool = True,
         **kwargs
 ):
-    key = hashtype + str(hashsize)
+    key = f'{hashtype}-{hashsize}x{hashsize}'
     db = hash_db or {key: {}}
     dk = db[key]
     images_l = list_all_image_files()
@@ -149,7 +149,7 @@ def pair_similar_images(
 ):
     max_diff = ist2hd(threshold, hashsize=hashsize)
     diff_pairs_ll = []
-    dm = hash_db[hashtype + str(hashsize)]
+    dm = hash_db[f'{hashtype}-{hashsize}x{hashsize}']
     for _ in range(max_diff + 1):
         diff_pairs_ll += [list()]
     image_pairs_l = [c for c in combinations(dm, 2)]
