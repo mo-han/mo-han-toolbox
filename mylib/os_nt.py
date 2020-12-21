@@ -16,7 +16,7 @@ ILLEGAL_FS_CHARS_UNICODE_REPLACE = r'⧹⧸꞉∗？″﹤﹥￨'
 ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE = str.maketrans(ILLEGAL_FS_CHARS, ILLEGAL_FS_CHARS_UNICODE_REPLACE)
 
 
-class Clipboard(metaclass=SingletonMeta):
+class Clipboard(metaclass=SingletonMetaClass):
     _wcb = win32clipboard
     cf_dict = {n.lstrip('CF_'): m for n, m in inspect.getmembers(_wcb) if n.startswith('CF_')}
 
