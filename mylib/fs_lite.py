@@ -101,12 +101,12 @@ def find_iter(start_path: str, find_type: str, pattern: str = None, *,
         return
 
 
-def make_path(*paths, absolute=False, follow_link=False, relative=False, user_home=True, env_var=True, win32_unc):
+def make_path(*parts, absolute=False, follow_link=False, relative=False, user_home=True, env_var=True, win32_unc=False):
     if win32_unc:
         absolute = True
     if absolute and relative:
         raise ValueError('both `absolute` and `relative` are enabled')
-    path = os.path.join(*paths)
+    path = os.path.join(*parts)
     if follow_link:
         path = os.path.realpath(path)
     if absolute:

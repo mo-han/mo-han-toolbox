@@ -15,7 +15,7 @@ from send2trash import send2trash
 from mylib import fs, os_auto
 from mylib._deprecated import real_join_path, fs_inplace_rename, fs_inplace_rename_regex
 from mylib.cli import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter
-from mylib.fs import path_or_glob
+from mylib.fs import path_or_glob, make_path, ctx_pushd
 from mylib.os_auto import clipboard, list_files, set_console_title___try
 from mylib.text_lite import ellipt_middle
 from mylib.tricks_lite import Attreebute, eval_or_str, deco_factory_keyboard_interrupt
@@ -115,6 +115,33 @@ def cmd_mode_func():
 
 cmd_mode = add_sub_parser('cmd', ['cli'], 'command line interactive mode')
 cmd_mode.set_defaults(func=cmd_mode_func)
+
+
+def catalog_files_by_year_func():
+    import shutil
+    args = rtd.args
+    suffix_l = args.suffix or ['']
+    dry_run = args.dry_run
+    files = [p for p in list_files(args.src or clipboard, recursive=True) if any(map(p.endswith, suffix_l))]
+    for f in files:
+        dirname, basename = os.path.split(f)
+        year = re.findall(r'(\d{4})-\d{2}-\d{2}', basename)
+        if not year:
+            continue
+        year = year[0]
+        new_dir = make_path(dirname, year)
+        print(f'{basename} -> {new_dir}')
+        if not dry_run:
+            with ctx_pushd(new_dir, ensure_dst=True):
+                shutil.move(f, basename)
+
+
+catalog_webp_by_year = add_sub_parser('catalog-webp-year', [],
+                                      'catalog webp files into sub-folders by year (search ISO 8601 date in filename)')
+catalog_webp_by_year.set_defaults(func=catalog_files_by_year_func)
+catalog_webp_by_year.add_argument('-x', '--suffix', metavar='ext', nargs='*')
+catalog_webp_by_year.add_argument('-D', '--dry-run', action='store_true')
+catalog_webp_by_year.add_argument('src', nargs='*')
 
 
 def cfip_func():
@@ -627,17 +654,21 @@ rename.add_argument('replace')
 def run_from_lines_func():
     import os
     args = rtd.args
-    file = args.file
+    source = args.source
     dry_run = args.dry_run
     cmd_fmt = ' '.join(args.command) or input('< ')
     if '{}' not in cmd_fmt:
-        cmd_fmt += ' {}'
+        cmd_fmt += ' "{}"'
     print('>', cmd_fmt)
-    if file:
-        with open(file, 'r') as fd:
+    if source == ':clipboard.path':
+        lines = clipboard.list_paths()
+    elif source == ':clipboard':
+        lines = str(clipboard.get()).splitlines()
+    elif source:
+        with open(source, 'r') as fd:
             lines = fd.readlines()
     else:
-        lines = str(clipboard.get()).splitlines()
+        lines = []
     try:
         for line in lines:
             line = line.strip()
@@ -655,8 +686,8 @@ run_from_lines = add_sub_parser(
     'run.from.lines', ['runlines', 'rl'],
     'given lines from file, clipboard, etc. formatted command will be executed for each of the line')
 run_from_lines.set_defaults(func=run_from_lines_func)
-run_from_lines.add_argument('-f', '--file', help='text file of lines')
-run_from_lines.add_argument('command', nargs='*', help='format command from this string and a line')
+run_from_lines.add_argument('-s', '--source', help='":clipboard", ":clipboard.path", or path of file (text lines)')
+run_from_lines.add_argument('command', nargs='*')
 run_from_lines.add_argument('-D', '--dry-run', action='store_true')
 
 

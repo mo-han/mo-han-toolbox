@@ -16,6 +16,7 @@ from filetype import filetype
 
 from . import tricks_lite
 from . import T
+from . import fs
 from ._deprecated import fs_find_iter
 from .os_lite import *
 
@@ -86,7 +87,7 @@ def write_file_chunk(filepath: str, start: int, stop: int, data: bytes, total: i
         f[start:stop] = data
 
 
-def list_files(src: str or T.Iterable or Clipboard, recursive=False, progress_queue: Queue = None) -> list:
+def list_files(src: str or T.Iterable or Clipboard, recursive=False, progress_queue: Queue = None) -> T.List[str]:
     common_kwargs = dict(recursive=recursive, progress_queue=progress_queue)
     # if src is None:
     #     return list_files(clipboard.list_paths(exist_only=True), recursive=recursive)
@@ -95,7 +96,8 @@ def list_files(src: str or T.Iterable or Clipboard, recursive=False, progress_qu
         if os.path.isfile(src):
             return [src]
         elif os.path.isdir(src):
-            return list(fs_find_iter(root=src, strip_root=False, **common_kwargs))
+            # print(src)
+            return list(fs.find_iter(src, 'f', recursive=True))
         else:
             return [fp for fp in glob(src, recursive=recursive) if os.path.isfile(fp)]
     elif isinstance(src, T.Iterable):
@@ -116,7 +118,7 @@ def list_dirs(src: str or T.Iterable or Clipboard, recursive=False, progress_que
             dirs = [src]
             if recursive:
                 dirs.extend(
-                    list(fs_find_iter(root=src, strip_root=False, find_dir_instead_of_file=True, **common_kwargs)))
+                    list(fs.find_iter(src, 'd', recursive=True)))
             return dirs
         else:
             return [p for p in glob(src, recursive=recursive) if os.path.isdir(p)]
