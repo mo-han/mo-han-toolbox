@@ -66,12 +66,16 @@ def hash_image_file(
             return hash_db[f'{hashtype}-{hashsize}x{hashsize}'][image_path]
         except KeyError:
             pass
-    image_o = open_image_file(image_path)
-    variants_l = [image_o]
+    im = open_image_file(image_path)
+    short, long = sorted(im.size)
+    in_cut = hashsize * 2
+    out_cut = in_cut * long / short
+    im.thumbnail((out_cut, out_cut))
+    variants_l = [im]
     if trans:
         for t in (Image.ROTATE_90, Image.ROTATE_180, Image.ROTATE_270, Image.FLIP_LEFT_RIGHT, Image.FLIP_TOP_BOTTOM):
             try:
-                variants_l.append(image_o.transpose(t))
+                variants_l.append(im.transpose(t))
             except MemoryError:
                 continue
     hash_l = []
