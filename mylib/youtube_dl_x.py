@@ -12,7 +12,7 @@ from . import fs
 from .site_iwara import IwaraIE
 from .site_pornhub import PornHubIE
 
-assert ytdl_common
+# assert ytdl_common
 # import module `youtube_dl.YoutubeDL` (forestalled by same name class `youtube_dl.YoutubeDL`)
 ytdl_YoutubeDL = import_module('youtube_dl.YoutubeDL')
 
