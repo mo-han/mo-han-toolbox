@@ -76,7 +76,7 @@ class MyAssistantBot(SimpleBot):
         return any(map(lambda x: x in s, abandon_errors))
 
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(
-        re.compile(r'BV[\da-zA-Z]{10}|av\d+|ep\d+|ss\d+')))
+        re.compile(r'BV[\da-zA-Z]{10}|av\d+\W|ep\d+|ss\d+')))
     def _bldl(self, update, *args):
         undone_key = self._bldl.__name__
         self.__undone_add__(undone_key, update)
