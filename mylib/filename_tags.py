@@ -27,6 +27,13 @@ class ListFilenameTags(ABC):
     def path(self):
         return self.get_path()
 
+    def get_untagged_path(self):
+        ...
+
+    @property
+    def untagged_path(self):
+        return self.get_untagged_path()
+
     def __repr__(self):
         return f'{self.__class__.__name__}(tags={self.tags}, filename={self.path})'
 
@@ -86,3 +93,6 @@ class SuffixListFilenameTags(ListFilenameTags):
             return f'{self.prefix}{self.left}{self.sep.join(tags_l)}{self.right}{self.extension}'
         else:
             return f'{self.prefix}{self.extension}'
+
+    def get_untagged_path(self):
+        return f'{self.prefix}{self.extension}'
