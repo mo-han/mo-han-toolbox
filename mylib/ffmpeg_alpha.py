@@ -1199,6 +1199,7 @@ class FFmpegSegmentsContainer:
         i, d = list(d.items())[0]
         config_funcs_d = {'h264': self.config_video, 'hevc': self.config_hevc, 'vp9': self.config_vp9}
         codec = VIDEO_CODECS_A10N.get(codec, codec) or d['codec_name']
+        codec = {'vp8': 'vp9'}.get(codec, codec)
         config_func = config_funcs_d[codec]
         crf0 = {'h264': 23, 'hevc': 28, 'vp9': 31}[codec]
         config_func(crf=crf0, res_limit=res_limit)
