@@ -6,8 +6,10 @@ import glob
 import html
 import itertools
 import json
+import os
 import urllib.parse
 
+from . import T
 from . import os_auto
 from . import text_lite
 from .ez import *
@@ -59,7 +61,7 @@ def regex_match(name: str, pattern: str):
     return bool(re.search(pattern, name))
 
 
-def func_factory_match_pattern(regex: bool, ignore_case: bool):
+def factory_match_pattern(regex: bool, ignore_case: bool):
     return {
         (False, False): match, (False, True): match_ignore_case,
         (True, False): regex_match, (True, True): regex_match_ignore_case
@@ -76,7 +78,7 @@ def find_iter(start_path: str, find_type: str, pattern: str = None, *,
     else:
         start_path = os.path.abspath(start_path) if abspath else start_path
     # print(start_path)
-    match_func = func_factory_match_pattern(regex=regex, ignore_case=ignore_case)
+    match_func = factory_match_pattern(regex=regex, ignore_case=ignore_case)
     basename = os.path.basename
     if os.path.isfile(start_path):
         if find_files and match_func(basename(start_path), pattern):
@@ -101,6 +103,28 @@ def find_iter(start_path: str, find_type: str, pattern: str = None, *,
         return
 
 
+def files_from_iter(src: str or T.Iterable, *, recursive=False, win32_unc=False):
+    def mkp(*parts):
+        return make_path(*parts, win32_unc=win32_unc)
+
+    if isinstance(src, str):
+        if os.path.isfile(src):
+            yield mkp(src)
+        elif os.path.isdir(src):
+            if recursive:
+                yield from find_iter(src, 'f', recursive=True, win32_unc=win32_unc)
+            else:
+                for fn in next(os.walk(src))[-1]:
+                    yield mkp(src, fn)
+        else:
+            for p in glob.glob(src, recursive=recursive):
+                if os.path.isfile(p):
+                    yield p
+    else:
+        for s in src:
+            yield from files_from_iter(s, recursive=recursive, win32_unc=win32_unc)
+
+
 def make_path(*parts, absolute=False, follow_link=False, relative=False, user_home=True, env_var=True, win32_unc=False):
     if win32_unc:
         absolute = True
@@ -120,7 +144,8 @@ def make_path(*parts, absolute=False, follow_link=False, relative=False, user_ho
     if env_var:
         path = os.path.expandvars(path)
     if win32_unc:
-        path = rf'\\?\{path}'
+        if not path.startswith('\\\\?\\'):
+            path = rf'\\?\{path}'
     return path
 
 
@@ -271,3 +296,14 @@ def path_or_glob(pathname, *, recursive=False):
         return [pathname]
     else:
         return glob.glob(pathname, recursive=recursive)
+
+
+def split_dirname_basename_ext(path):
+    """path -> dirname, basename, extension"""
+    p, b = os.path.split(path)
+    n, e = os.path.splitext(b)
+    return p, n, e
+
+
+def join_dirname_basename_ext(dirname, basename, extension):
+    return os.path.join(dirname, basename + extension)

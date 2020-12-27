@@ -4,7 +4,7 @@ import os
 import re
 from abc import ABC
 
-from .os_auto import split_filename
+from . import fs
 
 
 class ListFilenameTags(ABC):
@@ -20,6 +20,21 @@ class ListFilenameTags(ABC):
     def keys(self) -> set:
         return self.tags_set.union(self.tags_dict.keys())
 
+    def has_tag(self, *tag, **kw):
+        tag_n = len(tag)
+        kw_n = len(kw)
+        if tag_n + kw_n > 1:
+            raise ValueError('too many tags given (only one expected)')
+        if tag_n:
+            tag = tag[0]
+            return tag in self.tags or tag in self.keys
+        if kw_n:
+            for k, v in kw.items():
+                if v == '':
+                    return k in self.tags or k in self.keys
+                else:
+                    return str(self.tags_dict.get(k)) == str(v)
+
     def get_path(self):
         ...
 
@@ -31,7 +46,7 @@ class ListFilenameTags(ABC):
         ...
 
     @property
-    def untagged_path(self):
+    def notag(self):
         return self.get_untagged_path()
 
     def __repr__(self):
@@ -63,23 +78,20 @@ class SuffixListFilenameTags(ListFilenameTags):
         self.left = left
         self.right = right
         self.sep = sep
-        tags_pattern = f'({re.escape(self.left)}.*{re.escape(self.right)})$'
-        if re.search(tags_pattern, path):
-            pd, fn = os.path.split(path)
+        tags_pattern = fr'{re.escape(left)}[^\[\]]*{re.escape(right)}'
+        dn, bn, ext = fs.split_dirname_basename_ext(path)
+        if re.search(tags_pattern, ext):
+            bn += ext
             ext = ''
-        else:
-            pd, fn, ext = split_filename(path)
-        parts = re.split(tags_pattern, fn)
-        self.prefix = os.path.join(pd, parts[0])
         self.extension = ext
-        if len(parts) > 1:
-            tags_s = parts[1].lstrip(self.left).rstrip(self.right).strip()
-        else:
-            tags_s = ''
-        if tags_s:
-            tags_l = tags_s.split(sep=sep)
-        else:
+        try:
+            head, tags, _ = re.split(fr'({tags_pattern})$', bn)
+            tags_s = str(tags[len(left):-len(right)]).strip()
+            tags_l = tags_s.split(sep) if tags_s else []
+        except ValueError:
+            head = bn
             tags_l = []
+        self.prefix = os.path.join(dn, head)
         for t in tags_l:
             if '=' in t:
                 k, v = t.split('=', maxsplit=1)

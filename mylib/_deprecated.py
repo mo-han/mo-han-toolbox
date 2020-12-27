@@ -4,8 +4,12 @@ import fnmatch
 import os
 import re
 import shutil
+from glob import glob
 from queue import Queue
 from typing import Callable, Generator
+
+from mylib import T, fs
+from mylib.os_nt import Clipboard
 
 
 def fs_find_iter(pattern: str or Callable = None, root: str = '.',
@@ -207,3 +211,49 @@ def merge_m4s(m4s_list: list, output_path: str):
 
 
 VIDEO_FILE_EXTENSIONS = ['.mp4', '.m4v', '.mkv', '.flv', '.webm']
+
+
+def list_files(src: str or T.Iterable or Clipboard, recursive=False, progress_queue: Queue = None) -> T.List[str]:
+    common_kwargs = dict(recursive=recursive, progress_queue=progress_queue)
+    # if src is None:
+    #     return list_files(clipboard.list_paths(exist_only=True), recursive=recursive)
+    # elif isinstance(src, str):
+    if isinstance(src, str):
+        if os.path.isfile(src):
+            return [src]
+        elif os.path.isdir(src):
+            # print(src)
+            return list(fs.find_iter(src, 'f', recursive=True))
+        else:
+            return [fp for fp in glob(src, recursive=recursive) if os.path.isfile(fp)]
+    elif isinstance(src, T.Iterable):
+        r = []
+        for s in src:
+            r.extend(list_files(s, **common_kwargs))
+        return r
+    elif isinstance(src, Clipboard):
+        return list_files(src.list_path(exist_only=True), **common_kwargs)
+    else:
+        raise TypeError('invalid source', src)
+
+
+def list_dirs(src: str or T.Iterable or Clipboard, recursive=False, progress_queue: Queue = None) -> list:
+    common_kwargs = dict(recursive=recursive, progress_queue=progress_queue)
+    if isinstance(src, str):
+        if os.path.isdir(src):
+            dirs = [src]
+            if recursive:
+                dirs.extend(
+                    list(fs.find_iter(src, 'd', recursive=True)))
+            return dirs
+        else:
+            return [p for p in glob(src, recursive=recursive) if os.path.isdir(p)]
+    elif isinstance(src, T.Iterable):
+        dirs = []
+        for s in src:
+            dirs.extend(list_dirs(s, **common_kwargs))
+        return dirs
+    elif isinstance(src, Clipboard):
+        return list_dirs(src.list_path(exist_only=True), **common_kwargs)
+    else:
+        raise TypeError('invalid source', src)

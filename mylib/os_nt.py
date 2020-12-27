@@ -97,7 +97,7 @@ class Clipboard(metaclass=SingletonMetaClass):
             data = None
         return data
 
-    def list_paths(self, exist_only=True) -> list:
+    def list_path(self, exist_only=True) -> list:
         paths = self.get(self._wcb.CF_HDROP)
         if paths:
             if exist_only:

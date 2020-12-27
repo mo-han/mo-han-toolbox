@@ -8,15 +8,17 @@ import re
 import shlex
 import sys
 from argparse import ArgumentParser, REMAINDER
+from collections import defaultdict
 from pprint import pprint
 
 from send2trash import send2trash
 
-from mylib import fs, os_auto
-from mylib._deprecated import real_join_path, fs_inplace_rename, fs_inplace_rename_regex
+import mylib._deprecated
+from mylib import fs
+from mylib._deprecated import real_join_path, fs_inplace_rename, fs_inplace_rename_regex, list_files, list_dirs
 from mylib.cli import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter
 from mylib.fs import path_or_glob, make_path, ctx_pushd
-from mylib.os_auto import clipboard, list_files, set_console_title___try
+from mylib.os_auto import clipboard, set_console_title___try
 from mylib.text_lite import ellipt_middle
 from mylib.tricks_lite import Attreebute, eval_or_str, deco_factory_keyboard_interrupt
 from mylib.tui_lite import LinePrinter
@@ -117,6 +119,49 @@ cmd_mode = add_sub_parser('cmd', ['cli'], 'command line interactive mode')
 cmd_mode.set_defaults(func=cmd_mode_func)
 
 
+def tag_filter_files_func():
+    from mylib.filename_tags import SuffixListFilenameTags
+    args = rtd.args
+    ext_rm = set(args.X or [])
+    ext_kp = set(args.x or [])
+    tag_rm = set(args.T or [])
+    tag_kp = set(args.t or [])
+    dry = args.dry_run
+    rm = defaultdict(set)
+    kp = defaultdict(set)
+    for file in fs.files_from_iter(args.src or clipboard.list_path(), recursive=False):
+        ft = SuffixListFilenameTags(file)
+        ext = ft.extension
+        prefix = ft.prefix
+        if any(map(ft.has_tag, tag_kp)) or ext in ext_kp:
+            kp[prefix].add(file)
+        elif any(map(ft.has_tag, tag_rm)) or ext in ext_rm:
+            rm[prefix].add(file)
+        else:
+            kp[prefix].add(file)
+    for prefix, rm_set in rm.items():
+        kp_set = kp.get(prefix, set())
+        if kp_set:
+            print(f'* {prefix}')
+            for file in kp_set:
+                print(f'@ {file}')
+            for file in rm_set - kp_set:
+                print(f'- {file}')
+                if not dry:
+                    send2trash(file)
+
+
+tag_filter_files = add_sub_parser('tag.filter.files', [], 'filter files by tags and ext')
+tag_ff = tag_filter_files
+tag_ff.set_defaults(func=tag_filter_files_func)
+tag_ff.add_argument('src', nargs='*')
+tag_ff.add_argument('-D', '--dry-run', action='store_true')
+tag_ff.add_argument('-X', dest='X', metavar='ext', nargs='*', help='files with these extensions will be removed')
+tag_ff.add_argument('-x', dest='x', metavar='ext', nargs='*', help='files with these extensions will be kept')
+tag_ff.add_argument('-T', dest='T', metavar='tag', nargs='*', help='files with these tags will be removed')
+tag_ff.add_argument('-t', dest='t', metavar='tag', nargs='*', help='files with these tags will be kept')
+
+
 def catalog_files_by_year_func():
     import shutil
     args = rtd.args
@@ -212,7 +257,7 @@ def dir_flatter_func():
     is_win32 = os.name == 'nt'
     args = rtd.args
     prefix = args.prefix
-    src = args.src or clipboard.list_paths()
+    src = args.src or clipboard.list_path()
     for s in src:
         if not os.path.isdir(s):
             print(f'! skip non-folder: {s}')
@@ -246,7 +291,7 @@ def put_in_dir_func():
     conf = fs.read_json_file(conf_file) or {'dst_map': {}}
     dst_map = conf['dst_map']
     args = rtd.args
-    src = args.src or clipboard.list_paths()
+    src = args.src or clipboard.list_path()
     dst = args.dst
     alias = args.alias
     dry_run = args.dry_run
@@ -344,7 +389,7 @@ put_in_dir.add_argument('dst', nargs='?', help='dest dir')
 put_in_dir.add_argument('src', nargs='*')
 
 
-def clear_redundant_files_func():
+def tail_filter_files_func():
     from mylib.os_auto import filter_filename_tail, join_filename_tail
     lp = LinePrinter()
     args = rtd.args
@@ -374,15 +419,15 @@ def clear_redundant_files_func():
                     send2trash(join_filename_tail(dn, fn, tail, ext))
 
 
-files_clear_redundant = add_sub_parser('file.clear.redundant', ['fcr'], 'clear files with related names')
-fcr = files_clear_redundant
-fcr.set_defaults(func=clear_redundant_files_func)
-fcr.add_argument('-t', '--tails-keep', nargs='*', metavar='tail', help='keep files with these tails')
-fcr.add_argument('-x', '--extensions-keep', nargs='*', metavar='ext', help='keep files with these extensions')
-fcr.add_argument('-T', '--tails-gone', nargs='*', metavar='tail', help='remove files with these tails')
-fcr.add_argument('-X', '--extensions-gone', nargs='*', metavar='ext', help='remove files with these extensions')
-fcr.add_argument('-D', '--dry-run', action='store_true')
-fcr.add_argument('src', nargs='*')
+tail_filter_files = add_sub_parser('tail.filter.files', [], 'filter files by filename tails and extensions')
+tail_ff = tail_filter_files
+tail_ff.set_defaults(func=tail_filter_files_func)
+tail_ff.add_argument('-t', '--tails-keep', nargs='*', metavar='tail', help='keep files with these tails')
+tail_ff.add_argument('-x', '--extensions-keep', nargs='*', metavar='ext', help='keep files with these extensions')
+tail_ff.add_argument('-T', '--tails-gone', nargs='*', metavar='tail', help='remove files with these tails')
+tail_ff.add_argument('-X', '--extensions-gone', nargs='*', metavar='ext', help='remove files with these extensions')
+tail_ff.add_argument('-D', '--dry-run', action='store_true')
+tail_ff.add_argument('src', nargs='*')
 
 
 def cookies_write_func():
@@ -444,7 +489,7 @@ def ffmpeg_img2vid_func():
     if os.path.isdir(os.path.dirname(images)):
         images_l = [images]
     else:
-        images_l = [os.path.join(folder, images) for folder in clipboard.list_paths() if os.path.isdir(folder)]
+        images_l = [os.path.join(folder, images) for folder in clipboard.list_path() if os.path.isdir(folder)]
     for i in images_l:
         if output in ('mp4', 'webm'):
             o = f'{os.path.realpath(os.path.dirname(i))}.{output}'
@@ -486,7 +531,7 @@ def ffmpeg_func():
     opts = args.opts
     if verbose:
         print(args)
-    for filepath in os_auto.list_files(source, recursive=False):
+    for filepath in mylib._deprecated.list_files(source, recursive=False):
         kw_video_convert(filepath, keywords=keywords, vf=video_filters, cut_points=cut_points, dest=output_path,
                          overwrite=overwrite, redo=redo_origin, verbose=verbose, dry_run=dry_run, ffmpeg_opts=opts)
 
@@ -511,7 +556,7 @@ def ffprobe_func():
     file = rtd.args.file
     ss = rtd.args.select_streams
     if not file:
-        file = clipboard.list_paths()[0]
+        file = clipboard.list_path()[0]
     if ss:
         pprint(probe(file, select_streams=ss))
     else:
@@ -532,7 +577,7 @@ def file_type_func():
     else:
         fmt = '{type} ({file})'
     if not files:
-        files = clipboard.list_paths(exist_only=True)
+        files = clipboard.list_path(exist_only=True)
     for f in files:
         try:
             print(fmt.format(type=guess(f).mime, file=f))
@@ -586,7 +631,7 @@ ytdl.add_argument('param', nargs='*', help='argument(s) propagated to youtube-dl
 
 
 def regex_rename_func():
-    from mylib.os_auto import list_files, list_dirs
+    from mylib.os_auto import list_files
     args = rtd.args
     source = args.source
     recursive = args.recursive
@@ -661,7 +706,7 @@ def run_from_lines_func():
         cmd_fmt += ' "{}"'
     print('>', cmd_fmt)
     if source == ':clipboard.path':
-        lines = clipboard.list_paths()
+        lines = clipboard.list_path()
     elif source == ':clipboard':
         lines = str(clipboard.get()).splitlines()
     elif source:
@@ -763,7 +808,7 @@ clipboard_findurl.add_argument('pattern', help='URL pattern, or website name')
 
 def clipboard_rename_func():
     from mylib.gui import rename_dialog
-    for f in clipboard.list_paths():
+    for f in clipboard.list_path():
         rename_dialog(f)
 
 

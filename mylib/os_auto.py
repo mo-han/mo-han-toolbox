@@ -7,17 +7,13 @@ import platform
 import shlex
 import tempfile
 from collections import defaultdict
-from glob import glob
 from io import BytesIO
-from queue import Queue
 
 import psutil
 from filetype import filetype
 
 from . import tricks_lite
 from . import T
-from . import fs
-from ._deprecated import fs_find_iter
 from .os_lite import *
 
 assert tricks_lite
@@ -85,52 +81,6 @@ def write_file_chunk(filepath: str, start: int, stop: int, data: bytes, total: i
         elif f.size < stop:
             f.truncate(stop)
         f[start:stop] = data
-
-
-def list_files(src: str or T.Iterable or Clipboard, recursive=False, progress_queue: Queue = None) -> T.List[str]:
-    common_kwargs = dict(recursive=recursive, progress_queue=progress_queue)
-    # if src is None:
-    #     return list_files(clipboard.list_paths(exist_only=True), recursive=recursive)
-    # elif isinstance(src, str):
-    if isinstance(src, str):
-        if os.path.isfile(src):
-            return [src]
-        elif os.path.isdir(src):
-            # print(src)
-            return list(fs.find_iter(src, 'f', recursive=True))
-        else:
-            return [fp for fp in glob(src, recursive=recursive) if os.path.isfile(fp)]
-    elif isinstance(src, T.Iterable):
-        r = []
-        for s in src:
-            r.extend(list_files(s, **common_kwargs))
-        return r
-    elif isinstance(src, Clipboard):
-        return list_files(src.list_paths(exist_only=True), **common_kwargs)
-    else:
-        raise TypeError('invalid source', src)
-
-
-def list_dirs(src: str or T.Iterable or Clipboard, recursive=False, progress_queue: Queue = None) -> list:
-    common_kwargs = dict(recursive=recursive, progress_queue=progress_queue)
-    if isinstance(src, str):
-        if os.path.isdir(src):
-            dirs = [src]
-            if recursive:
-                dirs.extend(
-                    list(fs.find_iter(src, 'd', recursive=True)))
-            return dirs
-        else:
-            return [p for p in glob(src, recursive=recursive) if os.path.isdir(p)]
-    elif isinstance(src, T.Iterable):
-        dirs = []
-        for s in src:
-            dirs.extend(list_dirs(s, **common_kwargs))
-        return dirs
-    elif isinstance(src, Clipboard):
-        return list_dirs(src.list_paths(exist_only=True), **common_kwargs)
-    else:
-        raise TypeError('invalid source', src)
 
 
 def split_filename_tail(filepath, valid_tails) -> T.Tuple[str, str, str, str]:
@@ -236,18 +186,6 @@ def monitor_sub_process_tty_frozen(p: subprocess.Popen, timeout=30, wait=1,
                 pass
             except Exception as e:
                 raise e
-
-
-def split_filename(path):
-    """path -> parent_dir, name, ext"""
-    p, b = os.path.split(path)
-    n, e = os.path.splitext(b)
-    return p, n, e
-
-
-def join_filename(parent_path, name_without_ext, extension):
-    """parent_dir, name, ext -> path"""
-    return os.path.join(parent_path, name_without_ext + extension)
 
 
 def set_console_title___try(title: str):
