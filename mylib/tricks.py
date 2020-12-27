@@ -6,7 +6,7 @@ import sqlitedict
 
 from .tricks_lite import *
 
-assert ATTENTION_DO_NO_USE_THIS
+assert USELESS_PLACEHOLDER_FOR_MODULE_TRICKS_LITE
 
 
 class AttributeInflection:

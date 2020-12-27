@@ -2,21 +2,22 @@
 # encoding=utf8
 """telegram bot utilities"""
 import itertools
+import shlex
 import time
 from abc import ABC
 from functools import reduce
 from inspect import getmembers, ismethod
 from typing import Callable
-import shlex
 
 from telegram import ChatAction, Bot, Update, ParseMode, constants, Message
 from telegram.ext import Updater, Filters, CallbackContext
 from telegram.ext.filters import MergedFilter
 
+from . import T
+from .fs import write_sqlite_dict_file, read_sqlite_dict_file
 from .os_auto import HOSTNAME, OSNAME, USERNAME
 from .text import split_by_length_or_newline
-from .fs import write_sqlite_dict_file, read_sqlite_dict_file
-from .tricks import is_picklable_with_dill_trace, modify_module
+from .tricks import modify_module, is_picklable_with_dill_trace, deep_setattr, walk_obj_iter
 
 
 def modify_telegram_ext_commandhandler(s: str) -> str:
@@ -65,7 +66,7 @@ class SimpleBot(ABC):
         self.__updater__ = Updater(token, use_context=True,
                                    request_kwargs={'read_timeout': timeout, 'connect_timeout': timeout},
                                    **kwargs)
-        self.__bot__: Bot = self.__updater__.bot
+        # self.__bot__: Bot = self.__updater__.bot
         self.__get_me__(timeout=timeout)
         self.__init_data__()
         print(self.__about_this_bot__())
@@ -73,6 +74,10 @@ class SimpleBot(ABC):
         self.__register_handlers__()
         if auto_run:
             self.__run__(poll_timeout=timeout)
+
+    @property
+    def __bot__(self):
+        return self.__updater__.bot
 
     def __register_whitelist__(self, whitelist):
         if whitelist:
@@ -169,22 +174,33 @@ class SimpleBot(ABC):
         self.__reply_markdown__(f'```\n{menu_str}```', update)
 
     def __save_data__(self, data_file_path=None):
-        self.__data__['mtime'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+        # def pickle_bot(bot_obj: Bot):
+        #     return (lambda: self.__bot__), ()
+        # copyreg.pickle(Bot, pickle_bot)
+        # ABOVE CODE IS NOT A SOLUTION!
+        t0 = time.time()
+        bot_placeholder = object()
+        data = self.__data__
+        data['mtime'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
         if data_file_path:
-            undone = self.__data__.setdefault('undone', {})
-            queued = self.__data__.setdefault('queued', [])
-            for update in itertools.chain(undone.values(), queued):
-                update: Update
-                msg = update.message
-                msg.bot = msg.from_user.bot = msg.chat.bot = None
-                is_picklable_with_dill_trace(update)
-            write_sqlite_dict_file(data_file_path, self.__data__, with_dill=True)
-            for update in itertools.chain(undone.values(), queued):
-                update: Update
-                msg = update.message
-                msg.bot = msg.from_user.bot = msg.chat.bot = self.__bot__
+            undone = data.setdefault('undone', {})
+            queued = data.setdefault('queued', [])
+            updates: T.Iterable[Update] = itertools.chain(undone.values(), queued)
+            for u in updates:
+                # for path in [path for path, obj in walk_obj_iter(u) if isinstance(obj, Bot)]:
+                #     deep_setattr(u, bot_placeholder, *path)
+                m = u.message
+                m.bot = m.from_user.bot = m.chat.bot = None
+                # is_picklable_with_dill_trace(u)  # DEBUG ONLY
+            write_sqlite_dict_file(data_file_path, data, with_dill=True)
+            for u in updates:
+                # for path in [path for path, obj in walk_obj_iter(u) if obj is bot_placeholder]:
+                #     deep_setattr(u, self.__bot__, *path)
+                m = u.message
+                m.bot = m.from_user.bot = m.chat.bot = self.__bot__
             read_data = read_sqlite_dict_file(data_file_path, with_dill=True)
             print(f'saved: {len(read_data["undone"])} undone, {len(read_data["queued"])} queued')
+            print(f'time used: {time.time() - t0}s')
 
     def __requeue_failed_update__(self, update: Update, save=False):
         update_queue = self.__updater__.dispatcher.update_queue

@@ -14,7 +14,52 @@ from . import T
 from . import log
 from .ez import *
 
-ATTENTION_DO_NO_USE_THIS = __name__
+USELESS_PLACEHOLDER_FOR_MODULE_TRICKS_LITE = __name__
+
+
+def deep_getattr(obj, *path, enable_default=False, default=None):
+    try:
+        current = obj
+        for name in path:
+            current = getattr(current, name)
+        return current
+    except AttributeError:
+        if enable_default:
+            return default
+        else:
+            raise
+
+
+def deep_setattr(obj, value, path, *paths):
+    path_l = [path, *paths]
+    o = deep_getattr(obj, *path_l[:-1])
+    setattr(o, path_l[-1], value)
+
+
+def walk_obj_iter(obj, path: list = None, skip: set = None, *, ignore_method=True, ignore_magic=True):
+    path = [] if path is None else path
+    skip = set() if skip is None else skip
+
+    def _iter(_obj, _path):
+        for name, value in inspect.getmembers(_obj):
+            if name == '__dict__':
+                continue
+            if ignore_method and inspect.ismethod(value):
+                continue
+            if ignore_magic and name.startswith('__') and name.endswith('__'):
+                continue
+            _path_ = [*_path, name]
+            yield _path_, value
+            if id(value) in skip:
+                continue
+            skip.add(id(value))
+            yield from _iter(value, _path_)
+
+    root = deep_getattr(obj, *path)
+    skip.add(id(root))
+    if path:
+        yield path, root
+    yield from _iter(root, path)
 
 
 def constrained(x, x_type: T.Callable, x_condition: str or T.Callable = None, *,
