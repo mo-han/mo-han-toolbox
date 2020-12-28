@@ -167,7 +167,7 @@ def catalog_files_by_year_func():
     args = rtd.args
     suffix_l = args.suffix or ['']
     dry_run = args.dry_run
-    files = [p for p in list_files(args.src or clipboard, recursive=True) if any(map(p.endswith, suffix_l))]
+    files = (p for p in fs.files_from_iter(args.src or clipboard.list_path()) if any(map(p.endswith, suffix_l)))
     for f in files:
         dirname, basename = os.path.split(f)
         year = re.findall(r'(\d{4})-\d{2}-\d{2}', basename)
@@ -181,12 +181,12 @@ def catalog_files_by_year_func():
                 shutil.move(f, basename)
 
 
-catalog_webp_by_year = add_sub_parser('catalog-webp-year', [],
-                                      'catalog webp files into sub-folders by year (search ISO 8601 date in filename)')
-catalog_webp_by_year.set_defaults(func=catalog_files_by_year_func)
-catalog_webp_by_year.add_argument('-x', '--suffix', metavar='ext', nargs='*')
-catalog_webp_by_year.add_argument('-D', '--dry-run', action='store_true')
-catalog_webp_by_year.add_argument('src', nargs='*')
+catalog_files_by_year = add_sub_parser('catalog.files.year', ['clf.yr'],
+                                       'catalog files into sub-folders by year (search ISO 8601 date in filename)')
+catalog_files_by_year.set_defaults(func=catalog_files_by_year_func)
+catalog_files_by_year.add_argument('-x', '--suffix', metavar='ext', nargs='*')
+catalog_files_by_year.add_argument('-D', '--dry-run', action='store_true')
+catalog_files_by_year.add_argument('src', nargs='*')
 
 
 def cfip_func():
@@ -635,7 +635,6 @@ ytdl.add_argument('param', nargs='*', help='argument(s) propagated to youtube-dl
 
 
 def regex_rename_func():
-    from mylib.os_auto import list_files
     args = rtd.args
     source = args.source
     recursive = args.recursive
@@ -667,7 +666,6 @@ regex_rename.add_argument('replace')
 
 
 def rename_func():
-    from mylib.os_auto import list_files, list_dirs
     args = rtd.args
     source = args.source
     recursive = args.recursive
@@ -860,7 +858,6 @@ bilibili_download.add_argument('-A', '--no-moderate-audio', dest='moderate_audio
 
 
 def json_edit_func():
-    from mylib.os_auto import list_files
     from mylib.fs import write_json_file
     from mylib.fs import read_json_file
     args = rtd.args
