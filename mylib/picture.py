@@ -2,8 +2,6 @@
 # encoding=utf8
 import copy
 import json
-import os
-import shutil
 from itertools import combinations
 from logging import warning
 from typing import Iterable
@@ -12,8 +10,10 @@ from PIL import Image
 from disjoint_set import DisjointSet
 from imagehash import average_hash, dhash, phash, whash, hex_to_hash
 
-from mylib.tricks_lite import percentage
+from mylib.ez import *
+from mylib import fs
 from mylib.os_auto import check_file_ext
+from mylib.tricks_lite import percentage
 
 AHASH = 'ahash'
 DHASH = 'dhash'
@@ -199,22 +199,29 @@ def view_similar_image_groups(similar_groups: DisjointSet):
     folder = SIMILAR_IMAGE_FOLDER
     if not os.path.isdir(folder):
         os.mkdir(folder)
-    for g in list(similar_groups.itersets()):
-        real_files = []
-        for f in g:
-            if os.path.isfile(f):
-                real_files.append(f)
-        if len(real_files) < 2:
-            continue
-        for f in real_files:
-            shutil.move(f, folder)
-        os.system(cmd.format(os.path.join(folder, real_files[0])))
-        for f in real_files:
-            try:
-                shutil.move(os.path.join(folder, f), '.')
-            except (FileNotFoundError, shutil.Error):
-                pass
-    os.removedirs(folder)
+    try:
+        for g in list(similar_groups.itersets()):
+            real_files = []
+            for f in g:
+                if os.path.isfile(f):
+                    real_files.append(f)
+            if len(real_files) < 2:
+                continue
+            for f in real_files:
+                shutil.move(f, folder)
+            os.system(cmd.format(os.path.join(folder, real_files[0])))
+            for f in real_files:
+                try:
+                    shutil.move(os.path.join(folder, f), '.')
+                except (FileNotFoundError, shutil.Error):
+                    pass
+    except KeyboardInterrupt:
+        with fs.ctx_pushd(folder):
+            for f in os.listdir():
+                shutil.move(f, '..')
+        sys.exit(2)
+    finally:
+        os.removedirs(folder)
 
 
 def view_similar_images_auto(

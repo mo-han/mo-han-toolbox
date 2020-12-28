@@ -933,11 +933,18 @@ def view_similar_images():
         'trans': args.transpose,
         'dryrun': args.dry_run,
     }
-    view_similar_images_auto(**kwargs)
+    dir_l = (p for p in (args.dir or clipboard.list_path()) if os.path.isdir(p))
+    if dir_l:
+        for d in dir_l:
+            with ctx_pushd(d):
+                view_similar_images_auto(**kwargs)
+    else:
+        view_similar_images_auto(**kwargs)
 
 
 img_sim_view = add_sub_parser('img.sim.view', ['vsi'], 'view similar images in current working directory')
 img_sim_view.set_defaults(func=view_similar_images)
+img_sim_view.add_argument('dir', nargs='*')
 img_sim_view.add_argument(
     '-t', '--thresholds', type=arg_type_range_factory(float, '0<x<=1'), nargs='+', metavar='N',
     help='(multiple) similarity thresholds')
