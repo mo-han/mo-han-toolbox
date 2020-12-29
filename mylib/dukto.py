@@ -128,7 +128,7 @@ def copy_recv_text(file: str = None, use_clipboard: bool = False):
                 ndrop.netdrop.logger.info("Copy TEXT to file '{}'".format(file))
     elif use_clipboard:
         def handle(t):
-            clipboard.set_bot(t)
+            clipboard.set(t)
             ndrop.netdrop.logger.info('Copy TEXT to clipboard')
     else:
         def handle(t):

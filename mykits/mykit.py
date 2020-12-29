@@ -217,7 +217,7 @@ def cfip_func():
         output = pformat(info)
     if file:
         write_json_file(file, data, indent=4)
-    clipboard.set_bot(output)
+    clipboard.set(output)
     print(output)
 
 
