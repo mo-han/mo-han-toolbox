@@ -5,7 +5,8 @@ import os
 import re
 import shutil
 import sys
-from time import time, sleep
+import time
+from time import sleep
 
 assert os
 assert sys

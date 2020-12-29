@@ -30,13 +30,14 @@ def deep_getattr(obj, *path, enable_default=False, default=None):
             raise
 
 
-def deep_setattr(obj, value, path, *paths):
-    path_l = [path, *paths]
-    o = deep_getattr(obj, *path_l[:-1])
-    setattr(o, path_l[-1], value)
+def deep_setattr(obj, value, *path):
+    o = deep_getattr(obj, *path[:-1])
+    # print(path[:-1], path[-1])  # DEBUG ONLY
+    setattr(o, path[-1], value)
 
 
-def walk_obj_iter(obj, path: list = None, skip: set = None, *, ignore_method=True, ignore_magic=True):
+def walk_obj_iter(obj, path: list = None, skip: set = None, *,
+                  ignore_method=True, ignore_magic=True, keepout_types=()):
     path = [] if path is None else path
     skip = set() if skip is None else skip
 
@@ -50,6 +51,8 @@ def walk_obj_iter(obj, path: list = None, skip: set = None, *, ignore_method=Tru
                 continue
             _path_ = [*_path, name]
             yield _path_, value
+            if isinstance(value, keepout_types):
+                continue
             if id(value) in skip:
                 continue
             skip.add(id(value))
@@ -756,3 +759,7 @@ class AttributeNaming:
 
 def attr_name(x):
     return x.__attr_name__
+
+
+def call(target: T.Callable, *args, **kwargs):
+    return target(*args, **kwargs)

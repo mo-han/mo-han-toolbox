@@ -146,9 +146,9 @@ def monitor_sub_process_tty_frozen(p: subprocess.Popen, timeout=30, wait=1,
     if monitor_stderr:
         monitoring.append(
             (nb_caller(p.stderr.read, 1), codecs.getincrementaldecoder(encoding)(), sys.stderr, _err))
-    t0 = time()
+    t0 = time.perf_counter()
     while 1:
-        if time() - t0 > timeout:
+        if time.perf_counter() - t0 > timeout:
             for p in psutil.Process(p.pid).children(recursive=True):
                 p.kill()
             p.kill()
@@ -160,7 +160,7 @@ def monitor_sub_process_tty_frozen(p: subprocess.Popen, timeout=30, wait=1,
             try:
                 b = nb_reader.get(wait)
                 if b:
-                    t0 = time()
+                    t0 = time.perf_counter()
                     bytes_io.write(b)
                     nb_reader.run()
                     if output:

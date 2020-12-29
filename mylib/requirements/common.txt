@@ -1,7 +1,8 @@
+#bitmath  #MIT #filesize #unit
 #colored  #by-gooey #MIT
 #pymediainfo  #MIT
 colorama
-dill  #BSD
+dill  #BSD-3
 disjoint-set  #MIT
 ffmpeg-python
 filetype  #MIT
@@ -27,6 +28,7 @@ pyyaml  #MIT
 requests
 selenium<3.8  # phantomjs
 send2trash
+si-prefix  #BSD-3
 splinter<0.8  # phantomjs
 sqlitedict
 uiautomator2

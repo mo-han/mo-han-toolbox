@@ -3,21 +3,49 @@
 """telegram bot utilities"""
 import itertools
 import shlex
-import time
+import traceback
 from abc import ABC
 from functools import reduce
 from inspect import getmembers, ismethod
 from typing import Callable
 
+from si_prefix import si_format
 from telegram import ChatAction, Bot, Update, ParseMode, constants, Message
 from telegram.ext import Updater, Filters, CallbackContext
 from telegram.ext.filters import MergedFilter
 
 from . import T
+from .ez import *
 from .fs import write_sqlite_dict_file, read_sqlite_dict_file
 from .os_auto import HOSTNAME, OSNAME, USERNAME
 from .text import split_by_length_or_newline
-from .tricks import modify_module, is_picklable_with_dill_trace, deep_setattr, walk_obj_iter
+from .tricks import modify_module, deep_setattr, walk_obj_iter, is_picklable_with_dill_trace
+
+
+class PrePickleBotInUpdate(metaclass=SingletonMetaClass):
+    def __init__(self, u: Update):
+        self.bot_paths = []
+        for p in (path for path, obj in walk_obj_iter(u, keepout_types=(Bot,)) if isinstance(obj, Bot)):
+            self.bot_paths.append(p)
+
+    def del_bot(self, u: Update):
+        for p in self.bot_paths:
+            try:
+                deep_setattr(u, None, *p)
+            except AttributeError:
+                print(u, p)
+                raise
+
+    def set_bot(self, u: Update, b: Bot):
+        for p in self.bot_paths:
+            deep_setattr(u, b, *p)
+
+
+class BotPlaceholder:
+    pass
+
+
+BOT_PLACEHOLDER = BP = BotPlaceholder()
 
 
 def modify_telegram_ext_commandhandler(s: str) -> str:
@@ -59,14 +87,16 @@ def merge_filters_or(*filters):
 
 
 class SimpleBot(ABC):
-    def __init__(self, token, *, timeout=None, whitelist=None, auto_run=True, data: dict = None, filters=None,
+    def __init__(self, token, *,
+                 timeout=None, whitelist=None, filters=None, runtime_data: dict = None,
+                 auto_run=True, debug_mode=False,
                  **kwargs):
-        self.__data__ = data or {}
+        self._debug_mode = debug_mode
+        self.__rt_data__ = runtime_data or {}
         self.__filters__ = filters
         self.__updater__ = Updater(token, use_context=True,
                                    request_kwargs={'read_timeout': timeout, 'connect_timeout': timeout},
                                    **kwargs)
-        # self.__bot__: Bot = self.__updater__.bot
         self.__get_me__(timeout=timeout)
         self.__init_data__()
         print(self.__about_this_bot__())
@@ -76,7 +106,7 @@ class SimpleBot(ABC):
             self.__run__(poll_timeout=timeout)
 
     @property
-    def __bot__(self):
+    def __bot__(self) -> Bot:
         return self.__updater__.bot
 
     def __register_whitelist__(self, whitelist):
@@ -149,8 +179,8 @@ class SimpleBot(ABC):
                f'{self.__fullname__} @{self.__username__}\n\n' \
                f'running on device:\n' \
                f'{USERNAME} @ {HOSTNAME} ({OSNAME})\n\n' \
-               f'load {len(self.__data__["queued"]) + len(self.__data__["undone"])} update(s) ' \
-               f'since {self.__data__["mtime"]}'
+               f'load {len(self.__rt_data__["queued"]) + len(self.__rt_data__["undone"])} update(s) ' \
+               f'since {self.__rt_data__["mtime"]}'
 
     @deco_factory_bot_handler_method(CommandHandler, on_menu=True)
     def start(self, update: Update, context: CallbackContext):
@@ -173,34 +203,47 @@ class SimpleBot(ABC):
         menu_str = '\n'.join(lines)
         self.__reply_markdown__(f'```\n{menu_str}```', update)
 
-    def __save_data__(self, data_file_path=None):
+    def __save_rt_data__(self, data_file_path=None):
         # def pickle_bot(bot_obj: Bot):
         #     return (lambda: self.__bot__), ()
         # copyreg.pickle(Bot, pickle_bot)
         # ABOVE CODE IS NOT A SOLUTION!
-        t0 = time.time()
-        bot_placeholder = object()
-        data = self.__data__
+        t0 = time.perf_counter()
+        data = self.__rt_data__
         data['mtime'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
         if data_file_path:
             undone = data.setdefault('undone', {})
             queued = data.setdefault('queued', [])
-            updates: T.Iterable[Update] = itertools.chain(undone.values(), queued)
-            for u in updates:
-                # for path in [path for path, obj in walk_obj_iter(u) if isinstance(obj, Bot)]:
-                #     deep_setattr(u, bot_placeholder, *path)
-                m = u.message
-                m.bot = m.from_user.bot = m.chat.bot = None
-                # is_picklable_with_dill_trace(u)  # DEBUG ONLY
+            updates: T.List[Update] = [*undone.values(), *queued]
+            [self.__pre_pickle_update__(u) for u in updates]
             write_sqlite_dict_file(data_file_path, data, with_dill=True)
-            for u in updates:
-                # for path in [path for path, obj in walk_obj_iter(u) if obj is bot_placeholder]:
-                #     deep_setattr(u, self.__bot__, *path)
-                m = u.message
-                m.bot = m.from_user.bot = m.chat.bot = self.__bot__
+            [self.__post_pickle_update__(u) for u in updates]
             read_data = read_sqlite_dict_file(data_file_path, with_dill=True)
-            print(f'saved: {len(read_data["undone"])} undone, {len(read_data["queued"])} queued')
-            print(f'time used: {time.time() - t0}s')
+            t = time.perf_counter() - t0
+            print(f'saved: {len(read_data["undone"])} undone, {len(read_data["queued"])} queued ({si_format(t)}s used)')
+
+    def __pre_pickle_update_auto__(self, u: Update):
+        for p in (path for path, obj in walk_obj_iter(u, keepout_types=(Bot,)) if isinstance(obj, Bot)):
+            deep_setattr(u, BP, *p)
+        if self._debug_mode and not is_picklable_with_dill_trace(u):
+            for p in (path for path, obj in walk_obj_iter(u, keepout_types=(Bot,)) if isinstance(obj, Bot)):
+                print(p)
+
+    def __post_pickle_update_auto__(self, u: Update):
+        for p in (path for path, obj in walk_obj_iter(u, keepout_types=(BotPlaceholder,)) if
+                  isinstance(obj, BotPlaceholder)):
+            deep_setattr(u, self.__bot__, *p)
+
+    def __pre_pickle_update__(self, u: Update):
+        msg = u.message
+        msg.bot = msg.from_user.bot = msg.chat.bot = BP
+        if self._debug_mode and not is_picklable_with_dill_trace(u):
+            for p in (path for path, obj in walk_obj_iter(u, keepout_types=(Bot,)) if isinstance(obj, Bot)):
+                print(p)
+
+    def __post_pickle_update__(self, u: Update):
+        msg = u.message
+        msg.bot = msg.from_user.bot = msg.chat.bot = self.__bot__
 
     def __requeue_failed_update__(self, update: Update, save=False):
         update_queue = self.__updater__.dispatcher.update_queue
@@ -209,13 +252,27 @@ class SimpleBot(ABC):
         print(s)
         self.__reply_md_code_block__(s, update)
         if save:
-            self.__save_data__()
+            self.__save_rt_data__()
 
     def __init_data__(self):
-        self.__data__.setdefault('mtime', 'N/A')
-        undone = self.__data__.setdefault('undone', {})
-        queued = self.__data__.setdefault('queued', [])
+        self.__rt_data__.setdefault('mtime', 'N/A')
+        undone = self.__rt_data__.setdefault('undone', {})
+        queued = self.__rt_data__.setdefault('queued', [])
         for update in itertools.chain(undone.values(), queued):
             update.message.bot = self.__bot__
         [self.__updater__.dispatcher.update_queue.put(u) for u in queued]
         [self.__updater__.dispatcher.update_queue.put(v) for k, v in undone.items()]
+
+    def __undone_add__(self, key: str, update: Update):
+        self.__rt_data__['undone'][key] = update
+        try:
+            self.__save_rt_data__()
+        except:
+            self.__reply_md_code_block__(f'{traceback.format_exc()}', update)
+
+    def __undone_del__(self, key: str, update: Update):
+        del self.__rt_data__['undone'][key]
+        try:
+            self.__save_rt_data__()
+        except:
+            self.__reply_md_code_block__(f'{traceback.format_exc()}', update)

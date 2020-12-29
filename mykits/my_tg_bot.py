@@ -47,7 +47,7 @@ class MyAssistantBot(SimpleBot):
         data_file = os.path.splitext(conf_file)[0] + '.db'
         self._data_file = data_file
         data = read_sqlite_dict_file(data_file, with_dill=True)
-        super().__init__(token=config['token'], whitelist=config.get('user_whitelist'), data=data, **kwargs)
+        super().__init__(token=config['token'], whitelist=config.get('user_whitelist'), runtime_data=data, **kwargs)
 
     def __get_conf__(self):
         return read_json_file(self._conf_file)
@@ -56,20 +56,6 @@ class MyAssistantBot(SimpleBot):
         conf = self.__get_conf__()
         conf.update(kwargs)
         write_json_file(self._conf_file, conf, indent=4)
-
-    def __undone_add__(self, key, update):
-        self.__data__['undone'][key] = update
-        try:
-            self.__save_data__()
-        except:
-            self.__reply_md_code_block__(f'{traceback.format_exc()}', update)
-
-    def __undone_del__(self, key, update):
-        del self.__data__['undone'][key]
-        try:
-            self.__save_data__()
-        except Exception:
-            self.__reply_md_code_block__(f'{traceback.format_exc()}', update)
 
     def __str_contain_abandon_errors__(self, s):
         abandon_errors = self.__get_conf__().get('abandon_errors') or []
@@ -97,6 +83,8 @@ class MyAssistantBot(SimpleBot):
                 else:
                     echo = ''.join([s for s in [decode_fallback_locale(b) for b in out.readlines()] if '─┤' not in s])
                     self.__reply_md_code_block__(f'* {args_s}\n{echo}', update)
+            # except TypeError:
+            #     raise
             except Exception as e:
                 self.__reply_md_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
                 self.__requeue_failed_update__(update)
@@ -171,10 +159,10 @@ class MyAssistantBot(SimpleBot):
         else:
             self.__reply_md_code_block__(pformat(errors), u)
 
-    def __save_data__(self, data_file_path=None):
+    def __save_rt_data__(self, data_file_path=None):
         data_file_path = data_file_path or self._data_file
-        self.__data__['queued'] = list(self.__updater__.dispatcher.update_queue.queue)
-        super().__save_data__(data_file_path)
+        self.__rt_data__['queued'] = list(self.__updater__.dispatcher.update_queue.queue)
+        super().__save_rt_data__(data_file_path)
 
 
 def main():
