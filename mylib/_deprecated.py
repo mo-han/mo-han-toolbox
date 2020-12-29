@@ -9,7 +9,7 @@ from queue import Queue
 from typing import Callable, Generator
 
 from mylib import T, fs
-from mylib.os_nt import Clipboard
+from mylib.os_auto import Clipboard
 
 
 def fs_find_iter(pattern: str or Callable = None, root: str = '.',
