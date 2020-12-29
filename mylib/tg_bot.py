@@ -22,25 +22,6 @@ from .text import split_by_length_or_newline
 from .tricks import modify_module, deep_setattr, walk_obj_iter, is_picklable_with_dill_trace
 
 
-class PrePickleBotInUpdate(metaclass=SingletonMetaClass):
-    def __init__(self, u: Update):
-        self.bot_paths = []
-        for p in (path for path, obj in walk_obj_iter(u, keepout_types=(Bot,)) if isinstance(obj, Bot)):
-            self.bot_paths.append(p)
-
-    def del_bot(self, u: Update):
-        for p in self.bot_paths:
-            try:
-                deep_setattr(u, None, *p)
-            except AttributeError:
-                print(u, p)
-                raise
-
-    def set_bot(self, u: Update, b: Bot):
-        for p in self.bot_paths:
-            deep_setattr(u, b, *p)
-
-
 class BotPlaceholder:
     pass
 
@@ -52,10 +33,10 @@ def modify_telegram_ext_commandhandler(s: str) -> str:
     return s.replace('args = message.text.split()[1:]', 'args = self._get_args(message)')
 
 
-telegram_ext_commandhandler = modify_module('telegram.ext.commandhandler', modify_telegram_ext_commandhandler)
+telegram_ext_commandhandler_modified = modify_module('telegram.ext.commandhandler', modify_telegram_ext_commandhandler)
 
 
-class CommandHandler(telegram_ext_commandhandler.CommandHandler):
+class CommandHandler(telegram_ext_commandhandler_modified.CommandHandler):
     @staticmethod
     def _get_args(message: Message):
         return shlex.split(message.text)[1:]
@@ -98,7 +79,7 @@ class SimpleBot(ABC):
                                    request_kwargs={'read_timeout': timeout, 'connect_timeout': timeout},
                                    **kwargs)
         self.__get_me__(timeout=timeout)
-        self.__init_data__()
+        self.__init_rt_data__()
         print(self.__about_this_bot__())
         self.__register_whitelist__(whitelist)
         self.__register_handlers__()
@@ -168,7 +149,7 @@ class SimpleBot(ABC):
         self.__updater__.start_polling(**poll_param)
         self.__updater__.idle()
 
-    def __menu_str__(self):
+    def __get_menu_str__(self):
         lines = [f'try these commands:']
         menu = [n for n, v in self.__commands_list__ if v.on_menu]
         lines.extend([f'/{e}' for e in menu])
@@ -188,7 +169,7 @@ class SimpleBot(ABC):
         self.__typing__(update)
         self.__get_me__()
         update.message.reply_text(self.__about_this_bot__())
-        update.message.reply_text(self.__menu_str__())
+        update.message.reply_text(self.__get_menu_str__())
 
     @deco_factory_bot_handler_method(CommandHandler, on_menu=True)
     def menu(self, update: Update, context: CallbackContext):
@@ -254,7 +235,7 @@ class SimpleBot(ABC):
         if save:
             self.__save_rt_data__()
 
-    def __init_data__(self):
+    def __init_rt_data__(self):
         self.__rt_data__.setdefault('mtime', 'N/A')
         undone = self.__rt_data__.setdefault('undone', {})
         queued = self.__rt_data__.setdefault('queued', [])
@@ -263,14 +244,14 @@ class SimpleBot(ABC):
         [self.__updater__.dispatcher.update_queue.put(u) for u in queued]
         [self.__updater__.dispatcher.update_queue.put(v) for k, v in undone.items()]
 
-    def __undone_add__(self, key: str, update: Update):
+    def __add_undone_update__(self, key: str, update: Update):
         self.__rt_data__['undone'][key] = update
         try:
             self.__save_rt_data__()
         except:
             self.__reply_md_code_block__(f'{traceback.format_exc()}', update)
 
-    def __undone_del__(self, key: str, update: Update):
+    def __del_undone_update__(self, key: str, update: Update):
         del self.__rt_data__['undone'][key]
         try:
             self.__save_rt_data__()
