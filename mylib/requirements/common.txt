@@ -1,6 +1,7 @@
 #bitmath  #MIT #filesize #unit
 #colored  #by-gooey #MIT
 #pymediainfo  #MIT
+#dhash  #MIT
 colorama
 dill  #BSD-3
 disjoint-set  #MIT
@@ -8,7 +9,7 @@ ffmpeg-python
 filetype  #MIT
 gallery-dl
 humanize  #MIT
-imagehash
+imagehash  #BSD
 inflection  #MIT
 keyboard
 lxml

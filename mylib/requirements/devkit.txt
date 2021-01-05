@@ -7,3 +7,4 @@ pip-chill
 pipdeptree
 pipenv
 pyinstaller
+perfplot
