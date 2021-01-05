@@ -65,7 +65,7 @@ class MyAssistantBot(SimpleBot):
         re.compile(r'BV[\da-zA-Z]{10}|av\d+\W|ep\d+|ss\d+')))
     def _bldl(self, update, *args):
         undone_key = self._bldl.__name__
-        self.__undone_add__(undone_key, update)
+        self.__add_undone_update__(undone_key, update)
         args_l = [line2args(line) for line in update.message.text.splitlines()]
         for args in args_l:
             args_s = ' '.join([shlex.quote(a) for a in args])
@@ -88,13 +88,13 @@ class MyAssistantBot(SimpleBot):
             except Exception as e:
                 self.__reply_md_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
                 self.__requeue_failed_update__(update)
-        self.__undone_del__(undone_key, update)
+        self.__del_undone_update__(undone_key, update)
 
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(
         re.compile(r'youtube|youtu\.be|iwara|pornhub|\[ph[\da-f]{13}]')))
     def _ytdl(self, update: Update, *args):
         undone_key = self._ytdl.__name__
-        self.__undone_add__(undone_key, update)
+        self.__add_undone_update__(undone_key, update)
         args_l = [line2args(line) for line in update.message.text.splitlines()]
         for args in args_l:
             args = [re.sub(r'\[(ph[\da-f]{13})]', r'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in
@@ -118,7 +118,7 @@ class MyAssistantBot(SimpleBot):
             except Exception as e:
                 self.__reply_md_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
                 self.__requeue_failed_update__(update)
-        self.__undone_del__(undone_key, update)
+        self.__del_undone_update__(undone_key, update)
 
     @deco_factory_bot_handler_method(CommandHandler)
     def _secret(self, update: Update, *args):
