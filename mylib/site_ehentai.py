@@ -21,6 +21,14 @@ EH_TITLE_REGEX_PATTERN = re.compile(
 )
 
 
+def find_core_title(title: str):
+    split_by_right_l = re.split(r'[])]', title)
+    for s in split_by_right_l:
+        if not re.match(r'\s*[\[(]', s) and re.search(r'\w.*[\[(]', s):
+            print(s)
+            return re.split(r'[(\[]', s)[0].strip()
+
+
 def ehviewer_images_catalog(dry_run: bool = False):
     logger = log.get_logger('ehvimg', fmt=log.LOG_FMT_MESSAGE_ONLY)
     logmsg_move = '* move {} -> {}'
@@ -63,20 +71,15 @@ def ehviewer_images_catalog(dry_run: bool = False):
         creators = []
         title = d['title'].strip()
         try:
-            title_match = EH_TITLE_REGEX_PATTERN.match(title)
-            if title_match:
-                core_title = title_match.group(2)
-                core_title_l = re.findall(r'[\w]+[\-+\']?[\w]?', core_title)
-            elif title[:1] + title[-1:] == '[]':
-                core_title = ''
-                core_title_l = []
+            core_title = find_core_title(title) or ''
+            core_title_l = re.findall(r'[\w]+[\-+\']?[\w]?', core_title)
+            if title[:1] + title[-1:] == '[]':
                 creators.append(title[1:-1].strip())
-            else:
-                core_title = ''
-                core_title_l = []
         except AttributeError:
             print(logmsg_err.format(title))
             raise
+        # print(f': {title}')
+        # print(f': {core_title}')
         comic_magazine_title = None
         if core_title_l and core_title_l[0].lower() == 'comic':
             comic_magazine_title_l = []
@@ -123,7 +126,7 @@ def ehviewer_images_catalog(dry_run: bool = False):
         no_ext, ext = os.path.splitext(basename)
         # no_ext = ' '.join(core_title_l) + ' ' + no_ext.split()[-1]
         no_ext = text_lite.ellipt_end(core_title, 210, encoding='utf8').strip() + ' ' + no_ext.split()[-1]
-        new_path = os.path.join(folder, fs.sanitize_potential_unicode(no_ext + ext))
+        new_path = os.path.join(folder, fs.sanitize_xu(no_ext + ext))
         logger.info(logmsg_move.format(f, new_path))
         if not dry_run:
             if not os.path.isdir(folder):
