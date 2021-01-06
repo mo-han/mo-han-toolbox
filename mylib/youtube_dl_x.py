@@ -19,13 +19,13 @@ ytdl_YoutubeDL = import_module('youtube_dl.YoutubeDL')
 
 def limit_len_sanitize_filename(s, restricted=False, is_id=False):
     if not is_id:
-        s = fs.sanitize_pu_200(s)
+        s = fs.sanitize_xu200(s)
     return sanitize_filename(s, restricted=restricted, is_id=is_id)
 
 
 def safe_title(extracted_data: dict):
     title = extracted_data['title']
-    extracted_data['title'] = fs.sanitize_pu_200(title)
+    extracted_data['title'] = fs.sanitize_xu200(title)
 
 
 class NewInfoExtractor(InfoExtractor, metaclass=ABCMeta):

@@ -220,12 +220,12 @@ def sanitize(name: str, repl: str or dict = None, *, unescape_html=True, decode_
     return r
 
 
-def sanitize_potential_unicode(name: str, *, unescape_html=True, decode_url=True) -> str:
+def sanitize_xu(name: str, *, unescape_html=True, decode_url=True) -> str:
     return sanitize(name, POTENTIAL_INVALID_CHARS_MAP, unescape_html=unescape_html, decode_url=decode_url)
 
 
-def sanitize_pu_200(name: str, encoding: str = 'utf8') -> str:
-    return text_lite.ellipt_end(sanitize_potential_unicode(name), 200, encoding=encoding)
+def sanitize_xu200(name: str, encoding: str = 'utf8') -> str:
+    return text_lite.ellipt_end(sanitize_xu(name), 200, encoding=encoding)
 
 
 def read_sqlite_dict_file(filepath, *, with_dill=False, **kwargs):
