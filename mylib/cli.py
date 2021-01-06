@@ -15,9 +15,9 @@ def arg_type_pow2(x):
 
 def arg_type_range_factory(x_type, x_range_condition: str):
     def arg_type_range(x):
-        xx = x_type(x)
+        x = x_type(x)
         if eval(x_range_condition):
-            return xx
+            return x
         else:
             raise argparse.ArgumentTypeError("'{}' not in range {}".format(x, x_range_condition))
 

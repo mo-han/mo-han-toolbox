@@ -233,7 +233,7 @@ def view_similar_images_auto(
         dryrun: bool = False,
         **kwargs
 ):
-    thresholds = thresholds or [0.95, 0.8, 0.65]
+    thresholds = thresholds or [1, 0.95, 0.9, 0.85]
     thresholds.sort(reverse=True)
     hashtype = hashtype or DEFAULT_IMAGE_HASHTYPE
     hashsize = hashsize or DEFAULT_IMAGE_HASHSIZE

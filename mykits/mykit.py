@@ -957,7 +957,7 @@ img_sim_view.add_argument(
     '-T', '--no-transpose', action='store_false', dest='transpose',
     help='do not find similar images for transposed variants (rotated, flipped)')
 img_sim_view.add_argument(
-    '--dry-run', action='store_true', help='find similar images, but without viewing them')
+    '-D', '--dry-run', action='store_true', help='find similar images, but without viewing them')
 
 
 def move_ehviewer_images():
