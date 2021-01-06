@@ -425,10 +425,27 @@ class ExceptionWithKwargs(Exception):
 def thread_factory(group: None = None, name: str = None, daemon: bool = False):
     thread_kwargs = {'group': group, 'name': name, 'daemon': daemon}
 
-    def new_thread(callee: T.Callable, *args, **kwargs):
-        return threading.Thread(target=callee, args=args, kwargs=kwargs, **thread_kwargs)
+    def new_thread(target: T.Callable, *args, **kwargs):
+        return threading.Thread(target=target, args=args, kwargs=kwargs, **thread_kwargs)
 
     return new_thread
+
+
+def threading_call(target: T.Callable, *args, **kwargs):
+    t = threading.Thread(target=target, args=args, kwargs=kwargs)
+    t.start()
+
+
+def threading_call_factory(delay: float or int = None):
+    def wrapped_threading_call(target: T.Callable, *args, **kwargs):
+        def wrapped_target(*_args, **_kwargs):
+            if delay is not None:
+                sleep(delay)
+            return target(*_args, **_kwargs)
+
+        threading_call(wrapped_target, *args, **kwargs)
+
+    return wrapped_threading_call
 
 
 class NonBlockingCaller:

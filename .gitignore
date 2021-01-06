@@ -16,3 +16,5 @@ scpi_shell/extra.py
 scpi_shell/commands.txt
 scpi_shell/functions.txt
 __enamlcache__
+pyface
+traitsui
