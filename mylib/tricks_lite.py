@@ -13,6 +13,7 @@ import threading
 from . import T
 from . import log
 from .ez import *
+from .ez import SingletonMetaClass
 
 USELESS_PLACEHOLDER_FOR_MODULE_TRICKS_LITE = __name__
 
@@ -739,7 +740,7 @@ class CLIArgumentList(list):
         return k, value
 
 
-def sequential_try(tasks: T.Iterable[dict], common_exception=Exception):
+def seq_call_return(tasks: T.Iterable[dict], common_exception=Exception):
     """try through a sequence of calling, until sth returned, then stop and return that value.
 
     Args:
@@ -766,17 +767,3 @@ def sequential_try(tasks: T.Iterable[dict], common_exception=Exception):
             pass
     if e:
         raise e
-
-
-class AttributeNaming:
-    def __setattr__(self, key, value):
-        super().__setattr__(key, value)
-        value.__attr_name__ = key
-
-
-def attr_name(x):
-    return x.__attr_name__
-
-
-def call(target: T.Callable, *args, **kwargs):
-    return target(*args, **kwargs)
