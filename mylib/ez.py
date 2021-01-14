@@ -31,3 +31,11 @@ class AttrToStr(metaclass=SingletonMetaClass):
 
     def __getattr__(self, item):
         return item
+
+
+def rm_str_start_by_split(s, start):
+    return s.split(start, maxsplit=1)[-1]
+
+
+def rm_str_end_by_rsplit(s, end):
+    return s.rsplit(end, maxsplit=1)[0]

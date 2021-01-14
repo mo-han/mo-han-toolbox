@@ -228,6 +228,10 @@ def sanitize_xu200(name: str, encoding: str = 'utf8') -> str:
     return text_lite.ellipt_end(sanitize_xu(name), 200, encoding=encoding)
 
 
+def sanitize_xu240(name: str, encoding: str = 'utf8') -> str:
+    return text_lite.ellipt_end(sanitize_xu(name), 240, encoding=encoding)
+
+
 def read_sqlite_dict_file(filepath, *, with_dill=False, **kwargs):
     if with_dill:
         from .tricks import module_sqlitedict_with_dill

@@ -119,6 +119,35 @@ cmd_mode = add_sub_parser('cmd', ['cli'], 'command line interactive mode')
 cmd_mode.set_defaults(func=cmd_mode_func)
 
 
+def hath_gallery_rename_func():
+    from mylib.site_ehentai import parse_hath_dl_gallery_info
+    args = rtd.args
+    for s in args.src or clipboard.list_path():
+        try:
+            title = parse_hath_dl_gallery_info(s)['title']
+            folder, name, ext = fs.split_dirname_basename_ext(s)
+            try:
+                tail = re.search(r' \[\d+.*]$', name).group(0)
+            except AttributeError:
+                tail = ''
+            new = fs.join_dirname_basename_ext(folder, fs.sanitize_xu240(title) + tail, ext)
+            if new == s:
+                print(f'@ {s}')
+                continue
+            os.rename(s, new)
+            print(f'* {s} -> {new}')
+        except FileNotFoundError:
+            print(f'# {s}')
+        except Exception as e:
+            print(f'! {s} # {repr(e)}')
+
+
+hath_gallery_rename = add_sub_parser('H@H.gallery.rename', ['hath.gl.rn'],
+                                     'restore name of galleries downloaded by H@H')
+hath_gallery_rename.set_defaults(func=hath_gallery_rename_func)
+hath_gallery_rename.add_argument('src', nargs='*')
+
+
 def tag_filter_files_func():
     from mylib.filename_tags import SuffixListFilenameTags
     args = rtd.args

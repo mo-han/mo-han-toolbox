@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 # encoding=utf8
 import json
+import zipfile
+from collections import defaultdict
 
 import requests
 
-from . import text_lite
 from . import fs
 from . import log
+from . import text_lite
 from .ez import *
 from .tricks_lite import VoidDuck, is_hex
 from .web_client import cookies_dict_from_netscape_file, get_html_element_tree
@@ -335,3 +337,46 @@ def ehviewer_dl_folder_rename(folder_path: str, *, db: dict = None, update_db=Fa
         return
     title = fs.sanitize(title)
     return fs.x_rename(folder_path, title)
+
+
+def parse_hath_dl_gallery_info(gallery):
+    info = 'galleryinfo.txt'
+    desc = 'Downloaded from E-Hentai Galleries by the Hentai@Home Downloader <3'
+    if os.path.isdir(gallery):
+        with fs.ctx_pushd(gallery):
+            if not os.path.isfile(info):
+                raise FileNotFoundError(fs.make_path(gallery, info))
+            with open(info, 'tr', encoding='u8') as f:
+                s = f.read()
+    elif os.path.isfile(gallery):
+        with zipfile.ZipFile(gallery) as z:
+            try:
+                with z.open(info) as f:
+                    s = f.read().decode('u8')
+            except KeyError:
+                raise FileNotFoundError(f'{gallery}::{info}')
+    else:
+        raise FileNotFoundError(gallery)
+    s = rm_str_end_by_rsplit(s.strip(), desc)
+    d = {}
+    try:
+        meta, cmt = s.split("Uploader's Comments:", maxsplit=1)
+    except ValueError:
+        meta, cmt = s, None
+    # print(meta)
+    # print(cmt)
+    title_s, upload_time_s, uploader_s, download_time_s, tags_s = meta.strip().splitlines()
+    d['title'] = rm_str_start_by_split(title_s, 'Title:').strip()
+    d['upload time'] = rm_str_start_by_split(upload_time_s, 'Upload Time:').strip()
+    d['uploader'] = rm_str_start_by_split(uploader_s, 'Uploaded By:').strip()
+    d['download time'] = rm_str_start_by_split(download_time_s, 'Downloaded:').strip()
+    tags = defaultdict(list)
+    for e in rm_str_start_by_split(tags_s, 'Tags:').strip().split(', '):
+        if ':' in e:
+            tag_name, tag_value = e.split(':', maxsplit=1)
+            tags[tag_name].append(tag_value)
+        else:
+            tags['misc'].append(e)
+    d['tags'] = tags
+    d['uploader comments'] = cmt.strip() if cmt is not None else None
+    return d
