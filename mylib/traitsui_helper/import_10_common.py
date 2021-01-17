@@ -3,13 +3,12 @@
 from traits.api import *
 from traitsui.api import *
 from traitsui.key_bindings import *
+from varname import nameof
 
 from mylib.ez import *
 
-assert Trait
 
-
-class SimpleHandler(Handler):
+class UsefulHandler(Handler):
     def __hdl_do_nothing__(self, *args):
         pass
 
@@ -28,6 +27,48 @@ class SimpleHandler(Handler):
         self.__hdl_quit__()
 
 
-KB_ESC_NOTHING = KeyBinding(binding1='Esc', method_name=SimpleHandler.__hdl_do_nothing__.__name__)
-KB_ESC_CLOSE = KeyBinding(binding1='Esc', method_name=SimpleHandler.__hdl_close_view__.__name__)
-KB_ESC_QUIT = KeyBinding(binding1='Esc', method_name=SimpleHandler.__hdl_quit__.__name__)
+KB_ESC_NOTHING = KeyBinding(binding1='Esc', method_name=UsefulHandler.__hdl_do_nothing__.__name__)
+KB_ESC_CLOSE = KeyBinding(binding1='Esc', method_name=UsefulHandler.__hdl_close_view__.__name__)
+KB_ESC_QUIT = KeyBinding(binding1='Esc', method_name=UsefulHandler.__hdl_quit__.__name__)
+
+
+def trait_extra_attr_name(attr_name: str):
+    return f'__extra_attr_{attr_name}__'
+
+
+def trait_with_attr(traits_obj: HasTraits, name: str, value=...):
+    if value is ...:
+        return getattr(traits_obj, trait_extra_attr_name(name))
+    else:
+        setattr(traits_obj, trait_extra_attr_name(name), value)
+
+
+def trait_with_label(traits_obj: HasTraits, label=...):
+    attr_name = 'label'
+    return trait_with_attr(traits_obj, attr_name, label)
+
+
+def trait_with_id(traits_obj: HasTraits, id_=...):
+    attr_name = 'id'
+    return trait_with_attr(traits_obj, attr_name, id_)
+
+
+class TraitStr(AttrToStr):
+    def __setattr__(self, key, value):
+        super(TraitStr, self).__setattr__(key, value)
+        trait_with_id(value, key)
+
+
+def obj_attr_path(*obj):
+    return nameof(*obj, caller=2, full=True)
+
+
+def object_trait_path(trait_name):
+    return f'object.{trait_name}'
+
+
+ts = trait_str = TraitStr()
+tl = trait_with_label
+ti = trait_with_id
+oa = obj_attr_path
+ot = object_trait_path
