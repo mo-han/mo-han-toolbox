@@ -8,7 +8,7 @@ import requests
 
 from . import fs
 from . import log
-from . import text_lite
+from . import text
 from .ez import *
 from .tricks_lite import VoidDuck, is_hex
 from .web_client import cookies_dict_from_netscape_file, get_html_element_tree
@@ -24,24 +24,30 @@ EH_TITLE_REGEX_PATTERN = re.compile(
 
 
 def find_core_title(title: str):
-    split_by_right_l = re.split(r'[])]', title)
-    for s in split_by_right_l:
-        if not re.match(r'\s*[\[(]', s) and re.search(r'\w.*[\[(]', s):
-            print(s)
-            return re.split(r'[(\[]', s)[0].strip()
+    # split_by_right_l = re.split(r'[])]', title)
+    # for s in split_by_right_l:
+    #     print(s)  # DEBUG
+    #     if re.match(r'\s*[\[(]', s):
+    #         continue
+    #     elif re.search(r'\S.*[\[(]', s):
+    #         return re.split(r'[\[(]', s)[0].strip()
+    t = title
+    t = re.sub(r'^\s*\([^)]+\)(.+)', r'\1', t)
+    t = re.sub(r'^\s*\[[^]]+](.+)', r'\1', t)
+    t = re.sub(r'^\s*([^[]+)\[.+]', r'\1', t)
+    return t.strip()
 
 
-def ehviewer_images_catalog(dry_run: bool = False):
+def ehviewer_images_catalog(dry_run: bool = False, db_json_path: str = 'ehdb.json'):
     logger = log.get_logger('ehvimg', fmt=log.LOG_FMT_MESSAGE_ONLY)
     logmsg_move = '* move {} -> {}'
     logmsg_skip = '# skip {}'
     logmsg_data = '+ /g/{}/{}'
     logmsg_err = '! {}'
-    dbf = 'ehdb.json'
 
-    if os.path.isfile(dbf):
-        logger.info('@ using DB file: {}'.format(dbf))
-        db = fs.read_json_file(dbf)
+    if os.path.isfile(db_json_path):
+        logger.info('@ using DB file: {}'.format(db_json_path))
+        db = fs.read_json_file(db_json_path)
     else:
         db = {}
     skipped_gid_l = []
@@ -67,21 +73,19 @@ def ehviewer_images_catalog(dry_run: bool = False):
             logger.info(logmsg_data.format(g.gid, g.token))
             d = g.data
             db[gid] = d
-            fs.write_json_file(dbf, db, indent=4)
+            fs.write_json_file(db_json_path, db, indent=4)
             sleep(1)
 
         creators = []
         title = d['title'].strip()
         try:
-            core_title = find_core_title(title) or ''
+            core_title = find_core_title(title) or '__INVALID_CORE_TITLE__'
             core_title_l = re.findall(r'[\w]+[\-+\']?[\w]?', core_title)
             if title[:1] + title[-1:] == '[]':
                 creators.append(title[1:-1].strip())
         except AttributeError:
             print(logmsg_err.format(title))
             raise
-        # print(f': {title}')
-        # print(f': {core_title}')
         comic_magazine_title = None
         if core_title_l and core_title_l[0].lower() == 'comic':
             comic_magazine_title_l = []
@@ -115,7 +119,6 @@ def ehviewer_images_catalog(dry_run: bool = False):
                             creators = [m1]
                         core_title = title
                     break
-
         if len(creators) > 3:
             if comic_magazine_title:
                 folder = comic_magazine_title
@@ -123,16 +126,17 @@ def ehviewer_images_catalog(dry_run: bool = False):
                 folder = '[]'
         else:
             folder = '[{}]'.format(', '.join(creators))
-        folder = fs.sanitize(folder)
+        print(f': {title}')  # DEBUG
+        print(f': {core_title}')  # DEBUG
+
+        sub_folder = fs.make_path(fs.sanitize_xu240(folder), fs.sanitize_xu240(core_title))
         parent, basename = os.path.split(f)
         no_ext, ext = os.path.splitext(basename)
-        # no_ext = ' '.join(core_title_l) + ' ' + no_ext.split()[-1]
-        no_ext = text_lite.ellipt_end(core_title, 210, encoding='utf8').strip() + ' ' + no_ext.split()[-1]
-        new_path = os.path.join(folder, fs.sanitize_xu(no_ext + ext))
+        no_ext = fs.sanitize_xu240(no_ext.split()[-1])
+        new_path = fs.make_path(sub_folder, no_ext + ext)
         logger.info(logmsg_move.format(f, new_path))
         if not dry_run:
-            if not os.path.isdir(folder):
-                os.mkdir(folder)
+            os.makedirs(sub_folder, exist_ok=True)
             shutil.move(f, new_path)
 
 

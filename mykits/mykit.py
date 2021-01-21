@@ -305,7 +305,13 @@ def dir_flatter_func():
                 print(new)
                 shutil.move(fp, fs.make_path(new, win32_unc=is_win32))
             for dp in fs.find_iter('.', 'd', include_start_dir=False, win32_unc=is_win32):
-                os.removedirs(dp)
+                try:
+                    os.removedirs(dp)
+                except OSError:
+                    for p, d, f in os.walk(dp):
+                        if f:
+                            send2trash(dp)
+                            break
 
 
 dir_flatter = add_sub_parser('dir.flatter', ['flat.dir', 'flat.folder'],
@@ -992,13 +998,14 @@ img_sim_view.add_argument(
 def move_ehviewer_images():
     from mylib.site_ehentai import ehviewer_images_catalog
     args = rtd.args
-    ehviewer_images_catalog(dry_run=args.dry_run)
+    ehviewer_images_catalog(dry_run=args.dry_run, db_json_path=args.db_json or 'ehdb.json')
 
 
 ehv_img_mv = add_sub_parser('ehv.img.mv', ['ehvmv'],
                             'move ehviewer downloaded images into folders')
 ehv_img_mv.set_defaults(func=move_ehviewer_images)
 ehv_img_mv.add_argument('-D', '--dry-run', action='store_true')
+ehv_img_mv.add_argument('-j', '--db-json')
 
 if __name__ == '__main__':
     main()
