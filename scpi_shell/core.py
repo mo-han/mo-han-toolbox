@@ -13,9 +13,6 @@ from typing import Callable
 import vxi11  # pip install -U python-vxi11
 from serial import Serial, SerialException
 
-__author__ = '周默晗'
-__contact__ = 'work.zhoumohan@gmail.com'
-
 S_VXI11 = 'vxi11'
 STR_SERIAL = 'serial'
 # PROMPT_LEFT_ARROW = '←'
@@ -111,8 +108,7 @@ class VXI11LinkWrapper(LinkWrapper):
 
 
 class SCPIShell(cmd.Cmd):
-    intro = f'communicate with a remote instrument via SCPI commands\n' \
-            f'written by {__author__} <{__contact__}>'
+    intro = f'communicate with a remote instrument via SCPI commands\n'
     default_conn_type = 'VXI-11'
     default_timeout = 5
 
