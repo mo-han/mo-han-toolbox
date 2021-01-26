@@ -4,8 +4,8 @@ import os
 
 import requests
 
+from .fs import write_json_file, sanitize_xu
 from .log import get_logger
-from .fs import write_json_file
 from .tricks import AttributeInflection
 from .tricks_lite import Attreebute, width_of_int
 from .web_client import HTTPResponseInspection, parse_https_url, make_kwargs_for_lib_requests, DownloadPool
@@ -97,7 +97,7 @@ class PixivFanboxAPI:
         params = {'creatorId': creator_id}
         return self.get(url, params)
 
-    def list_post_of_creator(self, creator_id, limit=10) -> list:
+    def list_post_of_creator(self, creator_id, limit=10):
         posts = []
         url = self.api_url + '/post.listCreator'
         params = {'creatorId': creator_id, 'limit': limit}
@@ -134,10 +134,10 @@ def download_pixiv_fanbox_post(post_or_id: PixivFanboxPost or dict or str or int
     else:
         raise TypeError(
             "`post_or_id` must be PixivFanboxPost, dict, str, or int, not {}".format(type(post_or_id)))
-    creator_folder = pixiv_fanbox_creator_folder(post.__data__)
+    creator_folder = sanitize_xu(pixiv_fanbox_creator_folder(post.__data__))
     creator_id = post.creator_id
     prefix = '{}.'.format(creator_id)
-    post_folder = '[{user[name]} {creatorId}] {title} (fanbox {id})'.format(**post.__data__)
+    post_folder = sanitize_xu('[{user[name]} {creatorId}] {title} (fanbox {id})'.format(**post.__data__))
     os.makedirs(os.path.join(root_dir, creator_folder, post_folder), exist_ok=True)
 
     file = prefix + '{}.json'.format(post.id)
@@ -158,7 +158,7 @@ def download_pixiv_fanbox_post(post_or_id: PixivFanboxPost or dict or str or int
         filepath = os.path.join(root_dir, creator_folder, post_folder, file)
         download_pool.put_download_in_queue(image.original_url, filepath, retry, **kwargs_for_requests)
 
-    download_pool.start_queue()
+    download_pool.start_queue_loop()
     download_pool.put_end_of_queue()
 
 
@@ -174,7 +174,7 @@ def download_pixiv_fanbox_creator(creator_id, root_dir='.',
     prefix = '{}.'.format(creator_id)
     creator['plans'] = fanbox_api.list_sponsor_plan_of_creator(creator_id)
     profile_images = [i for i in creator['profileItems'] if i['type'] == 'image']
-    creator_folder = pixiv_fanbox_creator_folder(creator)
+    creator_folder = sanitize_xu(pixiv_fanbox_creator_folder(creator))
     os.makedirs(os.path.join(root_dir, creator_folder), exist_ok=True)
 
     write_json_file(os.path.join(root_dir, creator_folder, creator_id + '.json'), creator, indent=4)
@@ -204,5 +204,19 @@ def download_pixiv_fanbox_creator(creator_id, root_dir='.',
         filepath = os.path.join(root_dir, creator_folder, file)
         download_pool.put_download_in_queue(url, filepath, **download_params)
 
-    download_pool.start_queue()
+    download_pool.start_queue_loop()
     download_pool.put_end_of_queue()
+
+
+def download_pixiv_fanbox_creator_and_all_posts(creator_url_or_id, root_dir='.',
+                                                fanbox_api: PixivFanboxAPI = None,
+                                                download_pool: DownloadPool = None,
+                                                retry=-1, **kwargs_for_requests):
+    fanbox_api = fanbox_api or PixivFanboxAPI(**kwargs_for_requests)
+    download_pool = download_pool or DownloadPool()
+    creator_id = fanbox_creator_id_from_url(creator_url_or_id) or creator_url_or_id
+    download_pixiv_fanbox_creator(creator_id, root_dir, fanbox_api=fanbox_api, download_pool=download_pool, retry=retry,
+                                  **kwargs_for_requests)
+    for p in fanbox_api.list_post_of_creator(creator_id):
+        download_pixiv_fanbox_post(p, root_dir, fanbox_api=fanbox_api, download_pool=download_pool, retry=retry,
+                                   **kwargs_for_requests)

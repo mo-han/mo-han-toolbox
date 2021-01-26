@@ -7,6 +7,7 @@ import json
 from concurrent.futures.thread import ThreadPoolExecutor
 from io import StringIO
 from queue import Queue
+from urllib.parse import urlparse, ParseResult
 
 import colorama
 import humanize
@@ -343,8 +344,8 @@ class DownloadPool(ThreadPoolExecutor):
         self.emergency_queue = Queue()
         self.show_status_interval = 2
         self.show_status_enable = show_status
-        thread_factory(daemon=True)(self.calc_speed).run()
-        thread_factory(daemon=True)(self.show_status).run()
+        thread_factory(daemon=True)(self.calc_speed).start()
+        thread_factory(daemon=True)(self.show_status).start()
         super().__init__(max_workers=threads_n)
 
     def queue_pipeline(self):
@@ -369,8 +370,8 @@ class DownloadPool(ThreadPoolExecutor):
         eq = self.emergency_queue
         while True:
             if self.show_status_enable:
-                status_msg = '| {} | {} threads | {:>11} |'.format(
-                    color(self.name), color(self._max_workers), color(self.speed))
+                status_msg = f'| {self.name} {color(len(self._threads))}/{self._max_workers} ' \
+                             f'| {color(self.speed):>11} |'
                 # status_width = len(status_msg)
                 # preamble = shutil.get_terminal_size()[0] - status_width - 1
                 # print(' ' * preamble + status_msg, end='\r', file=sys.stderr)
@@ -392,7 +393,8 @@ class DownloadPool(ThreadPoolExecutor):
         q = self.recv_size_queue
         while True:
             if q.empty():
-                sleep(0.1)
+                sleep(0.5)
+                # print('DEBUG')
                 continue
             t, n = q.get()
             tl.append(t)
@@ -446,7 +448,7 @@ class DownloadPool(ThreadPoolExecutor):
         stop = dl_obj.stop
         size = dl_obj.size
         total = dl_obj.total_size
-        with SubscriptableFileIO(file) as f:
+        with SubscriptableFileIO(file, 'rb+') as f:
             if f.size != total:
                 f.truncate(total)
             f[start: stop] = dl_obj.data
@@ -458,6 +460,7 @@ class DownloadPool(ThreadPoolExecutor):
         for cnt, x in iter_factory_retry(retry)(self.request_data, url, tmpfile, **kwargs_for_requests):
             if isinstance(x, Exception):
                 self.logger.warning('! <{}> {}'.format(type(x).__name__, x))
+                # self.logger.warning(''.join(traceback.format_tb(x.__traceback__)))
                 if cnt:
                     self.logger.info('++ retry ({}) {} <- {}'.format(cnt, filepath, url))
             else:
@@ -498,20 +501,18 @@ class DownloadPool(ThreadPoolExecutor):
     def put_end_of_queue(self):
         self.queue.put(None)
 
-    def start_queue(self):
-        thread_factory()(self.queue_pipeline).run()
+    def start_queue_loop(self):
+        thread_factory()(self.queue_pipeline).start()
 
 
-def parse_https_url(url: str, allow_fragments=True):
-    from urllib.parse import urlparse
+def parse_https_url(url: str, allow_fragments=True) -> ParseResult:
     test_parse = urlparse(url)
     if not test_parse.scheme and not test_parse.netloc:
         url = 'https://' + url
     return urlparse(url, allow_fragments=allow_fragments)
 
 
-def parse_http_url(url: str, allow_fragments=True):
-    from urllib.parse import urlparse
+def parse_http_url(url: str, allow_fragments=True) -> ParseResult:
     test_parse = urlparse(url)
     if not test_parse.scheme and not test_parse.netloc:
         url = 'http://' + url

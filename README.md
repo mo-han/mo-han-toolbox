@@ -74,7 +74,7 @@ d = DownloadPool()
 d.submit_download(url, file, retry, cookies=...)
 d.put_download_in_queue(url, file, retry, cookies=...)
 d.put_end_of_queue()
-d.start_queue()
+d.start_queue_loop()
 ```
 
 #### [PotPlayerKit](mylib/potplayer.py)

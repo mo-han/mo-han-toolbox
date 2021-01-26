@@ -5,7 +5,6 @@ import re
 import shlex
 import subprocess
 import time
-import traceback
 from pprint import pformat
 
 from telegram.ext import MessageHandler, Filters, CallbackContext

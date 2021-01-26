@@ -61,35 +61,37 @@ class SubscriptableFileIO(FileIO):
 
     def __setitem__(self, key: int or slice, value: bytes):
         orig_pos = self.tell()
+        value_len = len(value)
+
         if isinstance(key, int):
-            if len(value) != 1:
+            if value_len != 1:
                 raise ValueError("overflow write", value)
             if key < 0:
                 key = self.size + key
             self.seek(key)
-            r = self.write(value)
+            self.write(value)
         elif isinstance(key, slice):
-            start, stop, step = key.start, key.stop, key.step
-            if not start:
-                start = 0
-            elif start < 0:
-                start = self.size + start
-            if not stop:
-                stop = self.size
-            elif stop < 0:
-                stop = self.size + stop
-            size = stop - start
-            if size <= 0:
-                r = 0
-            elif not step or step == 1:
-                if len(value) <= size:
-                    self.seek(start)
-                    r = self.write(value)
-                else:
-                    raise NotImplementedError('overflow write')
-            else:
+            if key.step not in (None, 1):
                 raise NotImplementedError('non-sequential write')
+            start, stop = key.start, key.stop
+            if not start and not stop:
+                self.truncate(value_len)
+                start = stop = 0
+                slice_len = value_len
+            else:
+                start = start or 0
+                if start < 0:
+                    start += self._size
+                stop = stop or 0
+                if stop < 0:
+                    stop += self._size
+                slice_len = stop - start
+            if value_len <= slice_len:
+                self.seek(start)
+                self.write(value)
+                self._size = max(self.size, start + value_len)
+            else:
+                raise NotImplementedError('overflow write')
         else:
             raise TypeError("'{}' is not int or slice".format(key))
         self.seek(orig_pos)
-        return r

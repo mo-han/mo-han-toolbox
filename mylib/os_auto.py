@@ -75,7 +75,7 @@ def write_file_chunk(filepath: str, start: int, stop: int, data: bytes, total: i
     #     raise ValueError('violate 0 <= start({}) <= stop({})'.format(start, stop))
     # if len(data) >= stop - start:
     #     raise ValueError('data length > stop - start')
-    with SubscriptableFileIO(filepath) as f:
+    with SubscriptableFileIO(filepath, 'rb+') as f:
         if total and f.size != total:
             f.truncate(total)
         elif f.size < stop:
