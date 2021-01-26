@@ -364,13 +364,15 @@ def put_in_dir_func():
     if not dst:
         return
     dst = dst_map.get(dst, dst)
+    sub_dirs_l = next(os.walk(dst))[1]
     if os.path.isfile(dst):
         print(f'! {dst} is file (should be directory)', file=sys.stderr)
         exit(1)
     os.makedirs(dst, exist_ok=True)
     db_path = fs.make_path(dst, '__folder_name_words__.db')
     db = fs.read_sqlite_dict_file(db_path)
-    sub_dirs_d = {b: set(find_words(b.lower())) for b in next(os.walk(dst))[1] if b not in db}
+    db = {k: v for k, v in db.items() if k in sub_dirs_l}
+    sub_dirs_d = {b: set(find_words(b.lower())) for b in sub_dirs_l if b not in db}
     sub_dirs_d.update(db)
     for ss in src:
         for s in path_or_glob(ss):
