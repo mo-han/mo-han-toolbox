@@ -116,7 +116,7 @@ class CurlCookieJar(http.cookiejar.MozillaCookieJar):
 
         with open(filename) as f:
             lines = [str_remove_prefix(line, http_only_prefix) for line in f.readlines()]
-            print(''.join(lines))
+            # print(''.join(lines))  # DEBUG
 
         with StringIO() as f:
             f.writelines(lines)
