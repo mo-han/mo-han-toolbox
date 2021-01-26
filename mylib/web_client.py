@@ -4,13 +4,9 @@
 
 import http.cookiejar
 import json
-import os
-import re
-import sys
 from concurrent.futures.thread import ThreadPoolExecutor
 from io import StringIO
 from queue import Queue
-from time import sleep, time
 
 import colorama
 import humanize
@@ -18,6 +14,7 @@ import lxml.html
 import requests.utils
 
 from .T import JSONType
+from .ez import *
 from .fs import touch, ensure_open_file
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
 from .os_auto import write_file_chunk
@@ -109,7 +106,7 @@ class CurlCookieJar(http.cookiejar.MozillaCookieJar):
 
     def load(self, filename=None, ignore_discard=False, ignore_expires=False):
         http_only_prefix = '#HttpOnly_'
-        http_only_prefix_len = len(http_only_prefix)
+
         if filename is None:
             if self.filename is not None:
                 filename = self.filename
@@ -118,8 +115,8 @@ class CurlCookieJar(http.cookiejar.MozillaCookieJar):
                 raise ValueError(http.cookiejar.MISSING_FILENAME_TEXT)
 
         with open(filename) as f:
-            n = http_only_prefix_len
-            lines = [line[n:] if line.startswith(http_only_prefix) else line for line in f.readlines()]
+            lines = [str_remove_prefix(line, http_only_prefix) for line in f.readlines()]
+            print(''.join(lines))
 
         with StringIO() as f:
             f.writelines(lines)
@@ -128,19 +125,19 @@ class CurlCookieJar(http.cookiejar.MozillaCookieJar):
             self._really_load(f, filename, ignore_discard, ignore_expires)
 
 
-def cookies_dict_from_netscape_file(filepath: str) -> dict:
+def cookies_dict_from_netscape_file(filepath: str, ignore_discard=True, ignore_expires=True) -> dict:
     cj = CurlCookieJar(filepath)
-    cj.load()
+    cj.load(ignore_discard=ignore_discard, ignore_expires=ignore_expires)
     return requests.utils.dict_from_cookiejar(cj)
 
 
-def cookies_dict_from_file(filepath: str) -> dict:
+def cookies_dict_from_file(filepath: str, ignore_discard=True, ignore_expires=True) -> dict:
     if not os.path.isfile(filepath):
         raise FileNotFoundError(filepath)
     if filepath.endswith('.json'):
         d = cookies_dict_from_json(filepath)
     else:
-        d = cookies_dict_from_netscape_file(filepath)
+        d = cookies_dict_from_netscape_file(filepath, ignore_discard=ignore_discard, ignore_expires=ignore_expires)
     return d
 
 
@@ -404,7 +401,7 @@ class DownloadPool(ThreadPoolExecutor):
                 self.bytes_per_sec = sum(nl) // (tl[-1] - tl[0])
             except ZeroDivisionError:
                 self.bytes_per_sec = 0
-            while time() - tl[0] > self.show_status_interval:
+            while time.time() - tl[0] > self.show_status_interval:
                 tl.pop(0)
                 nl.pop(0)
 
@@ -432,7 +429,7 @@ class DownloadPool(ThreadPoolExecutor):
         content = b''
         stop = 0
         for chunk in r.iter_content(chunk_size=chunk_size):
-            self.recv_size_queue.put((time(), len(chunk)))
+            self.recv_size_queue.put((time.time(), len(chunk)))
             start = stop
             stop = start + len(chunk)
             content += chunk

@@ -361,7 +361,7 @@ def parse_hath_dl_gallery_info(gallery):
                 raise FileNotFoundError(f'{gallery}::{info}')
     else:
         raise FileNotFoundError(gallery)
-    s = rm_str_end_by_rsplit(s.strip(), desc)
+    s = str_remove_suffix(s.strip(), desc)
     d = {}
     try:
         meta, cmt = s.split("Uploader's Comments:", maxsplit=1)
@@ -370,12 +370,12 @@ def parse_hath_dl_gallery_info(gallery):
     # print(meta)
     # print(cmt)
     title_s, upload_time_s, uploader_s, download_time_s, tags_s = meta.strip().splitlines()
-    d['title'] = rm_str_start_by_split(title_s, 'Title:').strip()
-    d['upload time'] = rm_str_start_by_split(upload_time_s, 'Upload Time:').strip()
-    d['uploader'] = rm_str_start_by_split(uploader_s, 'Uploaded By:').strip()
-    d['download time'] = rm_str_start_by_split(download_time_s, 'Downloaded:').strip()
+    d['title'] = str_remove_prefix(title_s, 'Title:').strip()
+    d['upload time'] = str_remove_prefix(upload_time_s, 'Upload Time:').strip()
+    d['uploader'] = str_remove_prefix(uploader_s, 'Uploaded By:').strip()
+    d['download time'] = str_remove_prefix(download_time_s, 'Downloaded:').strip()
     tags = defaultdict(list)
-    for e in rm_str_start_by_split(tags_s, 'Tags:').strip().split(', '):
+    for e in str_remove_prefix(tags_s, 'Tags:').strip().split(', '):
         if ':' in e:
             tag_name, tag_value = e.split(':', maxsplit=1)
             tags[tag_name].append(tag_value)

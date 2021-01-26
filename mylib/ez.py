@@ -8,12 +8,9 @@ import sys
 import time
 from time import sleep
 
-assert os
-assert sys
-assert time
-assert sleep
-assert shutil
-assert re
+
+def __referring_imported():
+    print(os, sys, time, sleep, shutil, re)
 
 
 class SingletonMetaClass(type):
@@ -33,9 +30,9 @@ class AttrToStr(metaclass=SingletonMetaClass):
         return item
 
 
-def rm_str_start_by_split(s, start):
-    return s.split(start, maxsplit=1)[-1]
+def str_remove_prefix(s: str, prefix: str):
+    return s[len(prefix):] if s.startswith(prefix) else s
 
 
-def rm_str_end_by_rsplit(s, end):
-    return s.rsplit(end, maxsplit=1)[0]
+def str_remove_suffix(s: str, suffix: str):
+    return s[:-len(suffix)] if s.endswith(suffix) else s
