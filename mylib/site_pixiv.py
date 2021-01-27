@@ -55,14 +55,19 @@ class PixivFanboxPost(Attreebute, AttributeInflection):
             post_dict['images'] = []
         else:
             try:
+                post_images = []
                 if 'text' in post_body:
                     post_dict['text'] = post_body['text']
                 else:
                     post_dict['text'] = '\n'.join([p['text'] for p in post_body['blocks'] if p['type'] == 'p'])
+                    # image_map = post_body['imageMap']
+                    image_map = {image_d['id']: image_d for image_d in post_body['imageMap'].values()}
+                    post_images.extend(
+                        [PixivFanboxImage(image_map[block['imageId']]) for block in post_body['blocks']
+                         if block['type'] == 'image'])
                 if 'images' in post_body:
-                    post_dict['images'] = [PixivFanboxImage(i) for i in post_body['images']]
-                else:
-                    post_dict['images'] = []
+                    post_images.extend([PixivFanboxImage(i) for i in post_body['images']])
+                post_dict['images'] = post_images
             except KeyError:
                 print(post_dict)
                 raise
@@ -116,7 +121,7 @@ class PixivFanboxAPI:
 
 
 def pixiv_fanbox_creator_folder(creator_data: dict):
-    return '[{user[name]}] fanbox {creatorId} {user[userId]}'.format(**creator_data)
+    return '[{user[name]}] pixiv {user[userId]} fanbox {creatorId}'.format(**creator_data)
 
 
 def download_pixiv_fanbox_post(post_or_id: PixivFanboxPost or dict or str or int, root_dir='.',
@@ -137,7 +142,7 @@ def download_pixiv_fanbox_post(post_or_id: PixivFanboxPost or dict or str or int
     creator_folder = sanitize_xu(pixiv_fanbox_creator_folder(post.__data__))
     creator_id = post.creator_id
     prefix = '{}.'.format(creator_id)
-    post_folder = sanitize_xu('[{user[name]} {creatorId}] {title} (fanbox {id})'.format(**post.__data__))
+    post_folder = sanitize_xu('[{user[name]} ({creatorId})] {title} (pixiv fanbox {id})'.format(**post.__data__))
     os.makedirs(os.path.join(root_dir, creator_folder, post_folder), exist_ok=True)
 
     file = prefix + '{}.json'.format(post.id)
