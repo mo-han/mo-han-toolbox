@@ -129,7 +129,7 @@ def ehviewer_images_catalog(dry_run: bool = False, db_json_path: str = 'ehdb.jso
         # print(f': {title}')  # DEBUG
         # print(f': {core_title}')  # DEBUG
 
-        sub_folder = fs.make_path(fs.sanitize_xu240(folder), fs.sanitize_xu240(core_title))
+        sub_folder = fs.make_path(fs.sanitize_xu200(folder), f'{fs.sanitize_xu200(core_title)} {g.gid}-{g.token}')
         parent, basename = os.path.split(f)
         no_ext, ext = os.path.splitext(basename)
         no_ext = fs.sanitize_xu240(no_ext.split()[-1])
