@@ -2,6 +2,7 @@
 # encoding=utf8
 from abc import ABCMeta
 from importlib import import_module
+from pprint import pprint
 
 import youtube_dl
 from youtube_dl.extractor import common as ytdl_common
@@ -11,8 +12,13 @@ from youtube_dl.utils import sanitize_filename
 from . import fs
 from .site_iwara import IwaraIE
 from .site_pornhub import PornHubIE
+from .web_client import parse_https_url, get_html_element_tree
 
-# assert ytdl_common
+
+def __unused_import_keeper():
+    return pprint
+
+
 # import module `youtube_dl.YoutubeDL` (forestalled by same name class `youtube_dl.YoutubeDL`)
 ytdl_YoutubeDL = import_module('youtube_dl.YoutubeDL')
 
@@ -37,9 +43,24 @@ class NewInfoExtractor(InfoExtractor, metaclass=ABCMeta):
         print(self.__class__.__name__, data['title'])
 
 
+class GenericInfoExtractor(youtube_dl.extractor.GenericIE, metaclass=ABCMeta):
+    def _real_extract(self, url):
+        data = super()._real_extract(url)
+        pr = parse_https_url(url)
+        kiss_jav = 'kissjav.com'
+        if pr.netloc == kiss_jav:
+            for entry in data['entries']:
+                entry['id'] = f'{kiss_jav} {pr.path.strip("/").split("/")[0]}'
+                entry['uploader'] = get_html_element_tree(url).xpath(
+                    '//div[@class="content-info" and contains(text(), "From")]//a')[0].text_content()
+            # pprint(data)
+        return data
+
+
 def youtube_dl_main_x(argv=None):
     ytdl_common.sanitize_filename = ytdl_YoutubeDL.sanitize_filename = limit_len_sanitize_filename
     ytdl_common.InfoExtractor = NewInfoExtractor
+    youtube_dl.extractor.GenericIE = GenericInfoExtractor
     youtube_dl.extractor.IwaraIE = IwaraIE
     youtube_dl.extractor.PornHubIE = PornHubIE
     youtube_dl.main(argv)
