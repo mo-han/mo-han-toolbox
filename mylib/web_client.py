@@ -16,7 +16,7 @@ import requests.utils
 
 from .T import JSONType
 from .ez import *
-from .fs import touch, ensure_open_file
+from .file import touch, ensure_open_file
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
 from .os_auto import write_file_chunk
 from .os_lite import SubscriptableFileIO
@@ -37,7 +37,7 @@ def get_html_element_tree(url, **kwargs) -> HTMLElementTree:
 
 
 def convert_cookies_json_to_netscape(json_data_or_filepath: JSONType or str, disable_filepath: bool = False) -> str:
-    from .fs import read_json_file
+    from .file import read_json_file
     if not disable_filepath and os.path.isfile(json_data_or_filepath):
         json_data = read_json_file(json_data_or_filepath)
     else:
@@ -90,7 +90,7 @@ def ensure_json_cookies(json_data) -> list:
 
 
 def cookies_dict_from_json(json_data_or_filepath: JSONType or str, disable_filepath: bool = False) -> dict:
-    from .fs import read_json_file
+    from .file import read_json_file
     if not disable_filepath and os.path.isfile(json_data_or_filepath):
         json_data = read_json_file(json_data_or_filepath)
     else:

@@ -8,7 +8,7 @@ from collections import defaultdict
 from .tricks_lite import deco_factory_retry, singleton, remove_from_list, dedup_list
 from .os_lite import ensure_sigint_signal
 from ._deprecated import real_join_path
-from .fs import read_json_file, write_json_file
+from .file import read_json_file, write_json_file
 from .text import encode_default_locale
 
 

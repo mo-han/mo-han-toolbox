@@ -8,7 +8,7 @@ import ffmpeg
 import filetype
 
 from . import T
-from . import fs
+from . import file
 from . import os_auto
 from . import tricks
 from . import tui
@@ -699,17 +699,17 @@ class FFmpegSegmentsContainer:
         if not fn:
             return
         self.input_data[S_FILENAME] = fn
-        with fs.ctx_pushd(self.root):
+        with file.ctx_pushd(self.root):
             prefix = self.input_filename_prefix
             for f in fs_find_iter(pattern=prefix + '*', recursive=False, strip_root=True):
-                fs.x_rename(f, prefix + fn, append_src_ext=False)
+                file.x_rename(f, prefix + fn, append_src_ext=False)
                 break
             else:
-                fs.touch(prefix + fn)
-            fs.write_json_file(self.input_json, self.input_data, indent=4)
+                file.touch(prefix + fn)
+            file.write_json_file(self.input_json, self.input_data, indent=4)
 
     def read_filename(self):
-        with fs.ctx_pushd(self.root):
+        with file.ctx_pushd(self.root):
             prefix = self.input_filename_prefix
             for f in fs_find_iter(pattern=prefix + '*', recursive=False, strip_root=True):
                 filename = f.lstrip(prefix)
@@ -724,7 +724,7 @@ class FFmpegSegmentsContainer:
             raise self.ContainerError('no input filepath')
         d = self.input_data or {S_SEGMENT: {}, S_NON_SEGMENT: {}}
 
-        with fs.ctx_pushd(self.root):
+        with file.ctx_pushd(self.root):
             for stream in ffmpeg.probe(i_file, select_streams=select_streams)['streams']:
                 index = stream['index']
                 # codec = stream['codec_name']
@@ -735,7 +735,7 @@ class FFmpegSegmentsContainer:
                 d[S_SEGMENT][index] = {}
                 seg_folder = self.input_prefix + index
                 os.makedirs(seg_folder, exist_ok=True)
-                with fs.ctx_pushd(seg_folder):
+                with file.ctx_pushd(seg_folder):
                     self.ff.segment(i_file, segment_output, map='0:{}'.format(index))
             try:
                 self.ff.convert([i_file], self.input_picture, copy_all=True, map_preset=S_ONLY_PICTURE)
@@ -753,7 +753,7 @@ class FFmpegSegmentsContainer:
         self.write_input_json()
 
     def write_metadata(self):
-        with fs.ctx_pushd(self.root):
+        with file.ctx_pushd(self.root):
             self.ff.metadata_file(self.input_filepath, self.metadata_file)
             with open(self.metadata_file, encoding='utf8') as f:
                 meta_lines = f.readlines()
@@ -766,11 +766,11 @@ class FFmpegSegmentsContainer:
         d = self.input_data or {}
         prefix = self.input_prefix
 
-        with fs.ctx_pushd(self.root):
+        with file.ctx_pushd(self.root):
             for k in d[S_SEGMENT]:
                 seg_folder = prefix + k
                 d[S_SEGMENT][k] = {}
-                with fs.ctx_pushd(seg_folder):
+                with file.ctx_pushd(seg_folder):
                     for file in fs_find_iter(pattern=self.segment_filename_regex_pattern, regex=True,
                                              recursive=False, strip_root=True):
                         d[S_SEGMENT][k][file] = excerpt_single_video_stream(file)
@@ -780,35 +780,35 @@ class FFmpegSegmentsContainer:
                     d[S_NON_SEGMENT][k] = ffmpeg.probe(file)
                 else:
                     del d[S_NON_SEGMENT][k]
-            fs.write_json_file(self.input_json, d, indent=4)
+            file.write_json_file(self.input_json, d, indent=4)
 
         self.input_data = d
 
     def read_input_json(self):
-        with fs.ctx_pushd(self.root):
-            self.input_data = fs.read_json_file(self.input_json)
+        with file.ctx_pushd(self.root):
+            self.input_data = file.read_json_file(self.input_json)
         self.write_filename()
         return self.input_data
 
     def read_output_json(self):
-        with fs.ctx_pushd(self.root):
-            self.output_data = fs.read_json_file(self.output_json)
+        with file.ctx_pushd(self.root):
+            self.output_data = file.read_json_file(self.output_json)
             if not self.output_data:
                 self.config()
-                self.output_data = fs.read_json_file(self.output_json)
+                self.output_data = file.read_json_file(self.output_json)
         return self.output_data
 
     def write_output_json(self):
-        with fs.ctx_pushd(self.root):
-            fs.write_json_file(self.output_json, self.output_data, indent=4)
+        with file.ctx_pushd(self.root):
+            file.write_json_file(self.output_json, self.output_data, indent=4)
 
     def tag_container_folder(self):
-        with fs.ctx_pushd(self.root):
+        with file.ctx_pushd(self.root):
             with open(self.tag_file, 'w') as f:
                 f.write(self.tag_sig)
 
     def container_is_tagged(self) -> bool:
-        with fs.ctx_pushd(self.root):
+        with file.ctx_pushd(self.root):
             try:
                 with open(self.tag_file) as f:
                     return f.readline().rstrip('\r\n') == self.tag_sig
@@ -969,22 +969,22 @@ class FFmpegSegmentsContainer:
             extra_input_list.append(i)
             output_args.extend(args)
         output_args.extend(d[S_MORE])
-        with fs.ctx_pushd(self.root):
+        with file.ctx_pushd(self.root):
             self.ff.concat(concat_list, d[S_FILENAME], output_args,
                            concat_demuxer=True, extra_inputs=extra_input_list, copy_all=False,
                            metadata_file=self.metadata_file,
                            **d['kwargs'])
 
     def write_output_concat_list_file(self):
-        with fs.ctx_pushd(self.root):
+        with file.ctx_pushd(self.root):
             d = self.input_data[S_SEGMENT]
             for index in d:
                 folder = self.output_prefix + index
                 os.makedirs(folder, exist_ok=True)
-                with fs.ctx_pushd(folder):
+                with file.ctx_pushd(folder):
                     lines = ["file '{}'".format(os.path.join(folder, seg)) for seg in
                              sorted(d[index].keys(), key=lambda x: int(os.path.splitext(x)[0]))]
-                    with fs.ensure_open_file(self.concat_list_file, 'w') as f:
+                    with file.ensure_open_file(self.concat_list_file, 'w') as f:
                         f.write('\n'.join(lines))
 
     def file_has_lock(self, filepath):
@@ -1011,9 +1011,9 @@ class FFmpegSegmentsContainer:
     def list_lock_segments(self):
         segments = []
         prefix = self.output_prefix
-        with fs.ctx_pushd(self.root):
+        with file.ctx_pushd(self.root):
             for index in self.input_data[S_SEGMENT]:
-                with fs.ctx_pushd(prefix + index):
+                with file.ctx_pushd(prefix + index):
                     segments.extend([(index, f.rstrip(self.suffix_lock)) for f in
                                      fs_find_iter('*' + self.suffix_lock)])
         return segments
@@ -1021,9 +1021,9 @@ class FFmpegSegmentsContainer:
     def list_done_segments(self):
         segments = []
         prefix = self.output_prefix
-        with fs.ctx_pushd(self.root):
+        with file.ctx_pushd(self.root):
             for index in self.input_data[S_SEGMENT]:
-                with fs.ctx_pushd(prefix + index):
+                with file.ctx_pushd(prefix + index):
                     segments.extend([(index, f.rstrip(self.suffix_done)) for f in
                                      fs_find_iter('*' + self.suffix_done)])
         return segments
@@ -1050,7 +1050,7 @@ class FFmpegSegmentsContainer:
         if self.file_has_lock(filepath) or self.file_has_done(filepath):
             return
         else:
-            fs.touch(filepath + self.suffix_lock)
+            file.touch(filepath + self.suffix_lock)
 
     def file_tag_unlock(self, filepath):
         if self.file_has_lock(filepath):
@@ -1060,18 +1060,18 @@ class FFmpegSegmentsContainer:
         if self.file_has_done(filepath):
             return
         if self.file_has_lock(filepath):
-            fs.x_rename(filepath + self.suffix_lock, filepath + self.suffix_done,
-                        stay_in_src_dir=False, append_src_ext=False)
+            file.x_rename(filepath + self.suffix_lock, filepath + self.suffix_done,
+                          stay_in_src_dir=False, append_src_ext=False)
 
     def file_tag_delete(self, filepath):
-        fs.touch(filepath + self.suffix_delete)
+        file.touch(filepath + self.suffix_delete)
 
     def convert_one_segment(self, stream_id, segment_file, overwrite=False) -> dict:
         segment_path_no_prefix = os.path.join(stream_id, segment_file)
         i_seg = self.input_prefix + segment_path_no_prefix
         o_seg = self.output_prefix + segment_path_no_prefix
         args = self.output_data[S_SEGMENT]
-        with fs.ctx_pushd(self.root):
+        with file.ctx_pushd(self.root):
             self.nap()
             if self.file_has_lock(o_seg):
                 raise self.SegmentLockedError
@@ -1101,7 +1101,7 @@ class FFmpegSegmentsContainer:
             o_seg = filepath
         else:
             o_seg = os.path.join(self.output_prefix + stream_id, segment_filename)
-        with fs.ctx_pushd(self.root):
+        with file.ctx_pushd(self.root):
             if not self.file_has_done(o_seg):
                 raise self.SegmentNotDoneError
             return excerpt_single_video_stream(o_seg)
@@ -1145,12 +1145,12 @@ class FFmpegSegmentsContainer:
                               'bit_rate': 8 * estimated_output_size // total_duration,
                               'ratio': round(estimated_output_size / total_input_size, 3)}
 
-        with fs.ctx_pushd(self.root):
-            fs.write_json_file(self.test_json, d, indent=4)
+        with file.ctx_pushd(self.root):
+            file.write_json_file(self.test_json, d, indent=4)
         return {k: v['estimate']['ratio'] for k, v in d.items()}
 
     def clear(self):
-        with fs.ctx_pushd(self.root):
+        with file.ctx_pushd(self.root):
             segments = self.list_lock_segments() + self.list_done_segments()
             while segments:
                 for i, seg in segments:
@@ -1163,7 +1163,7 @@ class FFmpegSegmentsContainer:
                         os.remove(o_seg + self.suffix_done)
                     elif self.file_has_lock(o_seg):
                         self.logger.info('request delete locked segment {}'.format(o_seg))
-                        fs.touch(o_seg + self.suffix_delete)
+                        file.touch(o_seg + self.suffix_delete)
                     else:
                         self.logger.info('delete stub segment{}'.format(o_seg))
                         os.remove(o_seg)

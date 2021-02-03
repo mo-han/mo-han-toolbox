@@ -10,7 +10,7 @@ from pprint import pformat
 from telegram.ext import MessageHandler, Filters, CallbackContext
 
 from mylib.cli import new_argument_parser
-from mylib.fs import read_json_file, write_json_file, read_sqlite_dict_file
+from mylib.file import read_json_file, write_json_file, read_sqlite_dict_file
 from mylib.log import get_logger
 from mylib.os_auto import monitor_sub_process_tty_frozen, ProcessTTYFrozen
 from mylib.text import decode_fallback_locale

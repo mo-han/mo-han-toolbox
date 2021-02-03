@@ -20,7 +20,7 @@ from . import web_client
 from ._deprecated import concat_videos, merge_m4s
 from ._misc import safe_print, safe_basename
 from .os_auto import ensure_sigint_signal
-from . import fs
+from . import file
 from .text import regex_find, ellipt_end
 from .tricks import str2range, modify_module
 from .tricks_lite import seq_call_return
@@ -168,7 +168,7 @@ def code_modify_you_get_extractor(x: str):
 
 
 def new_legitimize(text: str, os=...):
-    return ellipt_end(fs.sanitize(text, fs.POTENTIAL_INVALID_CHARS_MAP), 240, encoding='u8').lstrip('.')
+    return ellipt_end(file.sanitize(text, file.POTENTIAL_INVALID_CHARS_MAP), 240, encoding='u8').lstrip('.')
 
 
 you_get.extractor = modify_module('you_get.extractor', code_modify_you_get_extractor)

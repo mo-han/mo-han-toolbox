@@ -3,16 +3,20 @@
 #dhash  #MIT
 #pymediainfo  #MIT
 colorama
+datefinder #MIT
+dateparser #BSD-3
 dill  #BSD-3
 disjoint-set  #MIT
 ffmpeg-python
 filetype  #MIT
+fs #MIT # PyFilesystem2
 gallery-dl
 humanize  #MIT
 imagehash  #BSD
 inflection  #MIT
 keyboard
 lxml
+more-itertools #MIT
 mouse
 ndrop
 opencv-python
@@ -26,6 +30,7 @@ pyperclip
 pypinyin #MIT
 pyreadline
 pyserial
+python-dateutil #Apache #BSD
 python-i18n  #MIT
 pyyaml  #MIT
 regex #Apache

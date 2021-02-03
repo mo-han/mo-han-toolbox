@@ -11,7 +11,7 @@ from disjoint_set import DisjointSet
 from imagehash import average_hash, dhash, phash, whash, hex_to_hash
 
 from mylib.ez import *
-from mylib import fs
+from mylib import file
 from mylib.os_auto import check_file_ext
 from mylib.tricks_lite import percentage
 
@@ -216,7 +216,7 @@ def view_similar_image_groups(similar_groups: DisjointSet):
                 except (FileNotFoundError, shutil.Error):
                     pass
     except KeyboardInterrupt:
-        with fs.ctx_pushd(folder):
+        with file.ctx_pushd(folder):
             for f in os.listdir():
                 shutil.move(f, '..')
         sys.exit(2)
