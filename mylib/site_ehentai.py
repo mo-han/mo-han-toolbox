@@ -22,6 +22,8 @@ EH_TITLE_REGEX_PATTERN = re.compile(
     r'([\[(].+[)\]])?'
 )
 
+non_bracket = r'[^\[\]()]'
+
 
 def find_core_title(title: str):
     # split_by_right_l = re.split(r'[])]', title)
@@ -32,6 +34,7 @@ def find_core_title(title: str):
     #     elif re.search(r'\S.*[\[(]', s):
     #         return re.split(r'[\[(]', s)[0].strip()
     t = title
+    t = re.sub(rf'(\[{non_bracket}+\({non_bracket}+\))({non_bracket}+)', r'\1\]\2', t)  # missing `]`
     t = re.sub(r'^\s*\([^)]+\)(.+)', r'\1', t)
     t = re.sub(r'^\s*\[[^]]+](.+)', r'\1', t)
     t = re.sub(r'^\s*([^[]+)\[.+]', r'\1', t)
