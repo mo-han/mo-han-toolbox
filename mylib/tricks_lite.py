@@ -279,14 +279,14 @@ class Attreebute:
             self.__update_data__(k, self[k])
 
     def __from_json__(self, json_filepath: str):
-        from .fs import read_json_file
+        from .file import read_json_file
         self.__from_dict__(read_json_file(json_filepath))
 
     def __to_dict__(self):
         return self.__data__
 
     def __to_json__(self, json_filepath: str):
-        from .fs import write_json_file
+        from .file import write_json_file
         write_json_file(json_filepath, self.__data__, indent=4)
 
     def __query__(self, *args, **kwargs):

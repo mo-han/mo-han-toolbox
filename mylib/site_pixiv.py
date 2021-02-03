@@ -4,7 +4,7 @@ import os
 
 import requests
 from .ez import *
-from .fs import write_json_file, sanitize_xu
+from .file import write_json_file, sanitize_xu
 from .log import get_logger
 from .tricks import AttributeInflection
 from .tricks_lite import Attreebute, width_of_int

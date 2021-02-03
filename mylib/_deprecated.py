@@ -8,7 +8,7 @@ from glob import glob
 from queue import Queue
 from typing import Callable, Generator
 
-from mylib import T, fs
+from mylib import T, file
 from mylib.os_auto import Clipboard
 
 
@@ -223,7 +223,7 @@ def list_files(src: str or T.Iterable or Clipboard, recursive=False, progress_qu
             return [src]
         elif os.path.isdir(src):
             # print(src)
-            return list(fs.find_iter(src, 'f', recursive=True))
+            return list(file.find_iter(src, 'f', recursive=True))
         else:
             return [fp for fp in glob(src, recursive=recursive) if os.path.isfile(fp)]
     elif isinstance(src, T.Iterable):
@@ -244,7 +244,7 @@ def list_dirs(src: str or T.Iterable or Clipboard, recursive=False, progress_que
             dirs = [src]
             if recursive:
                 dirs.extend(
-                    list(fs.find_iter(src, 'd', recursive=True)))
+                    list(file.find_iter(src, 'd', recursive=True)))
             return dirs
         else:
             return [p for p in glob(src, recursive=recursive) if os.path.isdir(p)]

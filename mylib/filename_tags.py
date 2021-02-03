@@ -4,7 +4,7 @@ import os
 import re
 from abc import ABC
 
-from . import fs
+from . import file
 
 
 class ListFilenameTags(ABC):
@@ -79,7 +79,7 @@ class SuffixListFilenameTags(ListFilenameTags):
         self.right = right
         self.sep = sep
         tags_pattern = fr'{re.escape(left)}[^\[\]]*{re.escape(right)}'
-        dn, bn, ext = fs.split_dirname_basename_ext(path)
+        dn, bn, ext = file.split_dirname_basename_ext(path)
         if re.search(tags_pattern, ext):
             bn += ext
             ext = ''
