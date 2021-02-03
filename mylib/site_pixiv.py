@@ -3,7 +3,7 @@
 import os
 
 import requests
-
+from .ez import *
 from .fs import write_json_file, sanitize_xu
 from .log import get_logger
 from .tricks import AttributeInflection
@@ -19,11 +19,19 @@ logger = get_logger(__name__)
 
 
 def fanbox_creator_id_from_url(url: str) -> str or None:
-    netloc = parse_https_url(url).netloc
-    if FANBOX_DOMAIN in netloc:
-        creator = netloc.split(FANBOX_DOMAIN)[0]
-        if creator:
-            return creator.rstrip('.')
+    parse = parse_https_url(url)
+    netloc = parse.netloc
+    path = parse.path
+    if FANBOX_DOMAIN not in netloc:
+        creator = None
+    else:
+        creator = str_remove_suffix(netloc.split(FANBOX_DOMAIN)[0], '.')
+    if creator == 'www':
+        if path.startswith('/@'):
+            creator = re.findall(r'/@([^/]+)', path)[0]
+        else:
+            creator = None
+    return creator
 
 
 def fanbox_post_id_from_url(url: str) -> int or None:
@@ -31,10 +39,9 @@ def fanbox_post_id_from_url(url: str) -> int or None:
     parse = parse_https_url(url)
     netloc = parse.netloc
     path = parse.path
-    if FANBOX_DOMAIN in netloc and path.startswith(prefix):
-        post = path[len(prefix):]
-        if post:
-            return int(post)
+    if FANBOX_DOMAIN not in netloc and '/posts/' not in path:
+        return None
+    return int(re.findall(r'/posts/(\d+)', path)[0])
 
 
 class PostBodyError(Exception):
