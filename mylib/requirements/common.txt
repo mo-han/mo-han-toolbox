@@ -1,7 +1,7 @@
 #bitmath  #MIT #filesize #unit
 #colored  #by-gooey #MIT
-#pymediainfo  #MIT
 #dhash  #MIT
+#pymediainfo  #MIT
 colorama
 dill  #BSD-3
 disjoint-set  #MIT
@@ -17,15 +17,18 @@ mouse
 ndrop
 opencv-python
 pillow
+pinyin #BSD
 psutil
 pure-python-adb
 pyautogui  # pyautogui==0.9.39
 pynput  #LGPLv3
 pyperclip
+pypinyin #MIT
 pyreadline
 pyserial
 python-i18n  #MIT
 pyyaml  #MIT
+regex #Apache
 requests
 selenium<3.8  # phantomjs
 send2trash

@@ -178,3 +178,19 @@ def ellipt_end(s: str, limit: int, *, the_ellipsis: str = '...', encoding: str =
             return f'{s}{the_ellipsis}'
     else:
         return s
+
+
+def unicode_normalize(s: str, compose=False, compatibility=False):
+    forms = {(False, False): 'D', (False, True): 'KD', (True, False): 'C', (True, True): 'KC'}
+    form = f'NF{forms[(bool(compose), bool(compatibility))]}'
+    return unicodedata.normalize(form, s)
+
+
+def remove_accent_chars(s: str) -> str:
+    return u"".join([c for c in (unicodedata.normalize('NFKD', s)) if not unicodedata.combining(c)])
+
+
+def remove_accent_chars_join(x: str):
+    # answer by MiniQuark
+    # https://stackoverflow.com/a/517974/7966259
+    return u"".join([c for c in unicodedata.normalize('NFKD', x) if not unicodedata.combining(c)])
