@@ -2,4 +2,4 @@
 # encoding=utf8
 from traits.etsconfig.api import ETSConfig
 
-TRAITS_TOOLKIT = ETSConfig.toolkit = 'qt'
+TRAITS_TOOLKIT = ETSConfig.toolkit = 'qt4'

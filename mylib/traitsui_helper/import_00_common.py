@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 # encoding=utf8
+from enable.savage.trait_defs.ui.svg_button import *
+from pyface.api import *
 from traits.api import *
 from traitsui.api import *
 from traitsui.key_bindings import *
 from varname import nameof
 
-from mylib.ez import *
+from ..ez import *
+
+
+def __unused_import_keeper():
+    return ImageResource, SVGButton
 
 
 class UsefulHandler(Handler):
@@ -53,13 +59,13 @@ def trait_with_id(traits_obj: HasTraits, id_=...):
     return trait_with_attr(traits_obj, attr_name, id_)
 
 
-class TraitStr(AttrToStr):
+class TheName(AttrToStr):
     def __setattr__(self, key, value):
-        super(TraitStr, self).__setattr__(key, value)
+        super(TheName, self).__setattr__(key, value)
         trait_with_id(value, key)
 
 
-def obj_attr_path(*obj):
+def obj_attr_name(*obj):
     return nameof(*obj, caller=2, full=True)
 
 
@@ -67,8 +73,8 @@ def object_trait_path(trait_name):
     return f'object.{trait_name}'
 
 
-ts = trait_str = TraitStr()
+tn = the_name = TheName()
 tl = trait_with_label
 ti = trait_with_id
-oa = obj_attr_path
-ot = object_trait_path
+oa = obj_attr_name
+op = object_trait_path
