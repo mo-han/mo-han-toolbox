@@ -98,3 +98,13 @@ def prompt_confirm(ask: str, default=None, *, yes='y', no='n'):
         return default
     else:
         return prompt_confirm(ask, default, yes=yes, no=no)
+
+
+def prompt_input(header: str, default: str = None):
+    x = input(header)
+    if x:
+        return x
+    elif default is not None:
+        return default
+    else:
+        return prompt_input(header=header, default=default)

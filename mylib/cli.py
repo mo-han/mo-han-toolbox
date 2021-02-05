@@ -36,3 +36,7 @@ class ArgParseCompactHelpFormatter(argparse.HelpFormatter):
 
 def new_argument_parser(formatter_class=ArgParseCompactHelpFormatter):
     return argparse.ArgumentParser(formatter_class=formatter_class)
+
+
+def add_dry_run(parser: argparse.ArgumentParser):
+    parser.add_argument('-D', '--dry-run', action='store_true')

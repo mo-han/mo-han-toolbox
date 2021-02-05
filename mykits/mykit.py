@@ -15,16 +15,16 @@ from send2trash import send2trash
 
 import mylib._deprecated
 from mylib import file
+from mylib import tui
 from mylib._deprecated import real_join_path, fs_inplace_rename, fs_inplace_rename_regex, list_files, list_dirs
-from mylib.cli import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter
+from mylib.cli import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, add_dry_run
 from mylib.file import path_or_glob, make_path, ctx_pushd
 from mylib.os_auto import clipboard, set_console_title___try
 from mylib.text_lite import ellipt_middle
 from mylib.tricks_lite import Attreebute, eval_or_str, deco_factory_keyboard_interrupt
-from mylib.tui_lite import LinePrinter
 
 rtd = Attreebute()  # runtime data
-tui_lp = LinePrinter()
+tui_lp = tui.LinePrinter()
 common_parser_kwargs = {'formatter_class': ArgParseCompactHelpFormatter}
 ap = ArgumentParser(**common_parser_kwargs)
 sub = ap.add_subparsers(title='sub-commands')
@@ -94,8 +94,11 @@ def main():
     func()
 
 
-def add_sub_parser(name: str, aliases: list, desc: str) -> ArgumentParser:
-    return sub.add_parser(name, aliases=aliases, help=desc, description=desc, **common_parser_kwargs)
+def add_sub_parser(name: str, aliases: list, desc: str, func=None) -> ArgumentParser:
+    sub_parser = sub.add_parser(name, aliases=aliases, help=desc, description=desc, **common_parser_kwargs)
+    if func:
+        sub_parser.set_defaults(func=func)
+    return sub_parser
 
 
 def test_only():
@@ -117,6 +120,82 @@ def cmd_mode_func():
 
 cmd_mode = add_sub_parser('cmd', ['cli'], 'command line interactive mode')
 cmd_mode.set_defaults(func=cmd_mode_func)
+
+
+def merge_zip_files_func():
+    from more_itertools import all_equal
+    from fs import open_fs
+    from fs.compress import write_zip
+    from fs.copy import copy_fs_if_newer
+    from filetype import guess
+
+    def ask_for_dst_path():
+        return tui.prompt_input('? Input the path of the ZIP file to merge into: ')
+
+    def is_zip_file(path:str):
+        mime = guess(path).mime
+        if mime == 'application/zip':
+            return True
+        else:
+            print('! Not a ZIP file: {path}')
+            return False
+
+    args = rtd.args
+    dry_run = args.dry_run
+    auto_yes = args.yes
+    src_l = args.src or clipboard.list_path()
+    src_l = [s for s in src_l if is_zip_file(s)]
+
+    if len(src_l) < 2:
+        print(f'! at least 2 zip files')
+        return
+    print('# Merge all below ZIP files:')
+    print('\n'.join(src_l))
+    dbx_l = [file.split_dirname_basename_ext(p) for p in src_l]
+    if all_equal([d for d, b, x in dbx_l]):
+        common_dir = dbx_l[0][0]
+    else:
+        common_dir = ''
+    if all_equal([x for d, b, x in dbx_l]):
+        common_ext = dbx_l[0][-1]
+    else:
+        common_ext = ''
+    if common_dir and common_ext:
+        common_base = os.path.commonprefix([b for d, b, x in dbx_l]).strip()
+        if common_base:
+            tmp_dst = file.join_dirname_basename_ext(common_dir, common_base, common_ext)
+            if auto_yes or tui.prompt_confirm(f'? Merge into ZIP file "{tmp_dst}"', default=True):
+                dst = tmp_dst
+            else:
+                dst = ask_for_dst_path()
+        else:
+            dst = ask_for_dst_path()
+    elif common_dir:
+        if auto_yes or tui.prompt_confirm(f'? Put merged ZIP file into this dir "{common_dir}"', default=True):
+            filename = tui.prompt_input(f'? Input the basename of the ZIP file to merge into: ')
+            dst = file.make_path(common_dir, filename)
+        else:
+            dst = ask_for_dst_path()
+    else:
+        dst = ask_for_dst_path()
+    if dry_run:
+        print(f'@ Merge into ZIP file "{dst}"')
+        return
+    print(f'* Merge into ZIP file "{dst}"')
+    with open_fs('mem://tmp') as tmp:
+        for s in src_l:
+            with open_fs(f'zip://{s}') as z:
+                copy_fs_if_newer(z, tmp)  # todo: seem check time of ZIP-FS but not files inside
+        write_zip(tmp, dst)
+    for s in src_l:
+        send2trash(s)
+        print(f'# Trash <- {s}')
+
+
+merge_zip_files = add_sub_parser('merge.zip.files', ['mg.zip'], 'merge multiple files', merge_zip_files_func)
+add_dry_run(merge_zip_files)
+merge_zip_files.add_argument('src', nargs='*')
+merge_zip_files.add_argument('-y', '--yes', help='auto confirm yes', action='store_true')
 
 
 def hath_gallery_rename_func():
@@ -158,26 +237,26 @@ def tag_filter_files_func():
     dry = args.dry_run
     rm = defaultdict(set)
     kp = defaultdict(set)
-    for file in file.files_from_iter(args.src or clipboard.list_path(), recursive=False):
-        ft = SuffixListFilenameTags(file)
+    for f in file.files_from_iter(args.src or clipboard.list_path(), recursive=False):
+        ft = SuffixListFilenameTags(f)
         ext = ft.extension
         prefix = ft.prefix
         if any(map(ft.has_tag, tag_kp)) or ext in ext_kp:
-            kp[prefix].add(file)
+            kp[prefix].add(f)
         elif any(map(ft.has_tag, tag_rm)) or ext in ext_rm:
-            rm[prefix].add(file)
+            rm[prefix].add(f)
         else:
-            kp[prefix].add(file)
+            kp[prefix].add(f)
     for prefix, rm_set in rm.items():
         kp_set = kp.get(prefix, set())
         if kp_set:
             print(f'* {prefix}')
-            for file in kp_set:
-                print(f'@ {file}')
-            for file in rm_set - kp_set:
-                print(f'- {file}')
+            for f in kp_set:
+                print(f'@ {f}')
+            for f in rm_set - kp_set:
+                print(f'- {f}')
                 if not dry:
-                    send2trash(file)
+                    send2trash(f)
 
 
 tag_filter_files = add_sub_parser('tag.filter.files', [], 'filter files by tags and ext')
