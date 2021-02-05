@@ -90,7 +90,7 @@ class MyAssistantBot(SimpleBot):
         self.__del_undone_update__(undone_key, update)
 
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(
-        re.compile(r'youtube|youtu\.be|iwara|pornhub|\[ph[\da-f]{13}]')))
+        re.compile(r'youtube|youtu\.be|iwara|pornhub|\[ph[\da-f]{13}]|kissjav')))
     def _ytdl(self, update: Update, *args):
         undone_key = self._ytdl.__name__
         self.__add_undone_update__(undone_key, update)
