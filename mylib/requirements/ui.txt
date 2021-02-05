@@ -5,4 +5,3 @@ gooey  #need:wxpython:https://extras.wxpython.org/wxPython4/extras/
 pysimpleguiqt
 qt-binder  #BSD
 traitsui  #BSD
-whl/enable-4.8.1-cp36-cp36m-win_amd64.whl
