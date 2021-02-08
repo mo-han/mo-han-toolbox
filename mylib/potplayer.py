@@ -6,7 +6,7 @@ from time import sleep, time
 import keyboard
 import mouse
 
-from .gui import rename_dialog
+from .gui_old import rename_dialog
 from .uia import module_pywinauto
 from .os_auto import clipboard
 from .file import x_rename

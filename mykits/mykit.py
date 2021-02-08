@@ -511,7 +511,6 @@ put_in_dir.add_argument('src', nargs='*')
 
 def tail_filter_files_func():
     from mylib.os_auto import filter_filename_tail, join_filename_tail
-    lp = LinePrinter()
     args = rtd.args
     tk = set(args.tails_keep or [])
     xk = set(args.extensions_keep or [])
@@ -529,7 +528,7 @@ def tail_filter_files_func():
     for g in gone:
         if g in keep:
             dn, fn = g
-            lp.l()
+            tui_lp.l()
             print(f'* {os.path.join(dn, fn)}')
             for tail, ext in keep[g]:
                 print(f'@ {tail} {ext}')
@@ -601,7 +600,7 @@ def ffmpeg_img2vid_func():
     ff.logger.setLevel('INFO')
     args = rtd.args
     images = args.images
-    output = args.output
+    output = args.output or f'{os.path.split(os.path.abspath(images))[0]}.mp4'
     res_fps = args.res_fps
     keywords = args.keyword or ()
     ffmpeg_options = args.opt or ()
@@ -627,12 +626,12 @@ def ffmpeg_img2vid_func():
             exit(2)
 
 
-ffmpeg_img2vid = add_sub_parser('wrap.ffmpeg.img2vid', ['img2vid'], 'convert images (frames) into video using ffmpeg')
+ffmpeg_img2vid = add_sub_parser('ffmpeg.img2vid', ['img2vid'], 'convert images (frames) into video using ffmpeg')
 ffmpeg_img2vid.set_defaults(func=ffmpeg_img2vid_func)
 ffmpeg_img2vid.add_argument('-i', '--images', help='input images, e.g. "%%03d.jpg"', required=True)
-ffmpeg_img2vid.add_argument('-o', '--output', help='output video', required=True)
+ffmpeg_img2vid.add_argument('-o', '--output', help='output video', nargs='?')
 ffmpeg_img2vid.add_argument('-r', '--res-fps', metavar='WxH@FPS', required=True)
-ffmpeg_img2vid.add_argument('-k', '--keyword', nargs='*')
+ffmpeg_img2vid.add_argument('-k', '--keyword', nargs='*', help='')
 ffmpeg_img2vid.add_argument('opt', help='ffmpeg options (better insert -- before them)', nargs='*')
 
 
@@ -820,8 +819,8 @@ def run_from_lines_func():
     source = args.source
     dry_run = args.dry_run
     cmd_fmt = ' '.join(args.command) or input('< ')
-    if '{}' not in cmd_fmt:
-        cmd_fmt += ' "{}"'
+    if '{line}' not in cmd_fmt:
+        cmd_fmt += ' "{line}"'
     print('>', cmd_fmt)
     if source == ':clipboard.path':
         lines = clipboard.list_path()
@@ -837,7 +836,7 @@ def run_from_lines_func():
             line = line.strip()
             if not line:
                 continue
-            command = cmd_fmt.format(line.strip())
+            command = cmd_fmt.format(line=line.strip())
             print('#', command)
             if not dry_run:
                 os.system(command)
@@ -846,7 +845,7 @@ def run_from_lines_func():
 
 
 run_from_lines = add_sub_parser(
-    'run.from.lines', ['runlines', 'rl'],
+    'run.from.lines', ['run.lines', 'rl'],
     'given lines from file, clipboard, etc. formatted command will be executed for each of the line')
 run_from_lines.set_defaults(func=run_from_lines_func)
 run_from_lines.add_argument('-s', '--source', help='":clipboard", ":clipboard.path", or path of file (text lines)')
@@ -925,7 +924,7 @@ clipboard_findurl.add_argument('pattern', help='URL pattern, or website name')
 
 
 def clipboard_rename_func():
-    from mylib.gui import rename_dialog
+    from mylib.gui_old import rename_dialog
     for f in clipboard.list_path():
         rename_dialog(f)
 

@@ -2,6 +2,7 @@
 # encoding=utf8
 from pyface.api import *
 from traits.api import *
+from traits.observation import api as ob
 from traitsui.api import *
 from traitsui.key_bindings import *
 from varname import nameof
@@ -10,7 +11,7 @@ from ..ez import *
 
 
 def __unused_import_keeper():
-    return ImageResource
+    return ImageResource, ob
 
 
 class UsefulHandler(Handler):
