@@ -84,7 +84,7 @@ main features in current version:
 - find opened PotPlayer window and bring it to foreground
 - get and parse info of the opened media file
 - rename/move the opened media file
-- a [GUI dialog](mylib/gui.py#L44) to rename/move the opened media file
+- a [GUI dialog](mylib/gui_old.py#L44) to rename/move the opened media file
 
 #### [VoidDuck](mylib/tricks.py#L141)
 
