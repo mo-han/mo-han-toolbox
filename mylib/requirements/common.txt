@@ -1,10 +1,10 @@
 #bitmath  #MIT #filesize #unit
 #colored  #by-gooey #MIT
+#conda #BSD
 #dhash  #MIT
 #pymediainfo  #MIT
 auxlib #Apache #BSD
 colorama
-conda #BSD
 datefinder #MIT
 dateparser #BSD-3
 dill  #BSD-3
