@@ -4,4 +4,3 @@ enaml-web  #MIT
 gooey  #need:wxpython:https://extras.wxpython.org/wxPython4/extras/
 pysimpleguiqt
 qt-binder  #BSD
-traitsui  #BSD
