@@ -13,12 +13,12 @@ from pprint import pprint
 
 from send2trash import send2trash
 
-import mylib._deprecated
-from mylib import file
+import mylib.__deprecated__
+from mylib import fstk
 from mylib import tui
-from mylib._deprecated import real_join_path, fs_inplace_rename, fs_inplace_rename_regex, list_files, list_dirs
+from mylib.__deprecated__ import real_join_path, fs_inplace_rename, fs_inplace_rename_regex, list_files, list_dirs
 from mylib.cli import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, add_dry_run
-from mylib.file import path_or_glob, make_path, ctx_pushd
+from mylib.fstk import path_or_glob, make_path, ctx_pushd
 from mylib.os_auto import clipboard, set_console_title___try
 from mylib.text_lite import ellipt_middle
 from mylib.tricks_lite import Attreebute, eval_or_str, deco_factory_keyboard_interrupt
@@ -151,7 +151,7 @@ def merge_zip_files_func():
         return
     print('# Merge all below ZIP files:')
     print('\n'.join(src_l))
-    dbx_l = [file.split_dirname_basename_ext(p) for p in src_l]
+    dbx_l = [fstk.split_dirname_basename_ext(p) for p in src_l]
     if all_equal([d for d, b, x in dbx_l]):
         common_dir = dbx_l[0][0]
     else:
@@ -163,7 +163,7 @@ def merge_zip_files_func():
     if common_dir and common_ext:
         common_base = os.path.commonprefix([b for d, b, x in dbx_l]).strip()
         if common_base:
-            tmp_dst = file.join_dirname_basename_ext(common_dir, common_base, common_ext)
+            tmp_dst = fstk.join_dirname_basename_ext(common_dir, common_base, common_ext)
             if auto_yes or tui.prompt_confirm(f'? Merge into ZIP file "{tmp_dst}"', default=True):
                 dst = tmp_dst
             else:
@@ -173,7 +173,7 @@ def merge_zip_files_func():
     elif common_dir:
         if auto_yes or tui.prompt_confirm(f'? Put merged ZIP file into this dir "{common_dir}"', default=True):
             filename = tui.prompt_input(f'? Input the basename of the ZIP file to merge into: ')
-            dst = file.make_path(common_dir, filename)
+            dst = fstk.make_path(common_dir, filename)
         else:
             dst = ask_for_dst_path()
     else:
@@ -204,12 +204,12 @@ def hath_gallery_rename_func():
     for s in args.src or clipboard.list_path():
         try:
             title = parse_hath_dl_gallery_info(s)['title']
-            folder, name, ext = file.split_dirname_basename_ext(s)
+            folder, name, ext = fstk.split_dirname_basename_ext(s)
             try:
                 tail = re.search(r' \[\d+.*]$', name).group(0)
             except AttributeError:
                 tail = ''
-            new = file.join_dirname_basename_ext(folder, file.sanitize_xu240(title) + tail, ext)
+            new = fstk.join_dirname_basename_ext(folder, fstk.sanitize_xu240(title) + tail, ext)
             if new == s:
                 print(f'@ {s}')
                 continue
@@ -237,7 +237,7 @@ def tag_filter_files_func():
     dry = args.dry_run
     rm = defaultdict(set)
     kp = defaultdict(set)
-    for f in file.files_from_iter(args.src or clipboard.list_path(), recursive=False):
+    for f in fstk.files_from_iter(args.src or clipboard.list_path(), recursive=False):
         ft = SuffixListFilenameTags(f)
         ext = ft.extension
         prefix = ft.prefix
@@ -275,7 +275,7 @@ def catalog_files_by_year_func():
     args = rtd.args
     suffix_l = args.suffix or ['']
     dry_run = args.dry_run
-    files = (p for p in file.files_from_iter(args.src or clipboard.list_path()) if any(map(p.endswith, suffix_l)))
+    files = (p for p in fstk.files_from_iter(args.src or clipboard.list_path()) if any(map(p.endswith, suffix_l)))
     for f in files:
         dirname, basename = os.path.split(f)
         year = re.findall(r'(\d{4})-\d{2}-\d{2}', basename)
@@ -299,7 +299,7 @@ catalog_files_by_year.add_argument('src', nargs='*')
 
 def cfip_func():
     from mylib.sites import get_cloudflare_ipaddr_hostmonit
-    from mylib.file import write_json_file
+    from mylib.fstk import write_json_file
     from pprint import pformat
     args = rtd.args
     file = args.file
@@ -374,16 +374,16 @@ def dir_flatter_func():
         if not os.path.isdir(s):
             print(f'! skip non-folder: {s}')
             continue
-        with file.ctx_pushd(s):
+        with fstk.ctx_pushd(s):
             print(s)
-            for fp in file.find_iter('.', 'f', win32_unc=is_win32):
-                new = os.path.relpath(fp, file.make_path('.', win32_unc=is_win32))
+            for fp in fstk.find_iter('.', 'f', win32_unc=is_win32):
+                new = os.path.relpath(fp, fstk.make_path('.', win32_unc=is_win32))
                 if not prefix:
                     new = os.path.basename(new)
-                new = ellipt_middle(file.sanitize(new), 250, encoding='utf8')
+                new = ellipt_middle(fstk.sanitize(new), 250, encoding='utf8')
                 print(new)
-                shutil.move(fp, file.make_path(new, win32_unc=is_win32))
-            for dp in file.find_iter('.', 'd', include_start_dir=False, win32_unc=is_win32):
+                shutil.move(fp, fstk.make_path(new, win32_unc=is_win32))
+            for dp in fstk.find_iter('.', 'd', include_start_dir=False, win32_unc=is_win32):
                 try:
                     os.removedirs(dp)
                 except OSError:
@@ -406,7 +406,7 @@ def put_in_dir_func():
     from mylib.text_lite import find_words
     from mylib.tui_lite import prompt_choose_number, prompt_confirm
     conf_file = real_join_path('~', '.config', 'fs.put_in_dir.json')
-    conf = file.read_json_file(conf_file) or {'dst_map': {}}
+    conf = fstk.read_json_file(conf_file) or {'dst_map': {}}
     dst_map = conf['dst_map']
     args = rtd.args
     src = args.src or clipboard.list_path()
@@ -439,7 +439,7 @@ def put_in_dir_func():
                 print(f'{k}=')
             else:
                 print(f'{a}={dst_map.get(a, "")}')
-    file.write_json_file(conf_file, conf, indent=4)
+    fstk.write_json_file(conf_file, conf, indent=4)
     if not dst:
         return
     dst = dst_map.get(dst, dst)
@@ -448,8 +448,8 @@ def put_in_dir_func():
         print(f'! {dst} is file (should be directory)', file=sys.stderr)
         exit(1)
     os.makedirs(dst, exist_ok=True)
-    db_path = file.make_path(dst, '__folder_name_words__.db')
-    db = file.read_sqlite_dict_file(db_path)
+    db_path = fstk.make_path(dst, '__folder_name_words__.db')
+    db = fstk.read_sqlite_dict_file(db_path)
     db = {k: v for k, v in db.items() if k in sub_dirs_l}
     sub_dirs_d = {b: set(find_words(b.lower())) for b in sub_dirs_l if b not in db}
     sub_dirs_d.update(db)
@@ -482,21 +482,21 @@ def put_in_dir_func():
                 target_dir_name = target_dir_name or input(f'Create folder: ')
                 if target_dir_name:
                     sub_dirs_d[target_dir_name] = set(find_words(target_dir_name.lower()))
-                    dir_path = file.make_path(dst, target_dir_name)
+                    dir_path = fstk.make_path(dst, target_dir_name)
                     if not dry_run:
                         os.makedirs(dir_path, exist_ok=True)
                 else:
                     dir_path = dst
             else:
                 dir_path = dst
-            d = file.make_path(dir_path, os.path.basename(s))
+            d = fstk.make_path(dir_path, os.path.basename(s))
             if os.path.exists(d):
                 if not prompt_confirm(f'Overwrite {d}?', default=False):
                     continue
             if not dry_run:
                 fs_move_cli(s, d)
             print(f'{s} -> {d}')
-    file.write_sqlite_dict_file(db_path, sub_dirs_d, update_only=True)
+    fstk.write_sqlite_dict_file(db_path, sub_dirs_d, update_only=True)
 
 
 put_in_dir = add_sub_parser('putindir', ['mvd'], 'put files/folders into dest dir')
@@ -650,7 +650,7 @@ def ffmpeg_func():
     opts = args.opts
     if verbose:
         print(args)
-    for filepath in mylib._deprecated.list_files(source, recursive=False):
+    for filepath in mylib.__deprecated__.list_files(source, recursive=False):
         kw_video_convert(filepath, keywords=keywords, vf=video_filters, cut_points=cut_points, dest=output_path,
                          overwrite=overwrite, redo=redo_origin, verbose=verbose, dry_run=dry_run, ffmpeg_opts=opts)
 
@@ -973,8 +973,8 @@ bilibili_download.add_argument('-A', '--no-moderate-audio', dest='moderate_audio
 
 
 def json_edit_func():
-    from mylib.file import write_json_file
-    from mylib.file import read_json_file
+    from mylib.fstk import write_json_file
+    from mylib.fstk import read_json_file
     args = rtd.args
     file = args.file or list_files(clipboard)[0]
     indent = args.indent
@@ -1009,7 +1009,7 @@ json_edit.add_argument('item', nargs='+')
 
 
 def json_key_func():
-    from mylib.file import read_json_file
+    from mylib.fstk import read_json_file
     args = rtd.args
     d = read_json_file(args.file)
     print(d[args.key])
@@ -1022,8 +1022,8 @@ json_key.add_argument('key', help='query key')
 
 
 def update_json_file():
-    from mylib.file import write_json_file
-    from mylib.file import read_json_file
+    from mylib.fstk import write_json_file
+    from mylib.fstk import read_json_file
     args = rtd.args
     old, new = args.old, args.new
     d = read_json_file(old)

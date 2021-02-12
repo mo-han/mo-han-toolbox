@@ -3,7 +3,7 @@
 
 import sys
 
-from mylib._deprecated import _concat_videos_deprecated
+from mylib.__deprecated__ import _concat_videos_deprecated
 
 args = sys.argv[1:]
 if args:

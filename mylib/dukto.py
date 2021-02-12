@@ -6,7 +6,7 @@ import ndrop.netdrop
 import ndrop.shell
 
 from .os_auto import clipboard
-from .file import ensure_open_file
+from .fstk import ensure_open_file
 from .tricks import modify_module
 from .tricks_lite import Attreebute
 

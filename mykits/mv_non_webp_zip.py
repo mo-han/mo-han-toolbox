@@ -7,7 +7,7 @@ from zipfile import ZipFile, BadZipFile
 import shutil
 from mylib.os_auto import clipboard as cb
 from mylib.tricks_lite import thread_factory
-from mylib._deprecated import list_files
+from mylib.__deprecated__ import list_files
 from queue import Queue
 from threading import Thread
 

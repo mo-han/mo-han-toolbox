@@ -9,7 +9,7 @@ import mouse
 from .gui_old import rename_dialog
 from .uia import module_pywinauto
 from .os_auto import clipboard
-from .file import x_rename
+from .fstk import x_rename
 
 pywinauto = module_pywinauto()
 App = pywinauto.Application

@@ -9,7 +9,7 @@ from youtube_dl.extractor import common as ytdl_common
 from youtube_dl.extractor.common import InfoExtractor
 from youtube_dl.utils import sanitize_filename
 
-from . import file
+from . import fstk
 from .site_iwara import IwaraIE
 from .site_pornhub import PornHubIE
 from .web_client import parse_https_url, get_html_element_tree
@@ -25,13 +25,13 @@ ytdl_YoutubeDL = import_module('youtube_dl.YoutubeDL')
 
 def limit_len_sanitize_filename(s, restricted=False, is_id=False):
     if not is_id:
-        s = file.sanitize_xu200(s)
+        s = fstk.sanitize_xu200(s)
     return sanitize_filename(s, restricted=restricted, is_id=is_id)
 
 
 def safe_title(extracted_data: dict):
     title = extracted_data['title']
-    extracted_data['title'] = file.sanitize_xu200(title)
+    extracted_data['title'] = fstk.sanitize_xu200(title)
 
 
 class NewInfoExtractor(InfoExtractor, metaclass=ABCMeta):

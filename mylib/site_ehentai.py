@@ -6,7 +6,7 @@ from collections import defaultdict
 
 import requests
 
-from . import file
+from . import fstk
 from . import log
 from . import text
 from .ez import *
@@ -50,7 +50,7 @@ def ehviewer_images_catalog(dry_run: bool = False, db_json_path: str = 'ehdb.jso
 
     if os.path.isfile(db_json_path):
         logger.info('@ using DB file: {}'.format(db_json_path))
-        db = file.read_json_file(db_json_path)
+        db = fstk.read_json_file(db_json_path)
     else:
         db = {}
     skipped_gid_l = []
@@ -76,7 +76,7 @@ def ehviewer_images_catalog(dry_run: bool = False, db_json_path: str = 'ehdb.jso
             logger.info(logmsg_data.format(g.gid, g.token))
             d = g.data
             db[gid] = d
-            file.write_json_file(db_json_path, db, indent=4)
+            fstk.write_json_file(db_json_path, db, indent=4)
             sleep(1)
 
         creators = []
@@ -132,11 +132,11 @@ def ehviewer_images_catalog(dry_run: bool = False, db_json_path: str = 'ehdb.jso
         # print(f': {title}')  # DEBUG
         # print(f': {core_title}')  # DEBUG
 
-        sub_folder = file.make_path(file.sanitize_xu200(folder), f'{file.sanitize_xu200(core_title)} {g.gid}-{g.token}')
+        sub_folder = fstk.make_path(fstk.sanitize_xu200(folder), f'{fstk.sanitize_xu200(core_title)} {g.gid}-{g.token}')
         parent, basename = os.path.split(f)
         no_ext, ext = os.path.splitext(basename)
-        no_ext = file.sanitize_xu240(no_ext.split()[-1])
-        new_path = file.make_path(sub_folder, no_ext + ext)
+        no_ext = fstk.sanitize_xu240(no_ext.split()[-1])
+        new_path = fstk.make_path(sub_folder, no_ext + ext)
         logger.info(logmsg_move.format(f, new_path))
         if not dry_run:
             os.makedirs(sub_folder, exist_ok=True)
@@ -331,7 +331,7 @@ class EHentaiError(Exception):
 
 def ehviewer_dl_folder_rename(folder_path: str, *, db: dict = None, update_db=False):
     db = db or {}
-    with file.ctx_pushd(folder_path):
+    with fstk.ctx_pushd(folder_path):
         with open('.ehviewer') as info_file:
             info_lines = info_file.readlines()
     gid = info_lines[2].strip()
@@ -342,17 +342,17 @@ def ehviewer_dl_folder_rename(folder_path: str, *, db: dict = None, update_db=Fa
     title = d.get('title') or d.get('original title')
     if not title:
         return
-    title = file.sanitize(title)
-    return file.x_rename(folder_path, title)
+    title = fstk.sanitize(title)
+    return fstk.x_rename(folder_path, title)
 
 
 def parse_hath_dl_gallery_info(gallery):
     info = 'galleryinfo.txt'
     desc = 'Downloaded from E-Hentai Galleries by the Hentai@Home Downloader <3'
     if os.path.isdir(gallery):
-        with file.ctx_pushd(gallery):
+        with fstk.ctx_pushd(gallery):
             if not os.path.isfile(info):
-                raise FileNotFoundError(file.make_path(gallery, info))
+                raise FileNotFoundError(fstk.make_path(gallery, info))
             with open(info, 'tr', encoding='u8') as f:
                 s = f.read()
     elif os.path.isfile(gallery):
