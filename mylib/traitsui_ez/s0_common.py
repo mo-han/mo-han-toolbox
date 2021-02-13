@@ -69,11 +69,11 @@ def var_name(*obj):
     return nameof(*obj, caller=2)
 
 
-def var_path_name(*obj):
+def var_name_path(*obj):
     return nameof(*obj, caller=2, full=True)
 
 
-def object_path(trait_name):
+def object_trait_name(trait_name):
     return f'object.{trait_name}'
 
 
@@ -81,5 +81,5 @@ tn = the_name = TraitName()
 tl = trait_with_label
 ti = trait_with_id
 vn = var_name
-vp = var_path_name
-op = object_path
+vp = var_name_path
+ot = object_trait_name
