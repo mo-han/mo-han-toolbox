@@ -778,7 +778,7 @@ class FFmpegSegmentsContainer:
             for k in d[S_SEGMENT]:
                 seg_folder = prefix + k
                 d[S_SEGMENT][k] = {}
-                with file.ctx_pushd(seg_folder):
+                with fstk.ctx_pushd(seg_folder):
                     for file in fs_find_iter(pattern=self.segment_filename_regex_pattern, regex=True,
                                              recursive=False, strip_root=True):
                         d[S_SEGMENT][k][file] = excerpt_single_video_stream(file)
@@ -788,7 +788,7 @@ class FFmpegSegmentsContainer:
                     d[S_NON_SEGMENT][k] = ffmpeg.probe(file)
                 else:
                     del d[S_NON_SEGMENT][k]
-            file.write_json_file(self.input_json, d, indent=4)
+            fstk.write_json_file(self.input_json, d, indent=4)
 
         self.input_data = d
 
