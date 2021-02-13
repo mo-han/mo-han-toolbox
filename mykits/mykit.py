@@ -132,7 +132,7 @@ def merge_zip_files_func():
     def ask_for_dst_path():
         return tui.prompt_input('? Input the path of the ZIP file to merge into: ')
 
-    def is_zip_file(path:str):
+    def is_zip_file(path: str):
         mime = guess(path).mime
         if mime == 'application/zip':
             return True
@@ -819,6 +819,8 @@ def run_from_lines_func():
     source = args.source
     dry_run = args.dry_run
     cmd_fmt = ' '.join(args.command) or input('< ')
+    if '{}' in cmd_fmt:
+        cmd_fmt = cmd_fmt.replace('{}', '{line}')
     if '{line}' not in cmd_fmt:
         cmd_fmt += ' "{line}"'
     print('>', cmd_fmt)
