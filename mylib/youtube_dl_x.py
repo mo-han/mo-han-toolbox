@@ -5,6 +5,7 @@ from importlib import import_module
 from pprint import pprint
 
 import youtube_dl
+import youtube_dl.extractor.xvideos
 from youtube_dl.extractor import common as ytdl_common
 from youtube_dl.extractor.common import InfoExtractor
 from youtube_dl.utils import sanitize_filename
@@ -57,10 +58,21 @@ class GenericInfoExtractor(youtube_dl.extractor.GenericIE, metaclass=ABCMeta):
         return data
 
 
+class XVideosIE(youtube_dl.extractor.xvideos.XVideosIE, metaclass=ABCMeta):
+    def _real_extract(self, url):
+        data = super()._real_extract(url)
+        vid = data['id']
+        data['id'] = f'xvideos {vid}'
+        ht = get_html_element_tree(url)
+        data['uploader'] = ht.xpath('//span[@class="name"]')[0].text
+        return data
+
+
 def youtube_dl_main_x(argv=None):
     ytdl_common.sanitize_filename = ytdl_YoutubeDL.sanitize_filename = limit_len_sanitize_filename
     ytdl_common.InfoExtractor = NewInfoExtractor
     youtube_dl.extractor.GenericIE = GenericInfoExtractor
     youtube_dl.extractor.IwaraIE = IwaraIE
     youtube_dl.extractor.PornHubIE = PornHubIE
+    youtube_dl.extractor.XVideosIE = XVideosIE
     youtube_dl.main(argv)
