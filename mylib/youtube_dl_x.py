@@ -64,7 +64,10 @@ class XVideosIE(youtube_dl.extractor.xvideos.XVideosIE, metaclass=ABCMeta):
         vid = data['id']
         data['id'] = f'xvideos {vid}'
         ht = get_html_element_tree(url)
-        data['uploader'] = ht.xpath('//span[@class="name"]')[0].text
+        try:
+            data['uploader'] = ht.xpath('//span[@class="name"]')[0].text
+        except IndexError:
+            pass
         return data
 
 
