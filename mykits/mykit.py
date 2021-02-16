@@ -283,7 +283,7 @@ def catalog_files_by_year_func():
             continue
         year = year[0]
         new_dir = make_path(dirname, year)
-        print(f'{basename} -> {new_dir}')
+        print(f'{new_dir} <- {basename}')
         if not dry_run:
             with ctx_pushd(new_dir, ensure_dst=True):
                 shutil.move(f, basename)
