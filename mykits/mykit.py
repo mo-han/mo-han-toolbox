@@ -250,9 +250,9 @@ def tag_filter_files_func():
     for prefix, rm_set in rm.items():
         kp_set = kp.get(prefix, set())
         if kp_set:
-            print(f'* {prefix}')
+            print(f'@ {prefix}')
             for f in kp_set:
-                print(f'@ {f}')
+                print(f'# {f}')
             for f in rm_set - kp_set:
                 print(f'- {f}')
                 if not dry:
