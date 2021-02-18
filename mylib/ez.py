@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # encoding=utf8
 """THIS MODULE MUST ONLY DEPEND ON STANDARD LIBRARIES OR BUILT-IN"""
+import ctypes
+import locale
 import os
 import re
 import shutil
@@ -36,3 +38,11 @@ def str_remove_prefix(s: str, prefix: str):
 
 def str_remove_suffix(s: str, suffix: str):
     return s[:-len(suffix)] if s.endswith(suffix) else s
+
+
+def get_os_default_lang():
+    if os.name == 'nt':
+        win_lang = ctypes.windll.kernel32.GetUserDefaultUILanguage()
+        return locale.windows_locale[win_lang]
+    else:
+        return locale.getdefaultlocale()[0]

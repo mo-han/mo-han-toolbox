@@ -1,4 +1,6 @@
+#language-tags  #MIT
 enable -f pkg  #BSD
 pyside2  #LGPL
+python-i18n[YAML]  #MIT
 qt-binder  #BSD
 traitsui  #BSD
