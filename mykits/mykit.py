@@ -453,6 +453,7 @@ def put_in_dir_func():
     db = {k: v for k, v in db.items() if k in sub_dirs_l}
     sub_dirs_d = {b: set(find_words(b.lower())) for b in sub_dirs_l if b not in db}
     sub_dirs_d.update(db)
+    sub_dirs_d = {k:sub_dirs_d[k] for k in sorted(sub_dirs_d)}
     for ss in src:
         for s in path_or_glob(ss):
             tui_lp.d()

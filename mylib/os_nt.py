@@ -133,6 +133,10 @@ def _fs_move_cli_robocopy(src, dst, quiet=True, verbose=False):
     args = ['robocopy']
     if not full_log:
         # https://stackoverflow.com/a/7487697/7966259
+        # /NFL : No File List - don't log file names.
+        # /NDL : No Directory List - don't log directory names.
+        # /NJH : No Job Header.
+        # /NJS : No Job Summary.
         # /NP  : No Progress - don't display percentage copied.
         # /NS  : No Size - don't log file sizes.
         # /NC  : No Class - don't log file classes.
