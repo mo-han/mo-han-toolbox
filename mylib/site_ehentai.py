@@ -79,13 +79,13 @@ def ehviewer_images_catalog(dry_run: bool = False, db_json_path: str = 'ehdb.jso
             fstk.write_json_file(db_json_path, db, indent=4)
             sleep(1)
 
-        creators = []
+        artist_l = []
         title = d['title'].strip()
         try:
             core_title = find_core_title(title) or '__INVALID_CORE_TITLE__'
             core_title_l = re.findall(r'[\w]+[\-+\']?[\w]?', core_title)
             if title[:1] + title[-1:] == '[]':
-                creators.append(title[1:-1].strip())
+                artist_l.append(title[1:-1].strip())
         except AttributeError:
             print(logmsg_err.format(title))
             raise
@@ -104,9 +104,9 @@ def ehviewer_images_catalog(dry_run: bool = False, db_json_path: str = 'ehdb.jso
 
         tags = d['tags']
         if 'artist' in tags:
-            creators = tags['artist']
+            artist_l = tags['artist']
         elif 'group' in tags:
-            creators = tags['group']
+            artist_l = tags['group']
         else:
             for m in (
                     re.match(r'^(?:\([^)]+\))\s*\[([^]]+)]', title),
@@ -117,18 +117,18 @@ def ehviewer_images_catalog(dry_run: bool = False, db_json_path: str = 'ehdb.jso
                     m1 = m.group(1).strip()
                     if m1:
                         if '|' in m1:
-                            creators = [e.strip() for e in m1.split('|')]
+                            artist_l = [e.strip() for e in m1.split('|')]
                         else:
-                            creators = [m1]
+                            artist_l = [m1]
                         core_title = title
                     break
-        if len(creators) > 3:
+        if len(artist_l) > 3:
             if comic_magazine_title:
                 folder = comic_magazine_title
             else:
-                folder = '[]'
+                folder = '[...]'
         else:
-            folder = '[{}]'.format(', '.join(creators))
+            folder = '[{}]'.format(', '.join(artist_l))
         # print(f': {title}')  # DEBUG
         # print(f': {core_title}')  # DEBUG
 
