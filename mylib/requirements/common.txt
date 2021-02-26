@@ -17,7 +17,7 @@ humanize  #MIT
 imagehash  #BSD
 inflection  #MIT
 keyboard
-lxml
+lxml  #BSD
 more-itertools #MIT
 mouse
 ndrop
@@ -27,6 +27,7 @@ pinyin #BSD
 psutil
 pure-python-adb
 pyautogui  # pyautogui==0.9.39
+pyclean  #GPLv3
 pynput  #LGPLv3
 pyperclip
 pypinyin #MIT
