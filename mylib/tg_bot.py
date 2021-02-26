@@ -17,7 +17,7 @@ from telegram.ext.filters import MergedFilter
 from . import T
 from .ez import *
 from .fstk import write_sqlite_dict_file, read_sqlite_dict_file
-from .os_auto import HOSTNAME, OSNAME, USERNAME
+from .ostk import HOSTNAME, OSNAME, USERNAME
 from .text import split_by_length_or_newline
 from .tricks import modify_module, deep_setattr, walk_obj_iter, is_picklable_with_dill_trace
 

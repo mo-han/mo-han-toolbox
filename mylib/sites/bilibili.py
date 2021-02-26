@@ -19,7 +19,7 @@ from lxml import html
 from mylib import web_client
 from mylib.__deprecated__ import concat_videos, merge_m4s
 from mylib._misc import safe_print, safe_basename
-from mylib.os_auto import ensure_sigint_signal
+from mylib.ostk import ensure_sigint_signal
 from mylib import fstk
 from mylib.text import regex_find, ellipt_end
 from mylib.tricks import str2range, modify_module

@@ -10,7 +10,7 @@ import os
 import urllib.parse
 
 from . import T
-from . import os_auto
+from . import ostk
 from . import text_lite
 from .ez import *
 
@@ -203,7 +203,7 @@ def sanitize(name: str, repl: str or dict = None, *, unescape_html=True, decode_
         name = urllib.parse.unquote(name)
     if repl:
         if isinstance(repl, str):
-            r = os_auto.ILLEGAL_FS_CHARS_REGEX_PATTERN.sub(repl, name)
+            r = ostk.ILLEGAL_FS_CHARS_REGEX_PATTERN.sub(repl, name)
             # rl = len(repl)
             # if rl > 1:
             #     r = ILLEGAL_FS_CHARS_REGEX_PATTERN.sub(repl, x)
@@ -216,7 +216,7 @@ def sanitize(name: str, repl: str or dict = None, *, unescape_html=True, decode_
         else:
             raise TypeError('invalid repl', (str, dict), repl)
     else:
-        r = name.translate(os_auto.ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE)
+        r = name.translate(ostk.ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE)
     return r
 
 

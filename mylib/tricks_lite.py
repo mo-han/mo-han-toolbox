@@ -571,9 +571,9 @@ class SimpleSQLiteTable:
         self.connection.close()
 
 
-def deco_factory_keyboard_interrupt(exit_code,
-                                    called_in_except_block: T.Any = VoidDuck,
-                                    called_in_finally_block: T.Any = VoidDuck):
+def deco_factory_exit_on_keyboard_interrupt(exit_code,
+                                            called_in_except_block: T.Any = VoidDuck,
+                                            called_in_finally_block: T.Any = VoidDuck):
     def deco(target):
         @deco_factory_copy_signature(target)
         def tgt(*args, **kwargs):

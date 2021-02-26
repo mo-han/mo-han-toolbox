@@ -3,10 +3,7 @@
 """This tool heavily depends on `mylib` package, make sure `mylib` folder is in the same path with this tool."""
 
 import cmd
-import os
-import re
 import shlex
-import sys
 from argparse import ArgumentParser, REMAINDER
 from collections import defaultdict
 from pprint import pprint
@@ -16,18 +13,32 @@ from send2trash import send2trash
 import mylib.__deprecated__
 from mylib import fstk
 from mylib import tui
-from mylib.__deprecated__ import real_join_path, fs_inplace_rename, fs_inplace_rename_regex, list_files, list_dirs
+from mylib.__deprecated__ import fs_inplace_rename, fs_inplace_rename_regex, list_files, list_dirs
 from mylib.cli import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, add_dry_run
-from mylib.fstk import path_or_glob, make_path, ctx_pushd
-from mylib.os_auto import clipboard, set_console_title___try
-from mylib.text_lite import ellipt_middle
-from mylib.tricks_lite import Attreebute, eval_or_str, deco_factory_keyboard_interrupt
+from mylib.ez import *
+from mylib.fstk import make_path, ctx_pushd
+from mylib.ostk import clipboard, set_console_title___try
+from mylib.tricks_lite import Attreebute, eval_or_str, deco_factory_exit_on_keyboard_interrupt
 
 rtd = Attreebute()  # runtime data
 tui_lp = tui.LinePrinter()
+an = AttrName()
 common_parser_kwargs = {'formatter_class': ArgParseCompactHelpFormatter}
 ap = ArgumentParser(**common_parser_kwargs)
 sub = ap.add_subparsers(title='sub-commands')
+
+
+class HasParser:
+    parser: ArgumentParser
+
+    @classmethod
+    def run(cls):
+        pass
+
+
+def has_parser_done(cls: HasParser):
+    cls.parser.set_defaults(target=cls.run)
+    return cls
 
 
 class MyKitCmd(cmd.Cmd):
@@ -88,16 +99,17 @@ def main():
     # ensure_sigint_signal()
     rtd.args = args = ap.parse_args()
     try:
-        func = args.func
+        target = args.target
     except AttributeError:
-        func = cmd_mode_func
-    func()
+        target = cmd_mode_func
+    target()
 
 
-def add_sub_parser(name: str, aliases: list, desc: str, func=None) -> ArgumentParser:
+def add_sub_parser(name: str, aliases: list = None, desc: str = None, target=None) -> ArgumentParser:
+    aliases = aliases or []
     sub_parser = sub.add_parser(name, aliases=aliases, help=desc, description=desc, **common_parser_kwargs)
-    if func:
-        sub_parser.set_defaults(func=func)
+    if target:
+        sub_parser.set_defaults(target=target)
     return sub_parser
 
 
@@ -106,7 +118,7 @@ def test_only():
 
 
 test = add_sub_parser('test', [], 'for testing...')
-test.set_defaults(func=test_only)
+test.set_defaults(target=test_only)
 
 
 def gui_mode():
@@ -119,7 +131,7 @@ def cmd_mode_func():
 
 
 cmd_mode = add_sub_parser('cmd', ['cli'], 'command line interactive mode')
-cmd_mode.set_defaults(func=cmd_mode_func)
+cmd_mode.set_defaults(target=cmd_mode_func)
 
 
 def merge_zip_files_func():
@@ -223,7 +235,7 @@ def hath_gallery_rename_func():
 
 hath_gallery_rename = add_sub_parser('H@H.gallery.rename', ['hath.gl.rn'],
                                      'restore name of galleries downloaded by H@H')
-hath_gallery_rename.set_defaults(func=hath_gallery_rename_func)
+hath_gallery_rename.set_defaults(target=hath_gallery_rename_func)
 hath_gallery_rename.add_argument('src', nargs='*')
 
 
@@ -261,7 +273,7 @@ def tag_filter_files_func():
 
 tag_filter_files = add_sub_parser('tag.filter.files', [], 'filter files by tags and ext')
 tag_ff = tag_filter_files
-tag_ff.set_defaults(func=tag_filter_files_func)
+tag_ff.set_defaults(target=tag_filter_files_func)
 tag_ff.add_argument('src', nargs='*')
 tag_ff.add_argument('-D', '--dry-run', action='store_true')
 tag_ff.add_argument('-X', dest='X', metavar='ext', nargs='*', help='files with these extensions will be removed')
@@ -291,50 +303,29 @@ def catalog_files_by_year_func():
 
 catalog_files_by_year = add_sub_parser('catalog.files.year', ['clf.yr'],
                                        'catalog files into sub-folders by year (search ISO 8601 date in filename)')
-catalog_files_by_year.set_defaults(func=catalog_files_by_year_func)
+catalog_files_by_year.set_defaults(target=catalog_files_by_year_func)
 catalog_files_by_year.add_argument('-x', '--suffix', metavar='ext', nargs='*')
 catalog_files_by_year.add_argument('-D', '--dry-run', action='store_true')
 catalog_files_by_year.add_argument('src', nargs='*')
 
 
-def cfip_func():
-    from mylib.sites.misc import get_cloudflare_ipaddr_hostmonit
-    from mylib.fstk import write_json_file
-    from pprint import pformat
-    args = rtd.args
-    file = args.file
-    in_list = args.list
-    isp = args.isp
-    hostname = args.hostname
+@has_parser_done
+class GetCloudflareIP(HasParser):
+    parser = add_sub_parser('cfip', [], 'get cloudflare ip addresses from hostmonit.com')
+    parser.add_argument('file', help='write whole data to JSON file', nargs='?')
+    parser.add_argument('-L', '--list', action='store_true')
+    parser.add_argument('-P', '--isp', choices=('CM', 'CT', 'CU'))
+    parser.add_argument('-H', '--hostname')
 
-    data = get_cloudflare_ipaddr_hostmonit()
-    info: dict = data['info']
-    if isp:
-        info = {isp: info[isp]}
-    if in_list:
-        lines = []
-        for ip_isp, ip_l in info.items():
-            lines.append(ip_isp)
-            for ip_d in ip_l:
-                li = ip_d['ip']
-                if hostname:
-                    li = f'{li}  {hostname}'
-                lines.append(li)
-        output = '\r\n'.join(lines)
-    else:
-        output = pformat(info)
-    if file:
-        write_json_file(file, data, indent=4)
-    clipboard.set(output)
-    print(output)
-
-
-cfip = add_sub_parser('cloudflare.ipaddr.hostmonit', ['cfip'], 'get recommended ip addresses from hostmonit.com')
-cfip.set_defaults(func=cfip_func)
-cfip.add_argument('file', help='write whole data to JSON file', nargs='?')
-cfip.add_argument('-L', '--list', action='store_true')
-cfip.add_argument('-P', '--isp', choices=('CM', 'CT', 'CU'))
-cfip.add_argument('-H', '--hostname')
+    @classmethod
+    def run(cls):
+        from mylib.tools.mykit_parts import list_few_cfip
+        args = rtd.args
+        file = args.file
+        as_list = args.list
+        isp = args.isp
+        hostname = args.hostname
+        list_few_cfip(file, hostname, as_list, isp)
 
 
 def video_guess_crf_func():
@@ -356,7 +347,7 @@ def video_guess_crf_func():
 
 
 video_guess_crf = add_sub_parser('video.crf.guess', ['crf'], 'guess CRF parameter value of video file')
-video_guess_crf.set_defaults(func=video_guess_crf_func)
+video_guess_crf.set_defaults(target=video_guess_crf_func)
 video_guess_crf.add_argument('src', nargs='*')
 video_guess_crf.add_argument('-c', '--codec', nargs='?')
 video_guess_crf.add_argument('-w', '--work-dir')
@@ -364,154 +355,50 @@ video_guess_crf.add_argument('-R', '--redo', action='store_true')
 video_guess_crf.add_argument('-L', '--no-clean', action='store_true')
 
 
-def dir_flatter_func():
-    import shutil
-    is_win32 = os.name == 'nt'
-    args = rtd.args
-    prefix = args.prefix
-    src = args.src or clipboard.list_path()
-    for s in src:
-        if not os.path.isdir(s):
-            print(f'! skip non-folder: {s}')
-            continue
-        with fstk.ctx_pushd(s):
-            print(s)
-            for fp in fstk.find_iter('.', 'f', win32_unc=is_win32):
-                new = os.path.relpath(fp, fstk.make_path('.', win32_unc=is_win32))
-                if not prefix:
-                    new = os.path.basename(new)
-                new = ellipt_middle(fstk.sanitize(new), 250, encoding='utf8')
-                print(new)
-                shutil.move(fp, fstk.make_path(new, win32_unc=is_win32))
-            for dp in fstk.find_iter('.', 'd', include_start_dir=False, win32_unc=is_win32):
-                try:
-                    os.removedirs(dp)
-                except OSError:
-                    for p, d, f in os.walk(dp):
-                        if f:
-                            send2trash(dp)
-                            break
+@has_parser_done
+class FlatDir(HasParser):
+    parser = add_sub_parser('flatten-directory', ['flat-dir'])
+    parser.add_argument('-p', f'--prefix', action='store_true')
+    parser.add_argument('-D', '--dry-run', action='store_true')
+    parser.add_argument('src', nargs='*')
+
+    @classmethod
+    def run(cls):
+        from mylib.tools.mykit_parts import flat_dir
+        args = rtd.args
+        prefix = args.prefix
+        dry_run = args.dry_run
+        src = args.src or clipboard.list_path()
+        # print(prefix, dry_run, src)
+        flat_dir(src, prefix, dry_run)
 
 
-dir_flatter = add_sub_parser('dir.flatter', ['flat.dir', 'flat.folder'],
-                             'flatten directory tree inside a directory into files')
-dir_flatter.set_defaults(func=dir_flatter_func)
-dir_flatter.add_argument('-p', '--prefix', action='store_true')
-dir_flatter.add_argument('src', nargs='*')
+@has_parser_done
+class MoveIntoDir(HasParser):
+    parser = add_sub_parser('move-into-directory', ['mvd'])
+    parser.add_argument('-D', '--dry-run', action='store_true')
+    parser.add_argument('-a', '--alias', nargs='*', help='list, show, set or delete dst mapping aliases')
+    parser.add_argument('-d', '--sub-dir', action='store_true', help='into sub-directory by name')
+    parser.add_argument('-p', '--pattern')
+    parser.add_argument('dst', nargs='?', help='dest dir')
+    parser.add_argument('src', nargs='*')
 
-
-@deco_factory_keyboard_interrupt(2)
-def put_in_dir_func():
-    from mylib.os_auto import fs_move_cli
-    from mylib.text_lite import find_words
-    from mylib.tui_lite import prompt_choose_number, prompt_confirm
-    conf_file = real_join_path('~', '.config', 'fs.put_in_dir.json')
-    conf = fstk.read_json_file(conf_file) or {'dst_map': {}}
-    dst_map = conf['dst_map']
-    args = rtd.args
-    src = args.src or clipboard.list_path()
-    dst = args.dst
-    alias = args.alias
-    dry_run = args.dry_run
-    sub_dir = args.sub_dir
-    pattern = args.pattern
-    if pattern:
-        def filename_words(fn: str):
-            return find_words(' '.join(re.findall(pattern, fn)))
-    else:
-        filename_words = find_words
-    if alias is None:
-        pass
-    elif not alias:
-        for k, v in dst_map.items():
-            print(f'{k}={v}')
-    else:
-        for a in alias:
-            try:
-                k, v = a.split('=', maxsplit=1)
-            except ValueError:
-                k, v = None, None
-            if v:
-                dst_map[k] = v
-                print(f'{k}={v}')
-            elif k and k in dst_map:
-                del dst_map[k]
-                print(f'{k}=')
-            else:
-                print(f'{a}={dst_map.get(a, "")}')
-    fstk.write_json_file(conf_file, conf, indent=4)
-    if not dst:
-        return
-    dst = dst_map.get(dst, dst)
-    sub_dirs_l = next(os.walk(dst))[1]
-    if os.path.isfile(dst):
-        print(f'! {dst} is file (should be directory)', file=sys.stderr)
-        exit(1)
-    os.makedirs(dst, exist_ok=True)
-    db_path = fstk.make_path(dst, '__folder_name_words__.db')
-    db = fstk.read_sqlite_dict_file(db_path)
-    db = {k: v for k, v in db.items() if k in sub_dirs_l}
-    sub_dirs_d = {b: set(find_words(b.lower())) for b in sub_dirs_l if b not in db}
-    sub_dirs_d.update(db)
-    sub_dirs_d = {k:sub_dirs_d[k] for k in sorted(sub_dirs_d)}
-    for ss in src:
-        for s in path_or_glob(ss):
-            tui_lp.d()
-            print(s)
-            tui_lp.l()
-            if sub_dir:
-                similar_d = {basename: words_set & set(filename_words(os.path.basename(s).lower()))
-                             for basename, words_set in sub_dirs_d.items()}
-                similar_d = {k: v for k, v in similar_d.items() if v}
-                similar_l = sorted(similar_d, key=lambda x: similar_d[x], reverse=True)
-                if similar_l:
-                    target_dir_name = prompt_choose_number(f'Select probable folder:', similar_l)
-                    tui_lp.l()
-                else:
-                    target_dir_name = None
-                if not target_dir_name:
-                    keywords = input('Input custom keywords or leave it empty: ')
-                    if keywords:
-                        similar_d = {basename: words_set & set(filename_words(keywords.lower()))
-                                     for basename, words_set in sub_dirs_d.items()}
-                        similar_d = {k: v for k, v in similar_d.items() if v}
-                        similar_l = sorted(similar_d, key=lambda x: similar_d[x], reverse=True)
-                        if similar_l:
-                            target_dir_name = prompt_choose_number(f'Select probable folder for\n{keywords}:',
-                                                                   similar_l)
-                            tui_lp.l()
-                target_dir_name = target_dir_name or input(f'Create folder: ')
-                if target_dir_name:
-                    sub_dirs_d[target_dir_name] = set(find_words(target_dir_name.lower()))
-                    dir_path = fstk.make_path(dst, target_dir_name)
-                    if not dry_run:
-                        os.makedirs(dir_path, exist_ok=True)
-                else:
-                    dir_path = dst
-            else:
-                dir_path = dst
-            d = fstk.make_path(dir_path, os.path.basename(s))
-            if os.path.exists(d):
-                if not prompt_confirm(f'Overwrite {d}?', default=False):
-                    continue
-            if not dry_run:
-                fs_move_cli(s, d)
-            print(f'{s} -> {d}')
-    fstk.write_sqlite_dict_file(db_path, sub_dirs_d, update_only=True)
-
-
-put_in_dir = add_sub_parser('putindir', ['mvd'], 'put files/folders into dest dir')
-put_in_dir.set_defaults(func=put_in_dir_func)
-put_in_dir.add_argument('-D', '--dry-run', action='store_true')
-put_in_dir.add_argument('-a', '--alias', nargs='*', help='list, show, set or delete dst mapping aliases')
-put_in_dir.add_argument('-d', '--sub-dir', action='store_true', help='into sub-directory by name')
-put_in_dir.add_argument('-p', '--pattern')
-put_in_dir.add_argument('dst', nargs='?', help='dest dir')
-put_in_dir.add_argument('src', nargs='*')
+    @classmethod
+    @deco_factory_exit_on_keyboard_interrupt(2)
+    def run(cls):
+        from mylib.tools.mykit_parts import move_into_dir
+        args = rtd.args
+        src = args.src or clipboard.list_path()
+        dst = args.dst
+        alias = args.alias
+        dry_run = args.dry_run
+        sub_dir = args.sub_dir
+        pattern = args.pattern
+        move_into_dir(src, dst, pattern, alias, dry_run, sub_dir)
 
 
 def tail_filter_files_func():
-    from mylib.os_auto import filter_filename_tail, join_filename_tail
+    from mylib.ostk import filter_filename_tail, join_filename_tail
     args = rtd.args
     tk = set(args.tails_keep or [])
     xk = set(args.extensions_keep or [])
@@ -541,7 +428,7 @@ def tail_filter_files_func():
 
 tail_filter_files = add_sub_parser('tail.filter.files', [], 'filter files by filename tails and extensions')
 tail_ff = tail_filter_files
-tail_ff.set_defaults(func=tail_filter_files_func)
+tail_ff.set_defaults(target=tail_filter_files_func)
 tail_ff.add_argument('-t', '--tails-keep', nargs='*', metavar='tail', help='keep files with these tails')
 tail_ff.add_argument('-x', '--extensions-keep', nargs='*', metavar='ext', help='keep files with these extensions')
 tail_ff.add_argument('-T', '--tails-gone', nargs='*', metavar='tail', help='remove files with these tails')
@@ -577,7 +464,7 @@ def cookies_write_func():
 
 
 cookies_write = add_sub_parser('cookies.write', ['cwr'], 'write cookies file')
-cookies_write.set_defaults(func=cookies_write_func)
+cookies_write.set_defaults(target=cookies_write_func)
 cookies_write.add_argument('file', nargs='*')
 cookies_write.add_argument('-v', '--verbose', action='store_true')
 
@@ -591,7 +478,7 @@ def ccj_func():
 
 
 cookies_conv_json = add_sub_parser('cookies.conv.json', ['ccj'], 'convert .json cookies file')
-cookies_conv_json.set_defaults(func=ccj_func)
+cookies_conv_json.set_defaults(target=ccj_func)
 cookies_conv_json.add_argument('file', nargs='*')
 
 
@@ -628,7 +515,7 @@ def ffmpeg_img2vid_func():
 
 
 ffmpeg_img2vid = add_sub_parser('ffmpeg.img2vid', ['img2vid'], 'convert images (frames) into video using ffmpeg')
-ffmpeg_img2vid.set_defaults(func=ffmpeg_img2vid_func)
+ffmpeg_img2vid.set_defaults(target=ffmpeg_img2vid_func)
 ffmpeg_img2vid.add_argument('-i', '--images', help='input images, e.g. "%%03d.jpg"', required=True)
 ffmpeg_img2vid.add_argument('-o', '--output', help='output video', nargs='?')
 ffmpeg_img2vid.add_argument('-r', '--res-fps', metavar='WxH@FPS', required=True)
@@ -657,7 +544,7 @@ def ffmpeg_func():
 
 
 ffmpeg = add_sub_parser('wrap.ffmpeg', ['ffmpeg', 'ff'], 'convert video file using ffmpeg')
-ffmpeg.set_defaults(func=ffmpeg_func)
+ffmpeg.set_defaults(target=ffmpeg_func)
 ffmpeg.add_argument('-s', '--source', nargs='*', metavar='path', help='if omitted, will try paths in clipboard')
 ffmpeg.add_argument('-k', '--keywords', metavar='kw', nargs='*')
 ffmpeg.add_argument('-vf', '--video-filters', nargs='*')
@@ -684,7 +571,7 @@ def ffprobe_func():
 
 
 ffprobe = add_sub_parser('wrap.ffprobe', ['ffprobe', 'ffp'], 'json format ffprobe on a file')
-ffprobe.set_defaults(func=ffprobe_func)
+ffprobe.set_defaults(target=ffprobe_func)
 ffprobe.add_argument('-s', '--select-streams')
 ffprobe.add_argument('file', nargs='?')
 
@@ -706,7 +593,7 @@ def file_type_func():
 
 
 file_type = add_sub_parser('filetype', ['ftype', 'ft'], 'get file type by path')
-file_type.set_defaults(func=file_type_func)
+file_type.set_defaults(target=file_type_func)
 file_type.add_argument('file', nargs='*')
 file_type.add_argument('-P', '--print-no-path', action='store_true')
 
@@ -720,7 +607,7 @@ def pip2pi_func():
 
 
 pip2pi = add_sub_parser('pip2pi', [], 'modified pip2pi (from pip2pi)')
-pip2pi.set_defaults(func=pip2pi_func)
+pip2pi.set_defaults(target=pip2pi_func)
 pip2pi.add_argument('arg', nargs='*', help='arguments propagated to pip2pi, put a -- before them')
 
 
@@ -733,7 +620,7 @@ def dir2pi_func():
 
 
 dir2pi = add_sub_parser('dir2pi', [], 'modified dir2pi (from pip2pi)')
-dir2pi.set_defaults(func=dir2pi_func)
+dir2pi.set_defaults(target=dir2pi_func)
 dir2pi.add_argument('arg', nargs='*', help='arguments propagated to dir2pi, put a -- before them')
 
 
@@ -746,7 +633,7 @@ def ytdl_func():
 
 
 ytdl = add_sub_parser('ytdl', [], 'youtube-dl with modifications: [iwara.tv] fix missing uploader')
-ytdl.set_defaults(func=ytdl_func)
+ytdl.set_defaults(target=ytdl_func)
 ytdl.add_argument('param', nargs='*', help='argument(s) propagated to youtube-dl, better put a -- before it')
 
 
@@ -771,7 +658,7 @@ def regex_rename_func():
 
 
 regex_rename = add_sub_parser('rename.regex', ['regren', 'rern', 'rrn'], 'regex rename file(s) or folder(s)')
-regex_rename.set_defaults(func=regex_rename_func)
+regex_rename.set_defaults(target=regex_rename_func)
 regex_rename.add_argument('-B', '-not-only-basename', dest='only_basename', action='store_false')
 regex_rename.add_argument('-D', '--dry-run', action='store_true')
 regex_rename.add_argument('-d', '--only-dirs', action='store_true')
@@ -804,7 +691,7 @@ def rename_func():
 
 
 rename = add_sub_parser('rename', ['ren'], 'rename file(s) or folder(s)')
-rename.set_defaults(func=rename_func)
+rename.set_defaults(target=rename_func)
 rename.add_argument('-B', '-not-only-basename', dest='only_basename', action='store_false')
 rename.add_argument('-D', '--dry-run', action='store_true')
 rename.add_argument('-d', '--only-dirs', action='store_true')
@@ -850,7 +737,7 @@ def run_from_lines_func():
 run_from_lines = add_sub_parser(
     'run.from.lines', ['run.lines', 'rl'],
     'given lines from file, clipboard, etc. formatted command will be executed for each of the line')
-run_from_lines.set_defaults(func=run_from_lines_func)
+run_from_lines.set_defaults(target=run_from_lines_func)
 run_from_lines.add_argument('-s', '--source', help='":clipboard", ":clipboard.path", or path of file (text lines)')
 run_from_lines.add_argument('command', nargs='*')
 run_from_lines.add_argument('-D', '--dry-run', action='store_true')
@@ -876,7 +763,7 @@ def dukto_x_func():
 
 dukto_x = add_sub_parser('dukto-x', ['dukto'],
                          'extended dukto server, remainder arguments conform to ndrop')
-dukto_x.set_defaults(func=dukto_x_func)
+dukto_x.set_defaults(target=dukto_x_func)
 dukto_x.add_argument('-f', '--copy-text-to-file', metavar='file', dest='file')
 dukto_x.add_argument('-c', '--copy-text-to-clipboard', action='store_true', dest='clipboard')
 dukto_x.add_argument('-e', '--echo', action='store_true')
@@ -922,7 +809,7 @@ def url_from_clipboard():
 
 clipboard_findurl = add_sub_parser('clipboard.findurl', ['cb.url', 'cburl'],
                                    'find URLs from clipboard, then copy found URLs back to clipboard')
-clipboard_findurl.set_defaults(func=url_from_clipboard)
+clipboard_findurl.set_defaults(target=url_from_clipboard)
 clipboard_findurl.add_argument('pattern', help='URL pattern, or website name')
 
 
@@ -933,7 +820,7 @@ def clipboard_rename_func():
 
 
 clipboard_rename = add_sub_parser('clipboard.rename', ['cb.ren', 'cbren'], 'rename files in clipboard')
-clipboard_rename.set_defaults(func=clipboard_rename_func)
+clipboard_rename.set_defaults(target=clipboard_rename_func)
 
 
 def potplayer_rename_func():
@@ -943,7 +830,7 @@ def potplayer_rename_func():
 
 
 potplayer_rename = add_sub_parser('potplayer.rename', ['pp.ren', 'ppren'], 'rename media file opened in PotPlayer')
-potplayer_rename.set_defaults(func=potplayer_rename_func)
+potplayer_rename.set_defaults(target=potplayer_rename_func)
 potplayer_rename.add_argument('-F', '--no-keep-front', action='store_true', help='do not keep PotPlayer in front')
 
 
@@ -956,7 +843,7 @@ def bilibili_download_func():
 
 
 bilibili_download = add_sub_parser('bilibili.download', ['bldl'], 'bilibili video downloader (source-patched you-get)')
-bilibili_download.set_defaults(func=bilibili_download_func)
+bilibili_download.set_defaults(target=bilibili_download_func)
 bilibili_download.add_argument('url')
 bilibili_download.add_argument('-v', '--verbose', action='store_true')
 bilibili_download.add_argument('-c', '--cookies', metavar='FILE')
@@ -1004,7 +891,7 @@ def json_edit_func():
 
 
 json_edit = add_sub_parser('json.edit', ['jse'], 'edit JSON file')
-json_edit.set_defaults(func=json_edit_func)
+json_edit.set_defaults(target=json_edit_func)
 json_edit.add_argument('-f', '--file', nargs='?')
 json_edit.add_argument('-i', '--indent', type=int, default=4)
 json_edit.add_argument('-d', '--delete', action='store_true')
@@ -1019,7 +906,7 @@ def json_key_func():
 
 
 json_key = add_sub_parser('json.getkey', ['jsk'], 'find in JSON file by key')
-json_key.set_defaults(func=json_key_func)
+json_key.set_defaults(target=json_key_func)
 json_key.add_argument('file', help='JSON file to query')
 json_key.add_argument('key', help='query key')
 
@@ -1035,7 +922,7 @@ def update_json_file():
 
 
 json_update = add_sub_parser('json.update', ['jsup'], 'update <old> JSON file with <new>')
-json_update.set_defaults(func=update_json_file)
+json_update.set_defaults(target=update_json_file)
 json_update.add_argument('old', help='JSON file with old data')
 json_update.add_argument('new', help='JSON file with new data')
 json_update.add_argument('-t', '--indent', type=int, default=4, metavar='N')
@@ -1061,7 +948,7 @@ def view_similar_images():
 
 
 img_sim_view = add_sub_parser('img.sim.view', ['vsi'], 'view similar images in current working directory')
-img_sim_view.set_defaults(func=view_similar_images)
+img_sim_view.set_defaults(target=view_similar_images)
 img_sim_view.add_argument('dir', nargs='*')
 img_sim_view.add_argument(
     '-t', '--thresholds', type=arg_type_range_factory(float, '0<x<=1'), nargs='+', metavar='N',
@@ -1086,7 +973,7 @@ def move_ehviewer_images():
 
 ehv_img_mv = add_sub_parser('ehv.img.mv', ['ehvmv'],
                             'move ehviewer downloaded images into folders')
-ehv_img_mv.set_defaults(func=move_ehviewer_images)
+ehv_img_mv.set_defaults(target=move_ehviewer_images)
 ehv_img_mv.add_argument('-D', '--dry-run', action='store_true')
 ehv_img_mv.add_argument('-j', '--db-json')
 

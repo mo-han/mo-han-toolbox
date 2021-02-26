@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 from mylib._misc import ExitCode, rectify_basename
 from mylib.log import LOG_FMT_MESSAGE_ONLY, LOG_FMT
-from mylib.os_lite import ensure_sigint_signal
+from mylib.ostk_lite import ensure_sigint_signal
 
 DB_FILE = 'db.json'
 INFO_FILE = 'info.txt'

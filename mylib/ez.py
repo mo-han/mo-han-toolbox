@@ -12,7 +12,7 @@ import threading
 import time
 from time import sleep
 
-universal_config_of_ez = dict(shutil_copy_buffer_size=16 * 1024 * 1024)
+global_config = {'shutil.copy.buffer.size': 16 * 1024 * 1024}
 
 
 def __referring_imported():
@@ -28,7 +28,7 @@ class SingletonMetaClass(type):
         return cls._instances[cls]
 
 
-class AttrToStr(metaclass=SingletonMetaClass):
+class AttrName(metaclass=SingletonMetaClass):
     def __setattr__(self, key, value):
         pass
 
@@ -52,16 +52,8 @@ def get_os_default_locale():
         return locale.getdefaultlocale()[0]
 
 
-def set_shutil_copy_buffer_size(length: int):
-    universal_config_of_ez['shutil_copy_buffer_size'] = length
-
-
-def get_shutil_copy_buffer_size():
-    return universal_config_of_ez['shutil_copy_buffer_size']
-
-
-def copy_file_obj_fast(src_fd, dst_fd, length=None):
-    length = length or get_shutil_copy_buffer_size()
+def copy_file_obj_fast(src_fd, dst_fd, length: int = None):
+    length = length or global_config['shutil.copy.buffer.size']
     while 1:
         buf = src_fd.read(length)
         if not buf:
@@ -69,11 +61,12 @@ def copy_file_obj_fast(src_fd, dst_fd, length=None):
         dst_fd.write(buf)
 
 
-def copy_file_obj_boost(src_fd, dst_fd, length=None):
-    length = length or get_shutil_copy_buffer_size()
-    qn = 2
-    q = queue.Queue(maxsize=qn)
+def copy_file_obj_faster(src_fd, dst_fd, length: int = None):
+    length = length or global_config['shutil.copy.buffer.size']
+    q_max = 2
+    q = queue.Queue(maxsize=q_max)
     stop = threading.Event()
+    dl = [0.0]
 
     def read():
         t0 = time.perf_counter()
@@ -83,7 +76,7 @@ def copy_file_obj_boost(src_fd, dst_fd, length=None):
             t1 = time.perf_counter()
             td = t1 - t0
             t0 = t1
-            if q.qsize() == qn:
+            if q.qsize() == q_max:
                 sleep(td)
                 continue
             buf = src_fd.read(length)
@@ -100,6 +93,7 @@ def copy_file_obj_boost(src_fd, dst_fd, length=None):
                 break
             t1 = time.perf_counter()
             td = t1 - t0
+            dl[0] = td
             t0 = t1
             try:
                 buf = q.get()
@@ -117,10 +111,13 @@ def copy_file_obj_boost(src_fd, dst_fd, length=None):
     t_write.start()
     try:
         while True:
-            sleep(1)
+            if t_write.is_alive():
+                t_write.join(dl[0])
+            else:
+                break
     except (KeyboardInterrupt, SystemExit):
         stop.set()
         raise
 
 
-shutil.copyfileobj = copy_file_obj_boost
+shutil.copyfileobj = copy_file_obj_faster

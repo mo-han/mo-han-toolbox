@@ -12,7 +12,7 @@ from imagehash import average_hash, dhash, phash, whash, hex_to_hash
 
 from mylib.ez import *
 from mylib import fstk
-from mylib.os_auto import check_file_ext
+from mylib.ostk import check_file_ext
 from mylib.tricks_lite import percentage
 
 AHASH = 'ahash'

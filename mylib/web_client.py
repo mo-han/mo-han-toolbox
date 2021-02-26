@@ -18,8 +18,8 @@ from .T import JSONType
 from .ez import *
 from .fstk import touch, ensure_open_file
 from .log import get_logger, LOG_FMT_MESSAGE_ONLY
-from .os_auto import write_file_chunk
-from .os_lite import SubscriptableFileIO
+from .ostk import write_file_chunk
+from .ostk_lite import SubscriptableFileIO
 from .tricks_lite import singleton, thread_factory, iter_factory_retry
 
 MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE = '# Netscape HTTP Cookie File'
@@ -170,7 +170,7 @@ def headers_from_cookies(cookies_data: dict or str, headers: dict = None) -> dic
 
 def get_phantomjs_splinter(proxy=None, show_image=False, window_size=(1024, 1024)):
     import splinter
-    from .os_auto import TEMPDIR
+    from .ostk import TEMPDIR
 
     extra_argv = ['--webdriver-loglevel=WARN']
     if proxy:
@@ -190,7 +190,7 @@ def get_phantomjs_splinter(proxy=None, show_image=False, window_size=(1024, 1024
 
 def get_firefox_splinter(headless=True, proxy: str = None, **kwargs):
     import splinter
-    from .os_auto import TEMPDIR
+    from .ostk import TEMPDIR
     config = {'service_log_path': os.path.join(TEMPDIR, 'geckodriver.log'),
               'headless': headless}
     config.update(kwargs)

@@ -1,4 +1,4 @@
-#### [SubscriptableFileIO](mylib/os_auto.py#L274)
+#### [SubscriptableFileIO](mylib/ostk.py#L274)
 
 read/write file with slice
 
@@ -6,7 +6,7 @@ read/write file with slice
 
 ```python
 
-from mylib.os_lite import SubscriptableFileIO
+from mylib.ostk_lite import SubscriptableFileIO
 with SubscriptableFileIO('filepath') as f:
     f[-10:] = b'123abc'
     print(f[123:456])

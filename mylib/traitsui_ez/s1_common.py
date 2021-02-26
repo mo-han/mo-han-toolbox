@@ -63,7 +63,7 @@ def trait_with_id(traits_obj: HasTraits, id_=...):
     return trait_with_attr(traits_obj, attr_name, id_)
 
 
-class TraitName(AttrToStr):
+class TraitName(AttrName):
     def __setattr__(self, key, value):
         super(TraitName, self).__setattr__(key, value)
         trait_with_id(value, key)

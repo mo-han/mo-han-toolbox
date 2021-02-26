@@ -14,14 +14,14 @@ from filetype import filetype
 
 from . import tricks_lite
 from . import T
-from .os_lite import *
+from .ostk_lite import *
 
 assert tricks_lite
 
 if os.name == 'nt':
-    from .os_nt import *
+    from .ostk_nt import *
 elif os.name == 'posix':
-    from .os_posix import *
+    from .ostk_posix import *
 else:
     raise NotImplementedError(os.name)
 
