@@ -1,5 +1,6 @@
 #!/bin/sh
 
+pyclean .
 cp -rp mylib ~/bin/
 cp -rp i18n ~/bin/
 install -p -m 755 mykits/mykit.py ~/bin/mykit
