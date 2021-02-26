@@ -16,15 +16,15 @@ import requests
 import you_get.util.strings
 from lxml import html
 
-from . import web_client
-from .__deprecated__ import concat_videos, merge_m4s
-from ._misc import safe_print, safe_basename
-from .os_auto import ensure_sigint_signal
-from . import fstk
-from .text import regex_find, ellipt_end
-from .tricks import str2range, modify_module
-from .tricks_lite import seq_call_return
-from .tui import LinePrinter
+from mylib import web_client
+from mylib.__deprecated__ import concat_videos, merge_m4s
+from mylib._misc import safe_print, safe_basename
+from mylib.os_auto import ensure_sigint_signal
+from mylib import fstk
+from mylib.text import regex_find, ellipt_end
+from mylib.tricks import str2range, modify_module
+from mylib.tricks_lite import seq_call_return
+from mylib.tui import LinePrinter
 
 BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'
 BILIBILI_EPISODE_URL_PREFIX = 'https://www.bilibili.com/bangumi/play/'

@@ -92,7 +92,7 @@ main features in current version:
 
 a void, versatile, useless and quiet duck, called anyhow, no return no raise
 
-#### [PixivFanboxAPI](mylib/site_pixiv.py#L71)
+#### [PixivFanboxAPI](mylib/sites/pixiv.py#L71)
 
 pixivFANBOX API (incomplete but usable)
 

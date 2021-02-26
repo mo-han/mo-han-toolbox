@@ -199,7 +199,7 @@ merge_zip_files.add_argument('-y', '--yes', help='auto confirm yes', action='sto
 
 
 def hath_gallery_rename_func():
-    from mylib.site_ehentai import parse_hath_dl_gallery_info
+    from mylib.sites.ehentai import parse_hath_dl_gallery_info
     args = rtd.args
     for s in args.src or clipboard.list_path():
         try:
@@ -899,16 +899,16 @@ def url_from_clipboard():
         p = r'magnet:[^\s"]+'
         urls = regex_find(p, unescape(t), dedup=True)
     elif pattern == 'iwara':
-        from mylib.site_iwara import find_url_in_text
+        from mylib.sites.iwara import find_url_in_text
         urls = find_url_in_text(t)
     elif pattern in ('pornhub', 'ph'):
-        from mylib.site_pornhub import find_url_in_text
+        from mylib.sites.pornhub import find_url_in_text
         urls = find_url_in_text(t)
     elif pattern in ('youtube', 'ytb'):
-        from mylib.site_youtube import find_url_in_text
+        from mylib.sites.youtube import find_url_in_text
         urls = find_url_in_text(t)
     elif pattern in ('bilibili', 'bili'):
-        from mylib.site_bilibili import find_url_in_text
+        from mylib.sites.bilibili import find_url_in_text
         urls = find_url_in_text(t)
     elif pattern in ('hc.fyi', 'hentai.cafe', 'hentaicafe'):
         p = r'https://hentai.cafe/hc.fyi/\d+'
@@ -948,7 +948,7 @@ potplayer_rename.add_argument('-F', '--no-keep-front', action='store_true', help
 
 
 def bilibili_download_func():
-    from mylib.site_bilibili import download_bilibili_video
+    from mylib.sites.bilibili import download_bilibili_video
     args = rtd.args
     if args.verbose:
         print(args)
@@ -1079,7 +1079,7 @@ img_sim_view.add_argument(
 
 
 def move_ehviewer_images():
-    from mylib.site_ehentai import ehviewer_images_catalog
+    from mylib.sites.ehentai import ehviewer_images_catalog
     args = rtd.args
     ehviewer_images_catalog(dry_run=args.dry_run, db_json_path=args.db_json or 'ehdb.json')
 

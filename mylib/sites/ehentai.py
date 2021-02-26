@@ -6,12 +6,12 @@ from collections import defaultdict
 
 import requests
 
-from . import fstk
-from . import log
-from . import text
-from .ez import *
-from .tricks_lite import VoidDuck, is_hex
-from .web_client import cookies_dict_from_netscape_file, get_html_element_tree
+from mylib import fstk
+from mylib import log
+from mylib import text
+from mylib.ez import *
+from mylib.tricks_lite import VoidDuck, is_hex
+from mylib.web_client import cookies_dict_from_netscape_file, get_html_element_tree
 
 EH_TITLE_REGEX_PATTERN = re.compile(
     r'^'
@@ -55,7 +55,7 @@ def ehviewer_images_catalog(dry_run: bool = False, db_json_path: str = 'ehdb.jso
         db = {}
     skipped_gid_l = []
 
-    for f in os.listdir('.'):
+    for f in os.listdir('..'):
         if not os.path.isfile(f):
             continue
 

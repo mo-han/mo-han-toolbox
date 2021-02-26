@@ -3,12 +3,12 @@
 import os
 
 import requests
-from .ez import *
-from .fstk import write_json_file, sanitize_xu
-from .log import get_logger
-from .tricks import AttributeInflection
-from .tricks_lite import Attreebute, width_of_int
-from .web_client import HTTPResponseInspection, parse_https_url, make_kwargs_for_lib_requests, DownloadPool
+from mylib.ez import *
+from mylib.fstk import write_json_file, sanitize_xu
+from mylib.log import get_logger
+from mylib.tricks import AttributeInflection
+from mylib.tricks_lite import Attreebute, width_of_int
+from mylib.web_client import HTTPResponseInspection, parse_https_url, make_kwargs_for_lib_requests, DownloadPool
 
 FANBOX_DOMAIN = 'fanbox.cc'
 FANBOX_HOMEPAGE = 'https://' + FANBOX_DOMAIN
