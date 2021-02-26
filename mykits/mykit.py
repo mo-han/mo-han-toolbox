@@ -298,7 +298,7 @@ catalog_files_by_year.add_argument('src', nargs='*')
 
 
 def cfip_func():
-    from mylib.sites import get_cloudflare_ipaddr_hostmonit
+    from mylib.sites.misc import get_cloudflare_ipaddr_hostmonit
     from mylib.fstk import write_json_file
     from pprint import pformat
     args = rtd.args
