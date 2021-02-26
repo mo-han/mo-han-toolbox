@@ -18,7 +18,7 @@ def __unused_import_keeper():
     return ImageResource, ob_api, ob_exp
 
 
-class UsefulHandler(Handler):
+class SimpleHandler(Handler):
     def __hdlr_do_nothing__(self, *args):
         pass
 
@@ -37,9 +37,9 @@ class UsefulHandler(Handler):
         self.__hdlr_quit__()
 
 
-KB_ESC_NOTHING = KeyBinding(binding1='Esc', method_name=UsefulHandler.__hdlr_do_nothing__.__name__)
-KB_ESC_CLOSE = KeyBinding(binding1='Esc', method_name=UsefulHandler.__hdlr_close_view__.__name__)
-KB_ESC_QUIT = KeyBinding(binding1='Esc', method_name=UsefulHandler.__hdlr_quit__.__name__)
+KB_ESC_NOTHING = KeyBinding(binding1='Esc', method_name=SimpleHandler.__hdlr_do_nothing__.__name__)
+KB_ESC_CLOSE = KeyBinding(binding1='Esc', method_name=SimpleHandler.__hdlr_close_view__.__name__)
+KB_ESC_QUIT = KeyBinding(binding1='Esc', method_name=SimpleHandler.__hdlr_quit__.__name__)
 
 
 def trait_extra_attr_name(attr_name: str):

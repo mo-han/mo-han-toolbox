@@ -44,7 +44,7 @@ def str_remove_suffix(s: str, suffix: str):
     return s[:-len(suffix)] if s.endswith(suffix) else s
 
 
-def get_os_default_lang():
+def get_os_default_locale():
     if os.name == 'nt':
         win_lang = ctypes.windll.kernel32.GetUserDefaultUILanguage()
         return locale.windows_locale[win_lang]

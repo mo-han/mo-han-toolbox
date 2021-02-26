@@ -8,4 +8,5 @@ pushd "%~dp0"
 mkdir %dst%\mylib
 xcopy /s /y mylib %dst%\mylib
 xcopy /s /y mykits %dst%
+xcopy /s /y i18n %dst%\i18n
 popd
