@@ -7,7 +7,7 @@ from collections import defaultdict
 import requests
 
 from mylib import fstk
-from mylib import log
+from mylib import ez_log
 from mylib import text
 from mylib.ez import *
 from mylib.tricks_lite import VoidDuck, is_hex
@@ -42,7 +42,7 @@ def find_core_title(title: str):
 
 
 def ehviewer_images_catalog(dry_run: bool = False, db_json_path: str = 'ehdb.json'):
-    logger = log.get_logger('ehvimg', fmt=log.LOG_FMT_MESSAGE_ONLY)
+    logger = ez_log.get_logger('ehvimg', fmt=ez_log.LOG_FMT_MESSAGE_ONLY)
     logmsg_move = '* move {} -> {}'
     logmsg_skip = '# skip {}'
     logmsg_data = '+ /g/{}/{}'

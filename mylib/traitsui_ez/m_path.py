@@ -2,7 +2,7 @@
 # encoding=utf8
 from pathlib import Path as PrimePath
 
-from .s1_qt import *
+from .i1_qt import *
 
 
 class EasyPath:

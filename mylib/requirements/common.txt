@@ -38,6 +38,7 @@ python-i18n  #MIT
 pyyaml  #MIT
 regex #Apache
 requests
+requests-html  #MIT #python>=3.6
 selenium<3.8  # phantomjs
 send2trash
 si-prefix  #BSD-3

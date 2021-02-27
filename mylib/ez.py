@@ -12,11 +12,13 @@ import threading
 import time
 from time import sleep
 
+from .ez_log import *
+
 global_config = {'shutil.copy.buffer.size': 16 * 1024 * 1024}
 
 
-def __referring_imported():
-    print(os, sys, time, sleep, shutil, re)
+def __refer_sth():
+    return os, sys, time, sleep, shutil, re, get_logger
 
 
 class SingletonMetaClass(type):

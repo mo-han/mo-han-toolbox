@@ -5,7 +5,7 @@ import os
 import requests
 from mylib.ez import *
 from mylib.fstk import write_json_file, sanitize_xu
-from mylib.log import get_logger
+from mylib.ez_log import get_logger
 from mylib.tricks import AttributeInflection
 from mylib.tricks_lite import Attreebute, width_of_int
 from mylib.web_client import HTTPResponseInspection, parse_https_url, make_kwargs_for_lib_requests, DownloadPool

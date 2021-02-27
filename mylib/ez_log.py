@@ -9,15 +9,15 @@ LOG_FMT_1LEVEL_NO_TIME = '[%(levelname).1s][%(name)s] %(message)s'
 LOG_FMT_1LEVEL_DATE_TIME = '[%(levelname).1s][%(asctime).19s][%(name)s] %(message)s'
 LOG_FMT_1LEVEL_DATE_TIME_ZONE = '[%(levelname).1s][%(asctime)s][%(name)s] %(message)s'
 # logging datetime format
-LOG_DTF_SEC = '%Y-%m-%d %H:%M:%S'
-LOG_DTF_SEC_ZONE = '%Y-%m-%d %H:%M:%S%z'
+LOG_DATE_FMT_SEC = '%Y-%m-%d %H:%M:%S'
+LOG_DATE_FMT_SEC_ZONE = '%Y-%m-%d %H:%M:%S%z'
 
-LOG_FMT = LOG_FMT_1LEVEL_DATE_TIME
-LOG_DTF = LOG_DTF_SEC_ZONE
+LOG_FMT = LOG_FMT_1LEVEL_NO_TIME
+LOG_DATE_FMT = LOG_DATE_FMT_SEC_ZONE
 
 
-def get_logger(logger_name: str, level: str = 'INFO', fmt=LOG_FMT, datefmt=LOG_DTF, handlers_l: list = None):
-    formatter = logging.Formatter(fmt=fmt, datefmt=datefmt)
+def get_logger(logger_name: str, level: str = 'INFO', fmt=LOG_FMT, date_fmt=LOG_DATE_FMT, handlers_l: list = None):
+    formatter = logging.Formatter(fmt=fmt, datefmt=date_fmt)
     logger = logging.getLogger(logger_name)
     logger.setLevel(level)
     if not handlers_l:
@@ -29,8 +29,8 @@ def get_logger(logger_name: str, level: str = 'INFO', fmt=LOG_FMT, datefmt=LOG_D
     return logger
 
 
-def set_logger_format(logger: logging.Logger, fmt, datefmt):
-    formatter = logging.Formatter(fmt=fmt, datefmt=datefmt)
+def set_logger_format(logger: logging.Logger, fmt, date_fmt):
+    formatter = logging.Formatter(fmt=fmt, datefmt=date_fmt)
     for h in logger.handlers:
         h.setFormatter(formatter)
 

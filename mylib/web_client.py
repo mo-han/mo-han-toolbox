@@ -17,7 +17,7 @@ import requests.utils
 from .T import JSONType
 from .ez import *
 from .fstk import touch, ensure_open_file
-from .log import get_logger, LOG_FMT_MESSAGE_ONLY
+from .ez_log import get_logger, LOG_FMT_MESSAGE_ONLY
 from .ostk import write_file_chunk
 from .ostk_lite import SubscriptableFileIO
 from .tricks_lite import singleton, thread_factory, iter_factory_retry
@@ -28,8 +28,8 @@ USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) G
 HTMLElementTree = lxml.html.HtmlElement
 
 
-def get_html_element_tree(url, **kwargs) -> HTMLElementTree:
-    r = requests.get(url, **kwargs)
+def get_html_element_tree(url, **requests_kwargs) -> HTMLElementTree:
+    r = requests.get(url, **requests_kwargs)
     if r.ok:
         return lxml.html.document_fromstring(r.text)
     else:
