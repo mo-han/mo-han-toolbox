@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # encoding=utf8
+from .i1_qt import *
+from .m_path import Path
 from .. import i18n
-from .m_path import *
 
 i18n.auto_set()
 tt = i18n.tt

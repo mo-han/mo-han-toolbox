@@ -4,7 +4,7 @@ from pyface.api import *
 from traitsui.api import *
 from traitsui.key_bindings import *
 
-from .i1_traits_only import *
+from .i1_add_traits import *
 
 
 def __unused_import_keeper():

@@ -45,7 +45,7 @@ def object_trait_name(trait_name):
     return f'object.{trait_name}'
 
 
-tn = the_name = TraitName()
+tn = TraitName()
 tl = trait_with_label
 ti = trait_with_id
 vn = var_name
