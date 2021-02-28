@@ -418,7 +418,7 @@ class DownloadPool(ThreadPoolExecutor):
     def request_data(self, url, filepath, start=0, stop=0, **kwargs_for_requests) -> Download:
         # chunk_size = requests.models.CONTENT_CHUNK_SIZE
         chunk_size = 4096 * 1024
-        kwargs = make_kwargs_for_lib_requests(**kwargs_for_requests)
+        kwargs = make_requests_kwargs(**kwargs_for_requests)
         if stop:
             kwargs['headers']['Range'] = 'bytes={}-{}'.format(start, stop - 1)
         elif start > 0:
@@ -519,8 +519,8 @@ def parse_http_url(url: str, allow_fragments=True) -> ParseResult:
     return urlparse(url, allow_fragments=allow_fragments)
 
 
-def make_kwargs_for_lib_requests(params=None, cookies=None, headers=None, user_agent=None, proxies=None,
-                                 **kwargs):
+def make_requests_kwargs(params=None, cookies=None, headers=None, user_agent=None, proxies=None,
+                         **kwargs):
     user_agent = user_agent or USER_AGENT_FIREFOX_WIN10
     d = dict(headers=headers_from_user_agent(user_agent=user_agent, headers=headers))
     if params:

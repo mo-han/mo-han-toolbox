@@ -2,7 +2,6 @@
 #colored  #by-gooey #MIT
 #conda #BSD
 #dhash  #MIT
-#pymediainfo  #MIT
 auxlib #Apache #BSD
 colorama
 datefinder #MIT
@@ -28,6 +27,7 @@ psutil
 pure-python-adb
 pyautogui  # pyautogui==0.9.39
 pyclean  #GPLv3
+pymediainfo  #MIT
 pynput  #LGPLv3
 pyperclip
 pypinyin #MIT

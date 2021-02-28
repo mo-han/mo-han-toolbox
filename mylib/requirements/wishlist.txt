@@ -3,4 +3,5 @@ av  # PyAV
 fs  # PyFilesystem
 picotui  #MIT
 pyyaml  #YAML #MIT
+selenium-wire  #MIT
 termgraph  #MIT

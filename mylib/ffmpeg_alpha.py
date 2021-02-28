@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # encoding=utf8
+import mimetypes
 import random
 import subprocess
 from math import log
@@ -57,13 +58,13 @@ decorator_choose_map_preset = tricks.deco_factory_args_choices({'map_preset': ST
 
 def file_is_video(filepath):
     guess = filetype.guess(filepath)
-    ext = os.path.splitext(filepath)[-1]
+    # ext = os.path.splitext(filepath)[-1]
     if guess and 'video' in guess.mime:
         return True
-    elif ext.lower().lstrip('.') in ('mp4', 'mkv', 'webm', 'flv'):
+    guess = mimetypes.guess_type(filepath)[0]
+    if guess and 'video' in guess:
         return True
-    else:
-        return False
+    return False
 
 
 def filext_from_codec_name(x) -> str:

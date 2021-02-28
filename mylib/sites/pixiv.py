@@ -8,7 +8,7 @@ from mylib.fstk import write_json_file, sanitize_xu
 from mylib.ez_log import get_logger
 from mylib.tricks import AttributeInflection
 from mylib.tricks_lite import Attreebute, width_of_int
-from mylib.web_client import HTTPResponseInspection, parse_https_url, make_kwargs_for_lib_requests, DownloadPool
+from mylib.web_client import HTTPResponseInspection, parse_https_url, make_requests_kwargs, DownloadPool
 
 FANBOX_DOMAIN = 'fanbox.cc'
 FANBOX_HOMEPAGE = 'https://' + FANBOX_DOMAIN
@@ -84,7 +84,7 @@ class PixivFanboxPost(Attreebute, AttributeInflection):
 class PixivFanboxAPI:
     def __init__(self, **kwargs_for_requests):
         self.api_url = FANBOX_API_URL
-        self.kwargs_for_requests = make_kwargs_for_lib_requests(**kwargs_for_requests)
+        self.kwargs_for_requests = make_requests_kwargs(**kwargs_for_requests)
         self.kwargs_for_requests['headers']['Origin'] = FANBOX_HOMEPAGE
 
     def get(self, url, params=None):

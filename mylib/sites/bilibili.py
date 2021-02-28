@@ -224,7 +224,7 @@ def vid_to_bvid_web_api(vid: str or int, cookies: dict = None) -> str or None:
     else:
         raise TypeError('avid must be str or int')
     url = 'https://api.bilibili.com/x/web-interface/archive/stat'
-    r = requests.get(url, params={'aid': aid}, **web_client.make_kwargs_for_lib_requests(cookies=cookies))
+    r = requests.get(url, params={'aid': aid}, **web_client.make_requests_kwargs(cookies=cookies))
     j = r.json()
     if j['code'] == 0 and j['data']:
         return j['data']['bvid']
