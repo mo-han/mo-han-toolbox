@@ -2,7 +2,7 @@
 # encoding=utf8
 from pathlib import Path as PrimePath
 
-from .i1_add_traits import *
+from .i1_traits import *
 
 
 class EasyPath:
@@ -71,7 +71,7 @@ class EasyPath:
 
 class Path(HasTraits):
     full = tn.full = Str
-    dirname = tn.dirname = Str
+    dirname = tn.dirname = Directory
     basename = tn.basename = Str
     stem = tn.stem = Str
     extension = tn.extension = Str

@@ -5,7 +5,7 @@ import traits.observation.events as ob_evt
 import traits.observation.expression as ob_exp
 from traits.api import *
 
-from .i1_extra_util import *
+from .i1_util import *
 
 
 def __refer_sth():
