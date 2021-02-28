@@ -36,6 +36,7 @@ pyserial
 python-dateutil #Apache #BSD
 python-i18n  #MIT
 pyyaml  #MIT
+QtPy  #MIT
 regex #Apache
 requests
 requests-html  #MIT #python>=3.6
