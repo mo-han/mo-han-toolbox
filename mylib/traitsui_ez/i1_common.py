@@ -1,20 +1,14 @@
 #!/usr/bin/env python3
 # encoding=utf8
-import traits.observation.api as ob_api
-import traits.observation.events as ob_evt
-import traits.observation.expression as ob_exp
 from pyface.api import *
-from traits.api import *
 from traitsui.api import *
 from traitsui.key_bindings import *
 
-from .i0_extra_util import *
-
-TraitChangeEvent = ob_evt.TraitChangeEvent
+from .i1_traits_only import *
 
 
 def __unused_import_keeper():
-    return ImageResource, ob_api, ob_exp, TraitType
+    return ImageResource, TraitType
 
 
 class SimpleHandler(Handler):

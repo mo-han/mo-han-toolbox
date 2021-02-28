@@ -2,7 +2,7 @@
 # encoding=utf8
 from pathlib import Path as PrimePath
 
-from .i1_qt import *
+from .i1_traits_only import *
 
 
 class EasyPath:
@@ -83,18 +83,12 @@ class Path(HasTraits):
         self.path = EasyPath(*args)
         self._update()
 
-    def default_traits_view(self):
-        return View(
-            *self.nl,
-            title=f'Path: {self.full}', resizable=True, width=.5
-        )
-
     def _update(self):
         for name in self.nl:
             name: str
             setattr(self, name, getattr(self.path, name))
 
     @observe(nl)
-    def _change(self, e: TraitChangeEvent):
+    def _change(self, e: ob_evt.TraitChangeEvent):
         setattr(self.path, e.name, e.new)
         self._update()
