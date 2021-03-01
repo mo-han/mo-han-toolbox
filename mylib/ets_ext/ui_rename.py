@@ -2,9 +2,9 @@
 # encoding=utf8
 from .i1_qt import *
 from .m_path import Path
-from .. import i18n
+from ..shards import i18n
 
-i18n.auto_set()
+i18n.preset_alpha()
 tt = i18n.tt
 
 

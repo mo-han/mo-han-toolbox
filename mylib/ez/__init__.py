@@ -12,7 +12,7 @@ import threading
 import time
 from time import sleep
 
-from .ez_log import *
+from .log import *
 
 global_config = {'shutil.copy.buffer.size': 16 * 1024 * 1024}
 
@@ -54,7 +54,7 @@ def get_os_default_locale():
         return locale.getdefaultlocale()[0]
 
 
-def copy_file_obj_fast(src_fd, dst_fd, length: int = None):
+def shutil_copy_file_obj_fast(src_fd, dst_fd, length: int = None):
     length = length or global_config['shutil.copy.buffer.size']
     while 1:
         buf = src_fd.read(length)
@@ -63,12 +63,12 @@ def copy_file_obj_fast(src_fd, dst_fd, length: int = None):
         dst_fd.write(buf)
 
 
-def copy_file_obj_faster(src_fd, dst_fd, length: int = None):
+def shutil_copy_file_obj_faster(src_fd, dst_fd, length: int = None):
     length = length or global_config['shutil.copy.buffer.size']
     q_max = 2
     q = queue.Queue(maxsize=q_max)
     stop = threading.Event()
-    dl = [0.0]
+    data_array = [0.0]
 
     def read():
         t0 = time.perf_counter()
@@ -95,7 +95,7 @@ def copy_file_obj_faster(src_fd, dst_fd, length: int = None):
                 break
             t1 = time.perf_counter()
             td = t1 - t0
-            dl[0] = td
+            data_array[0] = td
             t0 = t1
             try:
                 buf = q.get()
@@ -112,9 +112,9 @@ def copy_file_obj_faster(src_fd, dst_fd, length: int = None):
     t_read.start()
     t_write.start()
     try:
-        while True:
+        while 1:
             if t_write.is_alive():
-                t_write.join(dl[0])
+                t_write.join(data_array[0])
             else:
                 break
     except (KeyboardInterrupt, SystemExit):
@@ -122,4 +122,4 @@ def copy_file_obj_faster(src_fd, dst_fd, length: int = None):
         raise
 
 
-shutil.copyfileobj = copy_file_obj_faster
+shutil.copyfileobj = shutil_copy_file_obj_faster

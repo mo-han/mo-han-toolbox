@@ -14,9 +14,8 @@ from . import ostk
 from . import tricks
 from . import tui
 from .__deprecated__ import fs_find_iter
-from .ez import *
 from .filename_tags import SuffixListFilenameTags
-from .ez_log import get_logger, LOG_FMT_MESSAGE_ONLY
+from mylib.ez.log import get_logger, LOG_FMT_MESSAGE_ONLY
 
 S_ORIGINAL = 'original'
 S_SEGMENT = 'segment'

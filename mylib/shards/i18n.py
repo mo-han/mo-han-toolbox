@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # encoding=utf8
 import i18n
-from .ez import *
+from mylib.ez import *
 
 load_path = i18n.load_path
 tt = i18n.t
@@ -30,7 +30,7 @@ def enable_memoization():
     i18n.set('enable_memoization', True)
 
 
-def auto_set():
+def preset_alpha():
     remove_namespace_from_filename_format()
     insert_load_dir()
     set_locale()

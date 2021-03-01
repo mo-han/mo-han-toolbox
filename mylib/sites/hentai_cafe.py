@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # encoding=utf8
 import requests_html as rqh
-from mylib.traitsui_ez.i1_traits import *
+from mylib.ets_ext.i1_traits import *
 from mylib.web_client import parse_https_url
 
 HOST = 'hentai.cafe'

@@ -11,9 +11,7 @@ import sqlite3
 import threading
 
 from . import T
-from . import ez_log
-from .ez import *
-from .ez import SingletonMetaClass
+from .ez import log
 
 USELESS_PLACEHOLDER_FOR_MODULE_TRICKS_LITE = __name__
 
@@ -515,7 +513,7 @@ def deco_factory_copy_signature(signature_source: T.Callable):
 class SimpleSQLiteTable:
     def __init__(self, db_path: str, table_name: str, table_columns: list or tuple, *,
                  converters: dict = None, adapters: dict = None):
-        logger = ez_log.get_logger(f'{__name__}.{self.__class__.__name__}')
+        logger = log.get_logger(f'{__name__}.{self.__class__.__name__}')
         db_path = db_path or ':memory:'
         if converters:
             self.connection = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)

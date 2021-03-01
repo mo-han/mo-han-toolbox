@@ -3,13 +3,12 @@
 
 import serial
 
-import mylib.ez_log
-from mylib import tricks
+import mylib.ez.log
 
 
 def short_serial_port(port: str, baudrate: int = 9600, **kwargs):
     p = serial.Serial(port=port, baudrate=baudrate, **kwargs)
-    logger = mylib.ez_log.get_logger('{} shorter'.format(p.name))
+    logger = mylib.ez.log.get_logger('{} shorter'.format(p.name))
     while True:
         b = p.read_all()
         if b:
