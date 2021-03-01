@@ -12,13 +12,11 @@ import threading
 import time
 from time import sleep
 
-from .log import *
-
 global_config = {'shutil.copy.buffer.size': 16 * 1024 * 1024}
 
 
 def __refer_sth():
-    return os, sys, time, sleep, shutil, re, get_logger
+    return os, sys, time, sleep, shutil, re
 
 
 class SingletonMetaClass(type):
@@ -120,6 +118,11 @@ def shutil_copy_file_obj_faster(src_fd, dst_fd, length: int = None):
     except (KeyboardInterrupt, SystemExit):
         stop.set()
         raise
+
+
+def is_path_valid(path: str or os.PathLike):
+    if not isinstance(path, str):
+        path = os.fsdecode(os.fspath(path))
 
 
 shutil.copyfileobj = shutil_copy_file_obj_faster

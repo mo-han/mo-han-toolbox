@@ -259,13 +259,13 @@ def get_image_files_in(x: Iterable) -> list:
     y = []
     for e in x:
         if os.path.isfile(e) and e not in y:
-            if check_file_ext(e):
+            if check_file_ext(e, IMAGE_FILE_EXT_COMMON):
                 y.append(e)
         elif os.path.isdir(e):
             for r, _, fl in os.walk(e):
                 for f in fl:
                     fp = os.path.join(r, f)
-                    if fp not in y and check_file_ext(f):
+                    if fp not in y and check_file_ext(f, IMAGE_FILE_EXT_COMMON):
                         y.append(fp)
         else:
             warning("invalid path: '{}'".format(e))

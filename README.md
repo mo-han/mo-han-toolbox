@@ -19,10 +19,10 @@ a very easy-to-use and write-less-do-more wrapper class of [PTB](https://github.
 make a Telegram bot like this:
 
 ```python
-from mylib.tg_bot import SimpleBot, meta_deco_handler_method
+from mylib.tg_bot import SimpleBot, deco_factory_bot_handler_method
 from telegram.ext import CommandHandler
 class MyBot(SimpleBot):
-    @meta_deco_handler_method(CommandHandler)
+    @deco_factory_bot_handler_method(CommandHandler)
     def hello(self, update, context):
         """say hi"""
         self.__typing__(update)

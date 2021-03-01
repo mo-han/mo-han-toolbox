@@ -4,6 +4,7 @@ import os
 
 import requests
 from mylib.fstk import write_json_file, sanitize_xu
+from mylib.ez import *
 from mylib.ez.log import get_logger
 from mylib.tricks import AttributeInflection
 from mylib.tricks_lite import Attreebute, width_of_int

@@ -26,7 +26,6 @@ pinyin #BSD
 psutil
 pure-python-adb
 pyautogui  # pyautogui==0.9.39
-pyclean  #GPLv3
 pymediainfo  #MIT
 pynput  #LGPLv3
 pyperclip

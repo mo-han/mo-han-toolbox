@@ -6,11 +6,10 @@ import functools
 import hashlib
 import importlib.util
 import inspect
-import queue
 import sqlite3
-import threading
 
 from . import T
+from .ez import *
 from .ez import log
 
 USELESS_PLACEHOLDER_FOR_MODULE_TRICKS_LITE = __name__

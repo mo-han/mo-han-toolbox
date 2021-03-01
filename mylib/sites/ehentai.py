@@ -7,6 +7,7 @@ from collections import defaultdict
 import requests
 
 from mylib import fstk
+from mylib.ez import *
 from mylib.ez import log
 from mylib.tricks_lite import VoidDuck, is_hex
 from mylib.web_client import cookies_dict_from_netscape_file, get_html_element_tree

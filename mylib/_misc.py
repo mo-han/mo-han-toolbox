@@ -58,12 +58,12 @@ def safe_print(s):
 def rectify_basename(s: str, replace: bool = True):
     char_map = {
         '\\': '⧹',  # U+29F9 (big reverse solidus)
-        '/': '⧸',  # U+29F8 (big solidus, permitted in Windows file and folder names）
-        '|': '￨',  # U+FFE8 (halfwidth forms light vertical)
+        '/': '⧸',  # U+29F8 (big solidus, permitted in Windows file and folder names）
+        '|': '￨',  # U+FFE8 (half-width forms light vertical)
         ':': '꞉',  # U+A789 (modifier letter colon, sometimes used in Windows filenames)
         '*': '∗',  # U+2217 (asterisk operator)
         '?': '？',  # U+FF1F (full-width question mark)
-        '"': '″',  # U+2033 (DOUBLE PRIME)
+        '"': '″',  # U+2033 (double prime)
         '<': '﹤',  # U+FE64 (small less-than sign)
         '>': '﹥',  # U+FE65 (small greater-than sign)
         '\t': '',

@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 # encoding=utf8
 import requests_html as rqh
+
 from mylib.ets_ext.i1_traits import *
+from mylib.ez import log
 from mylib.web_client import parse_https_url
 
 HOST = 'hentai.cafe'
 URL_ROOT = f'https://{HOST}'
 
-__logger__ = get_logger(f'sites.{__name__}')
+__logger__ = log.get_logger(f'sites.{__name__}')
 
 
 class HentaiCafeURL(Regex):
     def __init__(self, value='', **metadata):
         regex = r'(https://)?hentai\.cafe/.+|/hc\.fyi/.+'
-        super(Regex, self).__init__(value=value, regex=regex, **metadata)
+        super().__init__(value=value, regex=regex, **metadata)
 
     def validate(self, obj, name, value):
         v = super(HentaiCafeURL, self).validate(obj, name, value)
