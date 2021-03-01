@@ -120,9 +120,4 @@ def shutil_copy_file_obj_faster(src_fd, dst_fd, length: int = None):
         raise
 
 
-def is_path_valid(path: str or os.PathLike):
-    if not isinstance(path, str):
-        path = os.fsdecode(os.fspath(path))
-
-
 shutil.copyfileobj = shutil_copy_file_obj_faster
