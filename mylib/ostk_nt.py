@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # encoding=utf8
-import ctypes
 import inspect
 import subprocess
+from io import BytesIO
+
+import PIL.Image
 
 import pywintypes
 import win32clipboard
@@ -18,7 +20,8 @@ ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE = str.maketrans(ILLEGAL_FS_CHARS, ILLEGAL
 
 class Clipboard(metaclass=SingletonMetaClass):
     _wcb = win32clipboard
-    cf_dict = {n.lstrip('CF_'): m for n, m in inspect.getmembers(_wcb) if n.startswith('CF_')}
+    cf_dict = {str_remove_prefix(name, 'CF_'): method for name, method in inspect.getmembers(_wcb) if
+               name.startswith('CF_')}
 
     class OpenError(Exception):
         pass
@@ -85,7 +88,7 @@ class Clipboard(metaclass=SingletonMetaClass):
         return self._wcb.SetClipboardData(cf, data)
 
     @tricks_lite.deco_with_self_context
-    def _set_text__x(self, text):
+    def set_text___fixme(self, text):
         return self._wcb.SetClipboardText(text)
 
     @tricks_lite.deco_with_self_context
@@ -96,6 +99,27 @@ class Clipboard(metaclass=SingletonMetaClass):
         else:
             data = None
         return data
+
+    @tricks_lite.deco_with_self_context
+    def set_image(self, image):
+        if isinstance(image, str):
+            if re.match(r'data:image/\w+;base64, [A-Za-z0-9+/=]+', image):
+                raise NotImplementedError('base64 image data')
+            else:
+                from .shards.image import open_pil_image
+                i = open_pil_image(image)
+                with BytesIO() as o:
+                    i.convert('RGB').save(o, 'BMP')
+                    data = o.getvalue()[14:]  # https://stackoverflow.com/questions/34322132/copy-image-to-clipboard
+        elif isinstance(image, PIL.Image.Image):
+            with BytesIO() as o:
+                image.convert('RGB').save(o, 'BMP')
+                data = o.getvalue()[14:]
+        elif isinstance(image, bytes):
+            data = image
+        else:
+            raise TypeError('image', (str, PIL.Image.Image, bytes), type(image))
+        self.set(data, self._wcb.CF_DIB)
 
     def list_path(self, exist_only=True) -> list:
         paths = self.get(self._wcb.CF_HDROP)
