@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 # encoding=utf8
-from pathlib import Path as PrimePath
+import pathlib
 
 from .i1_traits import *
+from ..shards.path_check import is_path_valid
 
 
-class EasyPath:
+class PathSynthesizer:
     """Simple wrap class of `pathlib.Path`"""
 
     def __init__(self, *args, **kwargs):
-        self.path = PrimePath(*args, **kwargs)
+        self.path = pathlib.Path(*args, **kwargs)
 
     def __str__(self):
         return f'{self.__class__.__name__}({repr(self.full)})'
@@ -21,9 +22,9 @@ class EasyPath:
     @full.setter
     def full(self, value):
         if isinstance(value, str):
-            self.path = PrimePath(value)
+            self.path = pathlib.Path(value)
         elif isinstance(value, (tuple, list)):
-            self.path = PrimePath(*value)
+            self.path = pathlib.Path(*value)
         else:
             raise TypeError(value, (str, tuple, list))
 
@@ -36,10 +37,10 @@ class EasyPath:
         if isinstance(value, str):
             new_parent = value
         elif isinstance(value, (tuple, list)):
-            new_parent = PrimePath(*value)
+            new_parent = pathlib.Path(*value)
         else:
             raise TypeError(value, (str, tuple, list))
-        self.path = PrimePath(new_parent, self.path.name)
+        self.path = pathlib.Path(new_parent, self.path.name)
 
     @property
     def basename(self):
@@ -69,6 +70,22 @@ class EasyPath:
             pass
 
 
+class PathComponent(String):
+    def __init__(self, value: str = '', sync_to: PathSynthesizer = None, **metadata):
+        super(PathComponent, self).__init__(value=value, **metadata)
+        self.sync_path = sync_to
+
+    def validate(self, obj, name, value):
+        v = super(PathComponent, self).validate(obj, name, value)
+        if is_path_valid(v):
+            return v
+        self.error(obj, name, value)
+
+    @staticmethod
+    def info():
+        return 'a text string of valid path or path component'
+
+
 class Path(HasTraits):
     full = tn.full = Str
     dirname = tn.dirname = Directory
@@ -78,9 +95,9 @@ class Path(HasTraits):
 
     nl = [tn.full, tn.dirname, tn.basename, tn.stem, tn.extension]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *path_parts, **kwargs):
         super(Path, self).__init__(**kwargs)
-        self.path = EasyPath(*args)
+        self.path = PathSynthesizer(*path_parts)
         self._update()
 
     def _update(self):

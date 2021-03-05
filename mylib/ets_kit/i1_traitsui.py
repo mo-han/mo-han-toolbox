@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # encoding=utf8
+from enable.savage.trait_defs.ui.svg_button import SVGButton
 from pyface.api import *
 from traitsui.api import *
 from traitsui.key_bindings import *
@@ -8,7 +9,7 @@ from .i1_traits import *
 
 
 def __unused_import_keeper():
-    return ImageResource, TraitType
+    return ImageResource, TraitType, SVGButton
 
 
 class SimpleHandler(Handler):
