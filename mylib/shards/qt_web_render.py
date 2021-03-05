@@ -11,8 +11,8 @@ class QtWebPageRender:
     html_str: str
     html_parser: HTML
 
-    def __init__(self, qt_app: QApplication):
-        self._qt_app = qt_app
+    def __init__(self, qt_app_singleton: QApplication):
+        self._qt_app = qt_app_singleton
         self._qt_webpage = QWebEnginePage()
         self._qt_webpage.loadFinished.connect(self._on_load_finished)
 
