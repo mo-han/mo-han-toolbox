@@ -68,7 +68,7 @@ class MyKitCmd(cmd.Cmd):
         try:
             argv_l = shlex.split(line)
             rtd.args = args = ap.parse_args(argv_l)
-            func = args.func
+            func = args.target
             if func not in [cmd_mode_func, gui_mode]:
                 self._done = func
                 return func()
