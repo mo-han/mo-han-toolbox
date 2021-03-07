@@ -10,7 +10,7 @@ import sqlite3
 
 from . import T
 from .ez import *
-from .ez import log
+from .ez import log_kit
 
 USELESS_PLACEHOLDER_FOR_MODULE_TRICKS_LITE = __name__
 
@@ -512,7 +512,7 @@ def deco_factory_copy_signature(signature_source: T.Callable):
 class SimpleSQLiteTable:
     def __init__(self, db_path: str, table_name: str, table_columns: list or tuple, *,
                  converters: dict = None, adapters: dict = None):
-        logger = log.get_logger(f'{__name__}.{self.__class__.__name__}')
+        logger = log_kit.get_logger(f'{__name__}.{self.__class__.__name__}')
         db_path = db_path or ':memory:'
         if converters:
             self.connection = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)

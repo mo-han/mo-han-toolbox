@@ -3,13 +3,13 @@
 import requests_html as rqh
 
 from mylib.ets_kit.i1_traits import *
-from mylib.ez import log
+from mylib.ez import log_kit
 from mylib.web_client import parse_https_url
 
 HOST = 'hentai.cafe'
 URL_ROOT = f'https://{HOST}'
 
-__logger__ = log.get_logger(f'sites.{__name__}')
+__logger__ = log_kit.get_logger(f'sites.{__name__}')
 
 
 class HentaiCafeURL(Regex):
