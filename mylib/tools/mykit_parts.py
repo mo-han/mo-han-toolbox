@@ -1,19 +1,17 @@
 #!/usr/bin/env python3
 # encoding=utf8
-import os
 
 from send2trash import send2trash
 
 from mylib import tui, fstk
 from mylib.ez import *
-
 from mylib.ostk import clipboard
 from mylib.text_lite import ellipt_middle
 
 tui_lp = tui.LinePrinter()
 
 
-def list_few_cfip(file, hostname, as_list, isp):
+def list_several_cloudflare_ipaddr(file, hostname, as_list, isp):
     from mylib.sites.misc import get_cloudflare_ipaddr_hostmonit
     from mylib.fstk import write_json_file
     from pprint import pformat
@@ -158,3 +156,25 @@ def flat_dir(src, prefix, dry_run):
                         if f:
                             send2trash(dp)
                             break
+
+
+def hentai_at_home_galleries_real_name(path_l):
+    from mylib.sites.ehentai import parse_hath_dl_gallery_info
+    for p in path_l or clipboard.list_path():
+        try:
+            title = parse_hath_dl_gallery_info(p)['title']
+            folder, name, ext = fstk.split_dirname_basename_ext(p)
+            try:
+                tail = re.search(r' \[\d+(-\d{3,4}x)?]$', name).group(0)
+            except AttributeError:
+                tail = ''
+            new = fstk.join_dirname_basename_ext(folder, fstk.sanitize_xu240(title) + tail, ext)
+            if new == p:
+                # print(f'= {p}')
+                continue
+            os.rename(p, new)
+            print(f'* {p} -> {new}')
+        except FileNotFoundError:
+            print(f'# {p}')
+        except Exception as e:
+            print(f'! {p} ({repr(e)})')

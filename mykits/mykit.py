@@ -11,6 +11,7 @@ from pprint import pprint
 from send2trash import send2trash
 
 import mylib.__deprecated__
+from mylib.tools import mykit_parts
 from mylib import fstk
 from mylib import tui
 from mylib.__deprecated__ import fs_inplace_rename, fs_inplace_rename_regex, list_files, list_dirs
@@ -210,33 +211,15 @@ merge_zip_files.add_argument('src', nargs='*')
 merge_zip_files.add_argument('-y', '--yes', help='auto confirm yes', action='store_true')
 
 
-def hath_gallery_rename_func():
-    from mylib.sites.ehentai import parse_hath_dl_gallery_info
-    args = rtd.args
-    for s in args.src or clipboard.list_path():
-        try:
-            title = parse_hath_dl_gallery_info(s)['title']
-            folder, name, ext = fstk.split_dirname_basename_ext(s)
-            try:
-                tail = re.search(r' \[\d+.*]$', name).group(0)
-            except AttributeError:
-                tail = ''
-            new = fstk.join_dirname_basename_ext(folder, fstk.sanitize_xu240(title) + tail, ext)
-            if new == s:
-                print(f'@ {s}')
-                continue
-            os.rename(s, new)
-            print(f'* {s} -> {new}')
-        except FileNotFoundError:
-            print(f'# {s}')
-        except Exception as e:
-            print(f'! {s} # {repr(e)}')
+@has_parser_done
+class HentaiAtHomeGalleriesRealName(HasParser):
+    parser = add_sub_parser('H@H-gallery-real-name', ['hath.gl.rn'], 'restore real name of H@H-downloaded galleries')
+    parser.add_argument('path', nargs='*', help='path of gallery folder or ZIP file')
 
-
-hath_gallery_rename = add_sub_parser('H@H.gallery.rename', ['hath.gl.rn'],
-                                     'restore name of galleries downloaded by H@H')
-hath_gallery_rename.set_defaults(target=hath_gallery_rename_func)
-hath_gallery_rename.add_argument('src', nargs='*')
+    @classmethod
+    def run(cls):
+        args = rtd.args
+        mykit_parts.hentai_at_home_galleries_real_name(args.path)
 
 
 def tag_filter_files_func():
@@ -319,13 +302,13 @@ class GetCloudflareIP(HasParser):
 
     @classmethod
     def run(cls):
-        from mylib.tools.mykit_parts import list_few_cfip
+        from mylib.tools.mykit_parts import list_several_cloudflare_ipaddr
         args = rtd.args
         file = args.file
         as_list = args.list
         isp = args.isp
         hostname = args.hostname
-        list_few_cfip(file, hostname, as_list, isp)
+        list_several_cloudflare_ipaddr(file, hostname, as_list, isp)
 
 
 def video_guess_crf_func():
