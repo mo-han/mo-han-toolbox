@@ -711,7 +711,7 @@ def run_from_lines_func():
         cmd_fmt = cmd_fmt.replace('{}', '{line}')
     if '{line}' not in cmd_fmt:
         cmd_fmt += ' "{line}"'
-    print('>', cmd_fmt)
+    print('>', cmd_fmt, file=sys.stderr)
     if source == ':clipboard.path':
         lines = clipboard.list_path()
     elif source == ':clipboard':
@@ -727,7 +727,7 @@ def run_from_lines_func():
             if not line:
                 continue
             command = cmd_fmt.format(line=line.strip())
-            print('#', command)
+            print('#', command, file=sys.stderr)
             if not dry_run:
                 os.system(command)
     except KeyboardInterrupt:
