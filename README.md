@@ -77,7 +77,7 @@ d.put_end_of_queue()
 d.start_queue_loop()
 ```
 
-#### [PotPlayerKit](mylib/potplayer.py)
+#### [PotPlayerKit](mylib/shards/potplayer.py)
 
 toolkit for PotPlayer.
 main features in current version:

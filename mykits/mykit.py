@@ -824,7 +824,7 @@ clipboard_rename.set_defaults(target=clipboard_rename_func)
 
 
 def potplayer_rename_func():
-    from mylib.potplayer import PotPlayerKit
+    from mylib.shards.potplayer import PotPlayerKit
     args = rtd.args
     PotPlayerKit().rename_file_gui(alt_tab=args.no_keep_front)
 

@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # encoding=utf8
 import warnings
-from time import sleep, time
 
 import keyboard
 import mouse
 
-from .gui_old import rename_dialog
-from .uia import module_pywinauto
-from .ostk import clipboard
-from .fstk import x_rename
+from ..ez import *
+from ..fstk import x_rename
+from ..gui_old import rename_dialog
+from ..ostk import clipboard
+from ..uia import module_pywinauto
 
 pywinauto = module_pywinauto()
 App = pywinauto.Application
@@ -62,11 +62,9 @@ class PotPlayerKit:
 
     def get_fileinfo(self, alt_tab: bool = True, timeout=5):
         const_general = 'General'
-        const_general_lower = const_general.lower()
         const_complete_name = 'Complete name'
-        const_complete_name_lower = const_complete_name.lower()
 
-        t0 = time()
+        t0 = time.time()
         clipboard.clear()
         self.focus()
         keyboard.press_and_release('ctrl+f1')
@@ -80,12 +78,12 @@ class PotPlayerKit:
             keyboard.press_and_release('alt+tab')
 
         while True:
-            if time() - t0 > timeout:
+            if time.time() - t0 > timeout:
                 raise TimeoutError
             self.gasp()
             try:
-                data = clipboard.get() or ''
-                lines = data.splitlines()
+                text = clipboard.get() or ''
+                lines = text.splitlines()
                 line0 = getitem_default(lines, 0)
                 line1 = getitem_default(lines, 1)
                 if line0 == const_general and (line1.startswith(const_complete_name) or line1.startswith('Unique ID')):
@@ -93,54 +91,48 @@ class PotPlayerKit:
             except clipboard.OpenError:
                 warnings.warn('clipboard open error')
 
-        d = {}
-        group = ''
-        stream_id = -1
+        space_and_colon = ' : '
+        space_and_slash = ' / '
+        data = current_node = {}
         for line in lines:
-            if ':' in line:
-                k, v = [e.strip() for e in line.split(':', maxsplit=1)]
-                k = k.lower()
-                if k == 'id':
-                    d[group].append({})
-                    stream_id += 1
-                    continue
-                elif k == 'encoding settings':
-                    v = [e.strip() for e in v.split('/')]
-                if group == const_general_lower:
-                    if k == 'attachments':
-                        d[k] = v.split(' / ')
-                    else:
-                        d[k] = v
-                elif group:
-                    d[group][stream_id][k] = v
+            if not line:
+                continue
+            if space_and_colon in line:
+                k, v = line.split(space_and_colon, maxsplit=1)
+                k: str = k.strip().lower()
+                if space_and_slash in v:
+                    v = v.split(space_and_slash)
             else:
-                g = line.strip().lower().split(' #', maxsplit=1)[0]
-                if g and g != group:
-                    if g != const_general_lower:
-                        d[g] = []
-                    group = g
-                    stream_id = -1
+                k, v = 'stream', line.strip().lower()
+                type_name = v.split(' #')[0]
+                if type_name == 'general':
+                    current_node = data
+                else:
+                    current_node = {}
+                    data.setdefault(type_name, []).append(current_node)
+            current_node[k] = v
 
         try:
-            d['path'] = d[const_complete_name_lower]
-            vs0 = d['video'][0]
-            d['vc'] = vs0['format'].lower()
-            d['vbd'] = int(vs0['bit depth'].rstrip(' bits'))
-            if 'frame rate' in vs0:
-                d['fps'] = float(vs0['frame rate'].split()[0])
-            elif 'original frame rate' in vs0:
-                d['fps'] = float(vs0['original frame rate'].split()[0])
-            d['pix_fmt'] = \
-                vs0['color space'].lower() + \
-                vs0['chroma subsampling'].replace(':', '') + \
-                vs0['scan type'][0].lower() if 'scan type' in vs0 else 'p'
-            d['h'] = int(vs0['height'].rstrip(' pixels').replace(' ', ''))
-            d['w'] = int(vs0['width'].rstrip(' pixels').replace(' ', ''))
+            data['path'] = data['complete name']
+            video_stream_0: dict = data['video'][0]
+            data['vc'] = video_stream_0['format'].lower()
+            data['vbd'] = int(str_remove_suffix(video_stream_0['bit depth'], ' bits'))
+            str_frame_rate = 'frame rate'
+            str_original_frame_rate = 'original frame rate'
+            if str_frame_rate in video_stream_0:
+                data['fps'] = float(video_stream_0[str_frame_rate].split()[0])
+            elif str_original_frame_rate in video_stream_0:
+                data['fps'] = float(video_stream_0[str_original_frame_rate].split()[0])
+            data['pix_fmt'] = video_stream_0['color space'].lower() + \
+                              video_stream_0['chroma subsampling'].replace(':', '') + \
+                              video_stream_0.get('scan type', 'p')
+            data['h'] = int(str_remove_suffix(video_stream_0['height'], ' pixels').replace(' ', ''))
+            data['w'] = int(str_remove_suffix(video_stream_0['width'], ' pixels').replace(' ', ''))
         except KeyError as e:
             print(repr(e))
 
-        self._cache['fileinfo'] = d
-        return d
+        self._cache['fileinfo'] = data
+        return data
 
     def rename_file(self, new: str, use_cache: bool = False, move_to: str = None, keep_ext: bool = True):
         fileinfo = self.cache['fileinfo'] if use_cache else self.get_fileinfo()
