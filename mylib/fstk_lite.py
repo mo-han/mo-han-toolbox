@@ -302,10 +302,13 @@ def path_or_glob(pathname, *, recursive=False):
         return glob.glob(pathname, recursive=recursive)
 
 
-def split_dirname_basename_ext(path):
+def split_dirname_basename_ext(path, dir_ext=True):
     """path -> dirname, basename, extension"""
     p, b = os.path.split(path)
-    n, e = os.path.splitext(b)
+    if not dir_ext and os.path.isdir(path):
+        n, e = b, ''
+    else:
+        n, e = os.path.splitext(b)
     return p, n, e
 
 

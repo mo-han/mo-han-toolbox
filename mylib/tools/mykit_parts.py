@@ -163,7 +163,7 @@ def hentai_at_home_galleries_real_name(path_l):
     for p in path_l or clipboard.list_path():
         try:
             title = parse_hath_dl_gallery_info(p)['title']
-            folder, name, ext = fstk.split_dirname_basename_ext(p)
+            folder, name, ext = fstk.split_dirname_basename_ext(p, dir_ext=False)
             try:
                 tail = re.search(r' \[\d+(-\d{3,4}x)?]$', name).group(0)
             except AttributeError:
