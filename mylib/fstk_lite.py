@@ -220,8 +220,11 @@ def sanitize(name: str, repl: str or dict = None, *, unescape_html=True, decode_
     return r
 
 
-def sanitize_xu(name: str, *, unescape_html=True, decode_url=True) -> str:
-    return sanitize(name, POTENTIAL_INVALID_CHARS_MAP, unescape_html=unescape_html, decode_url=decode_url)
+def sanitize_xu(name: str, *, unescape_html=True, decode_url=True, unify_white_space=True) -> str:
+    r= sanitize(name, POTENTIAL_INVALID_CHARS_MAP, unescape_html=unescape_html, decode_url=decode_url)
+    if unify_white_space:
+        r = re.sub(r'\s', ' ', r)
+    return r
 
 
 def sanitize_xu200(name: str, encoding: str = 'utf8') -> str:
