@@ -3,8 +3,6 @@ from argparse import *
 
 from . import AttrName
 
-tn = the_name = AttrName()
-
 
 class HelpCompactFormatter(HelpFormatter):
     def _format_action_invocation(self, action):
