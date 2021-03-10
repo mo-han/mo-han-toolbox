@@ -14,7 +14,7 @@ import humanize
 import lxml.html
 import requests.utils
 
-from .T import JSONType
+from mylib.ez.typing import JSONType
 from .fstk import touch, ensure_open_file
 from .ez import *
 from .ez.log_kit import get_logger, LOG_FMT_MESSAGE_ONLY

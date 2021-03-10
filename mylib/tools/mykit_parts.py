@@ -168,7 +168,8 @@ def hentai_at_home_galleries_real_name(path_l):
                 tail = re.search(r' \[\d+(-\d{3,4}x)?]$', name).group(0)
             except AttributeError:
                 tail = ''
-            new = fstk.join_dirname_basename_ext(folder, fstk.sanitize_xu240(title) + tail, ext)
+            sanitized_title = fstk.sanitize_xu240(title)
+            new = fstk.join_dirname_basename_ext(folder, sanitized_title + tail, ext)
             if new == p:
                 # print(f'= {p}')
                 continue

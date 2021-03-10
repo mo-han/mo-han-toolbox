@@ -3,7 +3,7 @@
 #conda #BSD
 #dhash  #MIT
 auxlib #Apache #BSD
-colorama
+colorama #BSD
 datefinder #MIT
 dateparser #BSD-3
 dill  #BSD-3
@@ -44,6 +44,7 @@ send2trash
 si-prefix  #BSD-3
 splinter<0.8  # phantomjs
 sqlitedict
+typer #MIT
 uiautomator2
 you-get
 youtube-dl

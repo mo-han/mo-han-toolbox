@@ -15,7 +15,8 @@ from mylib.tools import mykit_parts
 from mylib import fstk
 from mylib import tui
 from mylib.__deprecated__ import fs_inplace_rename, fs_inplace_rename_regex, list_files, list_dirs
-from mylib.cli import arg_type_pow2, arg_type_range_factory, ArgParseCompactHelpFormatter, add_dry_run
+from mylib.cli import arg_type_pow2, arg_type_range_factory, add_dry_run
+from mylib.ez.argparse import HelpCompactFormatter
 from mylib.ez import *
 from mylib.fstk import make_path, ctx_pushd
 from mylib.ostk import clipboard, set_console_title___try
@@ -24,7 +25,7 @@ from mylib.tricks_lite import Attreebute, eval_or_str, deco_factory_exit_on_keyb
 rtd = Attreebute()  # runtime data
 tui_lp = tui.LinePrinter()
 an = AttrName()
-common_parser_kwargs = {'formatter_class': ArgParseCompactHelpFormatter}
+common_parser_kwargs = {'formatter_class': HelpCompactFormatter}
 ap = ArgumentParser(**common_parser_kwargs)
 sub = ap.add_subparsers(title='sub-commands')
 

@@ -14,7 +14,6 @@ from telegram import ChatAction, Bot, Update, ParseMode, constants, Message
 from telegram.ext import Updater, Filters, CallbackContext
 from telegram.ext.filters import MergedFilter
 
-from . import T
 from .ez import *
 from .fstk import write_sqlite_dict_file, read_sqlite_dict_file
 from .ostk import HOSTNAME, OSNAME, USERNAME
@@ -195,7 +194,7 @@ class SimpleBot(ABC):
         if data_file_path:
             undone = data.setdefault('undone', {})
             queued = data.setdefault('queued', [])
-            updates: T.List[Update] = [*undone.values(), *queued]
+            updates: typing.List[Update] = [*undone.values(), *queued]
             [self.__pre_pickle_update__(u) for u in updates]
             write_sqlite_dict_file(data_file_path, data, with_dill=True)
             [self.__post_pickle_update__(u) for u in updates]

@@ -6,10 +6,8 @@ import glob
 import html
 import itertools
 import json
-import os
 import urllib.parse
 
-from . import T
 from . import ostk
 from . import text_lite
 from .ez import *
@@ -103,7 +101,7 @@ def find_iter(start_path: str, find_type: str, pattern: str = None, *,
         return
 
 
-def files_from_iter(src: str or T.Iterable, *, recursive=False, win32_unc=False):
+def files_from_iter(src: str or typing.Iterable, *, recursive=False, win32_unc=False):
     def mkp(*parts):
         return make_path(*parts, win32_unc=win32_unc)
 

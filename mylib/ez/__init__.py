@@ -2,6 +2,8 @@
 # encoding=utf8
 """THIS MODULE MUST ONLY DEPEND ON STANDARD LIBRARIES OR BUILT-IN"""
 import ctypes
+import functools
+import inspect
 import locale
 import os
 import queue
@@ -11,6 +13,8 @@ import sys
 import threading
 import time
 from time import sleep
+
+from . import typing
 
 global_config = {'shutil.copy.buffer.size': 16 * 1024 * 1024}
 
@@ -121,3 +125,17 @@ def shutil_copy_file_obj_faster(src_fd, dst_fd, length: int = None):
 
 
 shutil.copyfileobj = shutil_copy_file_obj_faster
+
+
+def deco_factory_copy_signature(signature_source: typing.Callable):
+    # https://stackoverflow.com/a/58989918/7966259
+    def deco(target: typing.Callable):
+        @functools.wraps(target)
+        def tgt(*args, **kwargs):
+            inspect.signature(signature_source).bind(*args, **kwargs)
+            return target(*args, **kwargs)
+
+        tgt.__signature__ = inspect.signature(signature_source)
+        return tgt
+
+    return deco

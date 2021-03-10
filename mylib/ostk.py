@@ -2,18 +2,15 @@
 # encoding=utf8
 import codecs
 import getpass
-import locale
 import platform
 import shlex
 import tempfile
 from collections import defaultdict
-from io import BytesIO
 
 import psutil
 from filetype import filetype
 
 from . import tricks_lite
-from . import T
 from .ostk_lite import *
 
 assert tricks_lite
@@ -31,7 +28,7 @@ OSNAME = platform.system()
 USERNAME = getpass.getuser()
 
 
-def check_file_ext(fp: str, ext_list: T.Iterable):
+def check_file_ext(fp: str, ext_list: typing.Iterable):
     return os.path.isfile(fp) and os.path.splitext(fp)[-1].lower() in ext_list
 
 
@@ -83,7 +80,7 @@ def write_file_chunk(filepath: str, start: int, stop: int, data: bytes, total: i
         f[start:stop] = data
 
 
-def split_filename_tail(filepath, valid_tails) -> T.Tuple[str, str, str, str]:
+def split_filename_tail(filepath, valid_tails) -> typing.Tuple[str, str, str, str]:
     dirname, basename = os.path.split(filepath)
     file_non_ext, file_ext = os.path.splitext(basename)
     file_name, file_tail = os.path.splitext(file_non_ext)
@@ -97,7 +94,7 @@ def join_filename_tail(dirname, name_without_tail, tail, ext):
     return os.path.join(dirname, f'{name_without_tail}{tail}{ext}')
 
 
-def group_filename_tail(filepath_list, valid_tails) -> T.Dict[T.Tuple[str, str], T.List[T.Tuple[str, str]]]:
+def group_filename_tail(filepath_list, valid_tails) -> typing.Dict[typing.Tuple[str, str], typing.List[typing.Tuple[str, str]]]:
     rv = defaultdict(list)
     for fp in filepath_list:
         dn, fn, tail, ext = split_filename_tail(fp, valid_tails)
