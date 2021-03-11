@@ -15,7 +15,7 @@ from . import tui
 from .__deprecated__ import fs_find_iter
 from .filename_tags import SuffixListFilenameTags
 from mylib.ez import *
-from mylib.ez.log_kit import get_logger, LOG_FMT_MESSAGE_ONLY
+from mylib.ez.logging import get_logger, LOG_FMT_MESSAGE_ONLY
 
 S_ORIGINAL = 'original'
 S_SEGMENT = 'segment'

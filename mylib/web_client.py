@@ -17,7 +17,7 @@ import requests.utils
 from mylib.ez.typing import JSONType
 from .fstk import touch, ensure_open_file
 from .ez import *
-from .ez.log_kit import get_logger, LOG_FMT_MESSAGE_ONLY
+from .ez.logging import get_logger, LOG_FMT_MESSAGE_ONLY
 from .ostk import write_file_chunk
 from .ostk_lite import SubscriptableFileIO
 from .tricks_lite import singleton, thread_factory, iter_factory_retry

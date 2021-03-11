@@ -4,7 +4,7 @@ import sys
 import logging
 
 from archived.hentai import HentaiCafeKit
-from mylib.ez.log_kit import LOG_FMT_MESSAGE_ONLY
+from mylib.ez.logging import LOG_FMT_MESSAGE_ONLY
 from mylib.ostk_lite import ensure_sigint_signal
 
 logging.basicConfig(

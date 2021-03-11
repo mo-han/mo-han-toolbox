@@ -5,3 +5,7 @@ picotui  #MIT
 pyyaml  #YAML #MIT
 selenium-wire  #MIT
 termgraph  #MIT
+fire  #Apache2.0 #google #CLI #argparse
+argh  #LGPL #CLI #argparse #wrapper
+plac  #BSD #CLI #argparse
+commando  #MIT #CLI #argparse #wrapper #shallow

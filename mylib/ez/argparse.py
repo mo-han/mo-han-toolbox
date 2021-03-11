@@ -141,3 +141,12 @@ class ArgumentParserRigger:
         else:
             to_be_returned = getattr(p, item)
         return to_be_returned
+
+    arg = argument
+    grp = argument_group
+    root = super_command
+    sub = sub_command
+    true = flag
+    false = flag_reverse
+    map = map_target_signature
+    run = run_target

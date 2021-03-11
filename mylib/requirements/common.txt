@@ -1,9 +1,11 @@
 #bitmath  #MIT #filesize #unit
-#colored  #by-gooey #MIT
 #conda #BSD
 #dhash  #MIT
+QtPy  #MIT
 auxlib #Apache #BSD
 colorama #BSD
+colored  #by-gooey #MIT
+colour  #BSD-3
 datefinder #MIT
 dateparser #BSD-3
 dill  #BSD-3
@@ -35,7 +37,6 @@ pyserial
 python-dateutil #Apache #BSD
 python-i18n  #MIT
 pyyaml  #MIT
-QtPy  #MIT
 regex #Apache
 requests
 requests-html  #MIT #python>=3.6
