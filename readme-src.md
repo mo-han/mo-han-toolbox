@@ -1,4 +1,4 @@
-#### [AttrName](/blob/fd4ffad4be682ea248f8b8550c8538b7ff4f7004/mylib/ez/__init__.py#L35)
+#### AttrName
 
 its attribute is a str same as the name thereof
 
@@ -12,7 +12,7 @@ assert an.abc_xyz == 'abc_xyz'
 an.abc_xyz = 123456  # nothing happens
 ```
 
-#### [ArgumentParserRigger](/blob/3bafdf4e8d5267a9071523e4046c39892c3a20d0/mylib/ez/argparse.py#L28)
+#### ArgumentParserRigger
 
 use argparse in @decorator style
 
@@ -105,7 +105,7 @@ and more: a, b, c
 1 2
 ```
 
-#### [SubscriptableFileIO](mylib/ostk.py#L274)
+#### SubscriptableFileIO
 
 read/write file with slice
 
@@ -119,7 +119,7 @@ with SubscriptableFileIO('filepath') as f:
     print(f[123:456])
 ```
 
-#### [Simple Telegram Bot](mylib/tg_bot.py#L35)
+#### Simple Telegram Bot
 
 a very easy-to-use and write-less-do-more wrapper class of [PTB](https://github.com/python-telegram-bot/python-telegram-bot/ 'python-telegram-bot')
 
@@ -138,7 +138,7 @@ bot = MyBot('TOKEN', auto_run=False)
 bot.__run__()
 ```
 
-#### [bilibili_aocx](mykits/bilibili_aocx.py)
+#### bilibili_aocx
 
 bilibili APP offline cache extractor
 
@@ -148,7 +148,7 @@ bilibili mobile client APP offline cache extractor
 
 [.exe pre-release](https://github.com/mo-han/mo-han-toolbox/releases/download/t0/bilibili_aocx.exe)
 
-#### [mykit.py](mykits/mykit.py)
+#### mykit.py
 
 self-using multifunctional script
 
@@ -168,7 +168,7 @@ a ffprobe wrapper, can get source file(s) from clipboard
 
 `mykit fp` will print info of filepath in clipboard
 
-#### [DownloadPool](mylib/web_client.py#L336)
+#### DownloadPool
 
 HTTP multi-threading downloader
 
@@ -184,22 +184,22 @@ d.put_end_of_queue()
 d.start_queue_loop()
 ```
 
-#### [PotPlayerKit](mylib/shards/potplayer.py)
+#### PotPlayerKit
 
 toolkit for PotPlayer.
 main features in current version:
 - find opened PotPlayer window and bring it to foreground
 - get and parse info of the opened media file
 - rename/move the opened media file
-- a [GUI dialog](mylib/gui_old.py#L44) to rename/move the opened media file
+- a GUI dialog to rename/move the opened media file
 
-#### [VoidDuck](mylib/tricks.py#L141)
+#### VoidDuck
 
 虚空之鸭，万能的鸭鸭，无能的鸭鸭，随你怎么对待它，鸭鸭不反抗，鸭鸭不回答
 
 a void, versatile, useless and quiet duck, called anyhow, no return no raise
 
-#### [PixivFanboxAPI](mylib/sites/pixiv.py#L71)
+#### PixivFanboxAPI
 
 pixivFANBOX API (incomplete but usable)
 
