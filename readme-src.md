@@ -1,23 +1,3 @@
-
-Table of Contents
-=================
-
-* [<a href="/blob/fd4ffad4be682ea248f8b8550c8538b7ff4f7004/mylib/ez/\_\_init\_\_\.py\#L35">AttrName</a>](#attrname)
-* [<a href="/blob/3bafdf4e8d5267a9071523e4046c39892c3a20d0/mylib/ez/argparse\.py\#L28">ArgumentParserRigger</a>](#argumentparserrigger)
-* [<a href="mylib/ostk\.py\#L274">SubscriptableFileIO</a>](#subscriptablefileio)
-* [<a href="mylib/tg\_bot\.py\#L35">Simple Telegram Bot</a>](#simple-telegram-bot)
-* [<a href="mykits/bilibili\_aocx\.py">bilibili\_aocx</a>](#bilibili_aocx)
-* [<a href="mykits/mykit\.py">mykit\.py</a>](#mykitpy)
-  * [wrap\.ffmpeg (aliases: ffmpeg, ff)](#wrapffmpeg-aliases-ffmpeg-ff)
-  * [wrap\.ffprobe (aliases: ffprobe, ff)](#wrapffprobe-aliases-ffprobe-ff)
-* [<a href="mylib/web\_client\.py\#L336">DownloadPool</a>](#downloadpool)
-* [<a href="mylib/shards/potplayer\.py">PotPlayerKit</a>](#potplayerkit)
-* [<a href="mylib/tricks\.py\#L141">VoidDuck</a>](#voidduck)
-* [<a href="mylib/sites/pixiv\.py\#L71">PixivFanboxAPI</a>](#pixivfanboxapi)
-
-Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)
-
-
 #### [AttrName](/blob/fd4ffad4be682ea248f8b8550c8538b7ff4f7004/mylib/ez/__init__.py#L35)
 
 its attribute is a str same as the name thereof
