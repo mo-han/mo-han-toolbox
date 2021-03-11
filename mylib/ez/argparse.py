@@ -25,7 +25,7 @@ class UnknownArguments(metaclass=SingletonMetaClass):
     pass
 
 
-class ParserRigger:
+class ArgumentParserRigger:
     def __init__(self, formatter_class=HelpCompactFormatter, **kwargs):
         self.parser_common_kwargs = dict(formatter_class=formatter_class, **kwargs)
         self.the_parser = ArgumentParser(**self.parser_common_kwargs)
@@ -36,8 +36,9 @@ class ParserRigger:
         self.namespace: T.Optional[Namespace] = None
         self.unknown: T.List[str] = []
 
-    def call_map(self, *args: str or RawObject or UnknownArguments, **kwargs: str or RawObject or UnknownArguments):
-        """factory decorator to tell how to call the decorated callable"""
+    def map_target_signature(self, *args: str or RawObject or UnknownArguments,
+                             **kwargs: str or RawObject or UnknownArguments):
+        """factory decorator to map arguments to the signature of decorated callable target"""
 
         def deco(target):
             self.target_call_config[target] = args, kwargs
@@ -45,9 +46,12 @@ class ParserRigger:
 
         return deco
 
-    def run(self):
+    def run_target(self):
         """call target"""
-        target = self.namespace.__target__
+        try:
+            target = self.namespace.__target__
+        except AttributeError:
+            return
         if target in self.target_call_config:
             t_args, t_kwargs = self.target_call_config[target]
             args = [self.restore_mapped_argument(a) for a in t_args]
@@ -75,14 +79,19 @@ class ParserRigger:
 
         return deco
 
-    def sub_command(self, name=None, aliases=(), **kwargs):
+    def sub_command(self, namer=None, aliases=(), **kwargs):
         """factory decorator to add sub command, put this decorator on top"""
         if self.subparsers is None:
             self.subparsers = self.the_parser.add_subparsers(**self.subparsers_kwargs)
         parser_kwargs = dict(**self.parser_common_kwargs, **kwargs)
 
         def deco(target):
-            sub_command = name or target.__name__
+            if not namer:
+                sub_command = target.__name__
+            elif isinstance(namer, str):
+                sub_command = namer
+            else:
+                sub_command = namer(target.__name__)
             sub_parser = self.subparsers.add_parser(name=sub_command, aliases=aliases, **parser_kwargs)
             sub_parser.set_defaults(__target__=target)
             for _name, _args, _kwargs in self.arguments_config[target]:
@@ -99,14 +108,14 @@ class ParserRigger:
         return self._deco_factory_add_sth('argument_group', *args, **kwargs)
 
     def flag(self, short_flag: str, long_flag: str = None, **kwargs):
-        """option argument flagged as true"""
+        """'store_true' option"""
         flags = ['-' + short_flag.strip('-')]
         if long_flag:
             flags.append('--' + long_flag.strip('-'))
         return self.argument(*flags, action='store_true', **kwargs)
 
     def flag_reverse(self, short_flag: str, long_flag: str = None, **kwargs):
-        """option argument flagged as false"""
+        """'store_false' option"""
         flags = ['-' + short_flag.strip('-')]
         if long_flag:
             flags.append('--' + long_flag.strip('-'))
