@@ -10,6 +10,7 @@ import queue
 import re
 import shutil
 import sys
+import subprocess
 import threading
 import time
 from time import sleep
@@ -139,3 +140,14 @@ def deco_factory_copy_signature(signature_source: typing.Callable):
         return tgt
 
     return deco
+
+
+def pip_install_dependencies(dep_list, update=False, user=True, options: list = ()):
+    cmd = ['pip', 'install']
+    if user:
+        cmd.append('--user')
+    if update:
+        cmd.append('--update')
+    cmd.extend(options)
+    for dep in dep_list:
+        subprocess.run([*cmd, dep])

@@ -28,7 +28,7 @@ class UnknownArguments(metaclass=SingletonMetaClass):
 class ArgumentParserRigger:
     def __init__(self, formatter_class=HelpCompactFormatter, **kwargs):
         self.parser_common_kwargs = dict(formatter_class=formatter_class, **kwargs)
-        self.the_parser = ArgumentParser(**self.parser_common_kwargs)
+        self.root_parser = ArgumentParser(**self.parser_common_kwargs)
         self.subparsers_kwargs: dict = {}
         self.subparsers = None
         self.arguments_config = {}
@@ -37,9 +37,17 @@ class ArgumentParserRigger:
         self.unknown: T.List[str] = []
 
     @staticmethod
-    def namer_factory_replace_underscore(repl: str = '.'):
-        def namer(x: str):
+    def rename_factory_replace_underscore(repl: str = '.'):
+        def rename(x: str):
             return x.replace('_', repl)
+
+        return rename
+
+    def find(self, name: str, default=None):
+        try:
+            return getattr(self.namespace, name)
+        except AttributeError:
+            return default
 
     def map_target_signature(self, *args: str or RawObject or UnknownArguments,
                              **kwargs: str or RawObject or UnknownArguments):
@@ -50,6 +58,10 @@ class ArgumentParserRigger:
             return target
 
         return deco
+
+    def prepare(self, *args, skip_unknown=False, **kwargs):
+        parse = self.parse_known_args if skip_unknown else self.parse_args
+        return parse(*args, **kwargs)
 
     def run_target(self):
         """call target"""
@@ -77,29 +89,29 @@ class ArgumentParserRigger:
         """factory decorator for the whole parser"""
 
         def deco(target):
-            self.the_parser.set_defaults(__target__=target)
-            for _name, _args, _kwargs in self.arguments_config[target]:
-                getattr(self.the_parser, _name)(*_args, **_kwargs)
+            self.root_parser.set_defaults(__target__=target)
+            for _name, _args, _kwargs in self.arguments_config.get(target, []):
+                getattr(self.root_parser, _name)(*_args, **_kwargs)
             return target
 
         return deco
 
-    def sub_command(self, namer=None, aliases=(), **kwargs):
+    def sub_command(self, rename=None, aliases=(), **kwargs):
         """factory decorator to add sub command, put this decorator on top"""
         if self.subparsers is None:
-            self.subparsers = self.the_parser.add_subparsers(**self.subparsers_kwargs)
+            self.subparsers = self.root_parser.add_subparsers(**self.subparsers_kwargs)
         parser_kwargs = dict(**self.parser_common_kwargs, **kwargs)
 
         def deco(target):
-            if not namer:
+            if not rename:
                 sub_command = target.__name__
-            elif isinstance(namer, str):
-                sub_command = namer
+            elif isinstance(rename, str):
+                sub_command = rename
             else:
-                sub_command = namer(target.__name__)
+                sub_command = rename(target.__name__)
             sub_parser = self.subparsers.add_parser(name=sub_command, aliases=aliases, **parser_kwargs)
             sub_parser.set_defaults(__target__=target)
-            for _name, _args, _kwargs in self.arguments_config[target]:
+            for _name, _args, _kwargs in self.arguments_config.get(target, []):
                 getattr(sub_parser, _name)(*_args, **_kwargs)
             return target
 
@@ -112,19 +124,21 @@ class ArgumentParserRigger:
     def argument_group(self, *args, **kwargs):
         return self._deco_factory_add_sth('argument_group', *args, **kwargs)
 
-    def flag(self, short_flag: str, long_flag: str = None, **kwargs):
-        """'store_true' option"""
-        flags = ['-' + short_flag.strip('-')]
-        if long_flag:
-            flags.append('--' + long_flag.strip('-'))
-        return self.argument(*flags, action='store_true', **kwargs)
+    def option(self, short_name: str = None, long_name: str = None, **kwargs):
+        opts = []
+        if short_name:
+            opts.append('-' + short_name)
+        if long_name:
+            opts.append('--' + long_name)
+        return self.argument(*opts, **kwargs)
 
-    def flag_reverse(self, short_flag: str, long_flag: str = None, **kwargs):
+    def flag(self, short_name: str = None, long_name: str = None, *, action='store_true', **kwargs):
+        """'store_true' option"""
+        return self.option(short_name, long_name=long_name, action=action, **kwargs)
+
+    def flag_reverse(self, short_name: str = None, long_name: str = None, **kwargs):
         """'store_false' option"""
-        flags = ['-' + short_flag.strip('-')]
-        if long_flag:
-            flags.append('--' + long_flag.strip('-'))
-        return self.argument(*flags, action='store_false', **kwargs)
+        return self.flag(short_name, long_name=long_name, action='store_false', **kwargs)
 
     def _deco_factory_add_sth(self, sth_name, *args, **kwargs):
         def deco(target):
@@ -134,12 +148,12 @@ class ArgumentParserRigger:
         return deco
 
     def __getattr__(self, item):
-        p = self.the_parser
-        if item == 'parse_args' or item == 'parse_intermixed_args':
+        p = self.root_parser
+        if item in ('parse_args', 'parse_intermixed_args'):
             def to_be_returned(*args, **kwargs):
                 self.namespace = getattr(p, item)(*args, **kwargs)
                 return self.namespace
-        elif item == 'parse_known_args' or item == 'parse_known_intermixed_args':
+        elif item in ('parse_known_args', 'parse_known_intermixed_args'):
             def to_be_returned(*args, **kwargs):
                 self.namespace, self.unknown = getattr(p, item)(*args, **kwargs)
                 return self.namespace, self.unknown
@@ -148,10 +162,11 @@ class ArgumentParserRigger:
         return to_be_returned
 
     arg = argument
+    opt = option
+    true = flag
+    false = flag_reverse
     grp = argument_group
     root = super_command
     sub = sub_command
-    true = flag
-    false = flag_reverse
     map = map_target_signature
     run = run_target
