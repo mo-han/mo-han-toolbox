@@ -36,6 +36,11 @@ class ArgumentParserRigger:
         self.namespace: T.Optional[Namespace] = None
         self.unknown: T.List[str] = []
 
+    @staticmethod
+    def namer_factory_replace_underscore(repl: str = '.'):
+        def namer(x: str):
+            return x.replace('_', repl)
+
     def map_target_signature(self, *args: str or RawObject or UnknownArguments,
                              **kwargs: str or RawObject or UnknownArguments):
         """factory decorator to map arguments to the signature of decorated callable target"""
