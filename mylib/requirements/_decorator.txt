@@ -1,1 +1,3 @@
 decorator  #BSD-2-Clause
+wrapt  #BSD
+pydecor  #MIT
