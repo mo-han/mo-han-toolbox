@@ -47,37 +47,33 @@ features:
 
 ```python
 # test.py
-from mylib.ez.argparse import *
-from mylib.ez import AttrName
 
-pr = ArgumentParserRigger()
-ro = RawObject  # ro(x) -> RawObject(x), RawObject(x).value == x
-an = AttrName()  # an.abc_xyz == 'abc_xyz'
+from mylib.ez.argparse import *
+
+apr = ArgumentParserRigger()
+an = apr.an  # an.abc_xyz == 'abc_xyz'
 an.x = an.y = an.z = an.l = ''  # let the IDE remember these attr names
 
-
-@pr.sub_command(lambda x: x.replace('_', '-'))  # xyz_and_more -> xyz-and-more
-@pr.argument(an.x)
-@pr.argument(an.y)
-@pr.argument(an.z)
+@apr.sub_command(lambda x: x.replace('_', '-'))  # xyz_and_more -> xyz-and-more
+@apr.argument(an.x)
+@apr.argument(an.y)
+@apr.argument(an.z)
 # flag means option with action='store_true', so the flag 'l' means option '-l'
-@pr.flag(an.l, help='print in multiple lines')
-# arg x -> param x, arg z -> param z, int(1111) -> param y, unknown_args -> param y, flag -l -> param multi_line
-@pr.map_target_signature(an.x, ro(1111), an.z, UnknownArguments(), multi_line=an.l)
+@apr.flag(an.l, help='print in multiple lines')
+# arg x -> param x, int(1111) -> param y, arg z -> param z, unknown_args -> param y, flag -l -> param multi_line
+@apr.map_target_signature(an.x, apr.ro(1111), an.z, apr.skip, multi_line=an.l)
 def xyz_and_more(x, y, z, more, multi_line=False):
     print(f'x={x}', f'y={y}', f'z={z}', f'and more: {", ".join(more)}', sep='\n' if multi_line else ', ')
 
-
-@pr.sub_command()
-@pr.argument('a')
-@pr.argument('b')
-@pr.map_target_signature('a', 'b')
+@apr.sub_command()
+@apr.argument('a')
+@apr.argument('b')
+@apr.map_target_signature('a', 'b')
 def ab(a, b):
     print(a, b)
 
-
-pr.parse_known_args()
-pr.run_target()
+apr.prepare(skip_unknown=True)
+apr.run()
 ```
 
 ```

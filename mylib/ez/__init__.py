@@ -18,6 +18,7 @@ from time import sleep
 from . import typing
 
 global_config = {'shutil.copy.buffer.size': 16 * 1024 * 1024}
+T = typing
 
 
 def __refer_sth():
@@ -142,7 +143,7 @@ def deco_factory_copy_signature(signature_source: typing.Callable):
     return deco
 
 
-def pip_install_dependencies(dep_list, update=False, user=True, options: list = ()):
+def pip_install_dependencies(dep_list: T.List[str], update=False, user=True, options: list = ()):
     cmd = ['pip', 'install']
     if user:
         cmd.append('--user')
@@ -151,3 +152,57 @@ def pip_install_dependencies(dep_list, update=False, user=True, options: list = 
     cmd.extend(options)
     for dep in dep_list:
         subprocess.run([*cmd, dep])
+
+
+class CLIArgumentsList(list):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.add(*args, **kwargs)
+
+    def add_arg(self, arg):
+        if isinstance(arg, str):
+            self.append(arg)
+        elif isinstance(arg, typing.Iterable):
+            for a in arg:
+                self.add_arg(a)
+        else:
+            self.append(str(arg))
+        return self
+
+    def add_option(self, name: str, value):
+        if not isinstance(name, str):
+            raise TypeError('name', str)
+        if isinstance(value, str):
+            self.append(name)
+            self.append(value)
+        elif isinstance(value, typing.Iterable):
+            for v in value:
+                self.add_option(name, v)
+        elif value is True:
+            self.append(name)
+        elif value is None or value is False:
+            pass
+        else:
+            self.append(name)
+            self.append(str(value))
+        return self
+
+    def add(self, *args, **kwargs):
+        for arg in args:
+            self.add_arg(arg)
+        for k, v in kwargs.items():
+            option_name = self.keyword_to_option_name(k)
+            self.add_option(option_name, v)
+        return self
+
+    @staticmethod
+    def keyword_to_option_name(keyword):
+        if len(keyword) > 1:
+            k = '--' + '-'.join(keyword.split('_'))
+        else:
+            k = '-' + keyword
+        return k
+
+
+def get_default_encoding():
+    return locale.getdefaultlocale()[1]

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from argparse import *
 
-from . import typing, SingletonMetaClass
+from . import typing, SingletonMetaClass, AttrName
 
 T = typing
 
@@ -21,7 +21,7 @@ class RawObject:
         self.value = obj
 
 
-class UnknownArguments(metaclass=SingletonMetaClass):
+class UnknownArgumentsPlaceholder(metaclass=SingletonMetaClass):
     pass
 
 
@@ -36,6 +36,18 @@ class ArgumentParserRigger:
         self.namespace: T.Optional[Namespace] = None
         self.unknown: T.List[str] = []
 
+    @property
+    def unknown_placeholder(self):
+        return UnknownArgumentsPlaceholder()
+
+    @staticmethod
+    def raw_object(x):
+        return RawObject(x)
+
+    @property
+    def attr_name(self):
+        return AttrName()
+
     @staticmethod
     def rename_factory_replace_underscore(repl: str = '.'):
         def rename(x: str):
@@ -49,8 +61,8 @@ class ArgumentParserRigger:
         except AttributeError:
             return default
 
-    def map_target_signature(self, *args: str or RawObject or UnknownArguments,
-                             **kwargs: str or RawObject or UnknownArguments):
+    def map_target_signature(self, *args: str or RawObject or UnknownArgumentsPlaceholder,
+                             **kwargs: str or RawObject or UnknownArgumentsPlaceholder):
         """factory decorator to map arguments to the signature of decorated callable target"""
 
         def deco(target):
@@ -80,7 +92,7 @@ class ArgumentParserRigger:
     def restore_mapped_argument(self, x):
         if isinstance(x, RawObject):
             return x.value
-        elif isinstance(x, UnknownArguments):
+        elif isinstance(x, UnknownArgumentsPlaceholder):
             return self.unknown
         else:
             return getattr(self.namespace, x)
@@ -170,3 +182,6 @@ class ArgumentParserRigger:
     sub = sub_command
     map = map_target_signature
     run = run_target
+    ro = raw_object
+    skip = unknown_placeholder
+    an = attr_name

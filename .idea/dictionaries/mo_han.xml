@@ -13,6 +13,7 @@
       <w>bilidltemp</w>
       <w>chdir</w>
       <w>crlf</w>
+      <w>cwebp</w>
       <w>dedup</w>
       <w>demuxer</w>
       <w>dest</w>
@@ -56,6 +57,7 @@
       <w>logmsg</w>
       <w>manga</w>
       <w>mjpeg</w>
+      <w>mylib</w>
       <w>namer</w>
       <w>ndrop</w>
       <w>opencv</w>
@@ -63,6 +65,7 @@
       <w>picklable</w>
       <w>pixiv</w>
       <w>proc</w>
+      <w>psnr</w>
       <w>pushd</w>
       <w>pyinstaller</w>
       <w>pyreadline</w>
