@@ -1,0 +1,4 @@
+jsonpath-rw  #Apache2.0 #JSONPath
+jsonpath-ng  #Apache2.0 #JSONPath #fork-from=python-jsonpath-rw
+jmespath  #MIT #JSONPath
+objectpath  #MIT #JSONPath
