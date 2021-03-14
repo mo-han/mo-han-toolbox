@@ -123,7 +123,7 @@ def files_from_iter(src: str or typing.Iterable, *, recursive=False, win32_unc=F
             yield from files_from_iter(s, recursive=recursive, win32_unc=win32_unc)
 
 
-def make_path(*parts, absolute=False, follow_link=False, relative=False, user_home=True, env_var=True, win32_unc=False):
+def make_path(*parts, absolute=False, follow_link=False, relative=False, user_home=True, env_var=False, win32_unc=False):
     if win32_unc:
         absolute = True
     if absolute and relative:
