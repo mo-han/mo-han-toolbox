@@ -34,21 +34,21 @@ apr = ArgumentParserRigger()
 an = apr.an  # an.abc_xyz == 'abc_xyz'
 an.x = an.y = an.z = an.l = ''  # let the IDE remember these attr names
 
-@apr.sub_command(lambda x: x.replace('_', '-'))  # xyz_and_more -> xyz-and-more
-@apr.argument(an.x)
-@apr.argument(an.y)
-@apr.argument(an.z)
+@apr.sub(lambda x: x.replace('_', '-'))  # xyz_and_more -> xyz-and-more
+@apr.arg(an.x)
+@apr.arg(an.y)
+@apr.arg(an.z)
 # flag means option with action='store_true', so the flag 'l' means option '-l'
 @apr.flag(an.l, help='print in multiple lines')
 # arg x -> param x, int(1111) -> param y, arg z -> param z, unknown_args -> param y, flag -l -> param multi_line
-@apr.map_target_signature(an.x, apr.ro(1111), an.z, apr.skip, multi_line=an.l)
+@apr.map(an.x, apr.ro(1111), an.z, apr.skip, multi_line=an.l)
 def xyz_and_more(x, y, z, more, multi_line=False):
     print(f'x={x}', f'y={y}', f'z={z}', f'and more: {", ".join(more)}', sep='\n' if multi_line else ', ')
 
-@apr.sub_command()
-@apr.argument('a')
-@apr.argument('b')
-@apr.map_target_signature('a', 'b')
+@apr.sub()
+@apr.arg('a')
+@apr.arg('b')
+@apr.map('a', 'b')
 def ab(a, b):
     print(a, b)
 

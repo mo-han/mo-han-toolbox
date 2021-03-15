@@ -61,8 +61,8 @@ class ArgumentParserRigger:
         except AttributeError:
             return default
 
-    def map_target_signature(self, *args: str or RawObject or UnknownArgumentsPlaceholder,
-                             **kwargs: str or RawObject or UnknownArgumentsPlaceholder):
+    def map_args_to_target_params(self, *args: str or RawObject or UnknownArgumentsPlaceholder,
+                                  **kwargs: str or RawObject or UnknownArgumentsPlaceholder):
         """factory decorator to map arguments to the signature of decorated callable target"""
 
         def deco(target):
@@ -180,7 +180,7 @@ class ArgumentParserRigger:
     grp = argument_group
     root = super_command
     sub = sub_command
-    map = map_target_signature
+    map = map_args_to_target_params
     run = run_target
     ro = raw_object
     skip = unknown_placeholder
