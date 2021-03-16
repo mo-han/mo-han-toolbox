@@ -1,0 +1,5 @@
+python-i18n[YAML]  #MIT
+language-tags  #MIT
+langcodes  #MIT #BCP-47
+langtags  #GPL-v3 #BCP-47
+bcp47  #MIT #BCP-47

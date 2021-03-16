@@ -1,0 +1,6 @@
+enable  #BSD
+etsdemo  #BSD
+pyface  #BSD
+pyside2  #LGPL
+qt-binder  #BSD
+traitsui  #BSD
