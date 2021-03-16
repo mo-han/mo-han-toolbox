@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from ..ez import *
+from mylib.ez import *
 import colour
 
 
