@@ -60,13 +60,13 @@ def walk_obj_iter(obj, path: list = None, skip: set = None, *,
     yield from _iter(root, path)
 
 
-def constrained(x, x_type: typing.Callable, x_condition: str or typing.Callable = None, *,
+def constrained(x, x_type: T.Callable, x_condition: str or T.Callable = None, *,
                 enable_default=False, default=None):
     x = x_type(x)
     if x_condition:
         if isinstance(x_condition, str) and eval(x_condition):
             return x
-        elif isinstance(x_condition, typing.Callable) and x_condition(x):
+        elif isinstance(x_condition, T.Callable) and x_condition(x):
             return x
         elif enable_default:
             return default
@@ -92,14 +92,14 @@ class VoidDuck:
         return False
 
 
-def str2range(expr: str) -> typing.Generator:
+def str2range(expr: str) -> T.Generator:
     sections = [[int(n.strip() or 1) for n in e.split('-')] for e in expr.split(',')]
     for s in sections:
         yield from range(s[0], s[-1] + 1)
 
 
-def deco_factory_args_choices(choices: typing.Dict[int or str, typing.Iterable] or None, *args,
-                              **kwargs) -> typing.Decorator:
+def deco_factory_args_choices(choices: T.Dict[int or str, T.Iterable] or None, *args,
+                              **kwargs) -> T.Decorator:
     """decorator factory: force arguments of a func limited inside the given choices
 
     :param choices: a dict which describes the choices of arguments
@@ -137,8 +137,8 @@ def deco_factory_args_choices(choices: typing.Dict[int or str, typing.Iterable] 
 
 def deco_factory_retry(retry_exceptions=None, max_retries: int = 3,
                        enable_default=False, default=None,
-                       exception_predicate: typing.Callable[[Exception], bool] = None,
-                       exception_queue: typing.QueueType = None) -> typing.Decorator:
+                       exception_predicate: T.Callable[[Exception], bool] = None,
+                       exception_queue: T.QueueType = None) -> T.Decorator:
     """decorator factory: force a func re-running for several times on exception(s)"""
     retry_exceptions = retry_exceptions or ()
     predicate = exception_predicate or (lambda e: True)
@@ -174,7 +174,7 @@ def deco_factory_retry(retry_exceptions=None, max_retries: int = 3,
     return decorator
 
 
-def modify_module(module_path: str, code_modifier: str or typing.Callable, package_path: str = None,
+def modify_module(module_path: str, code_modifier: str or T.Callable, package_path: str = None,
                   output: bool = False, output_file: str = 'tmp.py'):
     # How to modify imported source code on-the-fly?
     #     https://stackoverflow.com/a/41863728/7966259  (answered by Martin Valgur)
@@ -225,7 +225,7 @@ def deco_with_self_context(target):
     return tgt
 
 
-def deco_factory_with_context(context_obj) -> typing.Decorator:
+def deco_factory_with_context(context_obj) -> T.Decorator:
     def deco(target):
         def tgt(*args, **kwargs):
             with context_obj:
@@ -236,12 +236,12 @@ def deco_factory_with_context(context_obj) -> typing.Decorator:
     return deco
 
 
-def remove_from_list(source: typing.Iterable, rmv_set: typing.Iterable) -> list:
+def remove_from_list(source: T.Iterable, rmv_set: T.Iterable) -> list:
     """return a list, which contains elements in source but not in rmv_set"""
     return [x for x in source if x not in rmv_set]
 
 
-def dedup_list(source: typing.Iterable) -> list:
+def dedup_list(source: T.Iterable) -> list:
     r = []
     [r.append(e) for e in source if e not in r]
     return r
@@ -420,19 +420,19 @@ class ExceptionWithKwargs(Exception):
 def thread_factory(group: None = None, name: str = None, daemon: bool = False):
     thread_kwargs = {'group': group, 'name': name, 'daemon': daemon}
 
-    def new_thread(target: typing.Callable, *args, **kwargs):
+    def new_thread(target: T.Callable, *args, **kwargs):
         return threading.Thread(target=target, args=args, kwargs=kwargs, **thread_kwargs)
 
     return new_thread
 
 
-def threading_call(target: typing.Callable, *args, **kwargs):
+def threading_call(target: T.Callable, *args, **kwargs):
     t = threading.Thread(target=target, args=args, kwargs=kwargs)
     t.start()
 
 
 def threading_call_factory(delay: float or int = None):
-    def wrapped_threading_call(target: typing.Callable, *args, **kwargs):
+    def wrapped_threading_call(target: T.Callable, *args, **kwargs):
         def wrapped_target(*_args, **_kwargs):
             if delay is not None:
                 sleep(delay)
@@ -450,7 +450,7 @@ class NonBlockingCaller:
     class Stopped(Exception):
         pass
 
-    def __init__(self, target: typing.Callable, *args, **kwargs):
+    def __init__(self, target: T.Callable, *args, **kwargs):
         self.triple = target, args, kwargs
         self._running = False
         self.run()
@@ -552,8 +552,8 @@ class SimpleSQLiteTable:
 
 
 def deco_factory_exit_on_keyboard_interrupt(exit_code,
-                                            called_in_except_block: typing.Any = VoidDuck,
-                                            called_in_finally_block: typing.Any = VoidDuck):
+                                            called_in_except_block: T.Any = VoidDuck,
+                                            called_in_finally_block: T.Any = VoidDuck):
     def deco(target):
         @deco_factory_copy_signature(target)
         def tgt(*args, **kwargs):
@@ -657,8 +657,8 @@ def iter_factory_retry(max_retries=0,
     else:
         max_try = max_retries
 
-    def iter_retry(callee: typing.Callable, *args, **kwargs) -> typing.Generator[
-        typing.Tuple[int, Exception or typing.Any], None, None]:
+    def iter_retry(callee: T.Callable, *args, **kwargs) -> T.Generator[
+        T.Tuple[int, Exception or T.Any], None, None]:
         cnt = max_try
         while cnt:
             try:
@@ -672,7 +672,7 @@ def iter_factory_retry(max_retries=0,
     return iter_retry
 
 
-def seq_call_return(tasks: typing.Iterable[dict], common_exception=Exception):
+def seq_call_return(tasks: T.Iterable[dict], common_exception=Exception):
     """try through a sequence of calling, until sth returned, then stop and return that value.
 
     Args:

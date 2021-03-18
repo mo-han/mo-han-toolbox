@@ -15,10 +15,11 @@ import threading
 import time
 from time import sleep
 
-from . import typing
+from . import typing as _typing
+
+T = _typing
 
 global_config = {'shutil.copy.buffer.size': 16 * 1024 * 1024}
-T = typing
 
 
 def __refer_sth():

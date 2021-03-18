@@ -5,11 +5,11 @@ import warnings
 import keyboard
 import mouse
 
-from ..ez import *
-from ..fstk import x_rename
-from ..gui_old import rename_dialog
-from ..ostk import clipboard
-from ..uia import module_pywinauto
+from mylib.ez import *
+from mylib.fstk import x_rename
+from mylib.gui_old import rename_dialog
+from mylib.ostk import clipboard
+from mylib.uia import module_pywinauto
 
 pywinauto = module_pywinauto()
 App = pywinauto.Application
