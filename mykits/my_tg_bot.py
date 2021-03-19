@@ -185,7 +185,7 @@ def main():
     else:
         log_lvl = 'INFO'
     get_logger('telegram').setLevel(log_lvl)
-    bot = MyAssistantBot(config_file, timeout=timeout, auto_run=False)
+    bot = MyAssistantBot(config_file, timeout=timeout, auto_run=False, debug_mode=parsed_args.verbose)
     bot.__run__()
 
 

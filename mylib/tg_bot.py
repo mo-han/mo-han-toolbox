@@ -194,7 +194,7 @@ class SimpleBot(ABC):
         if data_file_path:
             undone = data.setdefault('undone', {})
             queued = data.setdefault('queued', [])
-            updates: typing.List[Update] = [*undone.values(), *queued]
+            updates: T.List[Update] = [*undone.values(), *queued]
             [self.__pre_pickle_update__(u) for u in updates]
             write_sqlite_dict_file(data_file_path, data, with_dill=True)
             [self.__post_pickle_update__(u) for u in updates]
@@ -251,6 +251,8 @@ class SimpleBot(ABC):
             self.__reply_traceback__(update)
 
     def __reply_traceback__(self, update):
+        if not self._debug_mode:
+            return 
         tb = traceback.format_exc()
         print(tb)
         self.__reply_md_code_block__(f'{tb}', update)
