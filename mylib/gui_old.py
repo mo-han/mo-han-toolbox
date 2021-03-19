@@ -124,13 +124,14 @@ def rename_dialog(src: str):
         with open(info_filepath, encoding='utf8') as f:
             info = f.read()
         layout.insert(2, [G.CB(info_file_base, default=True, key=rename_info_file, enable_events=True)])
-        layout.insert(2, [G.ML(info)])
+        layout.insert(2, [G.ML(info, key='ML')])
         layout.insert(4, [G.HorizontalSeparator()])
 
     ensure_sigint_signal()
     window = G.Window(title, layout, return_keyboard_events=True, finalize=True, font='arial 10',
                       element_padding=(1, 1))
     window.bring_to_front()
+    window['ML'].update(readonly=True)
 
     loop = True
     data = {fname: old_fn, ext: old_ext, pattern: tmp_pl[0], replace: tmp_rl[0], root: old_root,
