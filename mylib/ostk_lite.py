@@ -4,6 +4,11 @@ import signal
 from io import FileIO
 
 from .ez import *
+from . import tricks_lite
+
+
+def __refer_sth_do_not_use_this():
+    return tricks_lite
 
 
 def ensure_sigint_signal():

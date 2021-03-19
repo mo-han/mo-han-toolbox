@@ -4,6 +4,7 @@
 import ctypes
 import functools
 import inspect
+import io
 import locale
 import os
 import queue
@@ -23,7 +24,7 @@ global_config = {'shutil.copy.buffer.size': 16 * 1024 * 1024}
 
 
 def __refer_sth():
-    return os, sys, time, sleep, shutil, re
+    return os, sys, time, sleep, shutil, re, io
 
 
 class SingletonMetaClass(type):

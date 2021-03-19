@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-# encoding=utf8
-import subprocess
 import pyperclip
 
-from .ez import *
+from .ostk_lite import *
 
 ILLEGAL_FS_CHARS = r'/'
 ILLEGAL_FS_CHARS_REGEX_PATTERN = re.compile(f'[{ILLEGAL_FS_CHARS}]')

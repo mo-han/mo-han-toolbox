@@ -10,17 +10,14 @@ from collections import defaultdict
 import psutil
 from filetype import filetype
 
-from . import tricks_lite
-from .ostk_lite import *
-
-assert tricks_lite
+from .ez import *
 
 if os.name == 'nt':
     from .ostk_nt import *
 elif os.name == 'posix':
     from .ostk_posix import *
 else:
-    raise NotImplementedError(os.name)
+    from .ostk_lite import *
 
 TEMPDIR = tempfile.gettempdir()
 HOSTNAME = platform.node()
@@ -131,8 +128,8 @@ def monitor_sub_process_tty_frozen(p: subprocess.Popen, timeout=30, wait=1,
 
     if not encoding:
         encoding = locale.getdefaultlocale()[1]
-    _out = BytesIO()
-    _err = BytesIO()
+    _out = io.BytesIO()
+    _err = io.BytesIO()
     monitoring = []
     monitor_stdout = bool(p.stdout)
     monitor_stderr = bool(p.stderr)

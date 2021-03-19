@@ -1,16 +1,9 @@
 #!/usr/bin/env python3
-# encoding=utf8
-import inspect
-import subprocess
-from io import BytesIO
-
 import PIL.Image
-
 import pywintypes
 import win32clipboard
 
-from . import tricks_lite
-from .ez import *
+from .ostk_lite import *
 
 ILLEGAL_FS_CHARS = r'\/:*?"<>|'
 ILLEGAL_FS_CHARS_REGEX_PATTERN = re.compile(f'[{ILLEGAL_FS_CHARS}]')
@@ -108,11 +101,11 @@ class Clipboard(metaclass=SingletonMetaClass):
             else:
                 from .shards.image import open_pil_image
                 i = open_pil_image(image)
-                with BytesIO() as o:
+                with io.BytesIO() as o:
                     i.convert('RGB').save(o, 'BMP')
                     data = o.getvalue()[14:]  # https://stackoverflow.com/questions/34322132/copy-image-to-clipboard
         elif isinstance(image, PIL.Image.Image):
-            with BytesIO() as o:
+            with io.BytesIO() as o:
                 image.convert('RGB').save(o, 'BMP')
                 data = o.getvalue()[14:]
         elif isinstance(image, bytes):
