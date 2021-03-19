@@ -116,6 +116,7 @@ class MyAssistantBot(SimpleBot):
                     self.__reply_md_code_block__(f'* {args_s}\n{echo}', update)
             except Exception as e:
                 self.__reply_md_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
+                self.__reply_traceback__(update)
                 self.__requeue_failed_update__(update)
         self.__del_undone_update__(undone_key, update)
 

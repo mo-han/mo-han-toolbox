@@ -248,11 +248,14 @@ class SimpleBot(ABC):
         try:
             self.__save_rt_data__()
         except:
-            self.__reply_md_code_block__(f'{traceback.format_exc()}', update)
+            self.__reply_traceback__(update)
+
+    def __reply_traceback__(self, update):
+        self.__reply_md_code_block__(f'{traceback.format_exc()}', update)
 
     def __del_undone_update__(self, key: str, update: Update):
         del self.__rt_data__['undone'][key]
         try:
             self.__save_rt_data__()
         except:
-            self.__reply_md_code_block__(f'{traceback.format_exc()}', update)
+            self.__reply_traceback__(update)
