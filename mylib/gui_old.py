@@ -45,8 +45,7 @@ class PySimpleGUISpecialKeyEvent:
 
 
 def rename_dialog(src: str):
-    import PySimpleGUIQt
-    sg = PySimpleGUIQt
+    import PySimpleGUIQt as G
     ske = PySimpleGUISpecialKeyEvent()
     conf_file = real_join_path('~', '.config/rename_dialog.json')
     root = 'root'
@@ -98,39 +97,39 @@ def rename_dialog(src: str):
 
     # sg.theme('SystemDefaultForReal')
     layout = [
-        [sg.T(src, key='src')],
-        [sg.HorizontalSeparator()],
-        [sg.I(old_fn, key=fname, focus=True),
-         sg.I(old_ext, key=ext, size=(42, h))],
-        [sg.I(old_root, key=root),
-         sg.B('+', key=add_root, size=(20, h)),
-         sg.FolderBrowse('...', target=root, initial_folder=old_root, size=(20, h))],
-        [sg.HorizontalSeparator()],
-        [sg.T('Regular Expression Pattern & Replacement')],
-        [sg.T(size=(0, h)),
-         sg.Drop(tmp_pl, key=pattern, enable_events=True, text_color='blue'),
-         sg.CB('', default=True, key=save_pattern, enable_events=True, size=(15, h)),
-         sg.Drop(tmp_rl, key=replace, enable_events=True, text_color='blue'),
-         sg.CB('', default=True, key=save_replace, enable_events=True, size=(15, h)),
-         sg.B('Go', key=substitute, size=(25, h))],
-        [sg.HorizontalSeparator()],
-        [sg.I(old_root, key=key_new_root)],
-        [sg.I(old_base, key=key_new_base)],
-        [sg.Submit(ok, size=(10, 1)),
-         sg.Stretch(), sg.T(count_name_bytes(old_base), key=bytes_count), sg.Stretch(),
-         sg.Cancel(cancel, size=(10, 1))]]
+        [G.T(src, key='src')],
+        [G.HorizontalSeparator()],
+        [G.I(old_fn, key=fname, focus=True),
+         G.I(old_ext, key=ext, size=(42, h))],
+        [G.I(old_root, key=root),
+         G.B('+', key=add_root, size=(20, h)),
+         G.FolderBrowse('...', target=root, initial_folder=old_root, size=(20, h))],
+        [G.HorizontalSeparator()],
+        [G.T('Regular Expression Pattern & Replacement')],
+        [G.T(size=(0, h)),
+         G.Drop(tmp_pl, key=pattern, enable_events=True, text_color='blue'),
+         G.CB('', default=True, key=save_pattern, enable_events=True, size=(15, h)),
+         G.Drop(tmp_rl, key=replace, enable_events=True, text_color='blue'),
+         G.CB('', default=True, key=save_replace, enable_events=True, size=(15, h)),
+         G.B('Go', key=substitute, size=(25, h))],
+        [G.HorizontalSeparator()],
+        [G.I(old_root, key=key_new_root)],
+        [G.I(old_base, key=key_new_base)],
+        [G.Submit(ok, size=(10, 1)),
+         G.Stretch(), G.T(count_name_bytes(old_base), key=bytes_count), G.Stretch(),
+         G.Cancel(cancel, size=(10, 1))]]
     if has_info:
         info_file_base = info_file_base[0]
         info_filepath = os.path.join(old_root, info_file_base)
         with open(info_filepath, encoding='utf8') as f:
             info = f.read()
-        layout.insert(2, [sg.CB(info_file_base, default=True, key=rename_info_file, enable_events=True)])
-        layout.insert(2, [sg.ML(info)])
-        layout.insert(4, [sg.HorizontalSeparator()])
+        layout.insert(2, [G.CB(info_file_base, default=True, key=rename_info_file, enable_events=True)])
+        layout.insert(2, [G.ML(info)])
+        layout.insert(4, [G.HorizontalSeparator()])
 
     ensure_sigint_signal()
-    window = sg.Window(title, layout, return_keyboard_events=True, finalize=True, font='arial 10',
-                       element_padding=(1,1))
+    window = G.Window(title, layout, return_keyboard_events=True, finalize=True, font='arial 10',
+                      element_padding=(1, 1))
     window.bring_to_front()
 
     loop = True
@@ -185,8 +184,7 @@ def rename_dialog(src: str):
                 shutil.move(src, dst)
                 if has_info:
                     if data[rename_info_file]:
-                        shutil.move(info_filepath,
-                                    os.path.splitext(dst)[0] + '.info')
+                        shutil.move(info_filepath, os.path.splitext(dst)[0] + '.info')
                 loop = False
             except FileNotFoundError:
                 for k in (root, fname, ext):
@@ -195,7 +193,7 @@ def rename_dialog(src: str):
                 for k in (key_new_root, key_new_base):
                     window[k].update(text_color='red')
             except OSError as e:
-                sg.PopupError(str(e))
+                G.PopupError(str(e))
         elif event in (None, cancel):
             loop = False
         else:
