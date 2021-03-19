@@ -252,7 +252,7 @@ class SimpleBot(ABC):
 
     def __reply_traceback__(self, update):
         if not self._debug_mode:
-            return 
+            return
         tb = traceback.format_exc()
         print(tb)
         self.__reply_md_code_block__(f'{tb}', update)
