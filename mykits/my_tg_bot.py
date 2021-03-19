@@ -23,7 +23,7 @@ mt = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(os.path.getmtime(os.path.
 @deco_factory_retry(retry_exceptions=ProcessTTYFrozen, max_retries=-1)
 def bldl_retry_frozen(*args: str):
     p = subprocess.Popen(['bldl.sh.cmd', *args], stdout=subprocess.PIPE)
-    return monitor_sub_process_tty_frozen(p, encoding='u8')
+    return monitor_sub_process_tty_frozen(p, encoding='u8', timeout=60)
 
 
 @deco_factory_retry(retry_exceptions=ProcessTTYFrozen, max_retries=-1)
@@ -94,7 +94,7 @@ class MyAssistantBot(SimpleBot):
         self.__del_undone_update__(undone_key, update)
 
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(
-        re.compile(r'BV[\da-zA-Z]{10}|av\d+\W|ep\d+|ss\d+')))
+        re.compile(r'BV[\da-zA-Z]{10}|av\d+\W|(/|^)ep\d+|(/|^)ss\d+')))
     def _bldl(self, update, *args):
         print(self._bldl.__name__)
         undone_key = self._bldl.__name__
@@ -109,8 +109,10 @@ class MyAssistantBot(SimpleBot):
                     echo = ''.join(
                         [decode_fallback_locale(b).rsplit('\r', maxsplit=1)[-1] for b in out.readlines()[-5:]])
                     if self.__str_contain_abandon_errors__(echo):
+                        print(f' EXIT CODE: {p.returncode}')
                         self.__reply_md_code_block__(f'- {args_s}\n{echo}', update)
                         continue
+                    print(f' EXIT CODE: {p.returncode}')
                     self.__requeue_failed_update__(update)
                     self.__reply_md_code_block__(f'- {args_s}\n{echo}', update)
                 else:
