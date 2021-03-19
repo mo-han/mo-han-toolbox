@@ -61,37 +61,9 @@ class MyAssistantBot(SimpleBot):
         return any(map(lambda x: x in s, abandon_errors))
 
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(
-        re.compile(r'BV[\da-zA-Z]{10}|av\d+\W|ep\d+|ss\d+')))
-    def _bldl(self, update, *args):
-        undone_key = self._bldl.__name__
-        self.__add_undone_update__(undone_key, update)
-        args_l = [line2args(line) for line in update.message.text.splitlines()]
-        for args in args_l:
-            args_s = ' '.join([shlex.quote(a) for a in args])
-            try:
-                self.__reply_md_code_block__(f'+ {args_s}', update)
-                p, out, err = bldl_retry_frozen(*args)
-                if p.returncode:
-                    echo = ''.join(
-                        [decode_fallback_locale(b).rsplit('\r', maxsplit=1)[-1] for b in out.readlines()[-5:]])
-                    if self.__str_contain_abandon_errors__(echo):
-                        self.__reply_md_code_block__(f'- {args_s}\n{echo}', update)
-                        continue
-                    self.__requeue_failed_update__(update)
-                    self.__reply_md_code_block__(f'- {args_s}\n{echo}', update)
-                else:
-                    echo = ''.join([s for s in [decode_fallback_locale(b) for b in out.readlines()] if '─┤' not in s])
-                    self.__reply_md_code_block__(f'* {args_s}\n{echo}', update)
-            # except TypeError:
-            #     raise
-            except Exception as e:
-                self.__reply_md_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
-                self.__requeue_failed_update__(update)
-        self.__del_undone_update__(undone_key, update)
-
-    @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(
         re.compile(r'youtube|youtu\.be|iwara|pornhub|\[ph[\da-f]{13}]|kissjav|xvideos')))
     def _ytdl(self, update: Update, *args):
+        print(self._ytdl.__name__)
         undone_key = self._ytdl.__name__
         self.__add_undone_update__(undone_key, update)
         args_l = [line2args(line) for line in update.message.text.splitlines()]
@@ -116,7 +88,38 @@ class MyAssistantBot(SimpleBot):
                     self.__reply_md_code_block__(f'* {args_s}\n{echo}', update)
             except Exception as e:
                 self.__reply_md_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
+                print('ERROR')
                 self.__reply_traceback__(update)
+                self.__requeue_failed_update__(update)
+        self.__del_undone_update__(undone_key, update)
+
+    @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(
+        re.compile(r'BV[\da-zA-Z]{10}|av\d+\W|ep\d+|ss\d+')))
+    def _bldl(self, update, *args):
+        print(self._bldl.__name__)
+        undone_key = self._bldl.__name__
+        self.__add_undone_update__(undone_key, update)
+        args_l = [line2args(line) for line in update.message.text.splitlines()]
+        for args in args_l:
+            args_s = ' '.join([shlex.quote(a) for a in args])
+            try:
+                self.__reply_md_code_block__(f'+ {args_s}', update)
+                p, out, err = bldl_retry_frozen(*args)
+                if p.returncode:
+                    echo = ''.join(
+                        [decode_fallback_locale(b).rsplit('\r', maxsplit=1)[-1] for b in out.readlines()[-5:]])
+                    if self.__str_contain_abandon_errors__(echo):
+                        self.__reply_md_code_block__(f'- {args_s}\n{echo}', update)
+                        continue
+                    self.__requeue_failed_update__(update)
+                    self.__reply_md_code_block__(f'- {args_s}\n{echo}', update)
+                else:
+                    echo = ''.join([s for s in [decode_fallback_locale(b) for b in out.readlines()] if '─┤' not in s])
+                    self.__reply_md_code_block__(f'* {args_s}\n{echo}', update)
+            # except TypeError:
+            #     raise
+            except Exception as e:
+                self.__reply_md_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
                 self.__requeue_failed_update__(update)
         self.__del_undone_update__(undone_key, update)
 
