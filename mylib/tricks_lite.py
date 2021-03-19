@@ -689,13 +689,16 @@ def seq_call_return(tasks: T.Iterable[dict], common_exception=Exception):
     however, if the whole sequence failed (no return), the last exception will be raised
     """
     e = None
+    ok = False
     for task in tasks:
         exception = task.get('exception', common_exception)
         args = task.get('args', ())
         kwargs = task.get('kwargs', {})
         try:
-            return task['target'](*args, **kwargs)
+            r = task['target'](*args, **kwargs)
+            ok = True
+            return r
         except exception as e:
             pass
-    if e:
+    if not ok and e:
         raise e
