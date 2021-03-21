@@ -7,6 +7,7 @@ import html
 import itertools
 import json
 import urllib.parse
+import pathlib
 
 from . import ostk
 from . import text_lite
@@ -66,8 +67,8 @@ def factory_match_pattern(regex: bool, ignore_case: bool):
     }[(bool(regex), bool(ignore_case))]
 
 
-def find_iter(start_path: str, find_type: str, pattern: str = None, *,
-              abspath=False, recursive=True, regex=False, ignore_case=False, include_start_dir=True, win32_unc=False):
+def find_iter(find_type: str, start_path: str = '.', pattern: str = None, *, abspath=False, recursive=True, regex=False,
+              relative_to=None, ignore_case=False, include_start_dir=True, win32_unc=False):
     find_files = 'f' in find_type
     find_dirs = 'd' in find_type
     pattern = pattern or ('.*' if regex else '*')
@@ -75,16 +76,22 @@ def find_iter(start_path: str, find_type: str, pattern: str = None, *,
         start_path = make_path(start_path, win32_unc=True)
     else:
         start_path = os.path.abspath(start_path) if abspath else start_path
+    if relative_to:
+        def conv_path(path):
+            return os.path.relpath(path, relative_to)
+    else:
+        def conv_path(path):
+            return path
     # print(start_path)
     match_func = factory_match_pattern(regex=regex, ignore_case=ignore_case)
     basename = os.path.basename
     if os.path.isfile(start_path):
         if find_files and match_func(basename(start_path), pattern):
-            yield start_path
+            yield conv_path(start_path)
         return
     if os.path.isdir(start_path):
         if find_dirs and match_func(basename(start_path), pattern) and include_start_dir:
-            yield start_path
+            yield conv_path(start_path)
         if not recursive:
             return
     # p,d,f = dirpath, dirnames, filenames
@@ -92,16 +99,17 @@ def find_iter(start_path: str, find_type: str, pattern: str = None, *,
     walk_pdf = ((p, d, f) for p, d, f in (os.walk(start_path)))
     if find_files and find_dirs:
         chain_iter = itertools.chain
-        yield from (os.path.join(p, n) for p, d, f in walk_pdf for n in chain_iter(d, f) if match_func(n, pattern))
+        yield from (conv_path(os.path.join(p, n)) for p, d, f in walk_pdf for n in chain_iter(d, f) if
+                    match_func(n, pattern))
     elif find_files:
-        yield from (os.path.join(p, n) for p, d, f in walk_pdf for n in f if match_func(n, pattern))
+        yield from (conv_path(os.path.join(p, n)) for p, d, f in walk_pdf for n in f if match_func(n, pattern))
     elif find_dirs:
-        yield from (os.path.join(p, n) for p, d, f in walk_pdf for n in d if match_func(n, pattern))
+        yield from (conv_path(os.path.join(p, n)) for p, d, f in walk_pdf for n in d if match_func(n, pattern))
     else:
         return
 
 
-def files_from_iter(src: str or typing.Iterable, *, recursive=False, win32_unc=False):
+def files_from_iter(src: str or T.Iterable, *, recursive=False, win32_unc=False):
     def mkp(*parts):
         return make_path(*parts, win32_unc=win32_unc)
 
@@ -110,7 +118,7 @@ def files_from_iter(src: str or typing.Iterable, *, recursive=False, win32_unc=F
             yield mkp(src)
         elif os.path.isdir(src):
             if recursive:
-                yield from find_iter(src, 'f', recursive=True, win32_unc=win32_unc)
+                yield from find_iter('f', src, recursive=True, win32_unc=win32_unc)
             else:
                 for fn in next(os.walk(src))[-1]:
                     yield mkp(src, fn)
@@ -123,7 +131,8 @@ def files_from_iter(src: str or typing.Iterable, *, recursive=False, win32_unc=F
             yield from files_from_iter(s, recursive=recursive, win32_unc=win32_unc)
 
 
-def make_path(*parts, absolute=False, follow_link=False, relative=False, user_home=True, env_var=False, win32_unc=False):
+def make_path(*parts, absolute=False, follow_link=False, relative=False, user_home=True, env_var=False,
+              win32_unc=False):
     if win32_unc:
         absolute = True
     if absolute and relative:
@@ -219,7 +228,7 @@ def sanitize(name: str, repl: str or dict = None, *, unescape_html=True, decode_
 
 
 def sanitize_xu(name: str, *, unescape_html=True, decode_url=True, unify_white_space=True) -> str:
-    r= sanitize(name, POTENTIAL_INVALID_CHARS_MAP, unescape_html=unescape_html, decode_url=decode_url)
+    r = sanitize(name, POTENTIAL_INVALID_CHARS_MAP, unescape_html=unescape_html, decode_url=decode_url)
     if unify_white_space:
         r = re.sub(r'\s', ' ', r)
     return r
@@ -303,7 +312,7 @@ def path_or_glob(pathname, *, recursive=False):
         return glob.glob(pathname, recursive=recursive)
 
 
-def split_dirname_basename_ext(path, dir_ext=True):
+def split_dirname_basename_ext(path, dir_ext=True) -> T.Tuple[str, str, str]:
     """path -> dirname, basename, extension"""
     p, b = os.path.split(path)
     if not dir_ext and os.path.isdir(path):
@@ -315,3 +324,8 @@ def split_dirname_basename_ext(path, dir_ext=True):
 
 def join_dirname_basename_ext(dirname, basename, extension):
     return os.path.join(dirname, basename + extension)
+
+
+def path_parts(path):
+    pp = pathlib.Path(path)
+    return pp.parts

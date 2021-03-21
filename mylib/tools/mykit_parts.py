@@ -138,7 +138,7 @@ def flat_dir(src, prefix, dry_run):
             continue
         with fstk.ctx_pushd(s):
             print(s)
-            for fp in fstk.find_iter('.', 'f', win32_unc=is_win32):
+            for fp in fstk.find_iter('f', '.', win32_unc=is_win32):
                 new = os.path.relpath(fp, fstk.make_path('.', win32_unc=is_win32))
                 if not prefix:
                     new = os.path.basename(new)
@@ -148,7 +148,7 @@ def flat_dir(src, prefix, dry_run):
                     shutil.move(fp, fstk.make_path(new, win32_unc=is_win32))
             if dry_run:
                 return
-            for dp in fstk.find_iter('.', 'd', include_start_dir=False, win32_unc=is_win32):
+            for dp in fstk.find_iter('d', '.', include_start_dir=False, win32_unc=is_win32):
                 try:
                     os.removedirs(dp)
                 except OSError:

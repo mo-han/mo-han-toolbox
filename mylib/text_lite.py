@@ -2,6 +2,7 @@
 # encoding=utf8
 import codecs
 import unicodedata
+from collections import defaultdict
 
 from .ez import *
 from .tricks_lite import deco_factory_args_choices, dedup_list
@@ -20,7 +21,7 @@ def visual_len(s: str):
     return n
 
 
-def list2col_str(x: typing.Iterable, width, *, horizontal=False, sep=2):
+def list2col_str(x: T.Iterable, width, *, horizontal=False, sep=2):
     """transfer list items into a single `str` in format of columns"""
     sep_s = ' ' * sep
     text_l = [s for s in x]
@@ -102,7 +103,7 @@ def dedup_periodical_str(s):
 
 
 @deco_factory_args_choices({'logic': ('and', '&', 'AND', 'or', '|', 'OR')})
-def simple_partial_query(pattern_list: typing.Iterable[str], source_pool: typing.Iterable[str],
+def simple_partial_query(pattern_list: T.Iterable[str], source_pool: T.Iterable[str],
                          logic: str = 'and',
                          ignore_case: bool = True, enable_regex: bool = False):
     if not enable_regex:
@@ -192,3 +193,17 @@ def remove_accent_chars_join(x: str):
     # answer by MiniQuark
     # https://stackoverflow.com/a/517974/7966259
     return u"".join([c for c in unicodedata.normalize('NFKD', x) if not unicodedata.combining(c)])
+
+
+def slice_word(x: str):
+    x_len = len(x)
+    r = defaultdict(list)
+    if x_len == 0:
+        return r
+    r[1] = [*x]
+    if x_len == 1:
+        return r
+    for slice_len in range(2, x_len):
+        for i in range(x_len - slice_len + 1):
+            r[slice_len].append(x[i:i + slice_len])
+    return r

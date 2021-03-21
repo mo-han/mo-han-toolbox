@@ -131,7 +131,9 @@ def rename_dialog(src: str):
     window = G.Window(title, layout, return_keyboard_events=True, finalize=True, font='arial 10',
                       element_padding=(1, 1))
     window.bring_to_front()
-    window['ML'].update(readonly=True)
+    ml = window.find_element('ML', silent_on_error=True)
+    if ml:
+        ml.update(readonly=True)
 
     loop = True
     data = {fname: old_fn, ext: old_ext, pattern: tmp_pl[0], replace: tmp_rl[0], root: old_root,

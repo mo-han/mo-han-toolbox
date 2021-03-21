@@ -224,7 +224,7 @@ def list_files(src: str or typing.Iterable or Clipboard, recursive=False, progre
             return [src]
         elif os.path.isdir(src):
             # print(src)
-            return list(fstk.find_iter(src, 'f', recursive=True))
+            return list(fstk.find_iter('f', src, recursive=True))
         else:
             return [fp for fp in glob(src, recursive=recursive) if os.path.isfile(fp)]
     elif isinstance(src, typing.Iterable):
@@ -245,7 +245,7 @@ def list_dirs(src: str or typing.Iterable or Clipboard, recursive=False, progres
             dirs = [src]
             if recursive:
                 dirs.extend(
-                    list(fstk.find_iter(src, 'd', recursive=True)))
+                    list(fstk.find_iter('d', src, recursive=True)))
             return dirs
         else:
             return [p for p in glob(src, recursive=recursive) if os.path.isdir(p)]
