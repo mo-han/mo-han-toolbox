@@ -162,19 +162,27 @@ def hentai_at_home_galleries_real_name(path_l):
     from mylib.sites.ehentai import parse_hath_dl_gallery_info
     for p in path_l or clipboard.list_path():
         try:
-            title = parse_hath_dl_gallery_info(p)['title']
+            info = parse_hath_dl_gallery_info(p)
+            title = info['title']
+            artist = info['tags']['artist']
+            group = info['tags']['group']
             folder, name, ext = fstk.split_dirname_basename_ext(p, dir_ext=False)
+            if len(artist) == 1:
+                folder = fstk.make_path(folder, f'[{artist[0]}]', )
+            elif len(group) == 1:
+                folder = fstk.make_path(folder, f'[{group[0]}]', )
+            else:
+                folder = fstk.make_path(folder, '[(various)]', )
+            os.makedirs(folder, exist_ok=True)
             try:
                 tail = re.search(r' \[\d+(-\d{3,4}x)?]$', name).group(0)
             except AttributeError:
                 tail = ''
             sanitized_title = fstk.sanitize_xu240(title)
             new = fstk.join_dirname_basename_ext(folder, sanitized_title + tail, ext)
-            if new == p:
-                # print(f'= {p}')
-                continue
             os.rename(p, new)
-            print(f'* {p} -> {new}')
+            if new != p:
+                print(f'* {p} -> {new}')
         except FileNotFoundError:
             print(f'# {p}')
         except Exception as e:
