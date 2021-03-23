@@ -1,10 +1,10 @@
+#pip-autoremove
+#ptpython
 cython>=3a
 ipython
 objbrowser
 perfplot
-pip-autoremove
 pip-chill
 pipdeptree
 pipenv
-ptpython
 pyinstaller
