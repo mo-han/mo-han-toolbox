@@ -21,6 +21,7 @@ def find_url_in_text(text: str) -> list:
 class IwaraIE(ytdl_iwara.IwaraIE, metaclass=ABCMeta):
     def _real_extract(self, url):
         data = super()._real_extract(url)
+        data['id'] = f'iwara {data["id"]}'
         # youtube_dl_x.safe_title(data)
         try:
             html = get_html_element_tree(url)
