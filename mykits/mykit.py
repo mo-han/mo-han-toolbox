@@ -952,7 +952,8 @@ img_sim_view.add_argument(
 def move_ehviewer_images():
     from mylib.sites.ehentai import ehviewer_images_catalog
     args = rtd.args
-    ehviewer_images_catalog(dry_run=args.dry_run, db_json_path=args.db_json or 'ehdb.json')
+    ehviewer_images_catalog(args.src or clipboard.list_path()[0],
+                            dry_run=args.dry_run, db_json_path=args.db_json or 'ehdb.json')
 
 
 ehv_img_mv = add_sub_parser('ehv.img.mv', ['ehvmv'],
@@ -960,6 +961,7 @@ ehv_img_mv = add_sub_parser('ehv.img.mv', ['ehvmv'],
 ehv_img_mv.set_defaults(target=move_ehviewer_images)
 ehv_img_mv.add_argument('-D', '--dry-run', action='store_true')
 ehv_img_mv.add_argument('-j', '--db-json')
+ehv_img_mv.add_argument('-s', '--src', nargs='?')
 
 if __name__ == '__main__':
     main()

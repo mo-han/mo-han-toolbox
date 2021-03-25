@@ -40,7 +40,7 @@ def find_core_title(title: str):
     return t.strip()
 
 
-def ehviewer_images_catalog(dry_run: bool = False, db_json_path: str = 'ehdb.json'):
+def ehviewer_images_catalog(root_dir, *, dry_run: bool = False, db_json_path: str = 'ehdb.json'):
     logger = logging.get_logger('ehvimg', fmt=logging.LOG_FMT_MESSAGE_ONLY)
     logmsg_move = '* move {} -> {}'
     logmsg_skip = '# skip {}'
@@ -50,96 +50,98 @@ def ehviewer_images_catalog(dry_run: bool = False, db_json_path: str = 'ehdb.jso
     if os.path.isfile(db_json_path):
         logger.info('@ using DB file: {}'.format(db_json_path))
         db = fstk.read_json_file(db_json_path)
+        db = {int(k): v for k, v in db.items()}
     else:
         db = {}
-    skipped_gid_l = []
 
-    for f in os.listdir('..'):
-        if not os.path.isfile(f):
-            continue
+    with fstk.ctx_pushd(root_dir):
+        not_found_gid_token = []
+        files = []
+        for f in next(os.walk('.'))[-1]:
+            try:
+                g = EHentaiGallery(f, logger=logger)
+            except ValueError:
+                logger.info(logmsg_skip.format(f))
+                continue
+            if g.gid not in db and (g.gid, g.token) not in not_found_gid_token:
+                not_found_gid_token.append((g.gid, g.token))
+                print(logmsg_data.format(g.gid, g.token))
+            files.append(f)
 
-        try:
-            g = EHentaiGallery(f, logger=logger)
-        except ValueError:
-            logger.info(logmsg_skip.format(f))
-            continue
-        gid = g.gid
-
-        if gid in skipped_gid_l:
-            logger.info(logmsg_skip.format(f))
-            continue
-
-        if gid in db:
-            d = db[gid]
-        else:
-            logger.info(logmsg_data.format(g.gid, g.token))
-            d = g.data
-            db[gid] = d
+        if not_found_gid_token:
+            print('... RETRIEVE GALLERY DATA FROM E-HENTAI API ...')
+            print('... IT WILL TAKE A LONG TIME ...')
+            eh_api = EHentaiAPI()
+            for d in eh_api.get_gallery_data(not_found_gid_token):
+                db[d['gid']] = d
             fstk.write_json_file(db_json_path, db, indent=4)
-            sleep(1)
 
-        artist_l = []
-        title = d['title'].strip()
-        try:
-            core_title = find_core_title(title) or '__INVALID_CORE_TITLE__'
-            core_title_l = re.findall(r'[\w]+[\-+\']?[\w]?', core_title)
-            if title[:1] + title[-1:] == '[]':
-                artist_l.append(title[1:-1].strip())
-        except AttributeError:
-            print(logmsg_err.format(title))
-            raise
-        comic_magazine_title = None
-        if core_title_l and core_title_l[0].lower() == 'comic':
-            comic_magazine_title_l = []
-            for s in core_title_l[1:]:
-                if re.match(r'^\d+', s):
-                    break
-                elif re.match(r'^(?:vol|no\.|#)(.*)$', s.lower()):
-                    break
-                else:
-                    comic_magazine_title_l.append(s)
-            if comic_magazine_title_l:
-                comic_magazine_title = 'COMIC ' + ' '.join(comic_magazine_title_l)
+        for f in files:
+            g = EHentaiGallery(f, logger=logger)
+            d = db[g.gid]
+            artist_l = []
+            title = d['title'].strip()
+            try:
+                core_title = find_core_title(title) or '__INVALID_CORE_TITLE__'
+                core_title_l = re.findall(r'[\w]+[\-+\']?[\w]?', core_title)
+                if title[:1] + title[-1:] == '[]':
+                    artist_l.append(title[1:-1].strip())
+            except AttributeError:
+                print(logmsg_err.format(title))
+                raise
+            comic_magazine_title = None
+            if core_title_l and core_title_l[0].lower() == 'comic':
+                comic_magazine_title_l = []
+                for s in core_title_l[1:]:
+                    if re.match(r'^\d+', s):
+                        break
+                    elif re.match(r'^(?:vol|no\.|#)(.*)$', s.lower()):
+                        break
+                    else:
+                        comic_magazine_title_l.append(s)
+                if comic_magazine_title_l:
+                    comic_magazine_title = 'COMIC ' + ' '.join(comic_magazine_title_l)
 
-        tags = d['tags']
-        if 'artist' in tags:
-            artist_l = tags['artist']
-        elif 'group' in tags:
-            artist_l = tags['group']
-        else:
-            for m in (
-                    re.match(r'^(?:\([^)]+\))\s*\[([^]]+)]', title),
-                    re.match(r'^\[(?:pixiv|fanbox|tumblr|twitter)]\s*(.+)\s*[(\[]', title, flags=re.I),
-                    re.match(r'^\W*artist\W*(\w.*)', title, flags=re.I),
-            ):
-                if m:
-                    m1 = m.group(1).strip()
-                    if m1:
-                        if '|' in m1:
-                            artist_l = [e.strip() for e in m1.split('|')]
-                        else:
-                            artist_l = [m1]
-                        core_title = title
-                    break
-        if len(artist_l) > 3:
-            if comic_magazine_title:
-                folder = comic_magazine_title
+            tags = d['tags']
+            if 'artist' in tags:
+                artist_l = tags['artist']
+            elif 'group' in tags:
+                artist_l = tags['group']
             else:
-                folder = '[...]'
-        else:
-            folder = '[{}]'.format(', '.join(artist_l))
-        # print(f': {title}')  # DEBUG
-        # print(f': {core_title}')  # DEBUG
+                for m in (
+                        re.match(r'^(?:\([^)]+\))\s*\[([^]]+)]', title),
+                        re.match(r'^\[(?:pixiv|fanbox|tumblr|twitter)]\s*(.+)\s*[(\[]', title, flags=re.I),
+                        re.match(r'^\W*artist\W*(\w.*)', title, flags=re.I),
+                ):
+                    if m:
+                        m1 = m.group(1).strip()
+                        if m1:
+                            if '|' in m1:
+                                artist_l = [e.strip() for e in m1.split('|')]
+                            else:
+                                artist_l = [m1]
+                            core_title = title
+                        break
+            if len(artist_l) > 3:
+                if comic_magazine_title:
+                    folder = comic_magazine_title
+                else:
+                    folder = '[...]'
+            else:
+                folder = '[{}]'.format(', '.join(artist_l))
+            # print(f': {title}')  # DEBUG
+            # print(f': {core_title}')  # DEBUG
 
-        sub_folder = fstk.make_path(fstk.sanitize_xu200(folder), f'{fstk.sanitize_xu200(core_title)} {g.gid}-{g.token}')
-        parent, basename = os.path.split(f)
-        no_ext, ext = os.path.splitext(basename)
-        no_ext = fstk.sanitize_xu240(no_ext.split()[-1])
-        new_path = fstk.make_path(sub_folder, no_ext + ext)
-        logger.info(logmsg_move.format(f, new_path))
-        if not dry_run:
-            os.makedirs(sub_folder, exist_ok=True)
-            shutil.move(f, new_path)
+            sub_folder = fstk.make_path(fstk.sanitize_xu200(folder),
+                                        f'{fstk.sanitize_xu200(core_title)} {g.gid}-{g.token}')
+            parent, basename = os.path.split(f)
+            no_ext, ext = os.path.splitext(basename)
+            no_ext = fstk.sanitize_xu240(no_ext.split()[-1])
+            new_path = fstk.make_path(sub_folder, no_ext + ext)
+            logger.info(logmsg_move.format(f, new_path))
+            if not dry_run:
+                os.makedirs(sub_folder, exist_ok=True)
+                shutil.move(f, new_path)
 
 
 class EHentaiGallery:
@@ -150,13 +152,13 @@ class EHentaiGallery:
             gid, token = re.split(r'(\d+)[./\- ]([0-9a-f]{10})', gallery_identity)[1:3]
         elif isinstance(gallery_identity, (tuple, list)):
             gid, token = gallery_identity
-            gid, token = str(gid), str(token)
         elif isinstance(gallery_identity, dict):
-            gid, token = str(gallery_identity['gid']), str(gallery_identity['token'])
+            gid, token = gallery_identity['gid'], gallery_identity['token']
         else:
             raise ValueError("invalid e-hentai gallery identity: '{}'".format(gallery_identity))
-        if not gid.isdecimal():
-            raise ValueError("invalid e-hentai gallery id: '{}'".format(gid))
+        # if not gid.isdecimal():
+        #     raise ValueError("invalid e-hentai gallery id: '{}'".format(gid))
+        gid, token = int(gid), str(token)
         if not is_hex(token):
             raise ValueError("invalid e-hentai gallery token: '{}'".format(token))
         self._gid = gid
@@ -218,26 +220,13 @@ class EHentaiGallery:
             raise EHentaiError(gdata['error'])
         gdata = gdata['gmetadata'][0]
         gdata.update({'token': self.token})
-        try:
-            tags = gdata['tags']
-        except KeyError:
-            return gdata
-        new_tags = {}
-        for tag in tags:
-            if ':' in tag:
-                tk, tv = tag.split(':', maxsplit=1)
-            else:
-                tk, tv = 'misc', tag
-            if tk not in new_tags:
-                new_tags[tk] = []
-            new_tags[tk].append(tv)
-        gdata.update({'tags': new_tags})
+        gdata = refine_tags_in_dict(gdata)
         self._data = gdata
         return gdata
 
     getdata = gdata
 
-    def get_data_from_page(self, wait=None, logger=None):
+    def _get_data_from_page___test_only(self, wait=None, logger=None):
         logger = logger or self.logger
         wait = wait or self.wait
         try:
@@ -386,3 +375,53 @@ def parse_hath_dl_gallery_info(gallery):
     d['tags'] = tags
     d['uploader comments'] = cmt.strip() if cmt is not None else None
     return d
+
+
+def refine_tags_in_dict(d: dict):
+    try:
+        tags = d['tags']
+    except KeyError:
+        return d
+    new_tags = {}
+    for tag in tags:
+        if ':' in tag:
+            tk, tv = tag.split(':', maxsplit=1)
+        else:
+            tk, tv = 'misc', tag
+        if tk not in new_tags:
+            new_tags[tk] = []
+        new_tags[tk].append(tv)
+    d['tags'] = new_tags
+    return d
+
+
+class EHentaiAPI:
+    API_URL = 'https://api.e-hentai.org/api.php'
+    max_entries = 25
+    interval = 1
+
+    def post(self, j):
+        r = requests.post(self.API_URL, json=j)
+        sleep(self.interval)
+        return r.json()
+
+    def split_entries(self, entries):
+        entries_n = len(entries)
+        groups_n = entries_n // self.max_entries
+        if entries_n % self.max_entries:
+            groups_n += 1
+        if entries_n <= self.max_entries:
+            return [list(entries)]
+        return [entries[i * self.max_entries:(i + 1) * self.max_entries] for i in range(groups_n)]
+
+    def get_gallery_data(self, gid_token_tuples):
+        data_l = []
+        for entries in self.split_entries(gid_token_tuples):
+            j = self.post({'method': 'gdata', 'namespace': 1, 'gidlist': entries})
+            if 'error' in j:
+                raise EHentaiError('error')
+            data_l.extend([refine_tags_in_dict(d) for d in j['gmetadata']])
+        return data_l
+
+    def get_gallery_data_single(self, gid, token):
+        return self.post({'method': 'gdata', 'namespace': 1, 'gidlist': [[gid, token]]})
