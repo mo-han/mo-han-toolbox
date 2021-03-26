@@ -23,7 +23,7 @@ class LinePrinter:
 
     p = print
 
-    def clear(self):
+    def clear_line(self):
         self.line(char=' ', end='\r')
 
     def line(self, char: str = '-', shorter: int = 1, **kwargs):
