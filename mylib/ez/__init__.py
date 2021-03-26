@@ -6,21 +6,12 @@ import functools
 import inspect
 import io
 import locale
-import os
-import queue
-import re
-import shutil
-import sys
-import subprocess
-import threading
-import time
-from time import sleep
 
 from . import typing as _typing
+from .often import *
+from .shutil import shutil_ as shutil
 
 T = _typing
-
-global_config = {'shutil.copy.buffer.size': 16 * 1024 * 1024}
 
 
 def __refer_sth():
@@ -60,80 +51,9 @@ def get_os_default_locale():
         return locale.getdefaultlocale()[0]
 
 
-def shutil_copy_file_obj_fast(src_fd, dst_fd, length: int = None):
-    length = length or global_config['shutil.copy.buffer.size']
-    while 1:
-        buf = src_fd.read(length)
-        if not buf:
-            break
-        dst_fd.write(buf)
-
-
-def shutil_copy_file_obj_faster(src_fd, dst_fd, length: int = None):
-    length = length or global_config['shutil.copy.buffer.size']
-    q_max = 2
-    q = queue.Queue(maxsize=q_max)
-    stop = threading.Event()
-    data_array = [0.0]
-
-    def read():
-        t0 = time.perf_counter()
-        while 1:
-            if stop.isSet():
-                break
-            t1 = time.perf_counter()
-            td = t1 - t0
-            t0 = t1
-            if q.qsize() == q_max:
-                sleep(td)
-                continue
-            buf = src_fd.read(length)
-            if buf:
-                q.put(buf)
-            else:
-                q.put(None)
-                break
-
-    def write():
-        t0 = time.perf_counter()
-        while 1:
-            if stop.isSet():
-                break
-            t1 = time.perf_counter()
-            td = t1 - t0
-            data_array[0] = td
-            t0 = t1
-            try:
-                buf = q.get()
-            except queue.Empty:
-                sleep(td)
-                continue
-            if buf is None:
-                break
-            else:
-                dst_fd.write(buf)
-
-    t_read = threading.Thread(target=read)
-    t_write = threading.Thread(target=write)
-    t_read.start()
-    t_write.start()
-    try:
-        while 1:
-            if t_write.is_alive():
-                t_write.join(data_array[0])
-            else:
-                break
-    except (KeyboardInterrupt, SystemExit):
-        stop.set()
-        raise
-
-
-shutil.copyfileobj = shutil_copy_file_obj_faster
-
-
-def deco_factory_copy_signature(signature_source: typing.Callable):
+def deco_factory_copy_signature(signature_source: T.Callable):
     # https://stackoverflow.com/a/58989918/7966259
-    def deco(target: typing.Callable):
+    def deco(target: T.Callable):
         @functools.wraps(target)
         def tgt(*args, **kwargs):
             inspect.signature(signature_source).bind(*args, **kwargs)
@@ -164,7 +84,7 @@ class CLIArgumentsList(list):
     def add_arg(self, arg):
         if isinstance(arg, str):
             self.append(arg)
-        elif isinstance(arg, typing.Iterable):
+        elif isinstance(arg, T.Iterable):
             for a in arg:
                 self.add_arg(a)
         else:
@@ -177,7 +97,7 @@ class CLIArgumentsList(list):
         if isinstance(value, str):
             self.append(name)
             self.append(value)
-        elif isinstance(value, typing.Iterable):
+        elif isinstance(value, T.Iterable):
             for v in value:
                 self.add_option(name, v)
         elif value is True:
