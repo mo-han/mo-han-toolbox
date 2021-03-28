@@ -21,7 +21,7 @@ def cwebp(src: str, dst: str or False or Ellipsis = ..., **kwargs):
         dst = src + '.webp'
     argv = make_cwebp_argv(src, dst, **kwargs)
     r = subprocess.run(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    encoding = get_default_encoding()
+    encoding = get_os_default_encoding()
     stdout_lines = r.stdout.decode(encoding).splitlines()
     stderr_lines = r.stderr.decode(encoding).splitlines()
     d = {

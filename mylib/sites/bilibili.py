@@ -22,7 +22,8 @@ from mylib._misc import safe_print, safe_basename
 from mylib.ostk import ensure_sigint_signal
 from mylib import fstk
 from mylib.text import regex_find, ellipt_end
-from mylib.tricks import str2range, modify_module
+from mylib.tricks import str2range
+from mylib.ez import python_module_from_modified_source_code
 from mylib.tricks_lite import seq_call_return
 from mylib.tui import LinePrinter
 
@@ -171,7 +172,7 @@ def new_legitimize(text: str, os=...):
     return ellipt_end(fstk.sanitize(text, fstk.POTENTIAL_INVALID_CHARS_MAP), 240, encoding='u8').lstrip('.')
 
 
-you_get.extractor = modify_module('you_get.extractor', code_modify_you_get_extractor)
+you_get.extractor = python_module_from_modified_source_code('you_get.extractor', code_modify_you_get_extractor)
 you_get.extractor.quality_desc_priority_index = quality_desc_priority_index
 # 上面已经导入了原版的`you_get.util.strings`，这条模块路径很重要，另有几个模块依赖它
 # 在此基础上，下面一行代码将原版的`you_get.util.fs`模块替换成修改版（弃用，不再修改原版模块，换用新的`new_legitimize`函数）
@@ -188,7 +189,7 @@ you_get.util.strings.legitimize = you_get.util.fs.legitimize = new_legitimize
 # 综上所述，下面这行可以注释掉了（已经注释掉了）
 # you_get.extractor.get_filename = you_get.common.get_filename = you_get.util.strings.get_filename
 # 下面则是将B站下载模块替换成修改版，所用的源码替换函数是`code_modify_you_get_bilibili`
-you_get.extractors.bilibili = modify_module('you_get.extractors.bilibili', code_modify_you_get_bilibili)
+you_get.extractors.bilibili = python_module_from_modified_source_code('you_get.extractors.bilibili', code_modify_you_get_bilibili)
 you_get_filename = you_get.util.strings.get_filename
 
 

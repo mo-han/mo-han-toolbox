@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import shutil as shutil_
 
-from .often import *
+from .__often_used_imports__ import *
 
 global_config = {'copy.buffer.size': 16 * 1024 * 1024}
 

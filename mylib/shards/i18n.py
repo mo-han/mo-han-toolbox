@@ -22,7 +22,7 @@ def map_locale_to_rfc5646___alpha(the_locale: str):
     return d.get(the_locale, the_locale.split('-')[0])
 
 
-def set_locale(the_locale: str = get_os_default_locale()):
+def set_locale(the_locale: str = get_os_default_lang()):
     i18n.config.set('locale', map_locale_to_rfc5646___alpha(the_locale))
 
 

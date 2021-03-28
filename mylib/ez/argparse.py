@@ -34,7 +34,7 @@ class ArgumentParserRigger:
         self.arguments_config = {}
         self.target_call_config = {}
         self.namespace: T.Optional[Namespace] = None
-        self.unknown: T.List[str] = []
+        self.unknown_args: T.List[str] = []
 
     @property
     def unknown_placeholder(self):
@@ -71,8 +71,8 @@ class ArgumentParserRigger:
 
         return deco
 
-    def prepare(self, *args, skip_unknown=False, **kwargs):
-        parse = self.parse_known_args if skip_unknown else self.parse_args
+    def parse(self, *args, catch_unknown_args=False, **kwargs):
+        parse = self.parse_known_args if catch_unknown_args else self.parse_args
         return parse(*args, **kwargs)
 
     def run_target(self):
@@ -93,11 +93,11 @@ class ArgumentParserRigger:
         if isinstance(x, RawObject):
             return x.value
         elif isinstance(x, UnknownArgumentsPlaceholder):
-            return self.unknown
+            return self.unknown_args
         else:
             return getattr(self.namespace, x)
 
-    def super_command(self, **kwargs):
+    def super_command(self):
         """factory decorator for the whole parser"""
 
         def deco(target):
@@ -167,8 +167,8 @@ class ArgumentParserRigger:
                 return self.namespace
         elif item in ('parse_known_args', 'parse_known_intermixed_args'):
             def to_be_returned(*args, **kwargs):
-                self.namespace, self.unknown = getattr(p, item)(*args, **kwargs)
-                return self.namespace, self.unknown
+                self.namespace, self.unknown_args = getattr(p, item)(*args, **kwargs)
+                return self.namespace, self.unknown_args
         else:
             to_be_returned = getattr(p, item)
         return to_be_returned

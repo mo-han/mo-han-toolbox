@@ -1,3 +1,4 @@
 colorama  #BSD
-colored  #MIT #CLI #color #style #depended-by:gooey
+colored  #MIT #console #color #style #depended-by:gooey
 colour  #BSD-3
+cmd2  #MIT

@@ -174,28 +174,6 @@ def deco_factory_retry(retry_exceptions=None, max_retries: int = 3,
     return decorator
 
 
-def modify_module(module_path: str, code_modifier: str or T.Callable, package_path: str = None,
-                  output: bool = False, output_file: str = 'tmp.py'):
-    # How to modify imported source code on-the-fly?
-    #     https://stackoverflow.com/a/41863728/7966259  (answered by Martin Valgur)
-    # Modules and Packages: Live and Let Die!  (by David Beazley)
-    #     http://www.dabeaz.com/modulepackage/ModulePackage.pdf
-    #     https://www.youtube.com/watch?v=0oTh1CXRaQ0
-    spec = importlib.util.find_spec(module_path, package_path)
-    if isinstance(code_modifier, str):
-        source = code_modifier
-    else:
-        source = code_modifier(spec.loader.get_source(module_path))
-    if output:
-        with open(output_file, 'w') as f:
-            f.write(source)
-    module = importlib.util.module_from_spec(spec)
-    code_obj = compile(source, module.__spec__.origin, 'exec')
-    exec(code_obj, module.__dict__)
-    sys.modules[module_path] = module
-    return module
-
-
 def singleton(cls):
     _instances = {}
 

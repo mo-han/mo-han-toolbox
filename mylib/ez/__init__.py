@@ -3,19 +3,20 @@
 """THIS MODULE MUST ONLY DEPEND ON STANDARD LIBRARIES OR BUILT-IN"""
 import ctypes
 import functools
+import importlib.util
 import inspect
 import io
 import locale
 
 from . import typing as _typing
-from .often import *
+from .__often_used_imports__ import *
 from .shutil import shutil_ as shutil
 
 T = _typing
 
 
 def __refer_sth():
-    return os, sys, time, sleep, shutil, re, io
+    return io, shutil
 
 
 class SingletonMetaClass(type):
@@ -43,8 +44,8 @@ def str_remove_suffix(s: str, suffix: str):
     return s[:-len(suffix)] if s.endswith(suffix) else s
 
 
-def get_os_default_locale():
-    if os.name == 'nt':
+def get_os_default_lang(*, os_name=os.name):
+    if os_name == 'nt':
         win_lang = ctypes.windll.kernel32.GetUserDefaultUILanguage()
         return locale.windows_locale[win_lang]
     else:
@@ -126,5 +127,35 @@ class CLIArgumentsList(list):
         return k
 
 
-def get_default_encoding():
+def get_os_default_encoding():
     return locale.getdefaultlocale()[1]
+
+
+def python_module_from_modified_source_code(
+        module_path: str, new_source_code: str or T.Callable[[str], str], package_path: str = None,
+        *, output: bool = False, output_file: str = 'tmp.py'):
+    # How to modify imported source code on-the-fly?
+    #     https://stackoverflow.com/a/41863728/7966259  (answered by Martin Valgur)
+    # Modules and Packages: Live and Let Die!  (by David Beazley)
+    #     http://www.dabeaz.com/modulepackage/ModulePackage.pdf
+    #     https://www.youtube.com/watch?v=0oTh1CXRaQ0
+    spec = importlib.util.find_spec(module_path, package_path)
+    if isinstance(new_source_code, str):
+        source = new_source_code
+    else:
+        source = new_source_code(spec.loader.get_source(module_path))
+    if output:
+        with open(output_file, 'w') as f:
+            f.write(source)
+    module = importlib.util.module_from_spec(spec)
+    code_obj = compile(source, module.__spec__.origin, 'exec')
+    exec(code_obj, module.__dict__)
+    sys.modules[module_path] = module
+    return module
+
+
+def python_module_from_filepath(module_name, filepath):
+    spec = importlib.util.spec_from_file_location(module_name, filepath)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
