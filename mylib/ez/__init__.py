@@ -66,17 +66,6 @@ def deco_factory_copy_signature(signature_source: T.Callable):
     return deco
 
 
-def pip_install_dependencies(dep_list: T.List[str], update=False, user=True, options: list = ()):
-    cmd = ['pip', 'install']
-    if user:
-        cmd.append('--user')
-    if update:
-        cmd.append('--update')
-    cmd.extend(options)
-    for dep in dep_list:
-        subprocess.run([*cmd, dep])
-
-
 class CLIArgumentsList(list):
     def __init__(self, *args, **kwargs):
         super().__init__()
@@ -159,3 +148,13 @@ def python_module_from_filepath(module_name, filepath):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+class Caller:
+    def __init__(self, target, *args, **kwargs):
+        self.target = target
+        self.args = args
+        self.kwargs = kwargs
+
+    def call(self):
+        return self.target(*self.args, **self.kwargs)
