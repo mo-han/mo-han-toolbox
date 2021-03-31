@@ -2,4 +2,6 @@ pytesseract  #Apache-2.0 #ocr #tesseract #cli-wrapper
 paddleocr  #Apache-2.0 #ocr #chinese #baidu #depend-on:PaddlePaddle #cpu-perf:slow #gpu
 paddlepaddle  #Apache #deep-learning #baidu #depended-by:PaddleOCR
 tesserocr  #MIT #ocr #tesseract #cython #c-api
-#cnocr
+cnocr  #Apache-2.0 #chinese #very-fast-for-small-size-image #slow-for-medium-or-large-size-image
+easyocr  #Apache-2.0 #very-slow:seconds #ocr #multi-lang
+ABBYY  #MIT #ocr #cloud #web-api
