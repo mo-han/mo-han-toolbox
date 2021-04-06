@@ -43,9 +43,9 @@ class TesseractOCRCLIWrapper:
         return self
 
     def set_image_object(self, image: Image.Image):
-        bytes_io = io.BytesIO()
-        image.save(bytes_io, format=image.format or 'PNG')
-        self.set_image_bytes(bytes_io.getvalue())
+        with io.BytesIO() as bytes_io:
+            image.save(bytes_io, format=image.format or 'PNG')
+            self.set_image_bytes(bytes_io.getvalue())
         return self
 
     def set_image_array(self, nd_array, mode=None):
