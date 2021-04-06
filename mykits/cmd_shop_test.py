@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
 
 def main():
-    print(__file__)
+    print('cmd:', 'test')
+    print('module path:', __file__)

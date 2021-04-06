@@ -8,6 +8,7 @@ import itertools
 import json
 import urllib.parse
 import pathlib
+import zipfile
 
 from . import ostk
 from . import text_lite
@@ -331,3 +332,12 @@ def join_dirname_basename_ext(dirname, basename, extension):
 def path_parts(path):
     pp = pathlib.Path(path)
     return pp.parts
+
+
+def make_zipfile_from_dir(zip_path, src_dir, *, strip_src_dir=True, **zipfile_kwargs):
+    src_dir_path = pathlib.Path(src_dir)
+    if not os.path.isdir(src_dir_path):
+        raise NotADirectoryError(src_dir)
+    with zipfile.ZipFile(zip_path, 'w', **zipfile_kwargs) as zf:
+        for file in src_dir_path.rglob('*'):
+            zf.write(file, file.relative_to(src_dir_path if strip_src_dir else src_dir_path.parent))

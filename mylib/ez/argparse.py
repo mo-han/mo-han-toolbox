@@ -35,6 +35,10 @@ class ArgumentParserRigger:
         self.target_call_config = {}
         self.namespace: T.Optional[Namespace] = None
         self.unknown_args: T.List[str] = []
+        self.last_target = None
+
+    def get_arg(self, arg_dest: str, default=None):
+        return self.namespace.__dict__.get(arg_dest, default)
 
     @property
     def unknown_placeholder(self):
@@ -78,8 +82,9 @@ class ArgumentParserRigger:
     def run_target(self):
         """call target"""
         try:
-            target = self.namespace.__target__
+            self.last_target = target = self.namespace.__target__
         except AttributeError:
+            self.last_target = None
             return
         if target in self.target_call_config:
             t_args, t_kwargs = self.target_call_config[target]

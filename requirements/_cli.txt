@@ -2,3 +2,6 @@ colorama  #BSD
 colored  #MIT #console #color #style #depended-by:gooey
 colour  #BSD-3
 cmd2  #MIT
+terminaltables  #MIT #console #draw-table
+prettytable  #BSD-3-clause #console #draw-table
+tabulate  #MIT #console #draw-table #favorite

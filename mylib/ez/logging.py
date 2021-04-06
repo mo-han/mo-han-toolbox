@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # encoding=utf8
-import logging
+from logging import *
 
 # logging format
 LOG_FMT_MESSAGE_ONLY = '%(message)s'
@@ -17,11 +17,11 @@ LOG_DATE_FMT = LOG_DATE_FMT_SEC_ZONE
 
 
 def get_logger(logger_name: str, level: str = 'INFO', fmt=LOG_FMT, date_fmt=LOG_DATE_FMT, handlers_l: list = None):
-    formatter = logging.Formatter(fmt=fmt, datefmt=date_fmt)
-    logger = logging.getLogger(logger_name)
+    formatter = Formatter(fmt=fmt, datefmt=date_fmt)
+    logger = getLogger(logger_name)
     logger.setLevel(level)
     if not handlers_l:
-        handlers_l = [logging.StreamHandler()]
+        handlers_l = [StreamHandler()]
     for h in handlers_l:
         h.setFormatter(formatter)
         # logger.addHandler(h)
@@ -29,13 +29,13 @@ def get_logger(logger_name: str, level: str = 'INFO', fmt=LOG_FMT, date_fmt=LOG_
     return logger
 
 
-def set_logger_format(logger: logging.Logger, fmt, date_fmt):
-    formatter = logging.Formatter(fmt=fmt, datefmt=date_fmt)
+def set_logger_format(logger: Logger, fmt, date_fmt):
+    formatter = Formatter(fmt=fmt, datefmt=date_fmt)
     for h in logger.handlers:
         h.setFormatter(formatter)
 
 
-def set_logger_level(logger: logging.Logger, level):
+def set_logger_level(logger: Logger, level):
     logger.setLevel(level)
     for h in logger.handlers:
         h.setLevel(level)

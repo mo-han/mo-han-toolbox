@@ -67,6 +67,8 @@ def deco_factory_copy_signature(signature_source: T.Callable):
 
 
 class CLIArgumentsList(list):
+    merge_option_nargs = True
+
     def __init__(self, *args, **kwargs):
         super().__init__()
         self.add(*args, **kwargs)
@@ -81,21 +83,24 @@ class CLIArgumentsList(list):
             self.append(str(arg))
         return self
 
-    def add_option(self, name: str, value):
-        if not isinstance(name, str):
+    def add_option(self, option_string: str, value):
+        if not isinstance(option_string, str):
             raise TypeError('name', str)
         if isinstance(value, str):
-            self.append(name)
+            self.append(option_string)
             self.append(value)
         elif isinstance(value, T.Iterable):
-            for v in value:
-                self.add_option(name, v)
+            if self.merge_option_nargs:
+                self.add(option_string, *value)
+            else:
+                for v in value:
+                    self.add_option(option_string, v)
         elif value is True:
-            self.append(name)
+            self.append(option_string)
         elif value is None or value is False:
             pass
         else:
-            self.append(name)
+            self.append(option_string)
             self.append(str(value))
         return self
 
@@ -103,12 +108,12 @@ class CLIArgumentsList(list):
         for arg in args:
             self.add_arg(arg)
         for k, v in kwargs.items():
-            option_name = self.keyword_to_option_name(k)
-            self.add_option(option_name, v)
+            option_string = self.keyword_to_option_string(k)
+            self.add_option(option_string, v)
         return self
 
     @staticmethod
-    def keyword_to_option_name(keyword):
+    def keyword_to_option_string(keyword):
         if len(keyword) > 1:
             k = '--' + '-'.join(keyword.split('_'))
         else:
@@ -158,3 +163,12 @@ class Caller:
 
     def call(self):
         return self.target(*self.args, **self.kwargs)
+
+
+def round_to(x, precision):
+    n = len(str(precision).split('.')[-1])
+    return round(round(x / precision) * precision, n)
+
+
+def os_exit_force(*args, **kwargs):
+    os._exit(*args, **kwargs)
