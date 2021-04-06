@@ -42,7 +42,7 @@ def move_into_dir(src, dst, pattern, alias, dry_run, sub_dir):
     from mylib.text_lite import find_words
     from mylib.tui_lite import prompt_choose_number, prompt_confirm
     from mylib import fstk_lite as fstk
-    conf_file = fstk.make_path('~', '.config', 'fs.put_in_dir.json')
+    conf_file = fstk.make_path('~', '.config', 'fs.put_in_dir.json', user_home=True)
     conf = fstk.read_json_file(conf_file) or {'dst_map': {}}
     dst_map = conf['dst_map']
     if pattern:

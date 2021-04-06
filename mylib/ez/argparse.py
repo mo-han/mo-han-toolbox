@@ -36,6 +36,7 @@ class ArgumentParserRigger:
         self.namespace: T.Optional[Namespace] = None
         self.unknown_args: T.List[str] = []
         self.last_target = None
+        self.dashes = ['-h', '--help']
 
     def get_arg(self, arg_dest: str, default=None):
         return self.namespace.__dict__.get(arg_dest, default)
@@ -147,6 +148,7 @@ class ArgumentParserRigger:
             opts.append('-' + short_name)
         if long_name:
             opts.append('--' + long_name)
+        self.dashes.extend(opts)
         return self.argument(*opts, **kwargs)
 
     def flag(self, short_name: str = None, long_name: str = None, *, action='store_true', **kwargs):

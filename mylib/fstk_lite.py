@@ -132,7 +132,7 @@ def files_from_iter(src: str or T.Iterable, *, recursive=False, win32_unc=False)
             yield from files_from_iter(s, recursive=recursive, win32_unc=win32_unc)
 
 
-def make_path(*parts, absolute=False, follow_link=False, relative=False, user_home=True, env_var=False,
+def make_path(*parts, absolute=False, follow_link=False, relative=False, user_home=False, env_var=False,
               win32_unc=False, part_converter=None):
     if part_converter:
         parts = [part_converter(part) for part in parts]

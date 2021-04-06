@@ -6,9 +6,9 @@ from mylib import fstk_lite
 from mylib.ez import *
 from mylib.ez import argparse
 
-__dirname__, __stem__, _ = fstk_lite.split_dirname_basename_ext(__file__)
-apr = argparse.ArgumentParserRigger()
-an = apr.an
+__dirname__, __filename_without_extension__, __file_extension__ = fstk_lite.split_dirname_basename_ext(__file__)
+sub_apr = argparse.ArgumentParserRigger()
+an = sub_apr.an
 meta_apr = argparse.ArgumentParserRigger()
 
 
@@ -17,7 +17,7 @@ def find_module_path():
     r = {}
     with fstk_lite.ctx_pushd(__dirname__):
         for f in next(os.walk('.'))[-1]:
-            match = re.match(rf'({__stem__})_(.+)\.py', f)
+            match = re.match(rf'({__filename_without_extension__})_([^.-]+)', f)
             if not match:
                 continue
             name = match.group(2)
@@ -42,18 +42,18 @@ def meta_cmd(list_cmd):
 an.sub_cmd = an.args = None
 
 
-@apr.root()
-@apr.arg(an.sub_cmd, nargs='?')
-@apr.arg(an.args, nargs='*')
-@apr.map(cmd_name=an.sub_cmd)
+@sub_apr.root()
+@sub_apr.arg(an.sub_cmd, nargs='?')
+@sub_apr.arg(an.args, nargs='*')
+@sub_apr.map(cmd_name=an.sub_cmd)
 def goto_sub_cmd_module(cmd_name=None):
     if cmd_name:
         module_paths_d = find_module_path()
         if cmd_name in module_paths_d:
+            argv = sys.argv
+            sys.argv = [f'{__filename_without_extension__}{__file_extension__} {cmd_name}', *argv[2:]]
             module_path = module_paths_d[cmd_name]
             module = python_module_from_filepath('module', module_path)
-            argv = sys.argv
-            sys.argv = [f'{__stem__} {cmd_name}', *argv[2:]]
             module.main()
         else:
             print('module not found:', cmd_name, file=sys.stderr)
@@ -66,11 +66,11 @@ def main():
     argv = sys.argv
     if len(argv) == 1:
         argv.append('-h')
-    if len(argv) > 1 and argv[1] not in ('-h', '--help', '-l', '--list'):
+    if len(argv) > 1 and argv[1] not in meta_apr.dashes:
         goto_sub_cmd_module(argv[1])
     else:
-        apr.parse(catch_unknown_args=True)
-        apr.run()
+        sub_apr.parse(catch_unknown_args=True)
+        sub_apr.run()
 
 
 if __name__ == '__main__':

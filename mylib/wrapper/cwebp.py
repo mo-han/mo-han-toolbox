@@ -29,7 +29,7 @@ class CLIArgs(CLIArgumentsList):
         return '-' + keyword
 
 
-def new_cwebp_argv():
+def new_cwebp_cmd():
     return CLIArgs(webptools.webplib.getcwebp())
 
 
@@ -65,8 +65,8 @@ def cwebp(src: str or bytes, dst: str or False or None or Ellipsis = ..., **kwar
         src_data['height'] = h
         dst_data['scale'] = resize
 
-    argv = new_cwebp_argv().add(**kwargs).add(o=dst).add('--', src)
-    r = subprocess.run(argv, input=src_bytes, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    cmd = new_cwebp_cmd().add(**kwargs).add(o=dst).add('--', src)
+    r = subprocess.run(cmd, input=src_bytes, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     encoding = get_os_default_encoding()
     msg_lines = r.stderr.decode(encoding).splitlines()
     ok = r.returncode == 0
@@ -117,7 +117,7 @@ def cwebp(src: str or bytes, dst: str or False or None or Ellipsis = ..., **kwar
 
 
 def cwebp_help_text():
-    return subprocess.run(new_cwebp_argv().add(longhelp=True), stdout=subprocess.PIPE).stdout.decode()
+    return subprocess.run(new_cwebp_cmd().add(longhelp=True), stdout=subprocess.PIPE).stdout.decode()
 
 
 class SkipOverException(Exception):
