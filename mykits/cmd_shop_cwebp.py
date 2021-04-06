@@ -36,7 +36,6 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
         image_fp_rel = image_fp
     webp_fp = image_fp + '.webp'
     mime_t, mime_st = (filetype.guess_mime(image_fp) or '/').split('/')
-    print(mime_t, mime_st)
     if mime_t != 'image':
         print(f'# skip non-image {image_fp_rel}')
         return

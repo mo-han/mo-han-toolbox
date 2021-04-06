@@ -2,7 +2,6 @@
 import math
 from functools import partial
 
-import webptools
 from PIL import Image
 
 from mylib.ez import *
@@ -30,7 +29,7 @@ class CLIArgs(CLIArgumentsList):
 
 
 def new_cwebp_cmd():
-    return CLIArgs(webptools.webplib.getcwebp())
+    return CLIArgs('cwebp')
 
 
 def cwebp(src: str or bytes, dst: str or False or None or Ellipsis = ..., **kwargs):
