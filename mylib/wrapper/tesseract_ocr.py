@@ -53,7 +53,7 @@ class TesseractOCRCLIWrapper:
         self.set_image_object(Image.fromarray(nd_array, mode=mode))
         return self
 
-    def get_ocr_tsv_to_dict_list(self, *, skip_non_text: bool = True, confidence_threshold: float = None, **kwargs):
+    def get_ocr_tsv_to_json(self, *, skip_non_text: bool = True, confidence_threshold: float = None, **kwargs):
         cells = self.get_ocr_tsv(**kwargs)
         headers = ['level', 'page_num', 'block_num', 'par_num', 'line_num', 'word_num',
                    'left', 'top', 'width', 'height', 'conf', 'text']
@@ -70,10 +70,10 @@ class TesseractOCRCLIWrapper:
                 conf = int(conf) / 100
             if confidence_threshold is not None and conf < confidence_threshold:
                 continue
-            page_block_paragraph_line_word_level = tuple(int(x) for x in [page, block, par, line, word, level])
+            page_block_paragraph_line_word_level = [int(x) for x in [page, block, par, line, word, level]]
             left, top, width, height = int(left), int(top), int(width), int(height)
             r.append({'text': text, 'confidence': conf,
-                      'box': ((left, top), (left + width, top), (left + width, top + height), (left, top + height)),
+                      'box': [[left, top], [left + width, top], [left + width, top + height], [left, top + height]],
                       'page_block_paragraph_line_word_level': page_block_paragraph_line_word_level})
         return r
 

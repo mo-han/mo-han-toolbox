@@ -84,7 +84,7 @@ t.set_image_bytes
 t.set_image_object
 t.set_image_file
 
-t.set_language('chi_sim', 'eng').set_image_bytes(b'IMAGE FILE BYTES').get_ocr_tsv_to_dict_list()
+t.set_language('chi_sim', 'eng').set_image_bytes(b'IMAGE FILE BYTES').get_ocr_tsv_to_json()
 ```
 output something like this:
 ```python
