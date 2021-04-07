@@ -74,7 +74,7 @@ class TesseractOCRCLIWrapper:
             left, top, width, height = int(left), int(top), int(width), int(height)
             r.append({'text': text, 'confidence': conf,
                       'box': ((left, top), (left + width, top), (left + width, top + height), (left, top + height)),
-                      'page block paragraph line word level': page_block_paragraph_line_word_level})
+                      'page_block_paragraph_line_word_level': page_block_paragraph_line_word_level})
         return r
 
     def get_ocr_tsv(self, **kwargs):

@@ -10,13 +10,13 @@ from mylib.ez import logging
 logger = logging.get_logger(__name__)
 
 
-def save_image_to_bytes(img: Image.Image, save_fmt=None, **kwargs):
+def image_to_bytes(img: Image.Image, save_fmt=None, **kwargs):
     with io.BytesIO() as _:
         img.save(_, format=save_fmt, **kwargs)
         return _.getvalue()
 
 
-def open_bytes_to_image(b: bytes, mode="r", formats=None):
+def image_from_bytes(b: bytes, mode="r", formats=None):
     with io.BytesIO() as _:
         _.write(b)
         return Image.open(_, mode=mode, formats=formats)
@@ -32,7 +32,7 @@ def new_cwebp_cmd():
     return CLIArgs('cwebp')
 
 
-def cwebp(src: str or bytes, dst: str or False or None or Ellipsis = ..., **kwargs):
+def cwebp(src: 'str, bytes', dst: 'str, False, None, Ellipsis' = ..., **kwargs):
     if isinstance(src, str):
         src_bytes = None
         src_size = os.path.getsize(src)
@@ -45,7 +45,10 @@ def cwebp(src: str or bytes, dst: str or False or None or Ellipsis = ..., **kwar
     src_data = {'path': src, 'size': src_size}
 
     if dst is ...:
-        dst = src + '.webp'
+        if src_bytes is None:
+            dst = src + '.webp'
+        else:
+            dst = '-'
 
     dst_data = {}
     if 'q' in kwargs:
@@ -57,7 +60,7 @@ def cwebp(src: str or bytes, dst: str or False or None or Ellipsis = ..., **kwar
         if src_bytes is None:
             src_img = Image.open(src)
         else:
-            src_img = open_bytes_to_image(src_bytes)
+            src_img = image_from_bytes(src_bytes)
         w, h = src_img.size
         kwargs['resize'] = round(w * resize), round(h * resize)
         src_data['width'] = w
