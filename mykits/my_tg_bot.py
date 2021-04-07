@@ -23,13 +23,13 @@ mt = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(os.path.getmtime(os.path.
 @deco_factory_retry(retry_exceptions=ProcessTTYFrozen, max_retries=-1)
 def bldl_retry_frozen(*args: str):
     p = subprocess.Popen(['bldl.sh.cmd', *args], stdout=subprocess.PIPE)
-    return monitor_sub_process_tty_frozen(p, encoding='u8', timeout=15)
+    return monitor_sub_process_tty_frozen(p, encoding='u8', timeout=60)
 
 
 @deco_factory_retry(retry_exceptions=ProcessTTYFrozen, max_retries=-1)
 def ytdl_retry_frozen(*args: str):
     p = subprocess.Popen(['ytdl.sh.cmd', *args], stdout=subprocess.PIPE)
-    return monitor_sub_process_tty_frozen(p, encoding='u8', timeout=30)
+    return monitor_sub_process_tty_frozen(p, encoding='u8', timeout=60)
 
 
 def line2args(line: str):

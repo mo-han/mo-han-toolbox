@@ -22,7 +22,7 @@ def list_several_cloudflare_ipaddr(file, hostname, as_list, isp):
     if as_list:
         lines = []
         for ip_isp, ip_l in info.items():
-            lines.append(ip_isp)
+            lines.append(f'# {ip_isp}')
             for ip_d in ip_l:
                 li = ip_d['ip']
                 if hostname:
