@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import glob
 import os
 import pathlib
 import queue
@@ -11,4 +12,4 @@ from time import sleep
 
 
 def __refer_sth():
-    return os, queue, re, sys, subprocess, threading, time, sleep, pathlib
+    return os, queue, re, sys, subprocess, threading, time, sleep, pathlib, glob

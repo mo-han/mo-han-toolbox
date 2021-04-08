@@ -32,7 +32,7 @@ def new_cwebp_cmd():
     return CLIArgs('cwebp')
 
 
-def cwebp(src: 'str, bytes', dst: 'str, False, None, Ellipsis' = ..., **kwargs):
+def cwebp(src: T.Union[str, bytes], dst: T.Union[str, None, type(...)] = ..., **kwargs):
     if isinstance(src, str):
         src_bytes = None
         src_size = os.path.getsize(src)
