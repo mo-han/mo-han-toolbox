@@ -12,15 +12,14 @@ from send2trash import send2trash
 
 import mylib.__deprecated__
 from mylib.tools import mykit_parts
-from mylib import fstk
-from mylib import tui
+from mylib.ex import fstk, tui
 from mylib.__deprecated__ import fs_inplace_rename, fs_inplace_rename_regex, list_files, list_dirs
 from mylib.cli import arg_type_pow2, arg_type_range_factory, add_dry_run
 from mylib.ez.argparse import HelpCompactFormatter
 from mylib.ez import *
-from mylib.fstk import make_path, ctx_pushd
-from mylib.ostk import clipboard, set_console_title___try
-from mylib.tricks_lite import Attreebute, eval_or_str, deco_factory_exit_on_keyboard_interrupt
+from mylib.ex.fstk import make_path, ctx_pushd
+from mylib.ex.ostk import clipboard, set_console_title___try
+from mylib.ex.tricks_lite import Attreebute, eval_or_str, deco_factory_exit_on_keyboard_interrupt
 
 rtd = Attreebute()  # runtime data
 tui_lp = tui.LinePrinter()
@@ -382,7 +381,7 @@ class MoveIntoDir(HasParser):
 
 
 def tail_filter_files_func():
-    from mylib.ostk import filter_filename_tail, join_filename_tail
+    from mylib.ex.ostk import filter_filename_tail, join_filename_tail
     args = rtd.args
     tk = set(args.tails_keep or [])
     xk = set(args.extensions_keep or [])
@@ -756,7 +755,7 @@ dukto_x.add_argument('ndrop_args', metavar='[--] arguments for ndrop', nargs=REM
 
 def url_from_clipboard():
     import pyperclip
-    from mylib.text_lite import regex_find
+    from mylib.ex.text_lite import regex_find
     from html import unescape
     args = rtd.args
     pattern = args.pattern
@@ -847,8 +846,8 @@ bilibili_download.add_argument('-A', '--no-moderate-audio', dest='moderate_audio
 
 
 def json_edit_func():
-    from mylib.fstk import write_json_file
-    from mylib.fstk import read_json_file
+    from mylib.ex.fstk import write_json_file
+    from mylib.ex.fstk import read_json_file
     args = rtd.args
     file = args.file or list_files(clipboard)[0]
     indent = args.indent
@@ -883,7 +882,7 @@ json_edit.add_argument('item', nargs='+')
 
 
 def json_key_func():
-    from mylib.fstk import read_json_file
+    from mylib.ex.fstk import read_json_file
     args = rtd.args
     d = read_json_file(args.file)
     print(d[args.key])
@@ -896,8 +895,8 @@ json_key.add_argument('key', help='query key')
 
 
 def update_json_file():
-    from mylib.fstk import write_json_file
-    from mylib.fstk import read_json_file
+    from mylib.ex.fstk import write_json_file
+    from mylib.ex.fstk import read_json_file
     args = rtd.args
     old, new = args.old, args.new
     d = read_json_file(old)

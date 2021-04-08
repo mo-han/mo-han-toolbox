@@ -15,12 +15,12 @@ import lxml.html
 import requests.utils
 
 from mylib.ez.typing import JSONType
-from .fstk import touch, ensure_open_file
+from mylib.ex.fstk import touch, ensure_open_file
 from .ez import *
 from .ez.logging import get_logger, LOG_FMT_MESSAGE_ONLY
-from .ostk import write_file_chunk
-from .ostk_lite import SubscriptableFileIO
-from .tricks_lite import singleton, thread_factory, iter_factory_retry
+from mylib.ex.ostk import write_file_chunk
+from mylib.ex.ostk_lite import SubscriptableFileIO
+from mylib.ex.tricks_lite import singleton, thread_factory, iter_factory_retry
 
 MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE = '# Netscape HTTP Cookie File'
 USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'
@@ -37,7 +37,7 @@ def get_html_element_tree(url, **requests_kwargs) -> HTMLElementTree:
 
 
 def convert_cookies_json_to_netscape(json_data_or_filepath: JSONType or str, disable_filepath: bool = False) -> str:
-    from .fstk import read_json_file
+    from mylib.ex.fstk import read_json_file
     if not disable_filepath and os.path.isfile(json_data_or_filepath):
         json_data = read_json_file(json_data_or_filepath)
     else:
@@ -90,7 +90,7 @@ def ensure_json_cookies(json_data) -> list:
 
 
 def cookies_dict_from_json(json_data_or_filepath: JSONType or str, disable_filepath: bool = False) -> dict:
-    from .fstk import read_json_file
+    from mylib.ex.fstk import read_json_file
     if not disable_filepath and os.path.isfile(json_data_or_filepath):
         json_data = read_json_file(json_data_or_filepath)
     else:
@@ -170,7 +170,7 @@ def headers_from_cookies(cookies_data: dict or str, headers: dict = None) -> dic
 
 def get_phantomjs_splinter(proxy=None, show_image=False, window_size=(1024, 1024)):
     import splinter
-    from .ostk import TEMPDIR
+    from mylib.ex.ostk import TEMPDIR
 
     extra_argv = ['--webdriver-loglevel=WARN']
     if proxy:
@@ -190,7 +190,7 @@ def get_phantomjs_splinter(proxy=None, show_image=False, window_size=(1024, 1024
 
 def get_firefox_splinter(headless=True, proxy: str = None, **kwargs):
     import splinter
-    from .ostk import TEMPDIR
+    from mylib.ex.ostk import TEMPDIR
     config = {'service_log_path': os.path.join(TEMPDIR, 'geckodriver.log'),
               'headless': headless}
     config.update(kwargs)

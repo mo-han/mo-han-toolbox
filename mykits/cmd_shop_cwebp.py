@@ -8,11 +8,10 @@ import filetype
 from humanize import naturaldelta
 from send2trash import send2trash
 
-from mylib import fstk
-from mylib import ostk
+from mylib.ex import fstk, ostk
 from mylib.ez import *
 from mylib.ez import argparse
-from mylib.tui import LinePrinter
+from mylib.ex.tui import LinePrinter
 from mylib.wrapper import cwebp
 
 PIXELS_BASELINE = 1280 * 1920

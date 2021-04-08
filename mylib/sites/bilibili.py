@@ -19,13 +19,13 @@ from lxml import html
 from mylib import web_client
 from mylib.__deprecated__ import concat_videos, merge_m4s
 from mylib._misc import safe_print, safe_basename
-from mylib.ostk import ensure_sigint_signal
-from mylib import fstk
-from mylib.text import regex_find, ellipt_end
-from mylib.tricks import str2range
+from mylib.ex.ostk import ensure_sigint_signal
+from mylib.ex import fstk
+from mylib.ex.text import regex_find, ellipt_end
+from mylib.ex.tricks import str2range
 from mylib.ez import python_module_from_modified_source_code
-from mylib.tricks_lite import seq_call_return
-from mylib.tui import LinePrinter
+from mylib.ex.tricks_lite import seq_call_return
+from mylib.ex.tui import LinePrinter
 
 BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'
 BILIBILI_EPISODE_URL_PREFIX = 'https://www.bilibili.com/bangumi/play/'

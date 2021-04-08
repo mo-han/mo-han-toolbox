@@ -4,7 +4,7 @@ import codecs
 import unicodedata
 from collections import defaultdict
 
-from .ez import *
+from mylib.ez import *
 from .tricks_lite import deco_factory_args_choices, dedup_list
 
 ATTENTION_DO_NO_USE_THIS = __name__

@@ -5,10 +5,10 @@ import ndrop.__main__
 import ndrop.netdrop
 import ndrop.shell
 
-from .ostk import clipboard
-from .fstk import ensure_open_file
+from mylib.ex.ostk import clipboard
+from mylib.ex.fstk import ensure_open_file
 from .ez import python_module_from_modified_source_code
-from .tricks_lite import Attreebute
+from mylib.ex.tricks_lite import Attreebute
 
 config_at = Attreebute()
 config_at.server.text.queue = None

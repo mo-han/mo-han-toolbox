@@ -2,17 +2,14 @@
 # encoding=utf8
 import contextlib
 import fnmatch
-import glob
 import html
 import itertools
 import json
 import urllib.parse
-import pathlib
 import zipfile
 
-from . import ostk
-from . import text_lite
-from .ez import *
+from mylib.ex import text_lite, ostk
+from mylib.ez import *
 
 ATTENTION_DO_NO_USE_THIS = __name__
 

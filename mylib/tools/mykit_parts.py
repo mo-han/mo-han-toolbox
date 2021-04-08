@@ -3,17 +3,17 @@
 
 from send2trash import send2trash
 
-from mylib import tui, fstk
+from mylib.ex import fstk, tui, fstk_lite as fstk
 from mylib.ez import *
-from mylib.ostk import clipboard
-from mylib.text_lite import ellipt_middle
+from mylib.ex.ostk import clipboard
+from mylib.ex.text_lite import ellipt_middle
 
 tui_lp = tui.LinePrinter()
 
 
 def list_several_cloudflare_ipaddr(file, hostname, as_list, isp):
     from mylib.sites.misc import get_cloudflare_ipaddr_hostmonit
-    from mylib.fstk import write_json_file
+    from mylib.ex.fstk import write_json_file
     from pprint import pformat
     data = get_cloudflare_ipaddr_hostmonit()
     info: dict = data['info']
@@ -38,10 +38,9 @@ def list_several_cloudflare_ipaddr(file, hostname, as_list, isp):
 
 
 def move_into_dir(src, dst, pattern, alias, dry_run, sub_dir):
-    from mylib.ostk import fs_move_cli
-    from mylib.text_lite import find_words
-    from mylib.tui_lite import prompt_choose_number, prompt_confirm
-    from mylib import fstk_lite as fstk
+    from mylib.ex.ostk import fs_move_cli
+    from mylib.ex.text_lite import find_words
+    from mylib.ex.tui_lite import prompt_choose_number, prompt_confirm
     conf_file = fstk.make_path('~', '.config', 'fs.put_in_dir.json', user_home=True)
     conf = fstk.read_json_file(conf_file) or {'dst_map': {}}
     dst_map = conf['dst_map']

@@ -3,8 +3,8 @@
 import signal
 from io import FileIO
 
-from . import tricks_lite
-from .ez import *
+from mylib.ex import tricks_lite
+from mylib.ez import *
 
 
 def __refer_sth_do_not_use_this():

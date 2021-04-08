@@ -5,11 +5,10 @@ import os
 from time import time
 from zipfile import ZipFile, BadZipFile
 import shutil
-from mylib.ostk import clipboard as cb
-from mylib.tricks_lite import thread_factory
+from mylib.ex.ostk import clipboard as cb
+from mylib.ex.tricks_lite import thread_factory
 from mylib.__deprecated__ import list_files
 from queue import Queue
-from threading import Thread
 
 ap = argparse.ArgumentParser()
 ap.add_argument('-s', '--src', nargs='*')

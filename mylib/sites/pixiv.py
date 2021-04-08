@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 # encoding=utf8
-import os
 
 import requests
-from mylib.fstk import write_json_file, sanitize_xu
+from mylib.ex.fstk import write_json_file, sanitize_xu
 from mylib.ez import *
 from mylib.ez.logging import get_logger
-from mylib.tricks import AttributeInflection
-from mylib.tricks_lite import Attreebute, width_of_int
+from mylib.ex.tricks import AttributeInflection
+from mylib.ex.tricks_lite import Attreebute, width_of_int
 from mylib.web_client import HTTPResponseInspection, parse_https_url, make_requests_kwargs, DownloadPool
 
 FANBOX_DOMAIN = 'fanbox.cc'
