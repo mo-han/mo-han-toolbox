@@ -16,10 +16,10 @@ def save_image_to_bytes(img: Image.Image, save_fmt=None, **kwargs):
         return _.getvalue()
 
 
-def open_bytes_to_image(b: bytes, mode="r", formats=None):
+def open_bytes_to_image(b: bytes, mode="r"):
     with io.BytesIO() as _:
         _.write(b)
-        return Image.open(_, mode=mode, formats=formats)
+        return Image.open(_, mode=mode)
 
 
 class CLIArgs(CLIArgumentsList):
