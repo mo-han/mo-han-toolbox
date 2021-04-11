@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import re
 from argparse import *
 
 from . import typing, SingletonMetaClass, AttrName
@@ -141,6 +142,14 @@ class ArgumentParserRigger:
 
     def argument_group(self, *args, **kwargs):
         return self._deco_factory_add_sth('argument_group', *args, **kwargs)
+
+    @staticmethod
+    def make_option_name(dest_name):
+        return re.sub(r'[\W_]+', '-', dest_name)
+
+    @staticmethod
+    def make_dest_name(option_name):
+        return re.sub(r'\W+', '_', option_name)
 
     def option(self, short_name: str = None, long_name: str = None, **kwargs):
         opts = []

@@ -3,6 +3,7 @@
 
 from send2trash import send2trash
 
+import mylib.ex.ostk
 from mylib.ex import fstk, tui, fstk_lite as fstk
 from mylib.ez import *
 from mylib.ex.ostk import clipboard
@@ -159,7 +160,7 @@ def flat_dir(src, prefix, dry_run):
 
 def hentai_at_home_galleries_real_name(path_l):
     from mylib.sites.ehentai import parse_hath_dl_gallery_info
-    for p in path_l or clipboard.list_path():
+    for p in path_l or mylib.ex.ostk.list_path():
         try:
             info = parse_hath_dl_gallery_info(p)
             title = info['title']

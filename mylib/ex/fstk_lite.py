@@ -7,6 +7,7 @@ import itertools
 import json
 import urllib.parse
 import zipfile
+from enum import Enum
 
 from mylib.ex import text_lite, ostk
 from mylib.ez import *
@@ -338,3 +339,113 @@ def make_zipfile_from_dir(zip_path, src_dir, *, strip_src_dir=True, **zipfile_kw
     with zipfile.ZipFile(zip_path, 'w', **zipfile_kwargs) as zf:
         for file in src_dir_path.rglob('*'):
             zf.write(file, file.relative_to(src_dir_path if strip_src_dir else src_dir_path.parent))
+
+
+class FSErr(Exception):
+    pass
+
+
+class FileToDirErr(FSErr):
+    def __init__(self, src, dst):
+        self.src = src
+        self.dst = dst
+
+
+class DirToFileErr(FSErr):
+    def __init__(self, src, dst):
+        self.src = src
+        self.dst = dst
+
+
+class NotFileDirErr(FSErr):
+    pass
+
+
+class NotExistErr(FSErr):
+    pass
+
+
+class AlreadyExistErr(FSErr):
+    pass
+
+
+class OnExist(Enum):
+    ERROR = 'error'
+    OVERWRITE = 'overwrite'
+    RENAME = 'rename'
+
+
+def _shutil_move(src, dst):
+    try:
+        return shutil.move(src, dst)
+    except shutil.Error as e:
+        if e.args:
+            msg = e.args[0]
+            m = re.match(r"Destination path '(.+)' already exists", msg)
+            if m:
+                raise AlreadyExistErr(m.group(1))
+            else:
+                raise
+        else:
+            raise
+
+
+def get_available_counting_sub_name(target_path):
+    without_ext, extension = os.path.splitext(target_path)
+    dup_count = 1
+    while os.path.exists(target_path):
+        target_path = f'{without_ext} ({dup_count}){extension}'
+        dup_count += 1
+    else:
+        return target_path
+
+
+def move(src, dst, *, on_exist: OnExist = OnExist.OVERWRITE):
+    _move = shutil.move
+    _does_exist = os.path.exists
+    _is_dir = os.path.isdir
+    if not isinstance(on_exist, OnExist):
+        raise TypeError('on_exist', OnExist)
+    if not _does_exist(src):
+        raise NotExistErr(src)
+    if not _does_exist(dst):
+        return _move(src, dst)
+    if _is_dir(src):
+        if _is_dir(dst):
+            for dirname, sub_dirs, sub_files in os.walk(src):
+                dirname_relative_to_src = os.path.relpath(dirname, src)
+                os.makedirs(os.path.join(dst, dirname_relative_to_src), exist_ok=True)
+                for f in sub_files:
+                    sub_src = os.path.join(dirname, f)
+                    sub_dst = os.path.join(dst, dirname_relative_to_src, f)
+                    if not _does_exist(sub_dst):
+                        _move(sub_src, sub_dst)
+                        continue
+                    if _is_dir(sub_dst):
+                        if on_exist == OnExist.RENAME:
+                            _move(sub_src, get_available_counting_sub_name(sub_dst))
+                            continue
+                        if on_exist == OnExist.OVERWRITE:
+                            raise FileToDirErr(sub_src, sub_dst)
+                        if on_exist == OnExist.ERROR:
+                            raise AlreadyExistErr(sub_dst)
+                    if on_exist == OnExist.OVERWRITE:
+                        _move(sub_src, sub_dst)
+                        continue
+                    if on_exist == OnExist.RENAME:
+                        _move(sub_src, get_available_counting_sub_name(sub_dst))
+                        continue
+                    if on_exist == OnExist.ERROR:
+                        raise AlreadyExistErr(sub_dst)
+            shutil.rmtree(src)
+            return dst
+        raise DirToFileErr(src, dst)
+    if on_exist == OnExist.RENAME:
+        return _move(src, get_available_counting_sub_name(dst))
+    if _is_dir(dst):
+        raise FileToDirErr(src, dst)
+    if on_exist == OnExist.OVERWRITE:
+        return _move(src, dst)
+    if on_exist == OnExist.ERROR:
+        raise AlreadyExistErr(dst)
+    raise RuntimeError('unknown situation')
