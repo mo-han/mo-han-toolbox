@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 # encoding=utf8
-from . import text_lite
-from . import tricks_lite
-from .ez import *
+from mylib.ex import text_lite, tricks_lite
+from mylib.ez import *
 
 ATTENTION_DO_NO_USE_THIS = __name__
 

@@ -2,16 +2,12 @@
 # encoding=utf8
 import mimetypes
 import random
-import subprocess
 from math import log
 
 import ffmpeg
 import filetype
 
-from . import fstk
-from . import ostk
-from . import tricks
-from . import tui
+from .ex import fstk, tricks, tui, ostk
 from .__deprecated__ import fs_find_iter
 from .filename_tags import SuffixListFilenameTags
 from mylib.ez import *

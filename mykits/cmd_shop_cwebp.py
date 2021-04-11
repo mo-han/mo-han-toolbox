@@ -8,11 +8,11 @@ import filetype
 from humanize import naturaldelta
 from send2trash import send2trash
 
-from mylib import fstk
-from mylib import ostk
+import mylib.ex.ostk
+from mylib.ex import fstk, ostk
 from mylib.ez import *
 from mylib.ez import argparse
-from mylib.tui import LinePrinter
+from mylib.ex.tui import LinePrinter
 from mylib.wrapper import cwebp
 
 PIXELS_BASELINE = 1280 * 1920
@@ -102,7 +102,7 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
 @apr.map('src', recursive='recursive', clean='clean', cbz='cbz', workers='workers')
 def batch(src, recursive, clean, cbz, workers):
     if not src:
-        src = ostk.clipboard.list_path()
+        src = mylib.ex.ostk.list_path()
     ostk.ensure_sigint_signal()
     workers = workers or os.cpu_count() or 4
     cnt = Counter()

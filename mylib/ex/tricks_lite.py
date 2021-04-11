@@ -6,8 +6,8 @@ import hashlib
 import importlib.util
 import sqlite3
 
-from .ez import *
-from .ez import logging, deco_factory_copy_signature
+from mylib.ez import *
+from mylib.ez import logging, deco_factory_copy_signature
 
 USELESS_PLACEHOLDER_FOR_MODULE_TRICKS_LITE = __name__
 

@@ -2,6 +2,7 @@
 Table of Contents
 =================
 
+* [Wrapper](#wrapper)
 * [AttrName](#attrname)
 * [ArgumentParserRigger](#argumentparserrigger)
 * [SubscriptableFileIO](#subscriptablefileio)
@@ -16,6 +17,14 @@ Table of Contents
 * [PixivFanboxAPI](#pixivfanboxapi)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)
+
+
+#### Wrapper
+
+[mylib/wrapper](https://github.com/mo-han/mo-han-toolbox/tree/master/mylib/wrapper)
+
+- cwebp
+- tesseract-ocr
 
 
 #### AttrName
@@ -132,7 +141,7 @@ read/write file with slice
 
 ```python
 
-from mylib.ostk_lite import SubscriptableFileIO
+from mylib.ex.ostk_lite import SubscriptableFileIO
 with SubscriptableFileIO('filepath') as f:
     f[-10:] = b'123abc'
     print(f[123:456])

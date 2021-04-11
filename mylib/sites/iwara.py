@@ -4,7 +4,7 @@ from abc import ABCMeta
 
 import youtube_dl.extractor.iwara as ytdl_iwara
 
-from mylib.text_lite import regex_find
+from mylib.ex.text_lite import regex_find
 from mylib.web_client import get_html_element_tree
 
 

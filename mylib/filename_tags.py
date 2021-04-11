@@ -4,7 +4,7 @@ import os
 import re
 from abc import ABC
 
-from . import fstk
+from .ex import fstk
 
 
 class ListFilenameTags(ABC):

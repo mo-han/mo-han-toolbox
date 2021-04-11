@@ -1,36 +1,15 @@
 #!/usr/bin/env python3
-import shutil as shutil_
+import functools
+import shutil as patched_shutil
+from shutil import *
 
 from .__often_used_imports__ import *
 
 global_config = {'copy.buffer.size': 16 * 1024 * 1024}
 
 
-def _shutil_move_safe(src, dst, *, error_on_exist=True, overwrite_exist=False, conflict_count=0):
-    if error_on_exist:
-        if os.path.exists(dst):
-            raise FileExistsError(dst)
-        else:
-            return shutil_.move(src, dst)
-
-    if overwrite_exist:
-        return shutil_.move(src, dst)
-
-    if not os.path.exists(dst):
-        return shutil_.move(src, dst)
-
-    conflict_count += 1
-    trunk, ext = os.path.splitext(dst)
-    new_trunk = trunk + f' ({conflict_count})'
-    new_dst = new_trunk + ext
-    if os.path.exists(new_dst):
-        return _shutil_move_safe(src, dst, error_on_exist=error_on_exist, overwrite_exist=overwrite_exist,
-                                 conflict_count=conflict_count)
-    else:
-        return shutil_.move(src, new_dst)
-
-
-shutil_.move_safe = _shutil_move_safe
+def __refer_sth():
+    return copyfileobj
 
 
 def shutil_copy_file_obj_fast(src_fd, dst_fd, length: int = None):
@@ -47,7 +26,7 @@ def shutil_copy_file_obj_faster(src_fd, dst_fd, length: int = None):
     q_max = 2
     q = queue.Queue(maxsize=q_max)
     stop = threading.Event()
-    data_array = [0.0]
+    registers = [0.0]
 
     def read():
         t0 = time.perf_counter()
@@ -74,7 +53,7 @@ def shutil_copy_file_obj_faster(src_fd, dst_fd, length: int = None):
                 break
             t1 = time.perf_counter()
             td = t1 - t0
-            data_array[0] = td
+            registers[0] = td
             t0 = t1
             try:
                 buf = q.get()
@@ -93,7 +72,7 @@ def shutil_copy_file_obj_faster(src_fd, dst_fd, length: int = None):
     try:
         while 1:
             if t_write.is_alive():
-                t_write.join(data_array[0])
+                t_write.join(registers[0])
             else:
                 break
     except (KeyboardInterrupt, SystemExit):
@@ -101,4 +80,91 @@ def shutil_copy_file_obj_faster(src_fd, dst_fd, length: int = None):
         raise
 
 
-shutil_.copyfileobj = shutil_copy_file_obj_faster
+patched_shutil.copyfileobj = shutil_copy_file_obj_faster
+copy = patched_shutil.copy
+copy2 = patched_shutil.copy2
+
+
+class FilesystemOperationError(Exception):
+    pass
+
+
+class FileToDirectoryError(FilesystemOperationError):
+    def __init__(self, src, dst):
+        self.src = src
+        self.dst = dst
+
+
+class DirectoryToFileError(FilesystemOperationError):
+    def __init__(self, src, dst):
+        self.src = src
+        self.dst = dst
+
+
+class NeitherFileNorDirectoryError(FilesystemOperationError):
+    pass
+
+
+def dir_is_empty(dirname):
+    if not os.path.isdir(dirname):
+        raise NotADirectoryError(dirname)
+    return not bool(os.listdir(dirname))
+
+
+def move_loyally___alpha(src, dst, *,
+                         remove_empty_src_dir_handler=os.rmdir):
+    try:
+        if not os.path.exists(src):
+            raise FileNotFoundError(src)
+        elif os.path.isdir(src):
+            if not os.path.exists(dst):
+                r = patched_shutil.move(src, dst)
+            elif os.path.isfile(dst):
+                raise DirectoryToFileError(src, dst)
+            elif os.path.isdir(dst):
+                for sub in os.listdir(src):
+                    patched_shutil.move(os.path.join(src, sub), dst)
+                remove_empty_src_dir_handler(src)
+                r = dst
+            else:
+                raise NeitherFileNorDirectoryError(dst)
+        elif os.path.isfile(src):
+            if os.path.isdir(dst):
+                raise FileToDirectoryError(src, dst)
+            else:
+                r = patched_shutil.move(src, dst)
+        else:
+            raise NeitherFileNorDirectoryError(src)
+        return r
+    except Error as e:
+        if e.args:
+            msg = e.args[0]
+            m = re.match(r"Destination path '(.+)' already exists", msg)
+            if m:
+                raise FileExistsError(m.group(1))
+            else:
+                raise
+        else:
+            raise
+
+
+def move_safe___alpha(src, dst, *, error_on_exist=True, overwrite_exist=False, conflict_count=0,
+                      remove_empty_src_dir_handler=os.rmdir):
+    _move = functools.partial(move_loyally___alpha, remove_empty_src_dir_handler=remove_empty_src_dir_handler)
+    if error_on_exist:
+        if os.path.exists(dst):
+            raise FileExistsError(dst)
+        else:
+            return _move(src, dst)
+
+    if overwrite_exist or not os.path.exists(dst):
+        return _move(src, dst)
+
+    conflict_count += 1
+    filepath_without_ext, ext = os.path.splitext(dst)
+    new_dst = filepath_without_ext + f' ({conflict_count})' + ext
+    if os.path.exists(new_dst):
+        return move_safe___alpha(src, dst, error_on_exist=error_on_exist, overwrite_exist=overwrite_exist,
+                                 conflict_count=conflict_count)
+    else:
+        return _move(src, new_dst)

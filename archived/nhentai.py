@@ -5,7 +5,7 @@ import logging
 
 from mylib._misc import ExitCode
 from mylib.ez.logging import LOG_FMT_MESSAGE_ONLY
-from mylib.ostk_lite import ensure_sigint_signal
+from mylib.ex.ostk_lite import ensure_sigint_signal
 from archived.hentai import NHentaiKit
 
 if __name__ == '__main__':

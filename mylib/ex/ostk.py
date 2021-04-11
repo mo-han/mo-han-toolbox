@@ -10,7 +10,7 @@ from collections import defaultdict
 import psutil
 from filetype import filetype
 
-from .ez import *
+from mylib.ez import *
 
 if os.name == 'nt':
     from .ostk_nt import *

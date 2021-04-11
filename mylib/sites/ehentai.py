@@ -6,10 +6,10 @@ from collections import defaultdict
 
 import requests
 
-from mylib import fstk
+from mylib.ex import fstk
 from mylib.ez import *
 from mylib.ez import logging
-from mylib.tricks_lite import VoidDuck, is_hex
+from mylib.ex.tricks_lite import VoidDuck, is_hex
 from mylib.web_client import cookies_dict_from_netscape_file, get_html_element_tree
 
 EH_TITLE_REGEX_PATTERN = re.compile(

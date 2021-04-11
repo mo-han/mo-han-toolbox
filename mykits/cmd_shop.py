@@ -2,7 +2,7 @@
 
 import tabulate
 
-from mylib import fstk_lite
+from mylib.ex import fstk_lite
 from mylib.ez import *
 from mylib.ez import argparse
 

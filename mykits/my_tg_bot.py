@@ -10,12 +10,12 @@ from pprint import pformat
 from telegram.ext import MessageHandler, Filters, CallbackContext
 
 from mylib.cli import new_argument_parser
-from mylib.fstk import read_json_file, write_json_file, read_sqlite_dict_file
+from mylib.ex.fstk import read_json_file, write_json_file, read_sqlite_dict_file
 from mylib.ez.logging import get_logger
-from mylib.ostk import monitor_sub_process_tty_frozen, ProcessTTYFrozen
-from mylib.text_lite import decode_fallback_locale
+from mylib.ex.ostk import monitor_sub_process_tty_frozen, ProcessTTYFrozen
+from mylib.ex.text_lite import decode_fallback_locale
 from mylib.tg_bot import SimpleBot, deco_factory_bot_handler_method, CommandHandler, Update
-from mylib.tricks_lite import deco_factory_retry
+from mylib.ex.tricks_lite import deco_factory_retry
 
 mt = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(os.path.getmtime(os.path.realpath(__file__))))
 
@@ -23,13 +23,13 @@ mt = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(os.path.getmtime(os.path.
 @deco_factory_retry(retry_exceptions=ProcessTTYFrozen, max_retries=-1)
 def bldl_retry_frozen(*args: str):
     p = subprocess.Popen(['bldl.sh.cmd', *args], stdout=subprocess.PIPE)
-    return monitor_sub_process_tty_frozen(p, encoding='u8', timeout=15)
+    return monitor_sub_process_tty_frozen(p, encoding='u8', timeout=60)
 
 
 @deco_factory_retry(retry_exceptions=ProcessTTYFrozen, max_retries=-1)
 def ytdl_retry_frozen(*args: str):
     p = subprocess.Popen(['ytdl.sh.cmd', *args], stdout=subprocess.PIPE)
-    return monitor_sub_process_tty_frozen(p, encoding='u8', timeout=30)
+    return monitor_sub_process_tty_frozen(p, encoding='u8', timeout=60)
 
 
 def line2args(line: str):

@@ -8,11 +8,11 @@ import inspect
 import io
 import locale
 
-from . import typing as _typing
+from . import shutil
+from . import typing
 from .__often_used_imports__ import *
-from .shutil import shutil_ as shutil
 
-T = _typing
+T = typing
 
 
 def __refer_sth():
@@ -32,7 +32,7 @@ class AttrName(metaclass=SingletonMetaClass):
     def __setattr__(self, key, value):
         pass
 
-    def __getattr__(self, item):
+    def __getattr__(self, item: str) -> str:
         return item
 
 
@@ -172,3 +172,5 @@ def round_to(x, precision):
 
 def os_exit_force(*args, **kwargs):
     os._exit(*args, **kwargs)
+
+

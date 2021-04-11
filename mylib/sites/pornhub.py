@@ -4,7 +4,7 @@ from abc import ABCMeta
 
 import youtube_dl.extractor.pornhub as ytdl_pornhub
 
-from mylib.text import regex_find
+from mylib.ex.text import regex_find
 from mylib.web_client import get_html_element_tree
 
 

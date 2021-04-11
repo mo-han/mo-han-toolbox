@@ -8,9 +8,9 @@ from glob import glob
 from queue import Queue
 from typing import Callable, Generator
 
-from mylib import fstk
+from mylib.ex import fstk
 from mylib.ez import typing
-from mylib.ostk import Clipboard
+from mylib.ex.ostk import Clipboard
 
 
 def fs_find_iter(pattern: str or Callable = None, root: str = '.',
