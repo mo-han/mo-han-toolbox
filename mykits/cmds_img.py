@@ -3,6 +3,7 @@ from mylib.ez import argparse
 from mylib.ez import *
 from mylib.ex import fstk
 from mylib.ex import ostk
+from mylib.ez import logging
 
 apr = argparse.ArgumentParserRigger()
 an = apr.an
@@ -16,18 +17,23 @@ def main():
     apr.run()
 
 
-an.img = an.l = an.lang = None
+an.img = an.l = an.lang = an.v = an.verbose = None
 
 
 @apr.sub()
 @apr.arg(an.img, nargs='?')
 @apr.opt(an.l, an.lang, nargs='*')
-def ocr(image=None, lang=None):
+@apr.true(an.v, an.verbose)
+@apr.map(an.img, lang=an.lang, verbose=an.verbose)
+def ocr(image=None, lang=None, verbose=False):
     from PIL.ImageGrab import grabclipboard
     from mylib.wrapper.tesseract_ocr import TesseractOCRCLIWrapper
     import yaml
     config = yaml.safe_load(open(os.path.splitext(__file__)[0] + '.yml').read())[ocr.__name__]['tesseract']
     tess = TesseractOCRCLIWrapper(config['bin'])
+    if verbose:
+        tess.logger.setLevel('DEBUG')
+        logging.set_logger_format(tess.logger, '# %(message)s')
     lang = lang or config.get('lang')
     image = image or grabclipboard()
     if lang:

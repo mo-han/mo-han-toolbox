@@ -29,7 +29,7 @@ def get_logger(logger_name: str, level: str = 'INFO', fmt=LOG_FMT, date_fmt=LOG_
     return logger
 
 
-def set_logger_format(logger: Logger, fmt, date_fmt):
+def set_logger_format(logger: Logger, fmt=None, date_fmt=None):
     formatter = Formatter(fmt=fmt, datefmt=date_fmt)
     for h in logger.handlers:
         h.setFormatter(formatter)

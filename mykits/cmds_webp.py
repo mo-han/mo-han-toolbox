@@ -100,7 +100,7 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
 @apr.opt('k', 'workers', type=int, metavar='N')
 @apr.arg('src', nargs='*')
 @apr.map('src', recursive='recursive', clean='clean', cbz='cbz', workers='workers')
-def batch(src, recursive, clean, cbz, workers):
+def cwebp(src, recursive, clean, cbz, workers):
     if not src:
         src = mylib.ex.ostk.list_path()
     ostk.ensure_sigint_signal()
