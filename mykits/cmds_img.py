@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-from mylib.ez import argparse
-from mylib.ez import *
 from mylib.ex import fstk
 from mylib.ex import ostk
+from mylib.ez import *
+from mylib.ez import argparse
 from mylib.ez import logging
 
 apr = argparse.ArgumentParserRigger()

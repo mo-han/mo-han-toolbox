@@ -19,4 +19,4 @@ __enamlcache__
 pyface
 traitsui
 .ipynb_checkpoints/
-mykits/cmdshop_*.yml
+mykits/cmds_*.yml
