@@ -157,7 +157,7 @@ def merge_zip_files_func():
     args = rtd.args
     dry_run = args.dry_run
     auto_yes = args.yes
-    src_l = args.src or mylib.ex.ostk.clipboard.list_path()()
+    src_l = args.src or mylib.ex.ostk.clipboard.list_path()
     src_l = [s for s in src_l if is_zip_file(s)]
 
     if len(src_l) < 2:
@@ -233,7 +233,7 @@ def tag_filter_files_func():
     dry = args.dry_run
     rm = defaultdict(set)
     kp = defaultdict(set)
-    for f in fstk.files_from_iter(args.src or mylib.ex.ostk.clipboard.list_path()(), recursive=False):
+    for f in fstk.files_from_iter(args.src or mylib.ex.ostk.clipboard.list_path(), recursive=False):
         ft = SuffixListFilenameTags(f)
         ext = ft.extension
         prefix = ft.prefix
@@ -271,7 +271,7 @@ def catalog_files_by_year_func():
     args = rtd.args
     suffix_l = args.suffix or ['']
     dry_run = args.dry_run
-    files = (p for p in fstk.files_from_iter(args.src or mylib.ex.ostk.clipboard.list_path()()) if any(map(p.endswith, suffix_l)))
+    files = (p for p in fstk.files_from_iter(args.src or mylib.ex.ostk.clipboard.list_path()) if any(map(p.endswith, suffix_l)))
     for f in files:
         dirname, basename = os.path.split(f)
         year = re.findall(r'(\d{4})-\d{2}-\d{2}', basename)
@@ -352,7 +352,7 @@ class FlatDir(HasParser):
         args = rtd.args
         prefix = args.prefix
         dry_run = args.dry_run
-        src = args.src or mylib.ex.ostk.clipboard.list_path()()
+        src = args.src or mylib.ex.ostk.clipboard.list_path()
         # print(prefix, dry_run, src)
         flat_dir(src, prefix, dry_run)
 
@@ -372,7 +372,7 @@ class MoveIntoDir(HasParser):
     def run(cls):
         from mylib.tools.mykit_parts import move_into_dir
         args = rtd.args
-        src = args.src or mylib.ex.ostk.clipboard.list_path()()
+        src = args.src or mylib.ex.ostk.clipboard.list_path()
         dst = args.dst
         alias = args.alias
         dry_run = args.dry_run
@@ -480,7 +480,7 @@ def ffmpeg_img2vid_func():
     if os.path.isdir(os.path.dirname(images)):
         images_l = [images]
     else:
-        images_l = [os.path.join(folder, images) for folder in mylib.ex.ostk.clipboard.list_path()() if os.path.isdir(folder)]
+        images_l = [os.path.join(folder, images) for folder in mylib.ex.ostk.clipboard.list_path() if os.path.isdir(folder)]
     for i in images_l:
         if output in ('mp4', 'webm'):
             o = f'{os.path.realpath(os.path.dirname(i))}.{output}'
@@ -547,7 +547,7 @@ def ffprobe_func():
     file = rtd.args.file
     ss = rtd.args.select_streams
     if not file:
-        file = mylib.ex.ostk.clipboard.list_path()()[0]
+        file = mylib.ex.ostk.clipboard.list_path()[0]
     if ss:
         pprint(probe(file, select_streams=ss))
     else:
@@ -697,7 +697,7 @@ def run_from_lines_func():
         cmd_fmt += ' "{line}"'
     print('>', cmd_fmt, file=sys.stderr)
     if source == ':clipboard.path':
-        lines = mylib.ex.ostk.clipboard.list_path()()
+        lines = mylib.ex.ostk.clipboard.list_path()
     elif source == ':clipboard':
         lines = str(clipboard.get()).splitlines()
     elif source:
@@ -799,7 +799,7 @@ clipboard_findurl.add_argument('pattern', help='URL pattern, or website name')
 
 def clipboard_rename_func():
     from mylib.gui_old import rename_dialog
-    for f in mylib.ex.ostk.clipboard.list_path()():
+    for f in mylib.ex.ostk.clipboard.list_path():
         rename_dialog(f)
 
 
@@ -922,7 +922,7 @@ def view_similar_images():
         'trans': args.transpose,
         'dryrun': args.dry_run,
     }
-    dir_l = (p for p in (args.dir or mylib.ex.ostk.clipboard.list_path()()) if os.path.isdir(p))
+    dir_l = (p for p in (args.dir or mylib.ex.ostk.clipboard.list_path()) if os.path.isdir(p))
     if dir_l:
         for d in dir_l:
             with ctx_pushd(d):
@@ -952,7 +952,7 @@ img_sim_view.add_argument(
 def move_ehviewer_images():
     from mylib.sites.ehentai import ehviewer_images_catalog
     args = rtd.args
-    ehviewer_images_catalog(args.src or mylib.ex.ostk.clipboard.list_path()()[0],
+    ehviewer_images_catalog(args.src or mylib.ex.ostk.clipboard.list_path()[0],
                             dry_run=args.dry_run, db_json_path=args.db_json or 'ehdb.json')
 
 

@@ -67,13 +67,13 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
     try:
         with open(image_fp, 'rb') as fd:
             image_file_bytes = fd.read()
-        for result in cwebp.cwebp_adaptive_iter___alpha(
-                image_file_bytes, max_size=max_size, max_compress=MAX_COMPRESS,
-                max_q=MAX_Q, min_q=MIN_Q, min_scale=min_scale):
+        cv_gen = cwebp.cwebp_adaptive_iter___alpha(image_file_bytes, max_size=max_size, max_compress=MAX_COMPRESS,
+                                                   max_q=MAX_Q, min_q=MIN_Q, min_scale=min_scale)
+        for result in cv_gen:
             d = cwebp.check_cwebp_subprocess_result(result)
             d_dst = d['dst']
             print(f"* ({d_dst['width']}x{d_dst['height']}, q={d_dst.get('q', '?')}, scale={d_dst.get('scale', 1)}, "
-                  f"size={d_dst['size']}, compress={d_dst['compress']}, psnr={d_dst['psnr']['all']}) <- {image_fp_rel}")
+                  f"psnr={d_dst['psnr']['all']}, size={d_dst['size']}, compress={d_dst['compress']}) <- {image_fp_rel}")
         with open(webp_fp, 'wb') as f:
             f.write(d['out'])
     except cwebp.SkipOverException as e:
@@ -93,14 +93,14 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
         os_exit_force(1)
 
 
-@apr.sub(apr.rename_factory_replace_underscore())
+@apr.sub(apr.rename_factory_replace_underscore(), aliases=['auto.cvt'])
 @apr.true('r', 'recursive')
 @apr.true('c', 'clean')
 @apr.true('z', 'cbz')
 @apr.opt('k', 'workers', type=int, metavar='N')
 @apr.arg('src', nargs='*')
 @apr.map('src', recursive='recursive', clean='clean', cbz='cbz', workers='workers')
-def cwebp(src, recursive, clean, cbz, workers):
+def auto_convert(src, recursive, clean, cbz, workers):
     if not src:
         src = mylib.ex.ostk.clipboard.list_path()
     ostk.ensure_sigint_signal()

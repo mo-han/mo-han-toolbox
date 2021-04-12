@@ -160,7 +160,7 @@ def flat_dir(src, prefix, dry_run):
 
 def hentai_at_home_galleries_real_name(path_l):
     from mylib.sites.ehentai import parse_hath_dl_gallery_info
-    for p in path_l or mylib.ex.ostk.clipboard.list_path()():
+    for p in path_l or mylib.ex.ostk.clipboard.list_path():
         try:
             info = parse_hath_dl_gallery_info(p)
             title = info['title']
@@ -172,7 +172,7 @@ def hentai_at_home_galleries_real_name(path_l):
             elif len(group) == 1:
                 folder = fstk.make_path(folder, f'[{group[0]}]', )
             else:
-                folder = fstk.make_path(folder, '[(various)]', )
+                folder = fstk.make_path(folder, '[...]', )
             os.makedirs(folder, exist_ok=True)
             try:
                 tail = re.search(r' \[\d+(-\d{3,4}x)?]$', name).group(0)
