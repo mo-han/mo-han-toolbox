@@ -12,6 +12,20 @@ class TesseractOCRCLIWrapper:
         self.cmd = CLIArgumentsList()
         self.image_bytes = None
         self.logger = logging.get_logger(f'{__name__}.{self.__class__.__name__}')
+        self.set_all_languages()
+
+    def get_all_languages(self):
+        lang = set()
+        for fn in os.listdir(os.path.join(os.path.dirname(self.exec), 'tessdata')):
+            m = re.match(r'(.+)\.(traineddata|user-patterns|user-words)$', fn)
+            if m:
+                lang.add(m.group(1))
+        lang.remove('osd')
+        return lang
+
+    def set_all_languages(self):
+        self.set_language(*self.get_all_languages())
+        return self
 
     @property
     def version(self):
@@ -24,9 +38,10 @@ class TesseractOCRCLIWrapper:
 
     def _init_cmd(self, input_file='stdin'):
         self.cmd.clear()
-        self.cmd.add(self.exec, input_file, 'stdout', *self.lang_args)
+        self.cmd.add(self.exec, input_file, 'stdout')
 
     def _run_cmd(self):
+        self.cmd.add(*self.lang_args)
         self.logger.debug(self.cmd)
         r = subprocess.run(self.cmd, input=self.image_bytes, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self.stdout = r.stdout
@@ -39,12 +54,17 @@ class TesseractOCRCLIWrapper:
 
     def set_image_bytes(self, image_bytes):
         self.image_bytes = image_bytes
+        # print('image_bytes', len(image_bytes))
         self._init_cmd()
         return self
 
-    def set_image_object(self, image: Image.Image):
+    def set_image_object(self, image: Image.Image, gray=False):
+        """PIL Image object"""
         with io.BytesIO() as bytes_io:
-            image.save(bytes_io, format=image.format or 'PNG')
+            if gray:
+                image = image.convert('LA')
+            # tesseract seem not support DIB, convert to PNG
+            image.save(bytes_io, format={'DIB': 'PNG'}.get(image.format, image.format) or 'PNG')
             self.set_image_bytes(bytes_io.getvalue())
         return self
 
@@ -52,6 +72,18 @@ class TesseractOCRCLIWrapper:
         """for the param `mode`, refer to `Image.fromarray`"""
         self.set_image_object(Image.fromarray(nd_array, mode=mode))
         return self
+
+    def set_image(self, image, **kwargs):
+        if isinstance(image, Image.Image):
+            return self.set_image_object(image, **kwargs)
+        if isinstance(image, bytes):
+            return self.set_image_bytes(image)
+        if isinstance(image, str):
+            return self.set_image_file(image)
+        try:
+            return self.set_image_array(image)
+        except AttributeError:
+            raise TypeError('image', (str, bytes, Image.Image, 'nd-array'))
 
     def get_ocr_tsv_to_json(self, *, skip_non_text: bool = True, confidence_threshold: float = None, **kwargs):
         cells = self.get_ocr_tsv(**kwargs)
@@ -96,3 +128,8 @@ class TesseractOCRCLIWrapper:
         if lang:
             self.lang_args.add(l='+'.join(lang))
         return self
+
+    img = set_image
+    lang = set_language
+    txt = get_ocr_text
+    json = get_ocr_tsv_to_json

@@ -18,6 +18,10 @@ class Clipboard(metaclass=SingletonMetaClass):
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
+    def clear(self):
+        self.set('')
+        return self
+
     def set(self, data):
         self._cb.copy(data)
 

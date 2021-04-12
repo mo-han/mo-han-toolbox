@@ -12,13 +12,14 @@ logger = logging.get_logger(__name__)
 
 def save_image_to_bytes(img: Image.Image, save_fmt=None, **kwargs):
     with io.BytesIO() as _:
-        img.save(_, format=save_fmt, **kwargs)
+        img.save(_, format=save_fmt or img.format, **kwargs)
         return _.getvalue()
 
 
 def open_bytes_to_image(b: bytes, mode="r"):
     with io.BytesIO() as _:
         _.write(b)
+        _.seek(0)
         return Image.open(_, mode=mode)
 
 

@@ -16,7 +16,7 @@ meta_apr = argparse.ArgumentParserRigger()
 def find_module_path():
     r = {}
     with fstk_lite.ctx_pushd(__dirname__):
-        for f in next(os.walk('.'))[-1]:
+        for f in glob.glob(__filename_without_extension__ + '*.py*'):
             match = re.match(rf'({__filename_without_extension__})_([^.-]+)', f)
             if not match:
                 continue

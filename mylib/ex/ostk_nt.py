@@ -73,7 +73,8 @@ class Clipboard(metaclass=SingletonMetaClass):
 
     @tricks_lite.deco_with_self_context
     def clear(self):
-        return self._wcb.EmptyClipboard()
+        self._wcb.EmptyClipboard()
+        return self
 
     @tricks_lite.deco_with_self_context
     def set(self, data, cf=_wcb.CF_UNICODETEXT):
@@ -99,8 +100,7 @@ class Clipboard(metaclass=SingletonMetaClass):
             if re.match(r'data:image/\w+;base64, [A-Za-z0-9+/=]+', image):
                 raise NotImplementedError('base64 image data')
             else:
-                from .shards.image import open_pil_image
-                i = open_pil_image(image)
+                i = PIL.Image.open(image)
                 with io.BytesIO() as o:
                     i.convert('RGB').save(o, 'BMP')
                     data = o.getvalue()[14:]  # https://stackoverflow.com/questions/34322132/copy-image-to-clipboard
