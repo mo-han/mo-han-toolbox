@@ -82,8 +82,6 @@ def move(dst: str, src: T.Union[T.List[str]] = None, *, in_dst: bool = False, in
 
 
 def main():
-    if len(sys.argv) < 2:
-        sys.argv.append('-h')
     apr.parse()
     apr.run()
 

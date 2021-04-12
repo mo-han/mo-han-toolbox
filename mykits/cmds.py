@@ -45,14 +45,18 @@ an.sub_cmd = an.args = None
 @sub_apr.root()
 @sub_apr.arg(an.sub_cmd, nargs='?')
 @sub_apr.arg(an.args, nargs='*')
+@sub_apr.true(an.l, an.list, help='list all sub-cmd modules')
 @sub_apr.map(cmd_name=an.sub_cmd)
 def goto_sub_cmd_module(cmd_name=None):
     if cmd_name:
         module_paths_d = find_module_path()
         if cmd_name in module_paths_d:
-            argv = sys.argv
-            sys.argv = [f'{__filename_without_extension__}{__file_extension__} {cmd_name}', *argv[2:]]
             module_path = module_paths_d[cmd_name]
+            argv = sys.argv
+            argv = [f'{__filename_without_extension__}{__file_extension__} {cmd_name}', *argv[2:]]
+            if len(argv) < 2:
+                argv.append('-h')
+            sys.argv = argv
             module = python_module_from_filepath('module', module_path)
             module.main()
         else:
@@ -66,7 +70,7 @@ def main():
     argv = sys.argv
     if len(argv) == 1:
         argv.append('-h')
-    if len(argv) > 1 and argv[1] not in meta_apr.dashes:
+    if len(argv) > 1 and argv[1] not in meta_apr.option_names:
         goto_sub_cmd_module(argv[1])
     else:
         sub_apr.parse(catch_unknown_args=True)

@@ -10,9 +10,6 @@ an = apr.an
 
 
 def main():
-    argv = sys.argv
-    if len(argv) < 2:
-        argv.append('-h')
     apr.parse()
     apr.run()
 

@@ -102,7 +102,7 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
 @apr.map('src', recursive='recursive', clean='clean', cbz='cbz', workers='workers')
 def cwebp(src, recursive, clean, cbz, workers):
     if not src:
-        src = mylib.ex.ostk.list_path()
+        src = mylib.ex.ostk.clipboard.list_path()
     ostk.ensure_sigint_signal()
     workers = workers or os.cpu_count() or 4
     cnt = Counter()
