@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
 # encoding=utf8
-import codecs
 import getpass
 import platform
 import shlex
 import tempfile
 from collections import defaultdict
 
-import psutil
 from filetype import filetype
 
-import mylib.__deprecated__
 from mylib.ez import *
 
 if os.name == 'nt':
@@ -112,75 +109,6 @@ def filter_filename_tail(filepath_list, valid_tails, filter_tails, filter_extens
 def filetype_is(filepath, keyword):
     guess = filetype.guess(filepath)
     return guess and keyword in guess.mime
-
-
-class ProcessTTYFrozen(TimeoutError):
-    pass
-
-
-def monitor_sub_process_tty_frozen(p: subprocess.Popen, timeout=30, wait=1,
-                                   encoding=None, ignore_decode_error=True,
-                                   ):
-    def decode(inc_decoder: codecs.IncrementalDecoder, new_bytes: bytes) -> str or None:
-        chars = inc_decoder.decode(new_bytes)
-        if chars:
-            inc_decoder.reset()
-            return chars
-
-    if not encoding:
-        encoding = locale.getdefaultlocale()[1]
-    _out = io.BytesIO()
-    _err = io.BytesIO()
-    monitoring = []
-    monitor_stdout = bool(p.stdout)
-    monitor_stderr = bool(p.stderr)
-    nb_caller = mylib.__deprecated__.NonBlockingCaller
-    if monitor_stdout:
-        monitoring.append(
-            (nb_caller(p.stdout.read, 1), codecs.getincrementaldecoder(encoding)(), sys.stdout, _out))
-    if monitor_stderr:
-        monitoring.append(
-            (nb_caller(p.stderr.read, 1), codecs.getincrementaldecoder(encoding)(), sys.stderr, _err))
-    t0 = time.perf_counter()
-    while 1:
-        if time.perf_counter() - t0 > timeout:
-            for p in psutil.Process(p.pid).children(recursive=True):
-                p.kill()
-            p.kill()
-            _out.seek(0)
-            _err.seek(0)
-            raise ProcessTTYFrozen(p, _out, _err)
-        for nb_reader, decoder, output, bytes_io in monitoring:
-            decoder: codecs.IncrementalDecoder
-            try:
-                b = nb_reader.get(wait)
-                if b:
-                    t0 = time.perf_counter()
-                    bytes_io.write(b)
-                    nb_reader.run()
-                    if output:
-                        try:
-                            s = decode(decoder, b)
-                            if s:
-                                decoder.reset()
-                                output.write(s)
-                        except UnicodeDecodeError:
-                            if ignore_decode_error:
-                                decoder.reset()
-                                continue
-                            else:
-                                raise
-                else:
-                    r = p.poll()
-                    if r is not None:
-                        _out.seek(0)
-                        _err.seek(0)
-                        return p, _out, _err
-                    sleep(wait)
-            except nb_reader.StillRunning:
-                pass
-            except Exception as e:
-                raise e
 
 
 def set_console_title___try(title: str):

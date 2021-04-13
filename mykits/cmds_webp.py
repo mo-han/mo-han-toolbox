@@ -103,8 +103,10 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
 def auto_convert(src, recursive, clean, cbz, workers):
     if not src:
         src = mylib.ex.ostk.clipboard.list_path()
+    else:
+        src = list_glob_path(src)
     ostk.ensure_sigint_signal()
-    workers = workers or os.cpu_count() or 4
+    workers = workers or os.cpu_count() - 1 or os.cpu_count()
     cnt = Counter()
     t0 = time.time()
     print(f'# workers={workers}')

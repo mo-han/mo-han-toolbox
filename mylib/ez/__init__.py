@@ -193,3 +193,14 @@ class ExceptionWithKwargs(Exception):
 
     def __repr__(self):
         return f'{self.__class__.__name__}{self}'
+
+
+def list_glob_path(x):
+    if isinstance(x, str) or not isinstance(x, T.Iterable):
+        return glob.glob(x)
+    if isinstance(x, T.Iterable):
+        r = []
+        for xx in x:
+            r.extend(glob.glob(xx))
+        return r
+    raise TypeError('x')

@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 # encoding=utf8
 import ast
+import codecs
 import collections
 import hashlib
 import importlib.util
 import sqlite3
 
+import psutil
+
 from mylib.ez import *
-from mylib.ez import logging, deco_factory_copy_signature
+from mylib.ez import logging, deco_factory_copy_signature, ExceptionWithKwargs, T, thread_factory
 
 USELESS_PLACEHOLDER_FOR_MODULE_TRICKS_LITE = __name__
 
@@ -591,3 +594,121 @@ def seq_call_return(tasks: T.Iterable[dict], common_exception=Exception):
             pass
     if not ok and e:
         raise e
+
+
+def monitor_sub_process_tty_frozen(p: subprocess.Popen, timeout=30, wait=1,
+                                   encoding=None, ignore_decode_error=True,
+                                   ):
+    def decode(inc_decoder: codecs.IncrementalDecoder, new_bytes: bytes) -> str or None:
+        chars = inc_decoder.decode(new_bytes)
+        if chars:
+            inc_decoder.reset()
+            return chars
+
+    if not encoding:
+        encoding = locale.getdefaultlocale()[1]
+    _out = io.BytesIO()
+    _err = io.BytesIO()
+    monitoring = []
+    monitor_stdout = bool(p.stdout)
+    monitor_stderr = bool(p.stderr)
+    nb_caller = NonBlockingCaller
+    if monitor_stdout:
+        monitoring.append(
+            (nb_caller(p.stdout.read, 1), codecs.getincrementaldecoder(encoding)(), sys.stdout, _out))
+    if monitor_stderr:
+        monitoring.append(
+            (nb_caller(p.stderr.read, 1), codecs.getincrementaldecoder(encoding)(), sys.stderr, _err))
+    t0 = time.perf_counter()
+    while 1:
+        if time.perf_counter() - t0 > timeout:
+            for p in psutil.Process(p.pid).children(recursive=True):
+                p.kill()
+            p.kill()
+            _out.seek(0)
+            _err.seek(0)
+            raise ProcessTTYFrozen(p, _out, _err)
+        for nb_reader, decoder, output, bytes_io in monitoring:
+            decoder: codecs.IncrementalDecoder
+            try:
+                b = nb_reader.get(wait)
+                if b:
+                    t0 = time.perf_counter()
+                    bytes_io.write(b)
+                    nb_reader.run()
+                    if output:
+                        try:
+                            s = decode(decoder, b)
+                            if s:
+                                decoder.reset()
+                                output.write(s)
+                        except UnicodeDecodeError:
+                            if ignore_decode_error:
+                                decoder.reset()
+                                continue
+                            else:
+                                raise
+                else:
+                    r = p.poll()
+                    if r is not None:
+                        _out.seek(0)
+                        _err.seek(0)
+                        return p, _out, _err
+                    sleep(wait)
+            except nb_reader.StillRunning:
+                pass
+            except Exception as e:
+                raise e
+
+
+class NonBlockingCaller:
+    class StillRunning(ExceptionWithKwargs):
+        pass
+
+    class Stopped(Exception):
+        pass
+
+    def __init__(self, target: T.Callable, *args, **kwargs):
+        self.triple = target, args, kwargs
+        self._running = False
+        self.run()
+
+    @property
+    def running(self):
+        return self._running
+
+    def thread(self):
+        try:
+            callee, args, kwargs = self.triple
+            self._result_queue.put(callee(*args, **kwargs), block=False)
+        except Exception as e:
+            self._exception_queue.put(e, block=False)
+        finally:
+            self._running = False
+
+    def run(self):
+        if self._running:
+            return False
+        self._running = True
+        self._result_queue = queue.Queue(maxsize=1)
+        self._exception_queue = queue.Queue(maxsize=1)
+        self._thread = thread_factory(daemon=True)(self.thread)
+        self._thread.start()
+        return True
+
+    def get(self, wait):
+        """return target result, or raise target exception, or raise NonBlockingCaller.StillRunning"""
+        rq = self._result_queue
+        eq = self._exception_queue
+        if rq.qsize():
+            return rq.get(block=False)
+        elif eq.qsize():
+            raise rq.get(block=False)
+        else:
+            sleep(wait)
+            target, args, kwargs = self.triple
+            raise self.StillRunning(target, *args, **kwargs)
+
+
+class ProcessTTYFrozen(TimeoutError):
+    pass
