@@ -78,7 +78,7 @@ def move(dst: str, src: T.Union[T.List[str]] = None, *, in_dst: bool = False, in
             the_dst = fstk.make_path(dst, the_src_bn) if in_dst_dir else dst
             fstk.move(the_src, the_dst, on_exist=on_exist)
             if verbose:
-                print(f'{the_src} <- {the_dst}')
+                print(f'{the_dst} <- {the_src}')
 
 
 def main():
