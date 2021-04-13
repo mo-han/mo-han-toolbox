@@ -2,14 +2,17 @@
 # encoding=utf8
 import fnmatch
 import os
+import queue
 import re
 import shutil
+import threading
 from glob import glob
 from queue import Queue
+from time import sleep
 from typing import Callable, Generator
 
 from mylib.ex import fstk
-from mylib.ez import typing
+from mylib.ez import typing, ExceptionWithKwargs, T, thread_factory
 from mylib.ex.ostk import Clipboard
 
 
@@ -258,3 +261,69 @@ def list_dirs(src: str or typing.Iterable or Clipboard, recursive=False, progres
         return list_dirs(src.list_path(exist_only=True), **common_kwargs)
     else:
         raise TypeError('invalid source', src)
+
+
+class NonBlockingCaller:
+    class StillRunning(ExceptionWithKwargs):
+        pass
+
+    class Stopped(Exception):
+        pass
+
+    def __init__(self, target: T.Callable, *args, **kwargs):
+        self.triple = target, args, kwargs
+        self._running = False
+        self.run()
+
+    @property
+    def running(self):
+        return self._running
+
+    def thread(self):
+        try:
+            callee, args, kwargs = self.triple
+            self._result_queue.put(callee(*args, **kwargs), block=False)
+        except Exception as e:
+            self._exception_queue.put(e, block=False)
+        finally:
+            self._running = False
+
+    def run(self):
+        if self._running:
+            return False
+        self._running = True
+        self._result_queue = queue.Queue(maxsize=1)
+        self._exception_queue = queue.Queue(maxsize=1)
+        self._thread = thread_factory(daemon=True)(self.thread)
+        self._thread.start()
+        return True
+
+    def get(self, wait):
+        """return target result, or raise target exception, or raise NonBlockingCaller.StillRunning"""
+        rq = self._result_queue
+        eq = self._exception_queue
+        if rq.qsize():
+            return rq.get(block=False)
+        elif eq.qsize():
+            raise rq.get(block=False)
+        else:
+            sleep(wait)
+            target, args, kwargs = self.triple
+            raise self.StillRunning(target, *args, **kwargs)
+
+
+def threading_call(target: T.Callable, *args, **kwargs):
+    t = threading.Thread(target=target, args=args, kwargs=kwargs)
+    t.start()
+
+
+def threading_call_factory(delay: float or int = None):
+    def wrapped_threading_call(target: T.Callable, *args, **kwargs):
+        def wrapped_target(*_args, **_kwargs):
+            if delay is not None:
+                sleep(delay)
+            return target(*_args, **_kwargs)
+
+        threading_call(wrapped_target, *args, **kwargs)
+
+    return wrapped_threading_call

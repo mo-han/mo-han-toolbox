@@ -19,7 +19,7 @@ from mylib.ex.fstk import write_sqlite_dict_file, read_sqlite_dict_file
 from mylib.ex.ostk import HOSTNAME, OSNAME, USERNAME
 from mylib.ex.text import split_by_length_or_newline
 from mylib.ex.tricks import deep_setattr, walk_obj_iter, is_picklable_with_dill_trace
-from .ez import python_module_from_modified_source_code
+from .ez import python_module_from_source_code
 
 
 class BotPlaceholder:
@@ -33,7 +33,7 @@ def modify_telegram_ext_commandhandler(s: str) -> str:
     return s.replace('args = message.text.split()[1:]', 'args = self._get_args(message)')
 
 
-telegram_ext_commandhandler_modified = python_module_from_modified_source_code('telegram.ext.commandhandler', modify_telegram_ext_commandhandler)
+telegram_ext_commandhandler_modified = python_module_from_source_code('telegram.ext.commandhandler', modify_telegram_ext_commandhandler)
 
 
 class CommandHandler(telegram_ext_commandhandler_modified.CommandHandler):

@@ -10,6 +10,7 @@ from collections import defaultdict
 import psutil
 from filetype import filetype
 
+import mylib.__deprecated__
 from mylib.ez import *
 
 if os.name == 'nt':
@@ -133,7 +134,7 @@ def monitor_sub_process_tty_frozen(p: subprocess.Popen, timeout=30, wait=1,
     monitoring = []
     monitor_stdout = bool(p.stdout)
     monitor_stderr = bool(p.stderr)
-    nb_caller = tricks_lite.NonBlockingCaller
+    nb_caller = mylib.__deprecated__.NonBlockingCaller
     if monitor_stdout:
         monitoring.append(
             (nb_caller(p.stdout.read, 1), codecs.getincrementaldecoder(encoding)(), sys.stdout, _out))

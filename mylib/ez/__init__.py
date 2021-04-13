@@ -125,24 +125,26 @@ def get_os_default_encoding():
     return locale.getdefaultlocale()[1]
 
 
-def python_module_from_modified_source_code(
-        module_path: str, new_source_code: str or T.Callable[[str], str], package_path: str = None,
-        *, output: bool = False, output_file: str = 'tmp.py'):
+def python_module_from_source_code(
+        module_path: str, code_source: str or T.Callable[[str], str], package_path: str = None,
+        *, output_file: str = None):
     # How to modify imported source code on-the-fly?
     #     https://stackoverflow.com/a/41863728/7966259  (answered by Martin Valgur)
     # Modules and Packages: Live and Let Die!  (by David Beazley)
     #     http://www.dabeaz.com/modulepackage/ModulePackage.pdf
     #     https://www.youtube.com/watch?v=0oTh1CXRaQ0
     spec = importlib.util.find_spec(module_path, package_path)
-    if isinstance(new_source_code, str):
-        source = new_source_code
+    if isinstance(code_source, str):
+        source_code = code_source
+    elif isinstance(code_source, T.Callable):
+        source_code = code_source(spec.loader.get_source(module_path))
     else:
-        source = new_source_code(spec.loader.get_source(module_path))
-    if output:
+        raise TypeError('code_source', (str, T.Callable[[str], str]))
+    if output_file:
         with open(output_file, 'w') as f:
-            f.write(source)
+            f.write(source_code)
     module = importlib.util.module_from_spec(spec)
-    code_obj = compile(source, module.__spec__.origin, 'exec')
+    code_obj = compile(source_code, module.__spec__.origin, 'exec')
     exec(code_obj, module.__dict__)
     sys.modules[module_path] = module
     return module
@@ -174,3 +176,20 @@ def os_exit_force(*args, **kwargs):
     os._exit(*args, **kwargs)
 
 
+def thread_factory(group=None, name=None, daemon=None):
+    def new_thread(target: T.Callable, *args, **kwargs):
+        return threading.Thread(group=group, target=target, name=name, args=args, kwargs=kwargs, daemon=daemon)
+
+    return new_thread
+
+
+class ExceptionWithKwargs(Exception):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args)
+        self.kwargs = kwargs
+
+    def __str__(self):
+        return f"({', '.join([*[str(a) for a in self.args], *[f'{k}={v}' for k, v in self.kwargs.items()]])})"
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}{self}'

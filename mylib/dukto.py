@@ -7,7 +7,7 @@ import ndrop.shell
 
 from mylib.ex.ostk import clipboard
 from mylib.ex.fstk import ensure_open_file
-from .ez import python_module_from_modified_source_code
+from .ez import python_module_from_source_code
 from mylib.ex.tricks_lite import Attreebute
 
 config_at = Attreebute()
@@ -106,7 +106,7 @@ def get_system_symbol(system):
     return symbols.get(system.lower(), system)
 
 
-ndrop.netdrop.dukto = python_module_from_modified_source_code('ndrop.dukto', code_modify_ndrop_dukto)
+ndrop.netdrop.dukto = python_module_from_source_code('ndrop.dukto', code_modify_ndrop_dukto)
 ndrop.netdrop.dukto.echo_after_recv = echo_after_recv
 ndrop.netdrop.dukto.get_system_symbol = ndrop.netdrop.nitroshare.get_system_symbol = get_system_symbol
 ndrop.__main__.NetDropServer = NetDropServerX
