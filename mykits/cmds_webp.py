@@ -130,11 +130,13 @@ def auto_convert(src, recursive, clean, cbz, workers):
             if cbz:
                 if os.path.isdir(s):
                     print('# zip folder into cbz file')
-                    dirs_containing_webp = []
+                    dirs_with_image = []
                     for dp, sub_dirs, files in os.walk(s):
-                        if any([f.endswith('.webp') for f in files]):
-                            dirs_containing_webp.append(dp)
-                    for dp in dirs_containing_webp:
+                        for f in files:
+                            if re.match(r'.+\.(webp|jpg|jpeg|png)', f):
+                                dirs_with_image.append(dp)
+                                break
+                    for dp in dirs_with_image:
                         cbz_fp = dp + '.cbz'
                         try:
                             fstk.make_zipfile_from_dir(cbz_fp, dp)
