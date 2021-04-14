@@ -4,7 +4,7 @@ from abc import ABC
 from mylib.ez import *
 
 
-class FilenameTags(ABC):
+class FilenameTagsABC(ABC):
     def __init__(self):
         self.tags_set = set()
         self.tags_dict = dict()
@@ -32,19 +32,19 @@ class FilenameTags(ABC):
                 else:
                     return str(self.tags_dict.get(k)) == str(v)
 
-    def get_path(self):
+    def tagged_path(self):
         ...
 
     @property
     def path(self):
-        return self.get_path()
+        return self.tagged_path()
 
-    def get_untagged_path(self):
+    def untagged_path(self):
         ...
 
     @property
     def no_tag(self):
-        return self.get_untagged_path()
+        return self.untagged_path()
 
     def __repr__(self):
         return f'{self.__class__.__name__}(tags={self.tags}, filename={self.path})'
@@ -55,13 +55,13 @@ class FilenameTags(ABC):
         self.tags_set.clear()
         return self
 
-    def tag(self, *tags, **kw_tags):
+    def tag(self, *tags: str, **kw_tags: str):
         """add tag(s)"""
         self.tags_set.update(tags)
         self.tags_dict.update(kw_tags)
         return self
 
-    def untag(self, *tags):
+    def untag(self, *tags: str):
         """remove tag(s)"""
         self.tags_set.difference_update(tags)
         for k in set(self.tags_dict).intersection(tags):
@@ -69,26 +69,32 @@ class FilenameTags(ABC):
         return self
 
 
-class FilenameSuffixTags(FilenameTags):
-    def __init__(self, path: str, *, left='.[', right=']', sep=' '):
+class SingleFilenameTags(FilenameTagsABC):
+    def __init__(self, path: str, *, preamble='.', begin='[', end=']', sep=' '):
         super().__init__()
-        self.left = left
-        self.right = right
+        self.begin = begin
+        self.begin_re = re.escape(begin)
+        self.end = end
+        self.end_re = re.escape(end)
+        self.preamble = preamble
+        self.preamble_re = preamble
         self.sep = sep
-        tags_pattern = fr'{re.escape(left)}[^\[\]]*{re.escape(right)}'
-        dn, bn, ext = split_path_dir_base_ext(path)
+        tags_pattern = fr'{self.preamble_re}{self.begin_re}[^{self.begin_re}{self.end_re}]*{self.end_re}'
+        parent_dir, body, ext = split_path_dir_base_ext(path)
         if re.search(tags_pattern, ext):
-            bn += ext
+            body += ext
             ext = ''
         self.extension = ext
         try:
-            head, tags, _ = re.split(fr'({tags_pattern})$', bn)
-            tags_s = str(tags[len(left):-len(right)]).strip()
+            before_tags, the_tags, after_tags = re.split(fr'({tags_pattern})', body, maxsplit=1)
+            tags_s = str(the_tags[len(self.preamble) + len(self.begin):-len(self.end)]).strip()
             tags_l = tags_s.split(sep) if tags_s else []
         except ValueError:
-            head = bn
+            before_tags = body
+            after_tags = ''
             tags_l = []
-        self.prefix = os.path.join(dn, head)
+        self.before_tags = os.path.join(parent_dir, before_tags)
+        self.after_tags = after_tags
         for t in tags_l:
             if '=' in t:
                 k, v = t.split('=', maxsplit=1)
@@ -96,12 +102,12 @@ class FilenameSuffixTags(FilenameTags):
             else:
                 self.tags_set.add(t)
 
-    def get_path(self):
+    def tagged_path(self):
         tags_l = sorted(self.tags)
         if tags_l:
-            return f'{self.prefix}{self.left}{self.sep.join(tags_l)}{self.right}{self.extension}'
+            return f'{self.before_tags}{self.preamble}{self.begin}{self.sep.join(tags_l)}{self.end}{self.after_tags}{self.extension}'
         else:
-            return f'{self.prefix}{self.extension}'
+            return f'{self.before_tags}{self.after_tags}{self.extension}'
 
-    def get_untagged_path(self):
-        return f'{self.prefix}{self.extension}'
+    def untagged_path(self):
+        return f'{self.before_tags}{self.after_tags}{self.extension}'
