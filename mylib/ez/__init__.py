@@ -204,3 +204,19 @@ def list_glob_path(x):
             r.extend(glob.glob(xx))
         return r
     raise TypeError('x')
+
+
+class VoidDuck:
+    """a void, versatile, useless and quiet duck, call in any way, return nothing, raise nothing"""
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __getattr__(self, item):
+        return self
+
+    def __call__(self, *args, **kwargs):
+        return self
+
+    def __bool__(self):
+        return False

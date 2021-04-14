@@ -10,7 +10,7 @@ import sqlite3
 import psutil
 
 from mylib.ez import *
-from mylib.ez import logging, deco_factory_copy_signature, ExceptionWithKwargs, T, thread_factory
+from mylib.ez import logging, deco_factory_copy_signature, ExceptionWithKwargs, T, thread_factory, VoidDuck
 
 USELESS_PLACEHOLDER_FOR_MODULE_TRICKS_LITE = __name__
 
@@ -77,22 +77,6 @@ def constrained(x, x_type: T.Callable, x_condition: str or T.Callable = None, *,
             raise ValueError("'{}' conflicts with '{}'".format(x, x_condition))
     else:
         return x
-
-
-class VoidDuck:
-    """a void, versatile, useless and quiet duck, called in any way, return nothing, raise nothing"""
-
-    def __init__(self, *args, **kwargs):
-        pass
-
-    def __getattr__(self, item):
-        return self
-
-    def __call__(self, *args, **kwargs):
-        return self
-
-    def __bool__(self):
-        return False
 
 
 def str2range(expr: str) -> T.Generator:
