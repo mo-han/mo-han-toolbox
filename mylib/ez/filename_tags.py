@@ -8,6 +8,7 @@ class FilenameTagsABC(ABC):
     def __init__(self):
         self.tags_set = set()
         self.tags_dict = dict()
+        self.config = {}
 
     @property
     def tags(self) -> set:
@@ -47,7 +48,8 @@ class FilenameTagsABC(ABC):
         return self.untagged_path()
 
     def __repr__(self):
-        return f'{self.__class__.__name__}(tags={self.tags}, filename={self.path})'
+        config_s = ', '.join([f'{k}={v}' for k, v in self.config.items()])
+        return f'{self.__class__.__name__}(tags={self.tags}, filename={self.path}, {config_s})'
 
     def clear(self):
         """clear all tags from filename"""
@@ -72,6 +74,7 @@ class FilenameTagsABC(ABC):
 class SingleFilenameTags(FilenameTagsABC):
     def __init__(self, path: str, *, preamble='.', begin='[', end=']', sep=' '):
         super().__init__()
+        self.config = dict(preamble=repr(preamble), begin=repr(begin), end=repr(end), sep=repr(sep))
         self.begin = begin
         self.begin_re = re.escape(begin)
         self.end = end
