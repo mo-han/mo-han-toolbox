@@ -9,7 +9,7 @@ import filetype
 
 from .ex import fstk, tricks, tui, ostk
 from .__deprecated__ import fs_find_iter
-from .filename_tags import SuffixListFilenameTags
+from .filename_tags import FilenameSuffixTags
 from mylib.ez import *
 from mylib.ez.logging import get_logger, LOG_FMT_MESSAGE_ONLY
 
@@ -512,9 +512,9 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
         logger.info(f'# skip non-video\n  {filepath}')
         return
 
-    input_ft = SuffixListFilenameTags(filepath)
-    origin_ft = SuffixListFilenameTags(filepath).tag('origin')
-    output_ft = SuffixListFilenameTags(filepath).untag('crf', 'origin')
+    input_ft = FilenameSuffixTags(filepath)
+    origin_ft = FilenameSuffixTags(filepath).tag('origin')
+    output_ft = FilenameSuffixTags(filepath).untag('crf', 'origin')
     if crf is not None:
         output_ft.tag(crf=crf)
     if not redo and 'origin' in input_ft.tags:
@@ -580,7 +580,7 @@ def parse_kw_opt_str(kw: str):
 
 
 def guess_video_crf(src, codec, *, redo=False, work_dir=None, auto_clean=True):
-    tf = SuffixListFilenameTags(src)
+    tf = FilenameSuffixTags(src)
     if not redo and 'crf' in tf.keys:
         return float(tf.tags_dict['crf'])
     c = FFmpegSegmentsContainer(src, work_dir=work_dir, log_lvl='WARNING')

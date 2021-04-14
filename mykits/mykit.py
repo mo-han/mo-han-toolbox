@@ -224,7 +224,7 @@ class HentaiAtHomeGalleriesRealName(HasParser):
 
 
 def tag_filter_files_func():
-    from mylib.filename_tags import SuffixListFilenameTags
+    from mylib.filename_tags import FilenameSuffixTags
     args = rtd.args
     ext_rm = set(args.X or [])
     ext_kp = set(args.x or [])
@@ -234,7 +234,7 @@ def tag_filter_files_func():
     rm = defaultdict(set)
     kp = defaultdict(set)
     for f in fstk.files_from_iter(args.src or mylib.ex.ostk.clipboard.list_path(), recursive=False):
-        ft = SuffixListFilenameTags(f)
+        ft = FilenameSuffixTags(f)
         ext = ft.extension
         prefix = ft.prefix
         if any(map(ft.has_tag, tag_kp)) or ext in ext_kp:

@@ -7,7 +7,7 @@ from abc import ABC
 from .ex import fstk
 
 
-class ListFilenameTags(ABC):
+class FilenameTags(ABC):
     def __init__(self):
         self.tags_set = set()
         self.tags_dict = dict()
@@ -46,7 +46,7 @@ class ListFilenameTags(ABC):
         ...
 
     @property
-    def notag(self):
+    def no_tag(self):
         return self.get_untagged_path()
 
     def __repr__(self):
@@ -72,7 +72,7 @@ class ListFilenameTags(ABC):
         return self
 
 
-class SuffixListFilenameTags(ListFilenameTags):
+class FilenameSuffixTags(FilenameTags):
     def __init__(self, path: str, *, left='.[', right=']', sep=' '):
         super().__init__()
         self.left = left
