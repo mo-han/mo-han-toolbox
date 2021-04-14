@@ -376,7 +376,7 @@ def _shutil_move(src, dst):
             raise
 
 
-def get_available_counting_sub_name(target_path):
+def get_available_indexed_path(target_path):
     without_ext, extension = os.path.splitext(target_path)
     dup_count = 1
     while os.path.exists(target_path):
@@ -409,7 +409,7 @@ def move(src, dst, *, on_exist: OnExist = OnExist.OVERWRITE):
                         continue
                     if _is_dir(sub_dst):
                         if on_exist == OnExist.RENAME:
-                            _move(sub_src, get_available_counting_sub_name(sub_dst))
+                            _move(sub_src, get_available_indexed_path(sub_dst))
                             continue
                         if on_exist == OnExist.OVERWRITE:
                             raise FileToDirErr(sub_src, sub_dst)
@@ -419,7 +419,7 @@ def move(src, dst, *, on_exist: OnExist = OnExist.OVERWRITE):
                         _move(sub_src, sub_dst)
                         continue
                     if on_exist == OnExist.RENAME:
-                        _move(sub_src, get_available_counting_sub_name(sub_dst))
+                        _move(sub_src, get_available_indexed_path(sub_dst))
                         continue
                     if on_exist == OnExist.ERROR:
                         raise AlreadyExistErr(sub_dst)
@@ -427,7 +427,7 @@ def move(src, dst, *, on_exist: OnExist = OnExist.OVERWRITE):
             return dst
         raise DirToFileErr(src, dst)
     if on_exist == OnExist.RENAME:
-        return _move(src, get_available_counting_sub_name(dst))
+        return _move(src, get_available_indexed_path(dst))
     if _is_dir(dst):
         raise FileToDirErr(src, dst)
     if on_exist == OnExist.OVERWRITE:
