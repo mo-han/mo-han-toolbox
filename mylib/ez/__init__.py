@@ -200,10 +200,9 @@ def list_glob_path(x):
         return glob.glob(x)
     if isinstance(x, T.Iterable):
         r = []
-        for xx in x:
-            r.extend(glob.glob(xx))
+        [r.extend(glob.glob(xx)) for xx in x]
         return r
-    raise TypeError('x')
+    raise TypeError('x', (str, T.Iterable[str], 'PathLikeObject'))
 
 
 class VoidDuck:

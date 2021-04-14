@@ -55,7 +55,7 @@ class ArgumentParserRigger:
         return AttrName()
 
     @staticmethod
-    def rename_factory_replace_underscore(repl: str = '.'):
+    def replace_underscore(repl: str = '.'):
         def rename(x: str):
             return x.replace('_', repl)
 

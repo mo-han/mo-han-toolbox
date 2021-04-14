@@ -14,3 +14,7 @@ class QueueType:
 
 
 JSONType = Union[str, int, float, bool, None, Mapping[str, 'JSON'], List['JSON']]
+
+NoneType = type(None)
+
+EllipsisType = type(Ellipsis)

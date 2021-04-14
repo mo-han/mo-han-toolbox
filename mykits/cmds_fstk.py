@@ -16,13 +16,13 @@ class FilesystemError(OSError):
     pass
 
 
-an.s = an.src = an.dst = an.D = an.in_dst = an.S = an.in_src = an.v = an.verbose = an.F = an.conflict = None
+an.s = an.src = an.PATH = an.dst = an.D = an.in_dst = an.S = an.in_src = an.v = an.verbose = an.F = an.conflict = None
 an.x = an.exclude = None
 
 
-@apr.sub()
+@apr.sub(aliases=['move.to'])
 @apr.arg(an.dst)
-@apr.opt(an.s, an.src, nargs='*')
+@apr.opt(an.s, an.src, nargs='*', metavar=an.PATH)
 @apr.true(an.D, apr.make_option_name(an.in_dst))
 @apr.true(an.S, apr.make_option_name(an.in_src))
 @apr.opt(an.F, an.conflict, choices=['error', 'overwrite', 'rename'], default='error')
@@ -30,22 +30,20 @@ an.x = an.exclude = None
 @apr.true(an.v, an.verbose)
 @apr.map(an.dst, an.src, in_dst=an.in_dst, in_src=an.in_src, conflict=an.conflict, exclude=an.exclude,
          verbose=an.verbose)
-def move(dst: str, src: T.Union[T.List[str]] = None, *, in_dst: bool = False, in_src: bool = False,
-         conflict='error' or 'overwrite' or 'rename', exclude=None, verbose: bool = False):
+def mv2(dst: str, src: T.Union[T.List[str], str, T.NoneType] = None, *, in_dst: bool = False, in_src: bool = False,
+        conflict='error' or 'overwrite' or 'rename', exclude=None, verbose: bool = False):
     get_basename = os.path.basename
 
     on_exist_ = fstk.OnExist
     on_exist = {'error': on_exist_.ERROR, 'overwrite': on_exist_.OVERWRITE, 'rename': on_exist_.RENAME}[conflict]
+    if not isinstance(src, (T.List[str], str, T.NoneType)):
+        raise TypeError(an.src, (T.List[str], str, T.NoneType))
     if not src:
         src_l = ostk.clipboard.list_path()
+    # elif src in ('-', ['-']):
+    #     src_l = sys.stdin.read().splitlines()
     else:
-        src_l = []
-        for s in src:
-            s_glob = glob.glob(s)
-            if s_glob == [s]:
-                src_l.append(s)
-            else:
-                src_l.extend(s_glob)
+        src_l = list_glob_path(src)
     if not src_l:
         return
     dst_is_dir = os.path.isdir(dst)

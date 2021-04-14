@@ -93,7 +93,7 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
         os_exit_force(1)
 
 
-@apr.sub(apr.rename_factory_replace_underscore(), aliases=['auto.cvt'])
+@apr.sub(apr.replace_underscore(), aliases=['auto.cvt'])
 @apr.true('r', 'recursive')
 @apr.true('c', 'clean')
 @apr.true('z', 'cbz')
