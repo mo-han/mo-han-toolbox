@@ -4,6 +4,7 @@
 from send2trash import send2trash
 
 import mylib.ex.ostk
+import mylib.ez
 from mylib.ex import fstk, tui, fstk_lite as fstk
 from mylib.ez import *
 from mylib.ex.ostk import clipboard
@@ -166,7 +167,7 @@ def hentai_at_home_galleries_real_name(path_l):
             title = info['title']
             artist = info['tags']['artist']
             group = info['tags']['group']
-            folder, name, ext = fstk.split_dirname_basename_ext(p, dir_ext=False)
+            folder, name, ext = mylib.ez.split_path_dir_base_ext(p, dir_ext=False)
             if len(artist) == 1:
                 folder = fstk.make_path(folder, f'[{artist[0]}]', )
             elif len(group) == 1:
@@ -179,7 +180,7 @@ def hentai_at_home_galleries_real_name(path_l):
             except AttributeError:
                 tail = ''
             sanitized_title = fstk.sanitize_xu240(title)
-            new = fstk.join_dirname_basename_ext(folder, sanitized_title + tail, ext)
+            new = mylib.ez.join_path_dir_base_ext(folder, sanitized_title + tail, ext)
             os.rename(p, new)
             if new != p:
                 print(f'* {p} -> {new}')

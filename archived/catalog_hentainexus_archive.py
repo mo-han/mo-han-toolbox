@@ -5,6 +5,7 @@ from mylib.ex.fstk import *
 from mylib.ex.ostk import clipboard as cb
 from mylib.ex.text import *
 from mylib.ex.tui import *
+from mylib.ez import split_path_dir_base_ext
 
 src = r'd:\usr\dl\1'
 ref = r'd:\usr\dl\HentaiNexus metadata'
@@ -111,13 +112,13 @@ def prompt_rename(fp):
         shutil.move_safe___alpha(fp, new)
     except FileExistsError:
         print(f'! {fp}')
-        cb.set(split_dirname_basename_ext(new)[1])
+        cb.set(split_path_dir_base_ext(new)[1])
         sys.exit()
 
 
 # '''
 for fp in find_iter('f', src):
-    _, name, _ = split_dirname_basename_ext(fp)
+    _, name, _ = split_path_dir_base_ext(fp)
     core_title = re.sub(r'(.+?]) ([^\[\]()]+) (\(|\[).+', r'\1 \2', name)
     # print(core_title)
     words0 = find_words(core_title.lower())
@@ -153,6 +154,6 @@ for fp in find_iter('f', src):
             shutil.move_safe___alpha(fp, new)
         except FileExistsError:
             print(f'! {fp}')
-            cb.set(split_dirname_basename_ext(new)[1])
+            cb.set(split_path_dir_base_ext(new)[1])
             sys.exit()
 # '''

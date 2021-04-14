@@ -7,6 +7,7 @@ import importlib.util
 import inspect
 import io
 import locale
+import os
 
 from . import shutil
 from . import typing
@@ -219,3 +220,17 @@ class VoidDuck:
 
     def __bool__(self):
         return False
+
+
+def split_path_dir_base_ext(path, dir_ext=True) -> T.Tuple[str, str, str]:
+    """path -> dirname, basename, extension"""
+    p, b = os.path.split(path)
+    if not dir_ext and os.path.isdir(path):
+        n, e = b, ''
+    else:
+        n, e = os.path.splitext(b)
+    return p, n, e
+
+
+def join_path_dir_base_ext(dirname, basename, extension):
+    return os.path.join(dirname, basename + extension)

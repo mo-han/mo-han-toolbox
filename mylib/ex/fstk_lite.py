@@ -313,20 +313,6 @@ def path_or_glob(pathname, *, recursive=False):
         return glob.glob(pathname, recursive=recursive)
 
 
-def split_dirname_basename_ext(path, dir_ext=True) -> T.Tuple[str, str, str]:
-    """path -> dirname, basename, extension"""
-    p, b = os.path.split(path)
-    if not dir_ext and os.path.isdir(path):
-        n, e = b, ''
-    else:
-        n, e = os.path.splitext(b)
-    return p, n, e
-
-
-def join_dirname_basename_ext(dirname, basename, extension):
-    return os.path.join(dirname, basename + extension)
-
-
 def path_parts(path):
     pp = pathlib.Path(path)
     return pp.parts

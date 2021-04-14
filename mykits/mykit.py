@@ -12,6 +12,7 @@ from send2trash import send2trash
 
 import mylib.__deprecated__
 import mylib.ex.ostk
+import mylib.ez
 from mylib.tools import mykit_parts
 from mylib.ex import fstk, tui
 from mylib.__deprecated__ import fs_inplace_rename, fs_inplace_rename_regex, list_files, list_dirs
@@ -165,7 +166,7 @@ def merge_zip_files_func():
         return
     print('# Merge all below ZIP files:')
     print('\n'.join(src_l))
-    dbx_l = [fstk.split_dirname_basename_ext(p) for p in src_l]
+    dbx_l = [mylib.ez.split_path_dir_base_ext(p) for p in src_l]
     if all_equal([d for d, b, x in dbx_l]):
         common_dir = dbx_l[0][0]
     else:
@@ -177,7 +178,7 @@ def merge_zip_files_func():
     if common_dir and common_ext:
         common_base = os.path.commonprefix([b for d, b, x in dbx_l]).strip()
         if common_base:
-            tmp_dst = fstk.join_dirname_basename_ext(common_dir, common_base, common_ext)
+            tmp_dst = mylib.ez.join_path_dir_base_ext(common_dir, common_base, common_ext)
             if auto_yes or tui.prompt_confirm(f'? Merge into ZIP file "{tmp_dst}"', default=True):
                 dst = tmp_dst
             else:
