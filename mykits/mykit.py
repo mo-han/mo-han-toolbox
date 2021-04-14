@@ -225,7 +225,7 @@ class HentaiAtHomeGalleriesRealName(HasParser):
 
 
 def tag_filter_files_func():
-    from mylib.filename_tags import FilenameSuffixTags
+    from mylib.ez.filename_tags import FilenameSuffixTags
     args = rtd.args
     ext_rm = set(args.X or [])
     ext_kp = set(args.x or [])

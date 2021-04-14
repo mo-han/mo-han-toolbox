@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
-# encoding=utf8
-import os
-import re
 from abc import ABC
 
-import mylib.ez
-from .ex import fstk
+from mylib.ez import *
 
 
 class FilenameTags(ABC):
@@ -80,7 +76,7 @@ class FilenameSuffixTags(FilenameTags):
         self.right = right
         self.sep = sep
         tags_pattern = fr'{re.escape(left)}[^\[\]]*{re.escape(right)}'
-        dn, bn, ext = mylib.ez.split_path_dir_base_ext(path)
+        dn, bn, ext = split_path_dir_base_ext(path)
         if re.search(tags_pattern, ext):
             bn += ext
             ext = ''

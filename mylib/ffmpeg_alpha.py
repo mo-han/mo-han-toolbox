@@ -9,7 +9,7 @@ import filetype
 
 from .ex import fstk, tricks, tui, ostk
 from .__deprecated__ import fs_find_iter
-from .filename_tags import FilenameSuffixTags
+from mylib.ez.filename_tags import FilenameSuffixTags
 from mylib.ez import *
 from mylib.ez.logging import get_logger, LOG_FMT_MESSAGE_ONLY
 
