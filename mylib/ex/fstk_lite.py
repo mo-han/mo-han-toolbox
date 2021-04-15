@@ -386,28 +386,38 @@ def get_available_indexed_path(target_path):
         return target_path
 
 
-def move(src, dst, *, on_exist: OnExist = OnExist.OVERWRITE):
+def move(src, dst, *, on_exist: OnExist = OnExist.OVERWRITE, dry_run=False, predicate_path_use_cache=False):
     _move = shutil.move
     _does_exist = os.path.exists
-    _is_dir = os.path.isdir
+    _norm_path = os.path.normpath
+
+    src = _norm_path(src)
+    dst = _norm_path(dst)
     if not isinstance(on_exist, OnExist):
         raise TypeError('on_exist', OnExist)
     if not _does_exist(src):
         raise NotExistErr(src)
+
     if not _does_exist(dst):
-        return _move(src, dst)
-    if _is_dir(src):
-        if _is_dir(dst):
+        if dry_run:
+            return dst
+        else:
+            return _move(src, dst)
+
+    if predicate_fs_path('d', src, use_cache=predicate_path_use_cache):
+        if predicate_fs_path('d', dst, use_cache=predicate_path_use_cache):
+            if dry_run:
+                return dst
             for dirname, sub_dirs, sub_files in os.walk(src):
                 dirname_relative_to_src = os.path.relpath(dirname, src)
                 os.makedirs(os.path.join(dst, dirname_relative_to_src), exist_ok=True)
                 for f in sub_files:
-                    sub_src = os.path.join(dirname, f)
-                    sub_dst = os.path.join(dst, dirname_relative_to_src, f)
+                    sub_src = _norm_path(os.path.join(dirname, f))
+                    sub_dst = _norm_path(os.path.join(dst, dirname_relative_to_src, f))
                     if not _does_exist(sub_dst):
                         _move(sub_src, sub_dst)
                         continue
-                    if _is_dir(sub_dst):
+                    if predicate_fs_path('d', sub_dst, use_cache=predicate_path_use_cache):
                         if on_exist == OnExist.RENAME:
                             _move(sub_src, get_available_indexed_path(sub_dst))
                             continue
@@ -426,12 +436,26 @@ def move(src, dst, *, on_exist: OnExist = OnExist.OVERWRITE):
             shutil.rmtree(src)
             return dst
         raise DirToFileErr(src, dst)
+
     if on_exist == OnExist.RENAME:
-        return _move(src, get_available_indexed_path(dst))
-    if _is_dir(dst):
+        new_dst = get_available_indexed_path(dst)
+        return _norm_path(new_dst if dry_run else _move(src, new_dst))
+    if predicate_fs_path('d', dst, use_cache=predicate_path_use_cache):
         raise FileToDirErr(src, dst)
     if on_exist == OnExist.OVERWRITE:
-        return _move(src, dst)
+        return dst if dry_run else _norm_path(_move(src, dst))
     if on_exist == OnExist.ERROR:
         raise AlreadyExistErr(dst)
     raise RuntimeError('unknown situation')
+
+
+def regex_rename_basename(src_path, pattern, replace, *, ignore_ext=False, on_exist=OnExist.ERROR, dry_run=False):
+    dirname, basename = os.path.split(src_path)
+    to_rename, ext = (basename, '') if ignore_ext else os.path.splitext(basename)
+    renamed = re.sub(pattern, replace, to_rename)
+    if renamed == to_rename:
+        return None
+    new = join_path_dir_base_ext(dirname, renamed, ext)
+    if not dry_run:
+        os.makedirs(os.path.dirname(new), exist_ok=True)
+    return move(src_path, new, on_exist=on_exist, dry_run=dry_run)
