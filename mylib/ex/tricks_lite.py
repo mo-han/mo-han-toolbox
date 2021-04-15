@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# encoding=utf8
 import ast
 import codecs
 import collections
