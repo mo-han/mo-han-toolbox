@@ -8,11 +8,10 @@ import filetype
 from humanize import naturaldelta
 from send2trash import send2trash
 
-import mylib.ex.ostk
 from mylib.ex import fstk, ostk
+from mylib.ex.tui import LinePrinter
 from mylib.ez import *
 from mylib.ez import argparse
-from mylib.ex.tui import LinePrinter
 from mylib.wrapper import cwebp
 
 PIXELS_BASELINE = 1280 * 1920
@@ -35,12 +34,12 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
     else:
         image_fp_rel = image_fp
     webp_fp = image_fp + '.webp'
-    mime_t, mime_st = (filetype.guess_mime(image_fp) or '/').split('/')
-    if mime_t != 'image':
+    mime_type, mime_sub = (filetype.guess_mime(image_fp) or '/').split('/')
+    if mime_type != 'image':
         print(f'# skip non-image {image_fp_rel}')
         return
-    if mime_st in {'webp', 'gif'}:
-        print(f'# skip {mime_st} image {image_fp_rel}')
+    if mime_sub in {'webp', 'gif'}:
+        print(f'# skip {mime_sub} image {image_fp_rel}')
         return
     if counter:
         counter.n += 1
@@ -93,18 +92,17 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
         os_exit_force(1)
 
 
-@apr.sub(apr.replace_underscore(), aliases=['auto.cvt'])
+@apr.sub(apr.replace_underscore())
 @apr.true('r', 'recursive')
 @apr.true('c', 'clean')
 @apr.true('z', 'cbz')
 @apr.opt('k', 'workers', type=int, metavar='N')
 @apr.arg('src', nargs='*')
 @apr.map('src', recursive='recursive', clean='clean', cbz='cbz', workers='workers')
-def auto_convert(src, recursive, clean, cbz, workers):
-    if not src:
-        src = mylib.ex.ostk.clipboard.list_path()
-    else:
-        src = list_glob_path(src)
+def auto_cvt(src, recursive, clean, cbz, workers):
+    """convert images to webp with auto-clean, auto-compress-to-cbz, adaptive-quality-scale"""
+    dirs, files = ostk.resolve_path_dirs_files(src)
+    src = dirs + files
     ostk.ensure_sigint_signal()
     workers = workers or os.cpu_count() - 1 or os.cpu_count()
     cnt = Counter()

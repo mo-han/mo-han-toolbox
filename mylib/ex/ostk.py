@@ -117,16 +117,20 @@ def set_console_title___try(title: str):
         pass
 
 
-def resolve_path_dirs_files(sth: T.Union[T.List[str], str, T.NoneType], *, glob_recurse=False, enable_stdin=False):
+def resolve_path_dirs_files(sth: T.Union[T.List[str], str, T.NoneType], *,
+                            enable_clipboard=True, glob_recurse=False, enable_stdin=False):
     if not isinstance(sth, (list, str, T.NoneType)):
         raise TypeError('src', (T.List[str], str, T.NoneType))
 
     if not sth:
-        path_l = clipboard.list_path()
+        if enable_clipboard:
+            path_l = clipboard.list_path()
+        else:
+            return [], []
     elif enable_stdin and sth in ('-', ['-']):
         path_l = sys.stdin.read().splitlines()
     else:
-        return glob_or_exist_dirs_files___alpha(sth, glob_recurse=glob_recurse)
+        return glob_or_exist_dirs_files(sth, glob_recurse=glob_recurse)
     dirs = []
     files = []
     for p in path_l:

@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
-from mylib.ex import ostk
+import fnmatch
+
 from mylib.ex import fstk
+from mylib.ex import ostk
 from mylib.ez import *
 from mylib.ez import argparse
 from mylib.ez import logging
-from fnmatch import fnmatch
 
 _logger = logging.get_logger(__name__)
 
+FILE_DIR_CHOICES = {'f', 'd', 'fd'}
+ON_EXIST_CHOICES = {'error', 'overwrite', 'rename'}
+
 apr = argparse.ArgumentParserRigger()
 an = apr.an
+path_is_file = os.path.isfile
+path_is_dir = os.path.isdir
 
 
 class FilesystemError(OSError):
@@ -17,33 +23,27 @@ class FilesystemError(OSError):
 
 
 an.s = an.src = an.PATH = an.dst = an.D = an.in_dst = an.S = an.in_src = an.v = an.verbose = an.F = an.conflict = None
-an.x = an.exclude = None
+an.x = an.exclude = an.dry_run = an.R = an.recurse = None
 
 
-@apr.sub(aliases=['move.to'])
+@apr.sub(help='move multiple src to/into dst')
 @apr.arg(an.dst)
 @apr.opt(an.s, an.src, nargs='*', metavar=an.PATH)
 @apr.true(an.D, apr.make_option_name(an.in_dst))
 @apr.true(an.S, apr.make_option_name(an.in_src))
-@apr.opt(an.F, an.conflict, choices=['error', 'overwrite', 'rename'], default='error')
+@apr.opt(an.F, an.conflict, choices=ON_EXIST_CHOICES, default='error')
 @apr.opt(an.x, an.exclude)
 @apr.true(an.v, an.verbose)
+@apr.true(long_name=apr.make_option_name(an.dry_run))
 @apr.map(an.dst, an.src, in_dst=an.in_dst, in_src=an.in_src, conflict=an.conflict, exclude=an.exclude,
-         verbose=an.verbose)
+         verbose=an.verbose, dry_run=an.dry_run)
 def mv2(dst: str, src: T.Union[T.List[str], str, T.NoneType] = None, *, in_dst: bool = False, in_src: bool = False,
-        conflict='error' or 'overwrite' or 'rename', exclude=None, verbose: bool = False):
+        conflict: ON_EXIST_CHOICES = 'error', exclude=None, verbose: bool = False, dry_run: bool = False):
     get_basename = os.path.basename
 
-    on_exist_ = fstk.OnExist
-    on_exist = {'error': on_exist_.ERROR, 'overwrite': on_exist_.OVERWRITE, 'rename': on_exist_.RENAME}[conflict]
-    if not isinstance(src, (T.List[str], str, T.NoneType)):
-        raise TypeError(an.src, (T.List[str], str, T.NoneType))
-    if not src:
-        src_l = ostk.clipboard.list_path()
-    # elif src in ('-', ['-']):
-    #     src_l = sys.stdin.read().splitlines()
-    else:
-        src_l = list_glob_path(src)
+    on_exist = fstk.OnExist(value=conflict)
+    dirs, files = ostk.resolve_path_dirs_files(src)
+    src_l = dirs + files
     if not src_l:
         return
     dst_is_dir = os.path.isdir(dst)
@@ -64,19 +64,24 @@ def mv2(dst: str, src: T.Union[T.List[str], str, T.NoneType] = None, *, in_dst: 
                 src_is_many = True
                 break
     if src_is_many and not in_dst_dir:
-        raise FilesystemError('one dst path for many dst')
+        raise FilesystemError('one dst path for many src')
 
     for one_src in src_l:
-        one_src_l = [fstk.make_path(one_src, sub) for sub in os.listdir(one_src)] if in_src and os.path.isdir(one_src) \
-            else [one_src]
-        for the_src in one_src_l:
-            the_src_bn = get_basename(the_src)
-            if exclude and fnmatch(the_src_bn, exclude):
+        if in_src and os.path.isdir(one_src):
+            one_src_expand = [fstk.make_path(one_src, bn) for bn in os.listdir(one_src)]
+        else:
+            one_src_expand = [one_src]
+        for a_src in one_src_expand:
+            the_src_bn = get_basename(a_src)
+            if exclude and fnmatch.fnmatch(the_src_bn, exclude):
                 continue
             the_dst = fstk.make_path(dst, the_src_bn) if in_dst_dir else dst
-            fstk.move(the_src, the_dst, on_exist=on_exist)
+            moved_dst = fstk.move(a_src, the_dst, on_exist=on_exist, dry_run=dry_run, predicate_path_use_cache=False)
             if verbose:
-                print(f'{the_dst} <- {the_src}')
+                print(f'"{moved_dst}" <- "{a_src}"')
+
+
+an.p = an.pattern = an.r = an.replace = an.t = an.filter_type = ''
 
 
 def main():

@@ -336,8 +336,8 @@ def glob_dirs_files(pathname, *, recursive=False):
     return dirs, files
 
 
-def glob_or_exist_dirs_files___alpha(x: T.Union[T.List[str], str, T.NoneType], *,
-                                     glob_recurse=False, exist_override_glob=False):
+def glob_or_exist_dirs_files(x: T.Union[T.List[str], str, T.NoneType], *,
+                             glob_recurse=False, exist_override_glob=False):
     def glob_then_exist_dirs_files(y):
         _dirs, _files = glob_dirs_files(y, recursive=glob_recurse)
         if _dirs or _files:
