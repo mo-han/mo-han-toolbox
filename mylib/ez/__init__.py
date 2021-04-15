@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# encoding=utf8
 """THIS MODULE MUST ONLY DEPEND ON STANDARD LIBRARIES OR BUILT-IN"""
 import ctypes
 import functools
@@ -7,13 +6,15 @@ import importlib.util
 import inspect
 import io
 import locale
-import os
 
 from . import shutil
 from . import typing
 from .__often_used_imports__ import *
 
 T = typing
+path_is_file = os.path.isfile
+path_is_dir = os.path.isdir
+path_exist = os.path.exists
 
 
 def __refer_sth():
@@ -158,14 +159,43 @@ def python_module_from_filepath(module_name, filepath):
     return module
 
 
-class Caller:
+class Call:
+    target: T.Callable
+    args: tuple
+    kwargs: dict
+    time: T.Optional[float]
+    result: T.Any
+    exception: T.Optional[Exception]
+
     def __init__(self, target, *args, **kwargs):
+        self.set(target, *args, **kwargs)
+        self.clear()
+
+    def clear(self):
+        self.time = None
+        self.result = None
+        self.exception = None
+
+    def set(self, target, *args, **kwargs):
         self.target = target
         self.args = args
         self.kwargs = kwargs
 
-    def call(self):
-        return self.target(*self.args, **self.kwargs)
+    def get(self):
+        self.clear()
+        try:
+            self.result = self.target(*self.args, **self.kwargs)
+            return self.result
+        except Exception as e:
+            self.exception = e
+
+    def timing_get(self):
+        counter = time.perf_counter
+        t0 = counter()
+        try:
+            return self.get()
+        finally:
+            self.time = counter() - t0
 
 
 def round_to(x, precision):
@@ -196,16 +226,6 @@ class ExceptionWithKwargs(Exception):
         return f'{self.__class__.__name__}{self}'
 
 
-def list_glob_path(x):
-    if isinstance(x, str) or not isinstance(x, T.Iterable):
-        return glob.glob(x)
-    if isinstance(x, T.Iterable):
-        r = []
-        [r.extend(glob.glob(xx)) for xx in x]
-        return r
-    raise TypeError('x', (str, T.Iterable[str], 'PathLikeObject'))
-
-
 class VoidDuck:
     """a void, versatile, useless and quiet duck, call in any way, return nothing, raise nothing"""
 
@@ -224,13 +244,130 @@ class VoidDuck:
 
 def split_path_dir_base_ext(path, dir_ext=True) -> T.Tuple[str, str, str]:
     """path -> dirname, basename, extension"""
-    p, b = os.path.split(path)
+    split = os.path.split
+    splitext = os.path.splitext
+    p, b = split(path)
     if not dir_ext and os.path.isdir(path):
         n, e = b, ''
     else:
-        n, e = os.path.splitext(b)
+        n, e = splitext(b)
     return p, n, e
 
 
 def join_path_dir_base_ext(dirname, basename, extension):
-    return os.path.join(dirname, basename + extension)
+    join = os.path.join
+    return join(dirname, basename + extension)
+
+
+def _predicate_fs_path(predication, path):
+    os_path_map = {'file': 'isfile', 'dir': 'isdir', 'link': 'islink', 'mount': 'ismount', 'abspath': 'isabs',
+                   'abs': 'isabs', 'exist': 'exists', 'f': 'isfile', 'd': 'isdir', 'e': 'exists'}
+    return getattr(os.path, os_path_map.get(predication, predication))(path)
+
+
+@functools.lru_cache()
+def predicate_fs_path_cached(predication: str, path):
+    return _predicate_fs_path(predication, path)
+
+
+def predicate_fs_path(predication: str, path, use_cache=False):
+    if use_cache:
+        return predicate_fs_path_cached(predication, path)
+    return _predicate_fs_path(predication, path)
+
+
+def os_walk_dirs_files(top, topdown=True, onerror=None, followlinks=False):
+    join_path = os.path.join
+    for root, sub_dirs, sub_files in os.walk(top, topdown=topdown, onerror=onerror, followlinks=followlinks):
+        dirs = [join_path(root, bn) for bn in sub_dirs]
+        files = [join_path(root, bn) for bn in sub_files]
+        yield dirs, files
+
+
+def glob_dirs_files(pathname, *, recursive=False):
+    normpath = os.path.normpath
+    is_file = os.path.isfile
+    is_dir = os.path.isdir
+    gl = glob.glob(pathname, recursive=recursive)
+    if not gl:
+        return [], []
+    try:
+        common = os.path.commonpath(gl)
+    except ValueError:
+        dirs = []
+        files = []
+        for p in gl:
+            if os.path.isfile(p):
+                files.append(p)
+            elif os.path.isdir(p):
+                dirs.append(p)
+        return dirs, files
+    dirs = []
+    files = []
+    dirs_set = set()
+    files_set = set()
+    walk = os_walk_dirs_files(common)
+    for p in gl:
+        p = normpath(p)
+        # print(p, p in files_set or p in dirs_set)
+        if p in files_set:
+            files.append(p)
+            continue
+        if p in dirs_set:
+            dirs.append(p)
+            continue
+        for w_dirs, w_files in walk:
+            dirs_set.update(w_dirs)
+            files_set.update(w_files)
+            # print(p, p in files_set or p in dirs_set)
+            if p in files_set:
+                files.append(p)
+                break
+            if p in dirs_set:
+                dirs.append(p)
+                break
+        else:
+            if is_file(p):
+                files_set.add(p)
+                files.append(p)
+            elif is_dir(p):
+                dirs_set.add(p)
+                dirs.append(p)
+    return dirs, files
+
+
+def glob_or_exist_dirs_files___alpha(x: T.Union[T.List[str], str, T.NoneType], *,
+                                     glob_recurse=False, exist_override_glob=False):
+    def glob_then_exist_dirs_files(y):
+        _dirs, _files = glob_dirs_files(y, recursive=glob_recurse)
+        if _dirs or _files:
+            return _dirs, _files
+        else:
+            if path_is_file(y):
+                return [], [y]
+            elif path_is_dir(y):
+                return [y], []
+            else:
+                return _dirs, _files
+
+    def exist_then_glob_dirs_files(y):
+        if path_is_file(y):
+            return [], [y]
+        elif path_is_dir(y):
+            return [y], []
+        else:
+            return glob_dirs_files(y, recursive=glob_recurse)
+
+    op = exist_then_glob_dirs_files if exist_override_glob else glob_then_exist_dirs_files
+
+    if isinstance(x, str) or not isinstance(x, T.Iterable):
+        return op(x)
+    if isinstance(x, T.Iterable):
+        dirs = []
+        files = []
+        for xx in x:
+            xx_dirs, xx_files = op(xx)
+            dirs.extend(xx_dirs)
+            files.extend(xx_files)
+        return dirs, files
+    raise TypeError('x', (str, T.Iterable[str], 'PathLikeObject'))
