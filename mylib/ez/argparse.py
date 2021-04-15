@@ -27,10 +27,11 @@ class UnknownArgumentsPlaceholder(metaclass=SingletonMetaClass):
 
 
 class ArgumentParserRigger:
-    def __init__(self, formatter_class=HelpCompactFormatter, **kwargs):
+    def __init__(self, formatter_class=HelpCompactFormatter,
+                 subcommands_title='sub-cmd', subcommands_desc=None, **kwargs):
         self.parser_common_kwargs = dict(formatter_class=formatter_class, **kwargs)
         self.root_parser = ArgumentParser(**self.parser_common_kwargs)
-        self.subparsers_kwargs: dict = {}
+        self.subparsers_kwargs = dict(title=subcommands_title, description=subcommands_desc)
         self.subparsers = None
         self.arguments_config = {}
         self.target_call_config = {}
@@ -122,13 +123,15 @@ class ArgumentParserRigger:
         parser_kwargs = dict(**self.parser_common_kwargs, **kwargs)
 
         def deco(target):
+            if not parser_kwargs.get('help') and target.__doc__:
+                parser_kwargs['help'] = target.__doc__
             if not rename:
-                sub_command = target.__name__
+                sub_name = target.__name__
             elif isinstance(rename, str):
-                sub_command = rename
+                sub_name = rename
             else:
-                sub_command = rename(target.__name__)
-            sub_parser = self.subparsers.add_parser(name=sub_command, aliases=aliases, **parser_kwargs)
+                sub_name = rename(target.__name__)
+            sub_parser = self.subparsers.add_parser(name=sub_name, aliases=aliases, **parser_kwargs)
             sub_parser.set_defaults(__target__=target)
             for _name, _args, _kwargs in self.arguments_config.get(target, []):
                 getattr(sub_parser, _name)(*_args, **_kwargs)
