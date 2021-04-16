@@ -42,3 +42,7 @@ def fs_copy_cli(src, dst):
 
 def fs_move_cli(src, dst):
     subprocess.run(['mv', src, dst], shell=True).check_returncode()
+
+
+def set_console_title(title: str):
+    print(f'\33]0;{title}\a', end='', flush=True)
