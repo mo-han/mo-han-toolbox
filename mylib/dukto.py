@@ -8,7 +8,7 @@ import ndrop.shell
 from mylib.ex.ostk import clipboard
 from mylib.ex.fstk import ensure_open_file
 from .ez import python_module_from_source_code
-from mylib.ex.tricks_lite import Attreebute
+from mylib.ez.tricks import Attreebute
 
 config_at = Attreebute()
 config_at.server.text.queue = None

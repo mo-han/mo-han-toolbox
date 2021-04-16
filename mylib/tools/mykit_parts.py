@@ -3,12 +3,14 @@
 
 from send2trash import send2trash
 
+import mylib.ex.fstk
 import mylib.ex.ostk
 import mylib.ez
-from mylib.ex import fstk, tui, fstk_lite as fstk
+from mylib.ex import fstk, tui
+from mylib.ez import fstk as fstk
 from mylib.ez import *
 from mylib.ex.ostk import clipboard
-from mylib.ex.text_lite import ellipt_middle
+from mylib.ez.text import ellipt_middle
 
 tui_lp = tui.LinePrinter()
 
@@ -41,7 +43,7 @@ def list_several_cloudflare_ipaddr(file, hostname, as_list, isp):
 
 def move_into_dir(src, dst, pattern, alias, dry_run, sub_dir):
     from mylib.ex.ostk import fs_move_cli
-    from mylib.ex.text_lite import find_words
+    from mylib.ez.text import find_words
     from mylib.ex.tui_lite import prompt_choose_number, prompt_confirm
     conf_file = fstk.make_path('~', '.config', 'fs.put_in_dir.json', user_home=True)
     conf = fstk.read_json_file(conf_file) or {'dst_map': {}}
@@ -80,7 +82,7 @@ def move_into_dir(src, dst, pattern, alias, dry_run, sub_dir):
         exit(1)
     os.makedirs(dst, exist_ok=True)
     db_path = fstk.make_path(dst, '__folder_name_words__.db')
-    db = fstk.read_sqlite_dict_file(db_path)
+    db = mylib.ex.fstk.read_sqlite_dict_file(db_path)
     db = {k: v for k, v in db.items() if k in sub_dirs_l}
     sub_dirs_d = {b: set(find_words(b.lower())) for b in sub_dirs_l if b not in db}
     sub_dirs_d.update(db)
@@ -128,7 +130,7 @@ def move_into_dir(src, dst, pattern, alias, dry_run, sub_dir):
             if not dry_run:
                 fs_move_cli(s, d)
             print(f'{s} -> {d}')
-    fstk.write_sqlite_dict_file(db_path, sub_dirs_d, update_only=True)
+    mylib.ex.fstk.write_sqlite_dict_file(db_path, sub_dirs_d, update_only=True)
 
 
 def flat_dir(src, prefix, dry_run):

@@ -3,12 +3,7 @@ import PIL.Image
 import pywintypes
 import win32clipboard
 
-from .ostk_lite import *
-
-ILLEGAL_FS_CHARS = r'\/:*?"<>|'
-ILLEGAL_FS_CHARS_REGEX_PATTERN = re.compile(f'[{ILLEGAL_FS_CHARS}]')
-ILLEGAL_FS_CHARS_UNICODE_REPLACE = r'⧹⧸꞉∗？″﹤﹥￨'
-ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE = str.maketrans(ILLEGAL_FS_CHARS, ILLEGAL_FS_CHARS_UNICODE_REPLACE)
+from mylib.ez.ostk import *
 
 
 class Clipboard(metaclass=SingletonMetaClass):
@@ -71,21 +66,21 @@ class Clipboard(metaclass=SingletonMetaClass):
             raise TypeError("'{}' is not str or int".format(x))
         return x
 
-    @tricks_lite.deco_with_self_context
+    @tricks.deco_with_self_context
     def clear(self):
         self._wcb.EmptyClipboard()
         return self
 
-    @tricks_lite.deco_with_self_context
+    @tricks.deco_with_self_context
     def set(self, data, cf=_wcb.CF_UNICODETEXT):
         cf = self.valid_format(cf)
         return self._wcb.SetClipboardData(cf, data)
 
-    @tricks_lite.deco_with_self_context
+    @tricks.deco_with_self_context
     def set_text___fixme(self, text):
         return self._wcb.SetClipboardText(text)
 
-    @tricks_lite.deco_with_self_context
+    @tricks.deco_with_self_context
     def get(self, cf=_wcb.CF_UNICODETEXT):
         cf = self.valid_format(cf)
         if self._wcb.IsClipboardFormatAvailable(cf):
@@ -94,7 +89,7 @@ class Clipboard(metaclass=SingletonMetaClass):
             data = None
         return data
 
-    @tricks_lite.deco_with_self_context
+    @tricks.deco_with_self_context
     def set_image(self, image):
         if isinstance(image, str):
             if re.match(r'data:image/\w+;base64, [A-Za-z0-9+/=]+', image):
@@ -125,7 +120,7 @@ class Clipboard(metaclass=SingletonMetaClass):
             lines = [line.strip() for line in str(self.get()).splitlines()]
             return [line for line in lines if os.path.exists(line)]
 
-    @tricks_lite.deco_with_self_context
+    @tricks.deco_with_self_context
     def get_all(self) -> dict:
         d = {}
         for k, v in self.cf_dict.items():

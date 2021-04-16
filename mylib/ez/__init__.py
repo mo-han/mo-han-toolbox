@@ -4,9 +4,9 @@ import ctypes
 import functools
 import importlib.util
 import inspect
-import io
 import locale
 
+from . import io
 from . import shutil
 from . import typing
 from .__often_used_imports__ import *
@@ -358,9 +358,9 @@ def exist_then_glob_to_dirs_files(x: str, glob_recurse=False):
         return glob_to_dirs_files(x, recursive=glob_recurse)
 
 
-def glob_or_exist_to_dirs_files(x: T.Union[T.List[str], str, T.NoneType], *,
-                                glob_recurse=False, exist_override_glob=False):
-    if exist_override_glob:
+def glob_or_exist_to_dirs_files(x: T.Union[T.Iterable[str], str, T.NoneType], *,
+                                glob_recurse=False, exist_prior_to_glob=False):
+    if exist_prior_to_glob:
         get_dirs_files = functools.partial(exist_then_glob_to_dirs_files, glob_recurse=glob_recurse)
     else:
         get_dirs_files = functools.partial(glob_then_exist_to_dirs_files, glob_recurse=glob_recurse)
@@ -376,3 +376,46 @@ def glob_or_exist_to_dirs_files(x: T.Union[T.List[str], str, T.NoneType], *,
             files.extend(xx_files)
         return dirs, files
     raise TypeError('x', (str, T.Iterable[str], 'PathLikeObject'))
+
+
+def deco_factory_param_value_choices(choices: T.Dict[int or str, T.Iterable] or None, *args,
+                                     **kwargs) -> T.Decorator:
+    """decorator factory: force arguments of a func limited inside the given choices
+
+    :param choices: a dict which describes the choices of arguments
+        the key of the dict must be either the index of args or the key(str) of kwargs
+        the value of the dict must be an iterable
+        choices could be supplemented by *args and **kwargs
+        choices could be empty or None"""
+    choices = choices or {}
+    for i in range(len(args)):
+        choices[i] = args[i]
+    choices.update(kwargs)
+    err_fmt = "argument {}={} is not valid, choose from {})"
+
+    def deco(target):
+        @functools.wraps(target)
+        def wrapped_target(*target_args, **target_kwargs):
+            for arg_index in range(len(target_args)):
+                param_name = target.__code__.co_varnames[arg_index]
+                value = target_args[arg_index]
+                if arg_index in choices and value not in choices[arg_index]:
+                    raise ValueError(err_fmt.format(param_name, choices[arg_index]))
+                elif param_name in choices and value not in choices[param_name]:
+                    raise ValueError(err_fmt.format(param_name, value, choices[param_name]))
+            for param_name in target_kwargs:
+                value = target_kwargs[param_name]
+                if param_name in choices and value not in choices[param_name]:
+                    raise ValueError(err_fmt.format(param_name, value, choices[param_name]))
+
+            return target(*target_args, **target_kwargs)
+
+        return wrapped_target
+
+    return deco
+
+
+def dedup_list(source: T.Iterable) -> list:
+    r = []
+    [r.append(e) for e in source if e not in r]
+    return r

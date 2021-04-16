@@ -7,6 +7,8 @@ from math import log
 import ffmpeg
 import filetype
 
+import mylib.ez
+import mylib.ez.io
 from .ex import fstk, tricks, tui, ostk
 from .__deprecated__ import fs_find_iter
 from mylib.ez.filename_tags import SingleFilenameTags
@@ -48,7 +50,7 @@ CODEC_TAGS_DICT = {'o': 'origin', 'a8': 'avc8b', 'h8': 'hevc8b', 'aq8': 'qsvavc8
                    **VIDEO_CODECS_A10N}
 CODEC_TAGS_SET = set(CODEC_TAGS_DICT.values())
 
-decorator_choose_map_preset = tricks.deco_factory_args_choices({'map_preset': STREAM_MAP_PRESET_TABLE.keys()})
+decorator_choose_map_preset = mylib.ez.deco_factory_param_value_choices({'map_preset': STREAM_MAP_PRESET_TABLE.keys()})
 
 
 def file_is_video(filepath):
@@ -361,7 +363,7 @@ def get_width_height(filepath) -> (int, int):
     return d['width'], d['height']
 
 
-@tricks.deco_factory_args_choices({'res_limit': (None, 'FHD', 'HD', 'qHD', 'QHD', '4K')})
+@mylib.ez.deco_factory_param_value_choices({'res_limit': (None, 'FHD', 'HD', 'qHD', 'QHD', '4K')})
 def get_vf_res_scale_down(width: int, height: int, res_limit='FHD', vf: str = None) -> str or None:
     """generate 'scale=<w>:<h>' value for ffmpeg `vf` option, to scale down the given resolution
     return empty str if the given resolution is enough low thus scaling is not needed"""
@@ -656,7 +658,7 @@ class FFmpegSegmentsContainer:
             if file_is_video(_path):
                 d, b = os.path.split(_path)
                 self.input_data = {S_FILENAME: b, S_SEGMENT: {}, S_NON_SEGMENT: {}}
-                with ostk.SubscriptableFileIO(_path) as f:
+                with mylib.ez.io.SubscriptableFileIO(_path) as f:
                     middle = f.size // 2
                     root_base = '.{}-{}'.format(self.nickname, tricks.hex_hash(
                         f[:4096] + f[middle - 2048:middle + 2048] + f[-4096:])[:8])

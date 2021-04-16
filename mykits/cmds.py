@@ -3,9 +3,8 @@
 import tabulate
 
 import mylib.ez
-from mylib.ex import fstk_lite
 from mylib.ez import *
-from mylib.ez import argparse
+from mylib.ez import argparse, fstk
 
 __dirname__, __filename_without_extension__, __file_extension__ = mylib.ez.split_path_dir_base_ext(__file__)
 sub_apr = argparse.ArgumentParserRigger()
@@ -16,13 +15,13 @@ meta_apr = argparse.ArgumentParserRigger()
 @functools.lru_cache()
 def find_module_path():
     r = {}
-    with fstk_lite.ctx_pushd(__dirname__):
+    with fstk.ctx_pushd(__dirname__):
         for f in glob.glob(__filename_without_extension__ + '*.py*'):
             match = re.match(rf'({__filename_without_extension__})_([^.-]+)', f)
             if not match:
                 continue
             name = match.group(2)
-            r[name] = fstk_lite.make_path(__dirname__, f)
+            r[name] = fstk.make_path(__dirname__, f)
     return r
 
 

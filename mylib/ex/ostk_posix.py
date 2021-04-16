@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
 import pyperclip
 
-from .ostk_lite import *
-
-ILLEGAL_FS_CHARS = r'/'
-ILLEGAL_FS_CHARS_REGEX_PATTERN = re.compile(f'[{ILLEGAL_FS_CHARS}]')
-ILLEGAL_FS_CHARS_UNICODE_REPLACE = r'⧸'
-ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE = str.maketrans(ILLEGAL_FS_CHARS, ILLEGAL_FS_CHARS_UNICODE_REPLACE)
+from mylib.ez.ostk import *
 
 
 class Clipboard(metaclass=SingletonMetaClass):

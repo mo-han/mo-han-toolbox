@@ -19,8 +19,8 @@ from mylib.ex.fstk import touch, ensure_open_file
 from .ez import *
 from .ez.logging import get_logger, LOG_FMT_MESSAGE_ONLY
 from mylib.ex.ostk import write_file_chunk
-from mylib.ex.ostk_lite import SubscriptableFileIO
-from mylib.ex.tricks_lite import singleton, iter_factory_retry
+from .ez.io import SubscriptableFileIO
+from mylib.ez.tricks import singleton, iter_factory_retry
 from .ez import thread_factory
 
 MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE = '# Netscape HTTP Cookie File'

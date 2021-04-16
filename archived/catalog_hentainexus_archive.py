@@ -2,6 +2,7 @@ import webbrowser
 from functools import reduce
 
 from mylib.ex.fstk import *
+from mylib.ex.fstk import read_sqlite_dict_file
 from mylib.ex.ostk import clipboard as cb
 from mylib.ex.text import *
 from mylib.ex.tui import *

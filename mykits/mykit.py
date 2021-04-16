@@ -21,7 +21,7 @@ from mylib.ez.argparse import HelpCompactFormatter
 from mylib.ez import *
 from mylib.ex.fstk import make_path, ctx_pushd
 from mylib.ex.ostk import clipboard, set_console_title
-from mylib.ex.tricks_lite import Attreebute, eval_or_str, deco_factory_exit_on_keyboard_interrupt
+from mylib.ez.tricks import Attreebute, eval_or_str, deco_factory_exit_on_keyboard_interrupt
 
 rtd = Attreebute()  # runtime data
 tui_lp = tui.LinePrinter()
@@ -757,7 +757,7 @@ dukto_x.add_argument('ndrop_args', metavar='[--] arguments for ndrop', nargs=REM
 
 def url_from_clipboard():
     import pyperclip
-    from mylib.ex.text_lite import regex_find
+    from mylib.ez.text import regex_find
     from html import unescape
     args = rtd.args
     pattern = args.pattern

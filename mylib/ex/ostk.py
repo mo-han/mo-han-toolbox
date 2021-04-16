@@ -14,7 +14,7 @@ if os.name == 'nt':
 elif os.name == 'posix':
     from .ostk_posix import *
 else:
-    from .ostk_lite import *
+    from mylib.ez.ostk import *
 
 TEMPDIR = tempfile.gettempdir()
 HOSTNAME = platform.node()
@@ -66,7 +66,7 @@ def write_file_chunk(filepath: str, start: int, stop: int, data: bytes, total: i
     #     raise ValueError('violate 0 <= start({}) <= stop({})'.format(start, stop))
     # if len(data) >= stop - start:
     #     raise ValueError('data length > stop - start')
-    with SubscriptableFileIO(filepath, 'rb+') as f:
+    with io.SubscriptableFileIO(filepath, 'rb+') as f:
         if total and f.size != total:
             f.truncate(total)
         elif f.size < stop:
@@ -108,27 +108,3 @@ def filter_filename_tail(filepath_list, valid_tails, filter_tails, filter_extens
 def filetype_is(filepath, keyword):
     guess = filetype.guess(filepath)
     return guess and keyword in guess.mime
-
-
-def resolve_path_to_dirs_files(sth: T.Union[T.List[str], str, T.NoneType], *,
-                               enable_clipboard=True, glob_recurse=False, enable_stdin=False):
-    if not isinstance(sth, (list, str, T.NoneType)):
-        raise TypeError('src', (T.List[str], str, T.NoneType))
-
-    if not sth:
-        if enable_clipboard:
-            path_l = clipboard.list_path()
-        else:
-            return [], []
-    elif enable_stdin and sth in ('-', ['-']):
-        path_l = sys.stdin.read().splitlines()
-    else:
-        return glob_or_exist_to_dirs_files(sth, glob_recurse=glob_recurse)
-    dirs = []
-    files = []
-    for p in path_l:
-        if path_is_file(p):
-            files.append(p)
-        elif path_is_dir(p):
-            dirs.append(p)
-    return dirs, files

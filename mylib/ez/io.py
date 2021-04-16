@@ -1,19 +1,6 @@
 #!/usr/bin/env python3
-# encoding=utf8
-import signal
-from io import FileIO
-
-from mylib.ex import tricks_lite
-from mylib.ez import *
-
-
-def __refer_sth_do_not_use_this():
-    return tricks_lite
-
-
-def ensure_sigint_signal():
-    if sys.platform == 'win32':
-        signal.signal(signal.SIGINT, signal.SIG_DFL)  # %ERRORLEVEL% = '-1073741510'
+import os as _os
+from io import *
 
 
 class SubscriptableFileIO(FileIO):
@@ -23,9 +10,9 @@ class SubscriptableFileIO(FileIO):
         """refer to doc string of io.FileIO"""
         super(SubscriptableFileIO, self).__init__(file, mode=mode, *args, **kwargs)
         try:
-            self._size = os.path.getsize(file)
+            self._size = _os.path.getsize(file)
         except TypeError:
-            self._size = os.path.getsize(self.name)
+            self._size = _os.path.getsize(self.name)
 
     def __len__(self):
         return self._size

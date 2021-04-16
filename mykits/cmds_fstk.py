@@ -2,9 +2,7 @@
 import fnmatch
 
 from mylib.ex import fstk
-from mylib.ex import ostk
-from mylib.ez import *
-from mylib.ez import argparse
+from mylib.ex.console_app import *
 from mylib.ez import logging
 
 _logger = logging.get_logger(__name__)
@@ -12,7 +10,7 @@ _logger = logging.get_logger(__name__)
 FILE_DIR_CHOICES = {'f', 'd', 'fd'}
 ON_EXIST_CHOICES = {'error', 'overwrite', 'rename'}
 
-apr = argparse.ArgumentParserRigger()
+apr = ArgumentParserRigger()
 an = apr.an
 path_is_file = os.path.isfile
 path_is_dir = os.path.isdir
@@ -42,7 +40,7 @@ def mv2(dst: str, src: T.Union[T.List[str], str, T.NoneType] = None, *, in_dst: 
     get_basename = os.path.basename
 
     on_exist = fstk.OnExist(value=conflict)
-    dirs, files = ostk.resolve_path_to_dirs_files(src)
+    dirs, files = resolve_path_to_dirs_files(src)
     src_l = dirs + files
     if not src_l:
         return

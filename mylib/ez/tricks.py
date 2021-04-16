@@ -84,43 +84,6 @@ def str2range(expr: str) -> T.Generator:
         yield from range(s[0], s[-1] + 1)
 
 
-def deco_factory_args_choices(choices: T.Dict[int or str, T.Iterable] or None, *args,
-                              **kwargs) -> T.Decorator:
-    """decorator factory: force arguments of a func limited inside the given choices
-
-    :param choices: a dict which describes the choices of arguments
-        the key of the dict must be either the index of args or the key(str) of kwargs
-        the value of the dict must be an iterable
-        choices could be supplemented by *args and **kwargs
-        choices could be empty or None"""
-    choices = choices or {}
-    for i in range(len(args)):
-        choices[i] = args[i]
-    choices.update(kwargs)
-    err_fmt = "argument {}={} is not valid, choose from {})"
-
-    def deco(target):
-        @functools.wraps(target)
-        def tgt(*args, **kwargs):
-            for arg_index in range(len(args)):
-                param_name = target.__code__.co_varnames[arg_index]
-                value = args[arg_index]
-                if arg_index in choices and value not in choices[arg_index]:
-                    raise ValueError(err_fmt.format(param_name, choices[arg_index]))
-                elif param_name in choices and value not in choices[param_name]:
-                    raise ValueError(err_fmt.format(param_name, value, choices[param_name]))
-            for param_name in kwargs:
-                value = kwargs[param_name]
-                if param_name in choices and value not in choices[param_name]:
-                    raise ValueError(err_fmt.format(param_name, value, choices[param_name]))
-
-            return target(*args, **kwargs)
-
-        return tgt
-
-    return deco
-
-
 def deco_factory_retry(retry_exceptions=None, max_retries: int = 3,
                        enable_default=False, default=None,
                        exception_predicate: T.Callable[[Exception], bool] = None,
@@ -203,12 +166,6 @@ def deco_factory_with_context(context_obj) -> T.Decorator:
 def remove_from_list(source: T.Iterable, rmv_set: T.Iterable) -> list:
     """return a list, which contains elements in source but not in rmv_set"""
     return [x for x in source if x not in rmv_set]
-
-
-def dedup_list(source: T.Iterable) -> list:
-    r = []
-    [r.append(e) for e in source if e not in r]
-    return r
 
 
 def default_dict_tree():

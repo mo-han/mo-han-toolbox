@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
-# encoding=utf8
 import codecs
+import collections
 import unicodedata
-from collections import defaultdict
 
 from mylib.ez import *
-from .tricks_lite import deco_factory_args_choices, dedup_list
-
-ATTENTION_DO_NO_USE_THIS = __name__
 
 CR = '\r'
 LF = '\n'
@@ -102,7 +98,7 @@ def dedup_periodical_str(s):
         return s[:i + 1]
 
 
-@deco_factory_args_choices({'logic': ('and', '&', 'AND', 'or', '|', 'OR')})
+@deco_factory_param_value_choices({'logic': ('and', '&', 'AND', 'or', '|', 'OR')})
 def simple_partial_query(pattern_list: T.Iterable[str], source_pool: T.Iterable[str],
                          logic: str = 'and',
                          ignore_case: bool = True, enable_regex: bool = False):
@@ -197,7 +193,7 @@ def remove_accent_chars_join(x: str):
 
 def slice_word(x: str):
     x_len = len(x)
-    r = defaultdict(list)
+    r = collections.defaultdict(list)
     if x_len == 0:
         return r
     r[1] = [*x]

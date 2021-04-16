@@ -8,6 +8,7 @@ import filetype
 from humanize import naturaldelta
 from send2trash import send2trash
 
+import mylib.ex.console_app
 from mylib.ex import fstk, ostk
 from mylib.ex.tui import LinePrinter
 from mylib.ez import *
@@ -30,7 +31,7 @@ class Counter:
 
 def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=None):
     if print_path_relative_to:
-        image_fp_rel = fstk.make_path(image_fp, relative=print_path_relative_to)
+        image_fp_rel = fstk.make_path(image_fp, relative_to=print_path_relative_to)
     else:
         image_fp_rel = image_fp
     webp_fp = image_fp + '.webp'
@@ -106,7 +107,7 @@ an.B = an.trash_bin = ''
 def auto_cvt(src, recursive, clean, cbz, workers, trash_bin=False):
     """convert images to webp with auto-clean, auto-compress-to-cbz, adaptive-quality-scale"""
     delete = send2trash if trash_bin else shutil.remove
-    dirs, files = ostk.resolve_path_to_dirs_files(src)
+    dirs, files = mylib.ex.console_app.resolve_path_to_dirs_files(src)
     src = dirs + files
     ostk.ensure_sigint_signal()
     workers = workers or os.cpu_count() - 1 or os.cpu_count()

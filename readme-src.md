@@ -120,7 +120,8 @@ read/write file with slice
 
 ```python
 
-from mylib.ex.ostk_lite import SubscriptableFileIO
+
+from mylib.ez.io import SubscriptableFileIO
 with SubscriptableFileIO('filepath') as f:
     f[-10:] = b'123abc'
     print(f[123:456])

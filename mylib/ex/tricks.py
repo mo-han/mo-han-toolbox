@@ -4,7 +4,7 @@ import dill
 import inflection
 import sqlitedict
 
-from .tricks_lite import *
+from mylib.ez.tricks import *
 
 assert USELESS_PLACEHOLDER_FOR_MODULE_TRICKS_LITE
 

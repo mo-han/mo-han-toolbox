@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# encoding=utf8
 import contextlib
 import fnmatch
 import html
@@ -9,10 +8,19 @@ import urllib.parse
 import zipfile
 from enum import Enum
 
-from mylib.ex import text_lite, ostk
 from mylib.ez import *
+from mylib.ez import text
 
-ATTENTION_DO_NO_USE_THIS = __name__
+if os.name == 'posix':
+    ILLEGAL_FS_CHARS = r'/'
+    ILLEGAL_FS_CHARS_REGEX_PATTERN = re.compile(f'[{ILLEGAL_FS_CHARS}]')
+    ILLEGAL_FS_CHARS_UNICODE_REPLACE = r'⧸'
+    ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE = str.maketrans(ILLEGAL_FS_CHARS, ILLEGAL_FS_CHARS_UNICODE_REPLACE)
+if os.name == 'nt':
+    ILLEGAL_FS_CHARS = r'\/:*?"<>|'
+    ILLEGAL_FS_CHARS_REGEX_PATTERN = re.compile(f'[{ILLEGAL_FS_CHARS}]')
+    ILLEGAL_FS_CHARS_UNICODE_REPLACE = r'⧹⧸꞉∗？″﹤﹥￨'
+    ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE = str.maketrans(ILLEGAL_FS_CHARS, ILLEGAL_FS_CHARS_UNICODE_REPLACE)
 
 POTENTIAL_INVALID_CHARS_MAP = {
     '<': '﹤',  # U+FE64 (small less-than sign)
@@ -33,10 +41,10 @@ def inplace_pattern_rename(src_path: str, pattern: str, repl: str, *,
     if only_basename:
         parent, basename = os.path.split(src_path)
         dst_path = os.path.join(parent,
-                                text_lite.pattern_replace(src_path, pattern, repl, regex=regex,
-                                                          ignore_case=ignore_case))
+                                text.pattern_replace(src_path, pattern, repl, regex=regex,
+                                                     ignore_case=ignore_case))
     else:
-        dst_path = text_lite.pattern_replace(src_path, pattern, repl, regex=regex, ignore_case=ignore_case)
+        dst_path = text.pattern_replace(src_path, pattern, repl, regex=regex, ignore_case=ignore_case)
     if not dry_run:
         shutil.move(src_path, dst_path)
     if src_path != dst_path:
@@ -130,23 +138,21 @@ def files_from_iter(src: str or T.Iterable, *, recursive=False, win32_unc=False)
             yield from files_from_iter(s, recursive=recursive, win32_unc=win32_unc)
 
 
-def make_path(*parts, absolute=False, follow_link=False, relative=False, user_home=False, env_var=False,
-              win32_unc=False, part_converter=None):
+def make_path(*parts, absolute=False, follow_link=False, relative_to: str = None,
+              user_home=False, env_var=False, win32_unc=False, part_converter=None):
     if part_converter:
         parts = [part_converter(part) for part in parts]
     if win32_unc:
         absolute = True
-    if absolute and relative:
+    if absolute and relative_to:
         raise ValueError('both `absolute` and `relative` are enabled')
     path = os.path.join(*parts)
     if follow_link:
         path = os.path.realpath(path)
     if absolute:
         path = os.path.abspath(path)
-    elif relative is True:
-        path = os.path.relpath(path)
-    elif relative:
-        path = os.path.relpath(path, relative)
+    elif relative_to is not None:
+        path = os.path.relpath(path, relative_to)
     if user_home:
         path = os.path.expanduser(path)
     if env_var:
@@ -211,7 +217,7 @@ def sanitize(name: str, repl: str or dict = None, *, unescape_html=True, decode_
         name = urllib.parse.unquote(name)
     if repl:
         if isinstance(repl, str):
-            r = ostk.ILLEGAL_FS_CHARS_REGEX_PATTERN.sub(repl, name)
+            r = ILLEGAL_FS_CHARS_REGEX_PATTERN.sub(repl, name)
             # rl = len(repl)
             # if rl > 1:
             #     r = ILLEGAL_FS_CHARS_REGEX_PATTERN.sub(repl, x)
@@ -224,7 +230,7 @@ def sanitize(name: str, repl: str or dict = None, *, unescape_html=True, decode_
         else:
             raise TypeError('invalid repl', (str, dict), repl)
     else:
-        r = name.translate(ostk.ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE)
+        r = name.translate(ILLEGAL_FS_CHARS_UNICODE_REPLACE_TABLE)
     return r
 
 
@@ -236,34 +242,11 @@ def sanitize_xu(name: str, *, unescape_html=True, decode_url=True, unify_white_s
 
 
 def sanitize_xu200(name: str, encoding: str = 'utf8') -> str:
-    return text_lite.ellipt_end(sanitize_xu(name), 200, encoding=encoding)
+    return text.ellipt_end(sanitize_xu(name), 200, encoding=encoding)
 
 
 def sanitize_xu240(name: str, encoding: str = 'utf8') -> str:
-    return text_lite.ellipt_end(sanitize_xu(name), 240, encoding=encoding)
-
-
-def read_sqlite_dict_file(filepath, *, with_dill=False, **kwargs):
-    if with_dill:
-        from .tricks import module_sqlitedict_with_dill
-        sqlitedict = module_sqlitedict_with_dill(dill_detect_trace=True)
-    else:
-        import sqlitedict
-    with sqlitedict.SqliteDict(filepath, **kwargs) as sd:
-        return dict(sd)
-
-
-def write_sqlite_dict_file(filepath, data, *, with_dill=False, dill_detect_trace=False, update_only=False, **kwargs):
-    if with_dill:
-        from .tricks import module_sqlitedict_with_dill
-        sqlitedict = module_sqlitedict_with_dill(dill_detect_trace=dill_detect_trace)
-    else:
-        import sqlitedict
-    with sqlitedict.SqliteDict(filepath, **kwargs) as sd:
-        if not update_only:
-            sd.clear()
-        sd.update(data)
-        sd.commit()
+    return text.ellipt_end(sanitize_xu(name), 240, encoding=encoding)
 
 
 def ensure_open_file(filepath, mode='r', **kwargs):
@@ -288,9 +271,9 @@ def ctx_pushd(dst: str, ensure_dst: bool = False):
     else:
         cd = os.chdir
     prev = os.getcwd()
-    cd(dst)
     saved_error = None
     try:
+        cd(dst)
         yield
     except Exception as e:
         saved_error = e
