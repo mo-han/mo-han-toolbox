@@ -8,11 +8,9 @@ import filetype
 from humanize import naturaldelta
 from send2trash import send2trash
 
-import mylib.ex.console_app
-from mylib.ex import fstk, ostk
+from mylib.ex.console_app import *
 from mylib.ex.tui import LinePrinter
 from mylib.ez import *
-from mylib.ez import argparse
 from mylib.wrapper import cwebp
 
 PIXELS_BASELINE = 1280 * 1920
@@ -20,7 +18,7 @@ MAX_Q = 80
 MIN_Q = 50
 MAX_COMPRESS = 0.667
 
-apr = argparse.ArgumentParserRigger()
+apr = ArgumentParserRigger()
 an = apr.an
 lp = LinePrinter()
 
@@ -107,7 +105,7 @@ an.B = an.trash_bin = ''
 def auto_cvt(src, recursive, clean, cbz, workers, trash_bin=False):
     """convert images to webp with auto-clean, auto-compress-to-cbz, adaptive-quality-scale"""
     delete = send2trash if trash_bin else shutil.remove
-    dirs, files = mylib.ex.console_app.resolve_path_to_dirs_files(src)
+    dirs, files = resolve_path_to_dirs_files(src)
     src = dirs + files
     ostk.ensure_sigint_signal()
     workers = workers or os.cpu_count() - 1 or os.cpu_count()

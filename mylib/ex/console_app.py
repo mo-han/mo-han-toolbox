@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
+from mylib.ex import fstk
 from mylib.ex import ostk
 from mylib.ez import *
 from mylib.ez.argparse import *
 
-PathSourceTypeTuple = T.List[str], str, T.NoneType
-PathSourceType = T.Union[PathSourceTypeTuple]
+
+def __ref():
+    return fstk
+
+
+PathSourceTypeTuple = list, str, T.NoneType
+PathSourceType = T.Union[T.List[str], str, T.NoneType]
 
 
 def resolve_path_to_dirs_files(x: PathSourceType, *,
