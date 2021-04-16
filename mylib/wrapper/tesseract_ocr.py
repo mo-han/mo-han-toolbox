@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-from PIL import Image
-
+from mylib.ex.PIL import *
 from mylib.ez import *
 from mylib.ez import logging
 
@@ -60,12 +59,13 @@ class TesseractOCRCLIWrapper:
 
     def set_image_object(self, image: Image.Image, gray=False):
         """PIL Image object"""
-        with io.BytesIO() as bytes_io:
-            if gray:
-                image = image.convert('LA')
-            # tesseract seem not support DIB, convert to PNG
-            image.save(bytes_io, format={'DIB': 'PNG'}.get(image.format, image.format) or 'PNG')
-            self.set_image_bytes(bytes_io.getvalue())
+        # with io.BytesIO() as bytes_io:
+        #     if gray:
+        #         image = image.convert('LA')
+        #     # tesseract seem not support DIB, convert to PNG
+        #     image.save(bytes_io, format={'DIB': 'PNG'}.get(image.format, image.format) or 'PNG')
+        #     self.set_image_bytes(bytes_io.getvalue())
+        self.set_image_bytes(save_image_to_bytes(image, 'PNG'))
         return self
 
     def set_image_array(self, nd_array, mode=None):

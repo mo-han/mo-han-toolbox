@@ -4,23 +4,11 @@ from functools import partial
 
 from PIL import Image
 
+from mylib.ex.PIL import open_bytes_as_image
 from mylib.ez import *
 from mylib.ez import logging
 
 logger = logging.get_logger(__name__)
-
-
-def save_image_to_bytes(img: Image.Image, save_fmt=None, **kwargs):
-    with io.BytesIO() as _:
-        img.save(_, format=save_fmt or img.format, **kwargs)
-        return _.getvalue()
-
-
-def open_bytes_to_image(b: bytes, mode="r"):
-    with io.BytesIO() as _:
-        _.write(b)
-        _.seek(0)
-        return Image.open(_, mode=mode)
 
 
 class CLIArgs(CLIArgumentsList):
@@ -58,7 +46,7 @@ def cwebp(src: str or bytes, dst: str or False or None or Ellipsis = ..., **kwar
         if src_bytes is None:
             src_img = Image.open(src)
         else:
-            src_img = open_bytes_to_image(src_bytes)
+            src_img = open_bytes_as_image(src_bytes)
         w, h = src_img.size
         kwargs['resize'] = round(w * resize), round(h * resize)
         src_data['width'] = w
