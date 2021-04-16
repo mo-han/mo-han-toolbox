@@ -276,7 +276,7 @@ def predicate_fs_path(predication: str, path, use_cache=False):
     return _predicate_fs_path(predication, path)
 
 
-def os_walk_dirs_files(top, topdown=True, onerror=None, followlinks=False):
+def walk_to_dirs_files(top, topdown=True, onerror=None, followlinks=False):
     join_path = os.path.join
     for root, sub_dirs, sub_files in os.walk(top, topdown=topdown, onerror=onerror, followlinks=followlinks):
         dirs = [join_path(root, bn) for bn in sub_dirs]
@@ -284,7 +284,7 @@ def os_walk_dirs_files(top, topdown=True, onerror=None, followlinks=False):
         yield dirs, files
 
 
-def glob_dirs_files(pathname, *, recursive=False):
+def glob_to_dirs_files(pathname, *, recursive=False):
     normpath = os.path.normpath
     is_file = os.path.isfile
     is_dir = os.path.isdir
@@ -306,7 +306,7 @@ def glob_dirs_files(pathname, *, recursive=False):
     files = []
     dirs_set = set()
     files_set = set()
-    walk = os_walk_dirs_files(common)
+    walk = walk_to_dirs_files(common)
     for p in gl:
         p = normpath(p)
         # print(p, p in files_set or p in dirs_set)
@@ -336,37 +336,42 @@ def glob_dirs_files(pathname, *, recursive=False):
     return dirs, files
 
 
-def glob_or_exist_dirs_files(x: T.Union[T.List[str], str, T.NoneType], *,
-                             glob_recurse=False, exist_override_glob=False):
-    def glob_then_exist_dirs_files(y):
-        _dirs, _files = glob_dirs_files(y, recursive=glob_recurse)
-        if _dirs or _files:
+def glob_then_exist_to_dirs_files(x: str, glob_recurse=False):
+    _dirs, _files = glob_to_dirs_files(x, recursive=glob_recurse)
+    if _dirs or _files:
+        return _dirs, _files
+    else:
+        if path_is_file(x):
+            return [], [x]
+        elif path_is_dir(x):
+            return [x], []
+        else:
             return _dirs, _files
-        else:
-            if path_is_file(y):
-                return [], [y]
-            elif path_is_dir(y):
-                return [y], []
-            else:
-                return _dirs, _files
 
-    def exist_then_glob_dirs_files(y):
-        if path_is_file(y):
-            return [], [y]
-        elif path_is_dir(y):
-            return [y], []
-        else:
-            return glob_dirs_files(y, recursive=glob_recurse)
 
-    op = exist_then_glob_dirs_files if exist_override_glob else glob_then_exist_dirs_files
+def exist_then_glob_to_dirs_files(x: str, glob_recurse=False):
+    if path_is_file(x):
+        return [], [x]
+    elif path_is_dir(x):
+        return [x], []
+    else:
+        return glob_to_dirs_files(x, recursive=glob_recurse)
+
+
+def glob_or_exist_to_dirs_files(x: T.Union[T.List[str], str, T.NoneType], *,
+                                glob_recurse=False, exist_override_glob=False):
+    if exist_override_glob:
+        get_dirs_files = functools.partial(exist_then_glob_to_dirs_files, glob_recurse=glob_recurse)
+    else:
+        get_dirs_files = functools.partial(glob_then_exist_to_dirs_files, glob_recurse=glob_recurse)
 
     if isinstance(x, str) or not isinstance(x, T.Iterable):
-        return op(x)
+        return get_dirs_files(x)
     if isinstance(x, T.Iterable):
         dirs = []
         files = []
         for xx in x:
-            xx_dirs, xx_files = op(xx)
+            xx_dirs, xx_files = get_dirs_files(xx)
             dirs.extend(xx_dirs)
             files.extend(xx_files)
         return dirs, files

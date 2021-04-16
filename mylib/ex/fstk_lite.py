@@ -376,7 +376,7 @@ def _shutil_move(src, dst):
             raise
 
 
-def get_available_indexed_path(target_path):
+def index_if_path_exist(target_path):
     without_ext, extension = os.path.splitext(target_path)
     dup_count = 1
     while os.path.exists(target_path):
@@ -420,7 +420,7 @@ def move_as(src, dst, *, on_exist: OnExist = OnExist.OVERWRITE, dry_run=False, p
                         continue
                     if predicate_fs_path('d', sub_dst, use_cache=predicate_path_use_cache):
                         if on_exist == OnExist.RENAME:
-                            _move(sub_src, get_available_indexed_path(sub_dst))
+                            _move(sub_src, index_if_path_exist(sub_dst))
                             continue
                         if on_exist == OnExist.OVERWRITE:
                             raise FileToDirErr(sub_src, sub_dst)
@@ -430,7 +430,7 @@ def move_as(src, dst, *, on_exist: OnExist = OnExist.OVERWRITE, dry_run=False, p
                         _move(sub_src, sub_dst)
                         continue
                     if on_exist == OnExist.RENAME:
-                        _move(sub_src, get_available_indexed_path(sub_dst))
+                        _move(sub_src, index_if_path_exist(sub_dst))
                         continue
                     if on_exist == OnExist.ERROR:
                         raise AlreadyExistErr(sub_dst)
@@ -439,7 +439,7 @@ def move_as(src, dst, *, on_exist: OnExist = OnExist.OVERWRITE, dry_run=False, p
         raise DirToFileErr(src, dst)
 
     if on_exist == OnExist.RENAME:
-        new_dst = get_available_indexed_path(dst)
+        new_dst = index_if_path_exist(dst)
         return _norm_path(new_dst if dry_run else _move(src, new_dst))
     if predicate_fs_path('d', dst, use_cache=predicate_path_use_cache):
         raise FileToDirErr(src, dst)

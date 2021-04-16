@@ -20,7 +20,7 @@ from mylib.cli import arg_type_pow2, arg_type_range_factory, add_dry_run
 from mylib.ez.argparse import HelpCompactFormatter
 from mylib.ez import *
 from mylib.ex.fstk import make_path, ctx_pushd
-from mylib.ex.ostk import clipboard, set_console_title___try
+from mylib.ex.ostk import clipboard, set_console_title
 from mylib.ex.tricks_lite import Attreebute, eval_or_str, deco_factory_exit_on_keyboard_interrupt
 
 rtd = Attreebute()  # runtime data
@@ -129,7 +129,7 @@ def gui_mode():
 
 
 def cmd_mode_func():
-    set_console_title___try(MyKitCmd.__name__)
+    set_console_title(MyKitCmd.__name__)
     MyKitCmd().cmdloop()
 
 

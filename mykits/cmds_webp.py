@@ -106,7 +106,7 @@ an.B = an.trash_bin = ''
 def auto_cvt(src, recursive, clean, cbz, workers, trash_bin=False):
     """convert images to webp with auto-clean, auto-compress-to-cbz, adaptive-quality-scale"""
     delete = send2trash if trash_bin else shutil.remove
-    dirs, files = ostk.resolve_path_dirs_files(src)
+    dirs, files = ostk.resolve_path_to_dirs_files(src)
     src = dirs + files
     ostk.ensure_sigint_signal()
     workers = workers or os.cpu_count() - 1 or os.cpu_count()
