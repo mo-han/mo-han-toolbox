@@ -154,10 +154,10 @@ def auto_cvt(src, recursive, clean, cbz, workers, trash_bin=False):
                             delete(dp)
                         print(f'- {dp}')
     finally:
+        lp.l()
         t = time.time() - t0
         n = cnt.n
         if n:
-            lp.l()
             print(f'{n} images in {naturaldelta(t)}, {naturaldelta(t / n)} per image')
         else:
             print(f'# no image file converted')
