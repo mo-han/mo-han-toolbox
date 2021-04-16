@@ -92,15 +92,20 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
         os_exit_force(1)
 
 
+an.B = an.trash_bin = ''
+
+
 @apr.sub(apr.replace_underscore())
 @apr.true('r', 'recursive')
 @apr.true('c', 'clean')
 @apr.true('z', 'cbz')
 @apr.opt('k', 'workers', type=int, metavar='N')
+@apr.true(an.B, apr.make_option_name(an.trash_bin), help='delete to trash bin')
 @apr.arg('src', nargs='*')
-@apr.map('src', recursive='recursive', clean='clean', cbz='cbz', workers='workers')
-def auto_cvt(src, recursive, clean, cbz, workers):
+@apr.map('src', recursive='recursive', clean='clean', cbz='cbz', workers='workers', trash_bin=an.trash_bin)
+def auto_cvt(src, recursive, clean, cbz, workers, trash_bin=False):
     """convert images to webp with auto-clean, auto-compress-to-cbz, adaptive-quality-scale"""
+    delete = send2trash if trash_bin else shutil.remove
     dirs, files = ostk.resolve_path_dirs_files(src)
     src = dirs + files
     ostk.ensure_sigint_signal()
@@ -120,11 +125,11 @@ def auto_cvt(src, recursive, clean, cbz, workers):
                     ext_lower = os.path.splitext(fp)[-1].lower()
                     fp_webp = fp + '.webp'
                     if ext_lower != '.webp' and os.path.isfile(fp_webp) and os.path.getsize(fp_webp):
-                        send2trash(fp)
+                        delete(fp)
                         print(f'- {fp}')
                         continue
                     if ext_lower == '.thumb':
-                        send2trash(fp)
+                        delete(fp)
                         print(f'- {fp}')
                         continue
             if cbz:
@@ -144,10 +149,10 @@ def auto_cvt(src, recursive, clean, cbz, workers):
                             print(f'! {dp}')
                         print(f'+ {cbz_fp} <- {dp}')
                         try:
-                            send2trash(dp)
+                            delete(dp)
                         except (OSError, WindowsError):
                             sleep(1)
-                            send2trash(dp)
+                            delete(dp)
                         print(f'- {dp}')
     finally:
         t = time.time() - t0

@@ -168,3 +168,13 @@ def move_safe___alpha(src, dst, *, error_on_exist=True, overwrite_exist=False, c
                                  conflict_count=conflict_count)
     else:
         return _move(src, new_dst)
+
+
+def remove(path):
+    try:
+        os.remove(path)
+    except PermissionError:
+        try:
+            rmtree(path)
+        except NotADirectoryError:
+            os.remove(path)

@@ -76,7 +76,7 @@ def mv2(dst: str, src: T.Union[T.List[str], str, T.NoneType] = None, *, in_dst: 
             if exclude and fnmatch.fnmatch(the_src_bn, exclude):
                 continue
             the_dst = fstk.make_path(dst, the_src_bn) if in_dst_dir else dst
-            moved_dst = fstk.move(a_src, the_dst, on_exist=on_exist, dry_run=dry_run, predicate_path_use_cache=False)
+            moved_dst = fstk.move_as(a_src, the_dst, on_exist=on_exist, dry_run=dry_run, predicate_path_use_cache=False)
             if verbose:
                 print(f'"{moved_dst}" <- "{a_src}"')
 

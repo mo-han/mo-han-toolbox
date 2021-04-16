@@ -5,3 +5,7 @@ cmd2  #MIT
 terminaltables  #MIT #console #draw-table
 prettytable  #BSD-3-clause #console #draw-table
 tabulate  #MIT #console #draw-table #favorite
+py-getch  #MIT #getch #console
+readkeys  #EUPL-1.2 #getch #console #getkey #Python>=3.8
+pytermgui  #MIT #console #TUI
+asciimatics  #Apache-2.0 #console #TUI
