@@ -51,7 +51,8 @@ class GenericInfoExtractor(youtube_dl.extractor.GenericIE, metaclass=ABCMeta):
         kiss_jav = 'kissjav.com'
         if pr.netloc == kiss_jav:
             for entry in data['entries']:
-                entry['id'] = f'{kiss_jav} {pr.path.strip("/").split("/")[0]}'
+                entry['extractor'] = '(kissjav.com)'
+                # entry['id'] = f'{kiss_jav} {pr.path.strip("/").split("/")[0]}'  # DON'T TOUCH ID
                 entry['uploader'] = get_html_element_tree(url).xpath(
                     '//div[@class="content-info" and contains(text(), "From")]//a')[0].text_content()
             # pprint(data)
@@ -62,7 +63,7 @@ class XVideosIE(youtube_dl.extractor.xvideos.XVideosIE, metaclass=ABCMeta):
     def _real_extract(self, url):
         data = super()._real_extract(url)
         vid = data['id']
-        data['id'] = f'xvideos {vid}'
+        # data['id'] = f'xvideos {vid}'  # DON'T TOUCH ID
         ht = get_html_element_tree(url)
         try:
             data['uploader'] = ht.xpath('//span[@class="name"]')[0].text
