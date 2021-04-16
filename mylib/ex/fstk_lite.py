@@ -386,7 +386,8 @@ def get_available_indexed_path(target_path):
         return target_path
 
 
-def move(src, dst, *, on_exist: OnExist = OnExist.OVERWRITE, dry_run=False, predicate_path_use_cache=False):
+def move_as(src, dst, *, on_exist: OnExist = OnExist.OVERWRITE, dry_run=False, predicate_path_use_cache=False):
+    """move strictly from src to dst, if dst is dir, move to it instead of into it"""
     _move = shutil.move
     _does_exist = os.path.exists
     _norm_path = os.path.normpath
@@ -458,4 +459,4 @@ def regex_rename_basename(src_path, pattern, replace, *, ignore_ext=False, on_ex
     new = join_path_dir_base_ext(dirname, renamed, ext)
     if not dry_run:
         os.makedirs(os.path.dirname(new), exist_ok=True)
-    return move(src_path, new, on_exist=on_exist, dry_run=dry_run)
+    return move_as(src_path, new, on_exist=on_exist, dry_run=dry_run)
