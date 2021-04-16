@@ -52,7 +52,7 @@ class GenericInfoExtractor(youtube_dl.extractor.GenericIE, metaclass=ABCMeta):
         if pr.netloc == kiss_jav:
             for entry in data['entries']:
                 entry['extractor'] = '(kissjav.com)'
-                # entry['id'] = f'{kiss_jav} {pr.path.strip("/").split("/")[0]}'  # DON'T TOUCH ID
+                entry['id'] = f'{pr.path.strip("/").split("/")[0]}'  # video id only
                 entry['uploader'] = get_html_element_tree(url).xpath(
                     '//div[@class="content-info" and contains(text(), "From")]//a')[0].text_content()
             # pprint(data)
