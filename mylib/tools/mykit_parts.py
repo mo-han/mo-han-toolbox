@@ -44,7 +44,7 @@ def list_several_cloudflare_ipaddr(file, hostname, as_list, isp):
 def move_into_dir(src, dst, pattern, alias, dry_run, sub_dir):
     from mylib.ex.ostk import fs_move_cli
     from mylib.easy.text import find_words
-    from mylib.ex.tui_lite import prompt_choose_number, prompt_confirm
+    from mylib.ex.tui import prompt_choose_number, prompt_confirm
     conf_file = fstk.make_path('~', '.config', 'fs.put_in_dir.json', user_home=True)
     conf = fstk.read_json_file(conf_file) or {'dst_map': {}}
     dst_map = conf['dst_map']
