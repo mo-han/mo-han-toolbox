@@ -15,6 +15,12 @@ T = typing
 path_is_file = os.path.isfile
 path_is_dir = os.path.isdir
 path_exist = os.path.exists
+path_dirname = os.path.dirname
+path_join = os.path.join
+path_split = os.path.split
+path_split_ext = os.path.splitext
+path_relative = os.path.relpath
+path_normalize = os.path.normpath
 
 
 def __refer_sth():

@@ -310,31 +310,31 @@ def make_zipfile_from_dir(zip_path, src_dir, *, strip_src_dir=True, **zipfile_kw
             zf.write(file, file.relative_to(src_dir_path if strip_src_dir else src_dir_path.parent))
 
 
-class FSErr(Exception):
+class FileSystemError(Exception):
     pass
 
 
-class FileToDirErr(FSErr):
+class FileToDirError(FileSystemError):
     def __init__(self, src, dst):
         self.src = src
         self.dst = dst
 
 
-class DirToFileErr(FSErr):
+class DirToFileError(FileSystemError):
     def __init__(self, src, dst):
         self.src = src
         self.dst = dst
 
 
-class NotFileDirErr(FSErr):
+class NotFileNotDirError(FileSystemError):
     pass
 
 
-class NotExistErr(FSErr):
+class NotExistError(FileSystemError):
     pass
 
 
-class AlreadyExistErr(FSErr):
+class AlreadyExistError(FileSystemError):
     pass
 
 
@@ -344,7 +344,7 @@ class OnExist(Enum):
     RENAME = 'rename'
 
 
-def _shutil_move(src, dst):
+def wrapped_shutil_move(src, dst):
     try:
         return shutil.move(src, dst)
     except shutil.Error as e:
@@ -352,7 +352,7 @@ def _shutil_move(src, dst):
             msg = e.args[0]
             m = re.match(r"Destination path '(.+)' already exists", msg)
             if m:
-                raise AlreadyExistErr(m.group(1))
+                raise AlreadyExistError(m.group(1))
             else:
                 raise
         else:
@@ -360,9 +360,9 @@ def _shutil_move(src, dst):
 
 
 def index_if_path_exist(target_path):
-    without_ext, extension = os.path.splitext(target_path)
+    without_ext, extension = path_split_ext(path_normalize(target_path))
     dup_count = 1
-    while os.path.exists(target_path):
+    while path_exist(target_path):
         target_path = f'{without_ext} ({dup_count}){extension}'
         dup_count += 1
     else:
@@ -371,65 +371,68 @@ def index_if_path_exist(target_path):
 
 def move_as(src, dst, *, on_exist: OnExist = OnExist.OVERWRITE, dry_run=False, predicate_path_use_cache=False):
     """move strictly from src to dst, if dst is dir, move to it instead of into it"""
-    _move = shutil.move
-    _does_exist = os.path.exists
-    _norm_path = os.path.normpath
-
-    src = _norm_path(src)
-    dst = _norm_path(dst)
     if not isinstance(on_exist, OnExist):
         raise TypeError('on_exist', OnExist)
-    if not _does_exist(src):
-        raise NotExistErr(src)
+    if not path_exist(src):
+        raise NotExistError(src)
 
-    if not _does_exist(dst):
+    if not path_exist(dst):
         if dry_run:
             return dst
         else:
-            return _move(src, dst)
+            os.makedirs(path_dirname(path_normalize(dst)), exist_ok=True)
+            return wrapped_shutil_move(src, dst)
 
     if predicate_fs_path('d', src, use_cache=predicate_path_use_cache):
         if predicate_fs_path('d', dst, use_cache=predicate_path_use_cache):
             if dry_run:
                 return dst
-            for dirname, sub_dirs, sub_files in os.walk(src):
-                dirname_relative_to_src = os.path.relpath(dirname, src)
-                os.makedirs(os.path.join(dst, dirname_relative_to_src), exist_ok=True)
-                for f in sub_files:
-                    sub_src = _norm_path(os.path.join(dirname, f))
-                    sub_dst = _norm_path(os.path.join(dst, dirname_relative_to_src, f))
-                    if not _does_exist(sub_dst):
-                        _move(sub_src, sub_dst)
+            for src_root_dir, src_sub_dirs, src_sub_files in os.walk(src):
+                root_dir_relative_in_src = path_relative(src_root_dir, src)
+                if root_dir_relative_in_src == '.':
+                    root_dir_relative_in_dst = dst
+                else:
+                    root_dir_relative_in_dst = path_join(dst, root_dir_relative_in_src)
+                os.makedirs(root_dir_relative_in_dst, exist_ok=True)
+                for f in src_sub_files:
+                    sub_src = path_join(src_root_dir, f)
+                    sub_dst = path_join(root_dir_relative_in_dst, f)
+                    if not path_exist(sub_dst):
+                        wrapped_shutil_move(sub_src, sub_dst)
                         continue
                     if predicate_fs_path('d', sub_dst, use_cache=predicate_path_use_cache):
                         if on_exist == OnExist.RENAME:
-                            _move(sub_src, index_if_path_exist(sub_dst))
+                            wrapped_shutil_move(sub_src, index_if_path_exist(sub_dst))
                             continue
                         if on_exist == OnExist.OVERWRITE:
-                            raise FileToDirErr(sub_src, sub_dst)
+                            raise FileToDirError(sub_src, sub_dst)
                         if on_exist == OnExist.ERROR:
-                            raise AlreadyExistErr(sub_dst)
+                            raise AlreadyExistError(sub_dst)
                     if on_exist == OnExist.OVERWRITE:
-                        _move(sub_src, sub_dst)
+                        wrapped_shutil_move(sub_src, sub_dst)
                         continue
                     if on_exist == OnExist.RENAME:
-                        _move(sub_src, index_if_path_exist(sub_dst))
+                        wrapped_shutil_move(sub_src, index_if_path_exist(sub_dst))
                         continue
                     if on_exist == OnExist.ERROR:
-                        raise AlreadyExistErr(sub_dst)
+                        raise AlreadyExistError(sub_dst)
             shutil.rmtree(src)
             return dst
-        raise DirToFileErr(src, dst)
+        raise DirToFileError(src, dst)
 
     if on_exist == OnExist.RENAME:
         new_dst = index_if_path_exist(dst)
-        return _norm_path(new_dst if dry_run else _move(src, new_dst))
+        if dry_run:
+            return new_dst
+        else:
+            os.makedirs(path_dirname(new_dst))
+            return wrapped_shutil_move(src, new_dst)
     if predicate_fs_path('d', dst, use_cache=predicate_path_use_cache):
-        raise FileToDirErr(src, dst)
+        raise FileToDirError(src, dst)
     if on_exist == OnExist.OVERWRITE:
-        return dst if dry_run else _norm_path(_move(src, dst))
+        return dst if dry_run else wrapped_shutil_move(src, dst)
     if on_exist == OnExist.ERROR:
-        raise AlreadyExistErr(dst)
+        raise AlreadyExistError(dst)
     raise RuntimeError('unknown situation')
 
 
