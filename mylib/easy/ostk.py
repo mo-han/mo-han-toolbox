@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import signal
 
-from mylib.ez import *
-from mylib.ez import tricks
+from mylib.easy import *
+from mylib.easy import tricks
 
 
 def __refer_sth_do_not_use_this():

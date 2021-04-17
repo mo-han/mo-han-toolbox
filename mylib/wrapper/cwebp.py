@@ -5,8 +5,8 @@ from functools import partial
 from PIL import Image
 
 from mylib.ex.PIL import open_bytes_as_image
-from mylib.ez import *
-from mylib.ez import logging
+from mylib.easy import *
+from mylib.easy import logging
 
 logger = logging.get_logger(__name__)
 

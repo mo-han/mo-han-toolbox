@@ -14,12 +14,12 @@ from telegram import ChatAction, Bot, Update, ParseMode, constants, Message
 from telegram.ext import Updater, Filters, CallbackContext
 from telegram.ext.filters import MergedFilter
 
-from .ez import *
+from .easy import *
 from mylib.ex.fstk import write_sqlite_dict_file, read_sqlite_dict_file
 from mylib.ex.ostk import HOSTNAME, OSNAME, USERNAME
 from mylib.ex.text import split_by_length_or_newline
 from mylib.ex.tricks import deep_setattr, walk_obj_iter, is_picklable_with_dill_trace
-from .ez import python_module_from_source_code
+from .easy import python_module_from_source_code
 
 
 class BotPlaceholder:

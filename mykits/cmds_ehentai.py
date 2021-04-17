@@ -39,7 +39,7 @@ an.src = an.v = an.verbose = an.D = an.dry_run = ''
 @apr.true(an.D, apr.fmt_opt(an.dry_run))
 @apr.map(an.src, verbose=an.verbose, dry_run=an.dry_run)
 def hath_sort(src: PathSourceType, *, verbose=False, dry_run=False):
-    """rename and sort galleries download via H@H (Hentai at Home)"""
+    """rename and sort galleries downloaded via H@H (Hentai at Home)"""
     dirs, files = resolve_path_to_dirs_files(src)
     src_dst_l = []
     [src_dst_l.append((src, _sorted_path_of_hentai_at_home_downloaded_gallery(src, 'd'))) for src in dirs]
@@ -47,11 +47,17 @@ def hath_sort(src: PathSourceType, *, verbose=False, dry_run=False):
     for src, dst in src_dst_l:
         if not dst and verbose:
             print(f'# {src}')
+            continue
         try:
             if not dry_run:
                 fstk.move_as(src, dst)
-                if verbose:
-                    print(f'* {dst} <- {src}')
+            if verbose:
+                print(f'* {dst} <- {src}')
         except Exception as e:
             if verbose:
                 print(f'! {src}: {repr(e)}')
+
+
+def main():
+    apr.parse()
+    apr.run()

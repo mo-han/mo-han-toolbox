@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # encoding=utf8
 import i18n
-from mylib.ez import *
+from mylib.easy import *
 
 load_path = i18n.load_path
 tt = i18n.t

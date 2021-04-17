@@ -8,8 +8,8 @@ import urllib.parse
 import zipfile
 from enum import Enum
 
-from mylib.ez import *
-from mylib.ez import text
+from mylib.easy import *
+from mylib.easy import text
 
 if os.name == 'posix':
     ILLEGAL_FS_CHARS = r'/'

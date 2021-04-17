@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from mylib.ex.PIL import *
-from mylib.ez import *
-from mylib.ez import logging
+from mylib.easy import *
+from mylib.easy import logging
 
 
 class TesseractOCRCLIWrapper:

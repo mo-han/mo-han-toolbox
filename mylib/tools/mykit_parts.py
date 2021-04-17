@@ -5,12 +5,12 @@ from send2trash import send2trash
 
 import mylib.ex.fstk
 import mylib.ex.ostk
-import mylib.ez
+import mylib.easy
 from mylib.ex import fstk, tui
 from mylib.ex.ostk import clipboard
-from mylib.ez import *
-from mylib.ez import fstk as fstk
-from mylib.ez.text import ellipt_middle
+from mylib.easy import *
+from mylib.easy import fstk as fstk
+from mylib.easy.text import ellipt_middle
 
 tui_lp = tui.LinePrinter()
 
@@ -43,7 +43,7 @@ def list_several_cloudflare_ipaddr(file, hostname, as_list, isp):
 
 def move_into_dir(src, dst, pattern, alias, dry_run, sub_dir):
     from mylib.ex.ostk import fs_move_cli
-    from mylib.ez.text import find_words
+    from mylib.easy.text import find_words
     from mylib.ex.tui_lite import prompt_choose_number, prompt_confirm
     conf_file = fstk.make_path('~', '.config', 'fs.put_in_dir.json', user_home=True)
     conf = fstk.read_json_file(conf_file) or {'dst_map': {}}

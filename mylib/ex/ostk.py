@@ -7,14 +7,14 @@ from collections import defaultdict
 
 from filetype import filetype
 
-from mylib.ez import *
+from mylib.easy import *
 
 if os.name == 'nt':
     from .ostk_nt import *
 elif os.name == 'posix':
     from .ostk_posix import *
 else:
-    from mylib.ez.ostk import *
+    from mylib.easy.ostk import *
 
 TEMPDIR = tempfile.gettempdir()
 HOSTNAME = platform.node()

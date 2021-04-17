@@ -14,8 +14,8 @@ from requests import get, head
 from bs4 import BeautifulSoup
 
 from mylib._misc import ExitCode, rectify_basename
-from mylib.ez.logging import LOG_FMT_MESSAGE_ONLY, LOG_FMT
-from mylib.ez.ostk import ensure_sigint_signal
+from mylib.easy.logging import LOG_FMT_MESSAGE_ONLY, LOG_FMT
+from mylib.easy.ostk import ensure_sigint_signal
 
 DB_FILE = 'db.json'
 INFO_FILE = 'info.txt'

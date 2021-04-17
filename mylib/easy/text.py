@@ -3,7 +3,7 @@ import codecs
 import collections
 import unicodedata
 
-from mylib.ez import *
+from mylib.easy import *
 
 CR = '\r'
 LF = '\n'

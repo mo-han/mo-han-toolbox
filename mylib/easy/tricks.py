@@ -8,8 +8,8 @@ import sqlite3
 
 import psutil
 
-from mylib.ez import *
-from mylib.ez import logging, deco_factory_copy_signature, ExceptionWithKwargs, T, thread_factory, VoidDuck
+from mylib.easy import *
+from mylib.easy import logging, deco_factory_copy_signature, ExceptionWithKwargs, T, thread_factory, VoidDuck
 
 USELESS_PLACEHOLDER_FOR_MODULE_TRICKS_LITE = __name__
 

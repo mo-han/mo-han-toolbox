@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import pyperclip
 
-from mylib.ez.ostk import *
+from mylib.easy.ostk import *
 
 
 class Clipboard(metaclass=SingletonMetaClass):

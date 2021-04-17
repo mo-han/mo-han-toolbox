@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from mylib.ez.fstk import *
+from mylib.easy.fstk import *
 from . import tricks
 
 

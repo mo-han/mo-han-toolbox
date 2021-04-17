@@ -3,7 +3,7 @@ import PIL.Image
 import pywintypes
 import win32clipboard
 
-from mylib.ez.ostk import *
+from mylib.easy.ostk import *
 
 
 class Clipboard(metaclass=SingletonMetaClass):

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from abc import ABC
 
-from mylib.ez import *
+from mylib.easy import *
 
 
 class FilenameTagsABC(ABC):

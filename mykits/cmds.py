@@ -2,11 +2,11 @@
 
 import tabulate
 
-import mylib.ez
-from mylib.ez import *
-from mylib.ez import argparse, fstk
+import mylib.easy
+from mylib.easy import *
+from mylib.easy import argparse, fstk
 
-__dirname__, __filename_without_extension__, __file_extension__ = mylib.ez.split_path_dir_base_ext(__file__)
+__dirname__, __filename_without_extension__, __file_extension__ = mylib.easy.split_path_dir_base_ext(__file__)
 sub_apr = argparse.ArgumentParserRigger()
 an = sub_apr.an
 meta_apr = argparse.ArgumentParserRigger()

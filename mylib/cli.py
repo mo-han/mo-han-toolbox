@@ -2,7 +2,7 @@
 # encoding=utf8
 import argparse
 
-from mylib.ez.argparse import HelpCompactFormatter
+from mylib.easy.argparse import HelpCompactFormatter
 from mylib.math import int_is_power_of_2
 
 

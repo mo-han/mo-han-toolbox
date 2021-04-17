@@ -5,7 +5,7 @@ import warnings
 import keyboard
 import mouse
 
-from mylib.ez import *
+from mylib.easy import *
 from mylib.ex.fstk import x_rename
 from mylib.gui_old import rename_dialog
 from mylib.ex.ostk import clipboard

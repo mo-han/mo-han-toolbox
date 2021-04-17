@@ -10,7 +10,7 @@ from send2trash import send2trash
 
 from mylib.ex.console_app import *
 from mylib.ex.tui import LinePrinter
-from mylib.ez import *
+from mylib.easy import *
 from mylib.wrapper import cwebp
 
 PIXELS_BASELINE = 1280 * 1920

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
+from mylib.easy import *
+from mylib.easy.argparse import *
 from mylib.ex import fstk
 from mylib.ex import ostk
-from mylib.ez import *
-from mylib.ez.argparse import *
 
 
 def __ref():

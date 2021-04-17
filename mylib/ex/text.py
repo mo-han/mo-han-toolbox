@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import regex
 
-from mylib.ez.text import *
+from mylib.easy.text import *
 
 
 def remove_accent_chars_regex(x: str):

@@ -11,7 +11,7 @@ from time import sleep
 from typing import Callable, Generator
 
 from mylib.ex import fstk
-from mylib.ez import typing, T
+from mylib.easy import typing, T
 from mylib.ex.ostk import Clipboard
 
 

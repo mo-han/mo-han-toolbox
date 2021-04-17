@@ -23,8 +23,8 @@ from mylib.ex.ostk import ensure_sigint_signal
 from mylib.ex import fstk
 from mylib.ex.text import regex_find, ellipt_end
 from mylib.ex.tricks import str2range
-from mylib.ez import python_module_from_source_code
-from mylib.ez.tricks import seq_call_return
+from mylib.easy import python_module_from_source_code
+from mylib.easy.tricks import seq_call_return
 from mylib.ex.tui import LinePrinter
 
 BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'

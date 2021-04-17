@@ -6,7 +6,7 @@ from mylib.ex.fstk import read_sqlite_dict_file
 from mylib.ex.ostk import clipboard as cb
 from mylib.ex.text import *
 from mylib.ex.tui import *
-from mylib.ez import split_path_dir_base_ext
+from mylib.easy import split_path_dir_base_ext
 
 src = r'd:\usr\dl\1'
 ref = r'd:\usr\dl\HentaiNexus metadata'

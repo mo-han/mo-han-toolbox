@@ -3,7 +3,7 @@ import fnmatch
 
 from mylib.ex import fstk
 from mylib.ex.console_app import *
-from mylib.ez import logging
+from mylib.easy import logging
 
 _logger = logging.get_logger(__name__)
 

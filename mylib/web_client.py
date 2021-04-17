@@ -14,14 +14,14 @@ import humanize
 import lxml.html
 import requests.utils
 
-from mylib.ez.typing import JSONType
+from mylib.easy.typing import JSONType
 from mylib.ex.fstk import touch, ensure_open_file
-from .ez import *
-from .ez.logging import get_logger, LOG_FMT_MESSAGE_ONLY
+from .easy import *
+from .easy.logging import get_logger, LOG_FMT_MESSAGE_ONLY
 from mylib.ex.ostk import write_file_chunk
-from .ez.io import SubscriptableFileIO
-from mylib.ez.tricks import singleton, iter_factory_retry
-from .ez import thread_factory
+from .easy.io import SubscriptableFileIO
+from mylib.easy.tricks import singleton, iter_factory_retry
+from .easy import thread_factory
 
 MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE = '# Netscape HTTP Cookie File'
 USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'

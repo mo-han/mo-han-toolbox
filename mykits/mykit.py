@@ -11,16 +11,16 @@ from pprint import pprint
 from send2trash import send2trash
 
 import mylib.__deprecated__
+import mylib.easy
 import mylib.ex.ostk
-import mylib.ez
 from mylib.__deprecated__ import fs_inplace_rename, fs_inplace_rename_regex, list_files, list_dirs
 from mylib.cli import arg_type_pow2, arg_type_range_factory, add_dry_run
+from mylib.easy import *
+from mylib.easy.argparse import HelpCompactFormatter
+from mylib.easy.tricks import Attreebute, eval_or_str, deco_factory_exit_on_keyboard_interrupt
 from mylib.ex import fstk, tui
 from mylib.ex.fstk import make_path, ctx_pushd
 from mylib.ex.ostk import clipboard, set_console_title
-from mylib.ez import *
-from mylib.ez.argparse import HelpCompactFormatter
-from mylib.ez.tricks import Attreebute, eval_or_str, deco_factory_exit_on_keyboard_interrupt
 
 rtd = Attreebute()  # runtime data
 tui_lp = tui.LinePrinter()
@@ -165,7 +165,7 @@ def merge_zip_files_func():
         return
     print('# Merge all below ZIP files:')
     print('\n'.join(src_l))
-    dbx_l = [mylib.ez.split_path_dir_base_ext(p) for p in src_l]
+    dbx_l = [mylib.easy.split_path_dir_base_ext(p) for p in src_l]
     if all_equal([d for d, b, x in dbx_l]):
         common_dir = dbx_l[0][0]
     else:
@@ -177,7 +177,7 @@ def merge_zip_files_func():
     if common_dir and common_ext:
         common_base = os.path.commonprefix([b for d, b, x in dbx_l]).strip()
         if common_base:
-            tmp_dst = mylib.ez.join_path_dir_base_ext(common_dir, common_base, common_ext)
+            tmp_dst = mylib.easy.join_path_dir_base_ext(common_dir, common_base, common_ext)
             if auto_yes or tui.prompt_confirm(f'? Merge into ZIP file "{tmp_dst}"', default=True):
                 dst = tmp_dst
             else:
@@ -213,7 +213,7 @@ merge_zip_files.add_argument('-y', '--yes', help='auto confirm yes', action='sto
 
 
 def tag_filter_files_func():
-    from mylib.ez.filename_tags import SingleFilenameTags
+    from mylib.easy.filename_tags import SingleFilenameTags
     args = rtd.args
     ext_rm = set(args.X or [])
     ext_kp = set(args.x or [])
@@ -747,7 +747,7 @@ dukto_x.add_argument('ndrop_args', metavar='[--] arguments for ndrop', nargs=REM
 
 def url_from_clipboard():
     import pyperclip
-    from mylib.ez.text import regex_find
+    from mylib.easy.text import regex_find
     from html import unescape
     args = rtd.args
     pattern = args.pattern

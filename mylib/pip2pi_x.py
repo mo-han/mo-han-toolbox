@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # encoding=utf8
-from .ez import python_module_from_source_code
+from .easy import python_module_from_source_code
 
 
 def code_modify_pip2pi(x: str) -> str:

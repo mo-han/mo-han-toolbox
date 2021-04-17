@@ -13,7 +13,7 @@ its attribute is a str same as the name thereof
 实例的属性总是一个和属性名称相同的字符串
 
 ```python
-from mylib.ez import AttrName
+from mylib.easy import AttrName
 
 an = AttrName()
 assert an.abc_xyz == 'abc_xyz'
@@ -36,7 +36,7 @@ features:
 ```python
 # test.py
 
-from mylib.ez.argparse import *
+from mylib.easy.argparse import *
 
 apr = ArgumentParserRigger()
 an = apr.an  # an.abc_xyz == 'abc_xyz'
@@ -121,7 +121,7 @@ read/write file with slice
 ```python
 
 
-from mylib.ez.io import SubscriptableFileIO
+from mylib.easy.io import SubscriptableFileIO
 with SubscriptableFileIO('filepath') as f:
     f[-10:] = b'123abc'
     print(f[123:456])

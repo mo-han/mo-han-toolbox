@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
-# encoding=utf8
 import json
 import zipfile
 from collections import defaultdict
 
 import requests
 
+from mylib.easy import *
+from mylib.easy import logging, VoidDuck
+from mylib.easy.tricks import is_hex
 from mylib.ex import fstk
-from mylib.ez import *
-from mylib.ez import logging, VoidDuck
-from mylib.ez.tricks import is_hex
 from mylib.web_client import cookies_dict_from_netscape_file, get_html_element_tree
 
 EH_TITLE_REGEX_PATTERN = re.compile(

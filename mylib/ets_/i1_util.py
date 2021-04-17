@@ -3,7 +3,7 @@
 from traits.api import HasTraits
 from varname import nameof
 
-from ..ez import *
+from ..easy import *
 
 
 def trait_extra_attr_name(attr_name: str):

@@ -10,10 +10,10 @@ from PIL import Image
 from disjoint_set import DisjointSet
 from imagehash import average_hash, dhash, phash, whash, hex_to_hash
 
-from mylib.ez import *
+from mylib.easy import *
 from mylib.ex import fstk
 from mylib.ex.ostk import check_file_ext
-from mylib.ez.tricks import percentage
+from mylib.easy.tricks import percentage
 
 AHASH = 'ahash'
 DHASH = 'dhash'
