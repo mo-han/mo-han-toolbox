@@ -7,9 +7,9 @@ import mylib.ex.fstk
 import mylib.ex.ostk
 import mylib.ez
 from mylib.ex import fstk, tui
-from mylib.ez import fstk as fstk
-from mylib.ez import *
 from mylib.ex.ostk import clipboard
+from mylib.ez import *
+from mylib.ez import fstk as fstk
 from mylib.ez.text import ellipt_middle
 
 tui_lp = tui.LinePrinter()
@@ -159,34 +159,3 @@ def flat_dir(src, prefix, dry_run):
                         if f:
                             send2trash(dp)
                             break
-
-
-def hentai_at_home_galleries_real_name(path_l):
-    from mylib.sites.ehentai import parse_hath_dl_gallery_info
-    for p in path_l or mylib.ex.ostk.clipboard.list_path():
-        try:
-            info = parse_hath_dl_gallery_info(p)
-            title = info['title']
-            artist = info['tags']['artist']
-            group = info['tags']['group']
-            folder, name, ext = mylib.ez.split_path_dir_base_ext(p, dir_ext=False)
-            if len(artist) == 1:
-                folder = fstk.make_path(folder, f'[{artist[0]}]', )
-            elif len(group) == 1:
-                folder = fstk.make_path(folder, f'[{group[0]}]', )
-            else:
-                folder = fstk.make_path(folder, '[...]', )
-            os.makedirs(folder, exist_ok=True)
-            try:
-                tail = re.search(r' \[\d+(-\d{3,4}x)?]$', name).group(0)
-            except AttributeError:
-                tail = ''
-            sanitized_title = fstk.sanitize_xu240(title)
-            new = mylib.ez.join_path_dir_base_ext(folder, sanitized_title + tail, ext)
-            os.rename(p, new)
-            if new != p:
-                print(f'* {p} -> {new}')
-        except FileNotFoundError:
-            print(f'# {p}')
-        except Exception as e:
-            print(f'! {p} ({repr(e)})')

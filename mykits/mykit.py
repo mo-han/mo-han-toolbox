@@ -13,14 +13,13 @@ from send2trash import send2trash
 import mylib.__deprecated__
 import mylib.ex.ostk
 import mylib.ez
-from mylib.tools import mykit_parts
-from mylib.ex import fstk, tui
 from mylib.__deprecated__ import fs_inplace_rename, fs_inplace_rename_regex, list_files, list_dirs
 from mylib.cli import arg_type_pow2, arg_type_range_factory, add_dry_run
-from mylib.ez.argparse import HelpCompactFormatter
-from mylib.ez import *
+from mylib.ex import fstk, tui
 from mylib.ex.fstk import make_path, ctx_pushd
 from mylib.ex.ostk import clipboard, set_console_title
+from mylib.ez import *
+from mylib.ez.argparse import HelpCompactFormatter
 from mylib.ez.tricks import Attreebute, eval_or_str, deco_factory_exit_on_keyboard_interrupt
 
 rtd = Attreebute()  # runtime data
@@ -213,17 +212,6 @@ merge_zip_files.add_argument('src', nargs='*')
 merge_zip_files.add_argument('-y', '--yes', help='auto confirm yes', action='store_true')
 
 
-@has_parser_done
-class HentaiAtHomeGalleriesRealName(HasParser):
-    parser = add_sub_parser('H@H-gallery-real-name', ['hath.gl.rn'], 'restore real name of H@H-downloaded galleries')
-    parser.add_argument('path', nargs='*', help='path of gallery folder or ZIP file')
-
-    @classmethod
-    def run(cls):
-        args = rtd.args
-        mykit_parts.hentai_at_home_galleries_real_name(args.path)
-
-
 def tag_filter_files_func():
     from mylib.ez.filename_tags import SingleFilenameTags
     args = rtd.args
@@ -272,7 +260,8 @@ def catalog_files_by_year_func():
     args = rtd.args
     suffix_l = args.suffix or ['']
     dry_run = args.dry_run
-    files = (p for p in fstk.files_from_iter(args.src or mylib.ex.ostk.clipboard.list_path()) if any(map(p.endswith, suffix_l)))
+    files = (p for p in fstk.files_from_iter(args.src or mylib.ex.ostk.clipboard.list_path()) if
+             any(map(p.endswith, suffix_l)))
     for f in files:
         dirname, basename = os.path.split(f)
         year = re.findall(r'(\d{4})-\d{2}-\d{2}', basename)
@@ -481,7 +470,8 @@ def ffmpeg_img2vid_func():
     if os.path.isdir(os.path.dirname(images)):
         images_l = [images]
     else:
-        images_l = [os.path.join(folder, images) for folder in mylib.ex.ostk.clipboard.list_path() if os.path.isdir(folder)]
+        images_l = [os.path.join(folder, images) for folder in mylib.ex.ostk.clipboard.list_path() if
+                    os.path.isdir(folder)]
     for i in images_l:
         if output in ('mp4', 'webm'):
             o = f'{os.path.realpath(os.path.dirname(i))}.{output}'
