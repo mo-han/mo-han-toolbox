@@ -65,7 +65,7 @@ class PotPlayerKit:
         const_complete_name = 'Complete name'
 
         t0 = time.time()
-        clipboard.clear_line()
+        clipboard.clear()
         self.focus()
         keyboard.press_and_release('ctrl+f1')
         for _ in range(5):

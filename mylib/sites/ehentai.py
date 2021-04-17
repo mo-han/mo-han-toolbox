@@ -6,11 +6,13 @@ from collections import defaultdict
 import requests
 
 from mylib.easy import *
-from mylib.easy import logging, VoidDuck
+from mylib.easy import logging
 from mylib.easy.tricks import is_hex
 from mylib.ex import fstk
 from mylib.web_client import cookies_dict_from_netscape_file, get_html_element_tree
 
+VARIOUS = '(various)'
+UNKNOWN = '(unknown)'
 EH_TITLE_REGEX_PATTERN = re.compile(
     r'^'
     r'([\[(].+[)\]])?'
@@ -78,13 +80,13 @@ def ehviewer_images_catalog(root_dir, *, dry_run: bool = False, db_json_path: st
         for f in files:
             g = EHentaiGallery(f, logger=logger)
             d = db[g.gid]
-            artist_l = []
+            creators = []
             title = d['title'].strip()
             try:
                 core_title = find_core_title(title) or '__INVALID_CORE_TITLE__'
                 core_title_l = re.findall(r'[\w]+[\-+\']?[\w]?', core_title)
                 if title[:1] + title[-1:] == '[]':
-                    artist_l.append(title[1:-1].strip())
+                    creators.append(title[1:-1].strip())
             except AttributeError:
                 print(logmsg_err.format(title))
                 raise
@@ -103,9 +105,9 @@ def ehviewer_images_catalog(root_dir, *, dry_run: bool = False, db_json_path: st
 
             tags = d['tags']
             if 'artist' in tags:
-                artist_l = tags['artist']
+                creators = tags['artist']
             elif 'group' in tags:
-                artist_l = tags['group']
+                creators = tags['group']
             else:
                 for m in (
                         re.match(r'^(?:\([^)]+\))\s*\[([^]]+)]', title),
@@ -116,18 +118,20 @@ def ehviewer_images_catalog(root_dir, *, dry_run: bool = False, db_json_path: st
                         m1 = m.group(1).strip()
                         if m1:
                             if '|' in m1:
-                                artist_l = [e.strip() for e in m1.split('|')]
+                                creators = [e.strip() for e in m1.split('|')]
                             else:
-                                artist_l = [m1]
+                                creators = [m1]
                             core_title = title
                         break
-            if len(artist_l) > 3:
-                if comic_magazine_title:
-                    folder = comic_magazine_title.replace('COMIC X-E ROS', 'COMIC X-EROS')
+            if comic_magazine_title:
+                folder = comic_magazine_title.replace('COMIC X-E ROS', 'COMIC X-EROS')
+            elif creators:
+                if len(creators) > 3:
+                    folder = VARIOUS
                 else:
-                    folder = '[...]'
+                    folder = ', '.join(creators)
             else:
-                folder = '[{}]'.format(', '.join(artist_l))
+                folder = UNKNOWN
             # print(f': {title}')  # DEBUG
             # print(f': {core_title}')  # DEBUG
 
