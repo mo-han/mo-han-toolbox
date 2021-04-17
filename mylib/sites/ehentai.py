@@ -334,24 +334,24 @@ def ehviewer_dl_folder_rename(folder_path: str, *, db: dict = None, update_db=Fa
     return fstk.x_rename(folder_path, title)
 
 
-def parse_hath_dl_gallery_info(gallery):
+def parse_hath_dl_gallery_info(gallery_path, is_dir=False, is_zip=False):
     info = 'galleryinfo.txt'
     desc = 'Downloaded from E-Hentai Galleries by the Hentai@Home Downloader <3'
-    if os.path.isdir(gallery):
-        with fstk.ctx_pushd(gallery):
+    if is_dir or os.path.isdir(gallery_path):
+        with fstk.ctx_pushd(gallery_path):
             if not os.path.isfile(info):
-                raise FileNotFoundError(fstk.make_path(gallery, info))
+                raise FileNotFoundError(fstk.make_path(gallery_path, info))
             with open(info, 'tr', encoding='u8') as f:
                 s = f.read()
-    elif os.path.isfile(gallery):
-        with zipfile.ZipFile(gallery) as z:
+    elif is_zip or os.path.isfile(gallery_path):
+        with zipfile.ZipFile(gallery_path) as z:
             try:
                 with z.open(info) as f:
                     s = f.read().decode('u8')
             except KeyError:
-                raise FileNotFoundError(f'{gallery}::{info}')
+                raise FileNotFoundError(f'{gallery_path}::{info}')
     else:
-        raise FileNotFoundError(gallery)
+        raise FileNotFoundError(gallery_path)
     s = str_remove_suffix(s.strip(), desc)
     d = {}
     try:
@@ -374,6 +374,20 @@ def parse_hath_dl_gallery_info(gallery):
             tags['misc'].append(e)
     d['tags'] = tags
     d['uploader comments'] = cmt.strip() if cmt is not None else None
+    root_dir, name, ext = split_path_dir_base_ext(gallery_path, dir_ext=False)
+    try:
+        gid_resize = re.search(r' \[\d+(-\d{3,4}x)?]$', name).group(0)
+    except AttributeError:
+        gid_resize = ''
+    if gid_resize:
+        d['gid_resize'] = gid_resize.strip()
+        tail_content = gid_resize.strip(' []')
+        if '-' in tail_content:
+            gid, resize = tail_content.split('-')
+            d['gid'] = int(gid)
+            d['resize'] = resize
+        else:
+            d['gid'] = int(tail_content)
     return d
 
 

@@ -147,11 +147,11 @@ class ArgumentParserRigger:
         return self._deco_factory_add_sth('argument_group', *args, **kwargs)
 
     @staticmethod
-    def make_option_name(dest_name):
+    def format_option_name(dest_name):
         return re.sub(r'[\W_]+', '-', dest_name)
 
     @staticmethod
-    def make_dest_name(option_name):
+    def format_dest_name(option_name):
         return re.sub(r'\W+', '_', option_name)
 
     def option(self, short_name: str = None, long_name: str = None, **kwargs):
@@ -204,3 +204,5 @@ class ArgumentParserRigger:
     ro = raw_object
     skip = unknown_placeholder
     an = attr_name
+    fmt_opt = format_option_name
+    fmt_dst = format_dest_name

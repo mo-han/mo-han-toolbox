@@ -15,7 +15,7 @@ PathSourceType = T.Union[T.List[str], str, T.NoneType]
 
 def resolve_path_to_dirs_files(x: PathSourceType, *,
                                use_clipboard=True, use_stdin=False,
-                               glob_recurse=False, exist_prior_to_glob=False):
+                               glob_recurse=False, exist_prior_to_glob=True):
     if not isinstance(x, PathSourceTypeTuple):
         raise TypeError('src', PathSourceType)
 
