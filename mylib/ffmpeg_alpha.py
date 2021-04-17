@@ -9,11 +9,11 @@ import filetype
 
 import mylib.easy
 import mylib.easy.io
-from .ex import fstk, tricks, tui, ostk
-from .__deprecated__ import fs_find_iter
-from mylib.easy.filename_tags import SingleFilenameTags
+from mylib.__deprecated__ import fs_find_iter
 from mylib.easy import *
+from mylib.easy.filename_tags import SingleFilenameTags
 from mylib.easy.logging import get_logger, LOG_FMT_MESSAGE_ONLY
+from mylib.ex import fstk, tricks, tui, ostk
 
 S_ORIGINAL = 'original'
 S_SEGMENT = 'segment'
