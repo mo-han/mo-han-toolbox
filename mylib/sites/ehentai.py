@@ -334,24 +334,25 @@ def ehviewer_dl_folder_rename(folder_path: str, *, db: dict = None, update_db=Fa
     return fstk.x_rename(folder_path, title)
 
 
-def parse_hath_dl_gallery_info(gallery_path, is_dir=False, is_zip=False):
+def parse_hentai_at_home_downloaded_gallery_info(gallery_path, gallery_type=''):
     info = 'galleryinfo.txt'
     desc = 'Downloaded from E-Hentai Galleries by the Hentai@Home Downloader <3'
-    if is_dir or os.path.isdir(gallery_path):
+    if 'd' in gallery_type or os.path.isdir(gallery_path):
         with fstk.ctx_pushd(gallery_path):
-            if not os.path.isfile(info):
-                raise FileNotFoundError(fstk.make_path(gallery_path, info))
-            with open(info, 'tr', encoding='u8') as f:
-                s = f.read()
-    elif is_zip or os.path.isfile(gallery_path):
+            try:
+                with open(info, 'tr', encoding='u8') as f:
+                    s = f.read()
+            except FileNotFoundError:
+                return None
+    elif 'f' in gallery_type or os.path.isfile(gallery_path):
         with zipfile.ZipFile(gallery_path) as z:
             try:
                 with z.open(info) as f:
                     s = f.read().decode('u8')
             except KeyError:
-                raise FileNotFoundError(f'{gallery_path}::{info}')
+                return None
     else:
-        raise FileNotFoundError(gallery_path)
+        return None
     s = str_remove_suffix(s.strip(), desc)
     d = {}
     try:
