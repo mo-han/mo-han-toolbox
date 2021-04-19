@@ -202,6 +202,8 @@ def merge_zip_files_func():
                 copy_fs_if_newer(z, tmp)  # todo: seem check time of ZIP-FS but not files inside
         write_zip(tmp, dst)
     for s in src_l:
+        if s == dst:
+            continue
         send2trash(s)
         print(f'# Trash <- {s}')
 
