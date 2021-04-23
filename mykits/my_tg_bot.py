@@ -58,8 +58,9 @@ class MyAssistantBot(SimpleBot):
     def _ytdl(self, update: Update, *args):
         print(self._ytdl.__name__)
         update = self.__preprocess_update__(update, *args)
+        msg = update.message.text
         if not update:
-            echo = f'# {update.message.text}'
+            echo = f'# {msg}'
             print(echo)
             self.__reply_md_code_block__(echo, update)
             return
