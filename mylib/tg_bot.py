@@ -14,7 +14,7 @@ from telegram.ext import Updater, Filters, CallbackContext
 from telegram.ext.filters import MergedFilter
 
 from .easy import *
-from mylib.ex import fstk, ostk, text, tricks
+from mylib.easy import fstk, ostk, text, tricks
 from .easy import python_module_from_source_code
 
 
