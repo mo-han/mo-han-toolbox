@@ -174,34 +174,54 @@ class ACall:
     exception: T.Optional[Exception]
 
     def __init__(self, target, *args, **kwargs):
-        self.set(target, *args, **kwargs)
-        self.clear()
+        self.set(target, *args, **kwargs).clear()
 
     def clear(self):
         self.time = None
         self.result = None
         self.exception = None
+        return self
 
     def set(self, target, *args, **kwargs):
         self.target = target
         self.args = args
         self.kwargs = kwargs
+        return self
 
-    def get(self):
+    def get(self, ignore_exceptions: T.Union[Exception, T.Tuple[Exception]]=(), exception_handler=None):
         self.clear()
         try:
             self.result = self.target(*self.args, **self.kwargs)
             return self.result
+        except ignore_exceptions:
+            pass
         except Exception as e:
-            self.exception = e
+            if not exception_handler:
+                self.exception = e
+            else:
+                exception_handler(e)
 
-    def timing_get(self):
+    def timing_get(self, **kwargs_of_self_get):
         counter = time.perf_counter
         t0 = counter()
         try:
-            return self.get()
+            return self.get(**kwargs_of_self_get)
         finally:
             self.time = counter() - t0
+
+
+class ALotCall:
+    def __init__(self, *calls: ACall):
+        self.calls = calls
+
+    def any(self, **kwargs_of_call_get):
+        return any((call.get(**kwargs_of_call_get) for call in self.calls))
+
+    def any_result(self, **kwargs_of_call_get):
+        for call in self.calls:
+            r = call.get(**kwargs_of_call_get)
+            if r:
+                return r
 
 
 def round_to(x, precision):

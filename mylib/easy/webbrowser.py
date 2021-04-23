@@ -15,20 +15,14 @@ def get_firefox(path=None):
     if not path:
         if os.name == 'nt':
             mozilla_firefox = 'Mozilla Firefox'
-            for caller in (
-                    ACall(shutil.which, name),
-                    ACall(shutil.which, name, path=path_join(os.environ['ProgramFiles'], mozilla_firefox)),
-                    ACall(shutil.which, name, path=path_join(os.environ['ProgramW6432'], mozilla_firefox)),
-                    ACall(shutil.which, name, path=path_join(os.environ['ProgramFiles(x86)'], mozilla_firefox)),
-            ):
-                try:
-                    path = caller.get()
-                    if path:
-                        break
-                except:
-                    continue
+            make_call = functools.partial(ACall, shutil.which, name)
+            path = ALotCall(
+                *[make_call(path=path_join(os.environ[env_var], mozilla_firefox)) for env_var in
+                  ['ProgramFiles', 'ProgramW6432', 'ProgramFiles(x86)']],
+                make_call(),
+            ).any_result(ignore_exceptions=Exception)
         else:
             path = shutil.which(name)
     if not path:
-        raise FileNotFoundError(name, path)
+        raise FileNotFoundError(name)
     return get_web_browser(name, path)
