@@ -57,10 +57,8 @@ class MyAssistantBot(SimpleBot):
         re.compile(r'youtube|youtu\.be|iwara|pornhub|\[ph[\da-f]{13}]|kissjav|xvideos')))
     def _ytdl(self, update: Update, *args):
         print(self._ytdl.__name__)
-        update = self.__preprocess_update__(update, *args)
-        msg = update.message.text
-        if not update:
-            echo = f'# {msg}'
+        if not self.__predicate_update__(update, *args):
+            echo = f'# {update.message.text}'
             print(echo)
             self.__reply_md_code_block__(echo, update)
             return
@@ -169,15 +167,15 @@ class MyAssistantBot(SimpleBot):
         self.__rt_data__['queued'] = list(self.__updater__.dispatcher.update_queue.queue)
         super().__save_rt_data__(data_file_path)
 
-    def __preprocess_update__(self, u: Update, c: CallbackContext):
+    def __predicate_update__(self, u: Update, c: CallbackContext):
         anti_updates = set(self.__get_conf__().get('anti_updates', []))
         for x in anti_updates:
             if x in u.message.text:
                 anti_updates.remove(x)
                 self.__set_conf__(anti_updates=list(anti_updates))
-                return None
+                return False
         else:
-            return u
+            return True
 
 
 def main():
