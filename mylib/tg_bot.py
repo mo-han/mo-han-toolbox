@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# encoding=utf8
 """telegram bot utilities"""
 import itertools
 import shlex
@@ -15,10 +14,7 @@ from telegram.ext import Updater, Filters, CallbackContext
 from telegram.ext.filters import MergedFilter
 
 from .easy import *
-from mylib.ex.fstk import write_sqlite_dict_file, read_sqlite_dict_file
-from mylib.ex.ostk import HOSTNAME, OSNAME, USERNAME
-from mylib.ex.text import split_by_length_or_newline
-from mylib.ex.tricks import deep_setattr, walk_obj_iter, is_picklable_with_dill_trace
+from mylib.ex import fstk, ostk, text, tricks
 from .easy import python_module_from_source_code
 
 
@@ -33,7 +29,8 @@ def modify_telegram_ext_commandhandler(s: str) -> str:
     return s.replace('args = message.text.split()[1:]', 'args = self._get_args(message)')
 
 
-telegram_ext_commandhandler_modified = python_module_from_source_code('telegram.ext.commandhandler', modify_telegram_ext_commandhandler)
+telegram_ext_commandhandler_modified = python_module_from_source_code('telegram.ext.commandhandler',
+                                                                      modify_telegram_ext_commandhandler)
 
 
 class CommandHandler(telegram_ext_commandhandler_modified.CommandHandler):
@@ -129,17 +126,17 @@ class SimpleBot(ABC):
         self.__bot__.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING)
 
     @staticmethod
-    def __reply_text__(text, update: Update, **kwargs):
-        for t in split_by_length_or_newline(text, constants.MAX_MESSAGE_LENGTH):
+    def __reply_text__(any_text: str, update: Update, **kwargs):
+        for t in text.split_by_length_or_newline(any_text, constants.MAX_MESSAGE_LENGTH):
             update.message.reply_text(t, **kwargs)
 
-    def __reply_markdown__(self, md_text, update: Update):
+    def __reply_markdown__(self, md_text: str, update: Update):
         self.__reply_text__(md_text, update, parse_mode=ParseMode.MARKDOWN)
 
     __reply_md__ = __reply_markdown__
 
     def __reply_md_code_block__(self, code_text, update: Update):
-        for ct in split_by_length_or_newline(code_text, constants.MAX_MESSAGE_LENGTH - 7):
+        for ct in text.split_by_length_or_newline(code_text, constants.MAX_MESSAGE_LENGTH - 7):
             self.__reply_markdown__(f'```\n{ct}```', update)
 
     def __run__(self, poll_timeout=None):
@@ -159,7 +156,7 @@ class SimpleBot(ABC):
         return f'bot:\n' \
                f'{self.__fullname__} @{self.__username__}\n\n' \
                f'running on device:\n' \
-               f'{USERNAME} @ {HOSTNAME} ({OSNAME})\n\n' \
+               f'{ostk.USERNAME} @ {ostk.HOSTNAME} ({ostk.OSNAME})\n\n' \
                f'load {len(self.__rt_data__["queued"]) + len(self.__rt_data__["undone"])} update(s) ' \
                f'since {self.__rt_data__["mtime"]}'
 
@@ -197,29 +194,29 @@ class SimpleBot(ABC):
             queued = data.setdefault('queued', [])
             updates: T.List[Update] = [*undone.values(), *queued]
             [self.__pre_pickle_update__(u) for u in updates]
-            write_sqlite_dict_file(data_file_path, data, with_dill=True)
+            fstk.write_sqlite_dict_file(data_file_path, data, with_dill=True)
             [self.__post_pickle_update__(u) for u in updates]
-            read_data = read_sqlite_dict_file(data_file_path, with_dill=True)
+            read_data = fstk.read_sqlite_dict_file(data_file_path, with_dill=True)
             t = time.perf_counter() - t0
             print(f'saved: {len(read_data["undone"])} undone, {len(read_data["queued"])} queued ({si_format(t)}s used)')
 
     def __pre_pickle_update_auto__(self, u: Update):
-        for p in (path for path, obj in walk_obj_iter(u, keepout_types=(Bot,)) if isinstance(obj, Bot)):
-            deep_setattr(u, BP, *p)
-        if self._debug_mode and not is_picklable_with_dill_trace(u):
-            for p in (path for path, obj in walk_obj_iter(u, keepout_types=(Bot,)) if isinstance(obj, Bot)):
+        for p in (path for path, obj in tricks.walk_obj_iter(u, keepout_types=(Bot,)) if isinstance(obj, Bot)):
+            tricks.deep_setattr(u, BP, *p)
+        if self._debug_mode and not tricks.is_picklable_with_dill_trace(u):
+            for p in (path for path, obj in tricks.walk_obj_iter(u, keepout_types=(Bot,)) if isinstance(obj, Bot)):
                 print(p)
 
     def __post_pickle_update_auto__(self, u: Update):
-        for p in (path for path, obj in walk_obj_iter(u, keepout_types=(BotPlaceholder,)) if
+        for p in (path for path, obj in tricks.walk_obj_iter(u, keepout_types=(BotPlaceholder,)) if
                   isinstance(obj, BotPlaceholder)):
-            deep_setattr(u, self.__bot__, *p)
+            tricks.deep_setattr(u, self.__bot__, *p)
 
     def __pre_pickle_update__(self, u: Update):
         msg = u.message
         msg.bot = msg.from_user.bot = msg.chat.bot = BP
-        if self._debug_mode and not is_picklable_with_dill_trace(u):
-            for p in (path for path, obj in walk_obj_iter(u, keepout_types=(Bot,)) if isinstance(obj, Bot)):
+        if self._debug_mode and not tricks.is_picklable_with_dill_trace(u):
+            for p in (path for path, obj in tricks.walk_obj_iter(u, keepout_types=(Bot,)) if isinstance(obj, Bot)):
                 print(p)
 
     def __post_pickle_update__(self, u: Update):

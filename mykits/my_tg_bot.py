@@ -1,20 +1,14 @@
 #!/usr/bin/env python3
-# encoding=utf8
-import os
-import re
-import shlex
-import subprocess
-import time
 from pprint import pformat
 
-from telegram.ext import MessageHandler, Filters, CallbackContext
+from telegram.ext import MessageHandler
 
 from mylib.cli import new_argument_parser
-from mylib.ex.fstk import read_json_file, write_json_file, read_sqlite_dict_file
 from mylib.easy.logging import get_logger
 from mylib.easy.text import decode_fallback_locale
-from mylib.tg_bot import SimpleBot, deco_factory_bot_handler_method, CommandHandler, Update
 from mylib.easy.tricks import deco_factory_retry, monitor_sub_process_tty_frozen, ProcessTTYFrozen
+from mylib.ex.fstk import read_json_file, write_json_file, read_sqlite_dict_file
+from mylib.tg_bot import *
 
 mt = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(os.path.getmtime(os.path.realpath(__file__))))
 
@@ -63,6 +57,12 @@ class MyAssistantBot(SimpleBot):
         re.compile(r'youtube|youtu\.be|iwara|pornhub|\[ph[\da-f]{13}]|kissjav|xvideos')))
     def _ytdl(self, update: Update, *args):
         print(self._ytdl.__name__)
+        update = self.__preprocess_update__(update, *args)
+        if not update:
+            echo = f'# {update.message.text}'
+            print(echo)
+            self.__reply_md_code_block__(echo, update)
+            return
         undone_key = self._ytdl.__name__
         self.__add_undone_update__(undone_key, update)
         args_l = [line2args(line) for line in update.message.text.splitlines()]
@@ -167,6 +167,16 @@ class MyAssistantBot(SimpleBot):
         data_file_path = data_file_path or self._data_file
         self.__rt_data__['queued'] = list(self.__updater__.dispatcher.update_queue.queue)
         super().__save_rt_data__(data_file_path)
+
+    def __preprocess_update__(self, u: Update, c: CallbackContext):
+        anti_updates = set(self.__get_conf__().get('anti_updates', []))
+        for x in anti_updates:
+            if x in u.message.text:
+                anti_updates.remove(x)
+                self.__set_conf__(anti_updates=list(anti_updates))
+                return None
+        else:
+            return u
 
 
 def main():
