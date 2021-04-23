@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-import getpass
-import platform
 import shlex
-import tempfile
 from collections import defaultdict
 
 from filetype import filetype
@@ -15,11 +12,6 @@ elif os.name == 'posix':
     from .ostk_posix import *
 else:
     from mylib.easy.ostk import *
-
-TEMPDIR = tempfile.gettempdir()
-HOSTNAME = platform.node()
-OSNAME = platform.system()
-USERNAME = getpass.getuser()
 
 
 def check_file_ext(fp: str, ext_list: T.Iterable):

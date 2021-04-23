@@ -15,10 +15,9 @@ import lxml.html
 import requests.utils
 
 from mylib.easy.typing import JSONType
-from mylib.ex.fstk import touch, ensure_open_file
+from mylib.ex import fstk, ostk
 from .easy import *
 from .easy.logging import get_logger, LOG_FMT_MESSAGE_ONLY
-from mylib.ex.ostk import write_file_chunk
 from .easy.io import SubscriptableFileIO
 from mylib.easy.tricks import singleton, iter_factory_retry
 from .easy import thread_factory
@@ -69,7 +68,7 @@ def convert_cookies_file_json_to_netscape(src, dst=None) -> str:
     if not os.path.isfile(src):
         raise FileNotFoundError(src)
     dst = dst or src + '.txt'
-    with ensure_open_file(dst, 'w') as f:
+    with fstk.ensure_open_file(dst, 'w') as f:
         f.write(convert_cookies_json_to_netscape(src))
         return dst
 
@@ -171,7 +170,6 @@ def headers_from_cookies(cookies_data: dict or str, headers: dict = None) -> dic
 
 def get_phantomjs_splinter(proxy=None, show_image=False, window_size=(1024, 1024)):
     import splinter
-    from mylib.ex.ostk import TEMPDIR
 
     extra_argv = ['--webdriver-loglevel=WARN']
     if proxy:
@@ -181,7 +179,7 @@ def get_phantomjs_splinter(proxy=None, show_image=False, window_size=(1024, 1024
 
     b = splinter.Browser(
         'phantomjs',
-        service_log_path=os.path.join(TEMPDIR, 'ghostdriver.log'),
+        service_log_path=os.path.join(ostk.TEMPDIR, 'ghostdriver.log'),
         user_agent=USER_AGENT_FIREFOX_WIN10,
         service_args=extra_argv,
     )
@@ -191,8 +189,7 @@ def get_phantomjs_splinter(proxy=None, show_image=False, window_size=(1024, 1024
 
 def get_firefox_splinter(headless=True, proxy: str = None, **kwargs):
     import splinter
-    from mylib.ex.ostk import TEMPDIR
-    config = {'service_log_path': os.path.join(TEMPDIR, 'geckodriver.log'),
+    config = {'service_log_path': os.path.join(ostk.TEMPDIR, 'geckodriver.log'),
               'headless': headless}
     config.update(kwargs)
     profile_dict = {}
@@ -437,7 +434,7 @@ class DownloadPool(ThreadPoolExecutor):
             stop = start + len(chunk)
             content += chunk
             total = len(content)
-            write_file_chunk(filepath, start, stop, chunk, total)
+            fstk.write_file_chunk(filepath, start, stop, chunk, total)
         self.logger.debug(HTTPResponseInspection(r, content=content))
         d = Download(r, filepath, content=content)
         return d
@@ -457,7 +454,7 @@ class DownloadPool(ThreadPoolExecutor):
 
     def download(self, url, filepath, retry, **kwargs_for_requests):
         tmpfile = filepath + self.tmpfile_suffix
-        touch(tmpfile)
+        fstk.touch(tmpfile)
         for cnt, x in iter_factory_retry(retry)(self.request_data, url, tmpfile, **kwargs_for_requests):
             if isinstance(x, Exception):
                 self.logger.warning('! <{}> {}'.format(type(x).__name__, x))
