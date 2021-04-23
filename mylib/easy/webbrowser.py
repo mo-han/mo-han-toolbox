@@ -16,10 +16,10 @@ def get_firefox(path=None):
         if os.name == 'nt':
             mozilla_firefox = 'Mozilla Firefox'
             for caller in (
-                    Call(shutil.which, name),
-                    Call(shutil.which, name, path=path_join(os.environ['ProgramFiles'], mozilla_firefox)),
-                    Call(shutil.which, name, path=path_join(os.environ['ProgramW6432'], mozilla_firefox)),
-                    Call(shutil.which, name, path=path_join(os.environ['ProgramFiles(x86)'], mozilla_firefox)),
+                    ACall(shutil.which, name),
+                    ACall(shutil.which, name, path=path_join(os.environ['ProgramFiles'], mozilla_firefox)),
+                    ACall(shutil.which, name, path=path_join(os.environ['ProgramW6432'], mozilla_firefox)),
+                    ACall(shutil.which, name, path=path_join(os.environ['ProgramFiles(x86)'], mozilla_firefox)),
             ):
                 try:
                     path = caller.get()

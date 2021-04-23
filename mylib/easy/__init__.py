@@ -165,7 +165,7 @@ def python_module_from_filepath(module_name, filepath):
     return module
 
 
-class Call:
+class ACall:
     target: T.Callable
     args: tuple
     kwargs: dict
