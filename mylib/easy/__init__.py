@@ -188,7 +188,7 @@ class ACall:
         self.kwargs = kwargs
         return self
 
-    def get(self, ignore_exceptions: T.Union[Exception, T.Tuple[Exception]]=(), exception_handler=None):
+    def get(self, ignore_exceptions: T.Union[Exception, T.Tuple[Exception]] = (), exception_handler=None):
         self.clear()
         try:
             self.result = self.target(*self.args, **self.kwargs)
@@ -211,8 +211,13 @@ class ACall:
 
 
 class ALotCall:
-    def __init__(self, *calls: ACall):
-        self.calls = calls
+    def __init__(self, *calls: T.Union[ACall, T.Iterable[ACall]]):
+        self.calls = []
+        for x in calls:
+            if isinstance(x, ACall):
+                self.calls.append(x)
+            else:
+                self.calls.extend(x)
 
     def any(self, **kwargs_of_call_get):
         return any((call.get(**kwargs_of_call_get) for call in self.calls))
