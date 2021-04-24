@@ -2,10 +2,8 @@
 # -*- coding: utf-8 -*-
 """Library for website operation"""
 
-import http.cookiejar
 import json
 from concurrent.futures.thread import ThreadPoolExecutor
-from io import StringIO
 from queue import Queue
 from urllib.parse import urlparse, ParseResult
 
@@ -17,6 +15,7 @@ import requests.utils
 from mylib.easy.typing import JSONType
 from mylib.ex import fstk, ostk
 from .easy import *
+from mylib.ex.http_headers import CurlCookieJar
 from .easy.logging import get_logger, LOG_FMT_MESSAGE_ONLY
 from .easy.io import SubscriptableFileIO
 from mylib.easy.tricks import singleton, iter_factory_retry
@@ -100,30 +99,6 @@ def cookies_dict_from_json(json_data_or_filepath: JSONType or str, disable_filep
     for c in cookies:
         d[c['name']] = c['value']
     return d
-
-
-class CurlCookieJar(http.cookiejar.MozillaCookieJar):
-    """fix issue: MozillaCookieJar ignores '#HttpOnly_' lines"""
-
-    def load(self, filename=None, ignore_discard=False, ignore_expires=False):
-        http_only_prefix = '#HttpOnly_'
-
-        if filename is None:
-            if self.filename is not None:
-                filename = self.filename
-            else:
-                # noinspection PyUnresolvedReferences
-                raise ValueError(http.cookiejar.MISSING_FILENAME_TEXT)
-
-        with open(filename) as f:
-            lines = [str_remove_prefix(line, http_only_prefix) for line in f.readlines()]
-            # print(''.join(lines))  # DEBUG
-
-        with StringIO() as f:
-            f.writelines(lines)
-            f.seek(0)
-            # noinspection PyUnresolvedReferences
-            self._really_load(f, filename, ignore_discard, ignore_expires)
 
 
 def cookies_dict_from_netscape_file(filepath: str, ignore_discard=True, ignore_expires=True) -> dict:
