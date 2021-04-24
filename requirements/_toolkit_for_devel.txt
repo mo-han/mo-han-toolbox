@@ -8,3 +8,4 @@ pip-chill
 pipdeptree
 pipenv
 pyinstaller
+httpie  #BSD-3-Clause #web #test #debug
