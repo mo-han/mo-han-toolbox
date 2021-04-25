@@ -450,3 +450,23 @@ def dedup_list(source: T.Iterable) -> list:
     r = []
     [r.append(e) for e in source if e not in r]
     return r
+
+
+def deco_cached_call(target):
+    cache = {}
+
+    @functools.wraps(target)
+    def deco(*args, **kwargs):
+        cache_key = target
+        if args:
+            cache_key = cache_key, str(args)
+        if kwargs:
+            cache_key = *cache_key, str(kwargs)
+        try:
+            return cache[cache_key]
+        except KeyError:
+            r = target(*args, **kwargs)
+            cache[cache_key] = r
+            return r
+
+    return deco
