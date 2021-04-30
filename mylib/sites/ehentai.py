@@ -8,7 +8,7 @@ import requests
 from mylib.easy import *
 from mylib.easy import logging
 from mylib.easy.tricks import is_hex
-from mylib.ex import fstk
+from mylib.ex import fstk, text
 from mylib.web_client import cookies_dict_from_netscape_file, get_html_element_tree
 
 VARIOUS = '(various)'
@@ -39,6 +39,24 @@ def find_core_title(title: str):
     t = re.sub(r'^\s*\[[^]]+](.+)', r'\1', t)
     t = re.sub(r'^\s*([^[]+)\[.+]', r'\1', t)
     return t.strip()
+
+
+def guess_creators_from_ehentai_title(x: str):
+    func = functools.partial(get_re_groups, x, )
+    creators_pattern_name = 'creators'
+    creators_pattern = f'?P<{creators_pattern_name}>'
+    _, _, group_dict = ALotCall(
+        ACall(func, rf'^(\([^)]+\))\s*\[({creators_pattern}[^]]+)]'),
+        ACall(func, rf'^\[(?:pixiv|fanbox|tumblr|twitter)]\s*({creators_pattern}.+)\s*[(\[]', flags=re.I),
+        ACall(func, rf'^\W*artist\W*({creators_pattern}\w.*)', flags=re.I),
+    ).any_result()
+    if creators_pattern_name not in group_dict:
+        return []
+    creators_str: str = group_dict[creators_pattern_name].strip()
+    if '|' in creators_str:
+        return [e.strip() for e in creators_str.split('|')]
+    else:
+        return [creators_str]
 
 
 def ehviewer_images_catalog(root_dir, *, dry_run: bool = False, db_json_path: str = 'ehdb.json'):
@@ -104,25 +122,30 @@ def ehviewer_images_catalog(root_dir, *, dry_run: bool = False, db_json_path: st
                     comic_magazine_title = 'COMIC ' + ' '.join(comic_magazine_title_l)
 
             tags = d['tags']
+
             if 'artist' in tags:
                 creators = tags['artist']
             elif 'group' in tags:
                 creators = tags['group']
             else:
-                for m in (
-                        re.match(r'^(?:\([^)]+\))\s*\[([^]]+)]', title),
-                        re.match(r'^\[(?:pixiv|fanbox|tumblr|twitter)]\s*(.+)\s*[(\[]', title, flags=re.I),
-                        re.match(r'^\W*artist\W*(\w.*)', title, flags=re.I),
-                ):
-                    if m:
-                        m1 = m.group(1).strip()
-                        if m1:
-                            if '|' in m1:
-                                creators = [e.strip() for e in m1.split('|')]
-                            else:
-                                creators = [m1]
-                            core_title = title
-                        break
+                creators = guess_creators_from_ehentai_title(title)
+                if creators:
+                    core_title = title
+                # todo: clean below code block if guess_creators_from_ehentai_title work well
+                # for m in (
+                #         re.match(r'^(?:\([^)]+\))\s*\[([^]]+)]', title),
+                #         re.match(r'^\[(?:pixiv|fanbox|tumblr|twitter)]\s*(.+)\s*[(\[]', title, flags=re.I),
+                #         re.match(r'^\W*artist\W*(\w.*)', title, flags=re.I),
+                # ):
+                #     if m:
+                #         m1 = m.group(1).strip()
+                #         if m1:
+                #             if '|' in m1:
+                #                 creators = [e.strip() for e in m1.split('|')]
+                #             else:
+                #                 creators = [m1]
+                #             core_title = title
+                #         break
             if comic_magazine_title:
                 folder = comic_magazine_title.replace('COMIC X-E ROS', 'COMIC X-EROS')
             elif creators:
