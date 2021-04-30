@@ -470,3 +470,16 @@ def deco_cached_call(target):
             return r
 
     return deco
+
+
+def get_re_groups(source: str, match_pattern=None, match_flags=None, match_method: T.Callable = re.match):
+    """get_re_group_data(string[, pattern[, flags[, method]]]) -> (group(0), groups(), groupdict())"""
+    args = [source]
+    if match_pattern:
+        args.insert(0, match_pattern)
+    if match_flags:
+        args.append(match_flags)
+    m = match_method(*args)
+    if m is None:
+        return type(source)(), tuple(), dict()
+    return m.group(0), m.groups(), m.groupdict()
