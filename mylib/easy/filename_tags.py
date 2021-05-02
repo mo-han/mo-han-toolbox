@@ -80,9 +80,10 @@ class SingleFilenameTags(FilenameTagsABC):
         self.end = end
         self.end_re = re.escape(end)
         self.preamble = preamble
-        self.preamble_re = preamble
+        self.preamble_re = re.escape(preamble)
         self.sep = sep
         tags_pattern = fr'{self.preamble_re}{self.begin_re}[^{self.begin_re}{self.end_re}]*{self.end_re}'
+        # print(tags_pattern)
         parent_dir, body, ext = split_path_dir_base_ext(path)
         if re.search(tags_pattern, ext):
             body += ext
@@ -90,6 +91,7 @@ class SingleFilenameTags(FilenameTagsABC):
         self.extension = ext
         try:
             before_tags, the_tags, after_tags = re.split(fr'({tags_pattern})', body, maxsplit=1)
+            # print(before_tags, the_tags, after_tags)
             tags_s = str(the_tags[len(self.preamble) + len(self.begin):-len(self.end)]).strip()
             tags_l = tags_s.split(sep) if tags_s else []
         except ValueError:
