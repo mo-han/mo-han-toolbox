@@ -27,12 +27,12 @@ an.x = an.exclude = an.dry_run = an.R = an.recurse = None
 @apr.sub(help='move multiple src to/into dst')
 @apr.arg(an.dst)
 @apr.opt(an.s, an.src, nargs='*', metavar=an.PATH)
-@apr.true(an.D, apr.format_option_name(an.in_dst))
-@apr.true(an.S, apr.format_option_name(an.in_src))
+@apr.true(an.D, apr.make_option_name_from_dest_name(an.in_dst))
+@apr.true(an.S, apr.make_option_name_from_dest_name(an.in_src))
 @apr.opt(an.F, an.conflict, choices=ON_EXIST_CHOICES, default='error')
 @apr.opt(an.x, an.exclude)
 @apr.true(an.v, an.verbose)
-@apr.true(long_name=apr.format_option_name(an.dry_run))
+@apr.true(long_name=apr.make_option_name_from_dest_name(an.dry_run))
 @apr.map(an.dst, an.src, in_dst=an.in_dst, in_src=an.in_src, conflict=an.conflict, exclude=an.exclude,
          verbose=an.verbose, dry_run=an.dry_run)
 def mv2(dst: str, src: T.Union[T.List[str], str, T.NoneType] = None, *, in_dst: bool = False, in_src: bool = False,

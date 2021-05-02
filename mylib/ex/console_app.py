@@ -12,6 +12,8 @@ def __ref():
 PathSourceTypeTuple = list, str, T.NoneType
 PathSourceType = T.Union[T.List[str], str, T.NoneType]
 
+stderr_print = functools.partial(print, file=sys.stderr)
+
 
 def resolve_path_to_dirs_files(x: PathSourceType, *,
                                use_clipboard=True, use_stdin=False,

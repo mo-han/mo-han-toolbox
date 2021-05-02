@@ -99,7 +99,7 @@ an.B = an.trash_bin = ''
 @apr.true('c', 'clean')
 @apr.true('z', 'cbz')
 @apr.opt('k', 'workers', type=int, metavar='N')
-@apr.true(an.B, apr.format_option_name(an.trash_bin), help='delete to trash bin')
+@apr.true(an.B, apr.make_option_name_from_dest_name(an.trash_bin), help='delete to trash bin')
 @apr.arg('src', nargs='*')
 @apr.map('src', recursive='recursive', clean='clean', cbz='cbz', workers='workers', trash_bin=an.trash_bin)
 def auto_cvt(src, recursive, clean, cbz, workers, trash_bin=False):
