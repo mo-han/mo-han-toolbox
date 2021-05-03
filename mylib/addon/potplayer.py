@@ -64,6 +64,7 @@ class PotPlayerKit:
         const_general = 'General'
         const_complete_name = 'Complete name'
 
+        cb_old = clipboard.get()
         t0 = time.time()
         clipboard.clear()
         self.focus()
@@ -84,6 +85,7 @@ class PotPlayerKit:
             try:
                 text = clipboard.get() or ''
                 clipboard.clear()
+                clipboard.set(cb_old)
                 lines = text.splitlines()
                 line0 = getitem_default(lines, 0)
                 line1 = getitem_default(lines, 1)
