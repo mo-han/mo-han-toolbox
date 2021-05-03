@@ -7,7 +7,7 @@ from . import typing, SingletonMetaClass, AttrName
 T = typing
 
 
-class HelpCompactFormatter(HelpFormatter):
+class CompactHelpFormatterWithDefaults(ArgumentDefaultsHelpFormatter):
     def _format_action_invocation(self, action):
         if not action.option_strings or action.nargs == 0:
             # noinspection PyProtectedMember
@@ -27,7 +27,7 @@ class UnknownArgumentsPlaceholder(metaclass=SingletonMetaClass):
 
 
 class ArgumentParserRigger:
-    def __init__(self, formatter_class=HelpCompactFormatter,
+    def __init__(self, formatter_class=CompactHelpFormatterWithDefaults,
                  subcommands_title='sub-cmd', subcommands_desc=None, **kwargs):
         self.parser_common_kwargs = dict(formatter_class=formatter_class, **kwargs)
         self.root_parser = ArgumentParser(**self.parser_common_kwargs)
@@ -147,11 +147,11 @@ class ArgumentParserRigger:
         return self._deco_factory_add_sth('argument_group', *args, **kwargs)
 
     @staticmethod
-    def format_option_name(dest_name):
+    def make_option_name_from_dest_name(dest_name):
         return re.sub(r'[\W_]+', '-', dest_name)
 
     @staticmethod
-    def format_dest_name(option_name):
+    def make_dest_name_from_option_name(option_name):
         return re.sub(r'\W+', '_', option_name)
 
     def option(self, short_name: str = None, long_name: str = None, **kwargs):
@@ -204,5 +204,5 @@ class ArgumentParserRigger:
     ro = raw_object
     skip = unknown_placeholder
     an = attr_name
-    fmt_opt = format_option_name
-    fmt_dst = format_dest_name
+    dst2opt = make_option_name_from_dest_name
+    opt2dst = make_dest_name_from_option_name

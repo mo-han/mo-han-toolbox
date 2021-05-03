@@ -2,7 +2,7 @@
 # encoding=utf8
 import argparse
 
-from mylib.easy.argparse import HelpCompactFormatter
+from mylib.easy.argparse import CompactHelpFormatterWithDefaults
 from mylib.math import int_is_power_of_2
 
 
@@ -25,7 +25,7 @@ def arg_type_range_factory(x_type, x_range_condition: str):
     return arg_type_range
 
 
-def new_argument_parser(formatter_class=HelpCompactFormatter):
+def new_argument_parser(formatter_class=CompactHelpFormatterWithDefaults):
     return argparse.ArgumentParser(formatter_class=formatter_class)
 
 

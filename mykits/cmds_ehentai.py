@@ -36,7 +36,7 @@ an.src = an.v = an.verbose = an.D = an.dry_run = ''
 @apr.sub(apr.replace_underscore())
 @apr.arg(an.src, nargs='*')
 @apr.true(an.v, an.verbose)
-@apr.true(an.D, apr.fmt_opt(an.dry_run))
+@apr.true(an.D, apr.dst2opt(an.dry_run))
 @apr.map(an.src, verbose=an.verbose, dry_run=an.dry_run)
 def hath_sort(src: PathSourceType, *, verbose=False, dry_run=False):
     """rename and sort galleries downloaded via H@H (Hentai at Home)"""
