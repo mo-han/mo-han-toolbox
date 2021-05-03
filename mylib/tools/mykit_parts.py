@@ -77,6 +77,14 @@ def move_into_dir(src, dst, pattern, alias, dry_run, sub_dir):
         return
     dst = dst_map.get(dst, dst)
     sub_dirs_l = next(os.walk(dst))[1]
+    __ = []
+    for sub_dir_basename in sub_dirs_l:
+        if re.fullmatch(r'#\w+=', sub_dir_basename):
+            for sub_sub_dir_basename in next(os.walk(path_join(dst, sub_dir_basename)))[1]:
+                __.append(path_join(sub_dir_basename, sub_sub_dir_basename))
+        else:
+            __.append(sub_dir_basename)
+    sub_dirs_l = __
     if os.path.isfile(dst):
         print(f'! {dst} is file (should be directory)', file=sys.stderr)
         exit(1)
@@ -84,7 +92,8 @@ def move_into_dir(src, dst, pattern, alias, dry_run, sub_dir):
     db_path = fstk.make_path(dst, '__folder_name_words__.db')
     db = mylib.ex.fstk.read_sqlite_dict_file(db_path)
     db = {k: v for k, v in db.items() if k in sub_dirs_l}
-    sub_dirs_d = {b: set(find_words(b.lower())) for b in sub_dirs_l if b not in db}
+    sub_dirs_d = {sd_bn: set(find_words(sd_bn.lower())) for sd_bn in sub_dirs_l if sd_bn not in db}
+    # sd_bn: sub-dir basename
     sub_dirs_d.update(db)
     sub_dirs_d = {k: sub_dirs_d[k] for k in sorted(sub_dirs_d)}
     for ss in src:
