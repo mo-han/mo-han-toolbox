@@ -83,6 +83,7 @@ class PotPlayerKit:
             self.gasp()
             try:
                 text = clipboard.get() or ''
+                clipboard.clear()
                 lines = text.splitlines()
                 line0 = getitem_default(lines, 0)
                 line1 = getitem_default(lines, 1)
