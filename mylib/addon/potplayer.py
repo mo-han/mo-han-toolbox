@@ -6,15 +6,15 @@ import keyboard
 import mouse
 
 from mylib.easy import *
-from mylib.ex.fstk import x_rename
+from mylib.ex import ostk, fstk
 from mylib.gui_old import rename_dialog
-from mylib.ex.ostk import clipboard
 from mylib.uia import module_pywinauto
 
 pywinauto = module_pywinauto()
 App = pywinauto.Application
 HwndElementInfo = pywinauto.win32_element_info.HwndElementInfo
 find_elements = pywinauto.findwindows.find_elements
+clipboard = ostk.clipboard
 
 
 class PotPlayerKit:
@@ -64,7 +64,11 @@ class PotPlayerKit:
         const_general = 'General'
         const_complete_name = 'Complete name'
 
-        cb_old = clipboard.get()
+        try:
+            cb_old = clipboard.get() or ''
+        except ostk.pywintypes.error as e:
+            warnings.warn(f'{e}\n{e!r}')
+            time.sleep(1)
         t0 = time.time()
         clipboard.clear()
         self.focus()
@@ -93,6 +97,9 @@ class PotPlayerKit:
                     break
             except clipboard.OpenError:
                 warnings.warn('clipboard open error')
+            except ostk.pywintypes.error as e:
+                warnings.warn(f'{e}\n{e!r}')
+                time.sleep(1)
 
         space_and_colon = ' : '
         space_and_slash = ' / '
@@ -140,7 +147,7 @@ class PotPlayerKit:
     def rename_file(self, new: str, use_cache: bool = False, move_to: str = None, keep_ext: bool = True):
         fileinfo = self.cache['fileinfo'] if use_cache else self.get_fileinfo()
         src = fileinfo['path']
-        x_rename(src, new, move_to_dir=move_to, append_src_ext=keep_ext)
+        fstk.x_rename(src, new, move_to_dir=move_to, append_src_ext=keep_ext)
 
     def rename_file_gui(self, alt_tab: bool = False):
         try:

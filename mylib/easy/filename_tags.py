@@ -82,7 +82,8 @@ class SingleFilenameTags(FilenameTagsABC):
         self.preamble = preamble
         self.preamble_re = re.escape(preamble)
         self.sep = sep
-        tags_pattern = fr'{self.preamble_re}{self.begin_re}[^{self.begin_re}{self.end_re}]*{self.end_re}'
+        tags_pattern = fr'[^{self.preamble_re}]{self.preamble_re}' \
+                       fr'{self.begin_re}[^{self.begin_re}{self.end_re}]*{self.end_re}'
         # print(tags_pattern)
         parent_dir, body, ext = split_path_dir_base_ext(path)
         if re.search(tags_pattern, ext):
