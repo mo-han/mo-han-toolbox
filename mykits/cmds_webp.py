@@ -30,6 +30,8 @@ class Counter:
 def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=None):
     if print_path_relative_to:
         image_fp_rel = fstk.make_path(image_fp, relative_to=print_path_relative_to)
+        if image_fp_rel == '.':
+            image_fp_rel = image_fp
     else:
         image_fp_rel = image_fp
     webp_fp = image_fp + '.webp'
@@ -85,6 +87,13 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
     # except ChildProcessError as e:
     #     if e.args[1] == ["Saving file '-'"]:
     #         raise KeyboardInterrupt
+    except cwebp.CWebpEncodeError as e:
+        if e.reason == e.E.BAD_DIMENSION:
+            print(f'! ({e.reason}) <- {image_fp_rel}')
+        else:
+            print(traceback.format_exc())
+            print(f'! {image_fp_rel}')
+            os_exit_force(1)
     except Exception:
         print(traceback.format_exc())
         print(f'! {image_fp_rel}')

@@ -483,3 +483,8 @@ def get_re_groups(source: str, match_pattern=None, match_flags=None, match_metho
     if m is None:
         return type(source)(), tuple(), dict()
     return m.group(0), m.groups(), m.groupdict()
+
+
+class AttrConstMetaClass(type):
+    def __new__(mcs, name, bases, namespace):
+        return super().__new__(mcs, name, bases, {k: k if v is ... else v for k, v in namespace.items()})

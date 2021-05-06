@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
+"""NOT USABLE"""
 from PySide2.QtWebEngineWidgets import *
-from .qt import *
 
 
 class WebView(QWebEngineView):

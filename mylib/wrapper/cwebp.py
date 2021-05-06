@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import enum
 import math
 from functools import partial
 
@@ -113,9 +114,30 @@ class SkipOverException(Exception):
         self.msg = msg
 
 
+class CWebpGenericError(ChildProcessError):
+    pass
+
+
+class CWebpEncodeError(CWebpGenericError):
+    class E(metaclass=AttrConstMetaClass):
+        BAD_DIMENSION = ...
+
+    def __init__(self, code: int, reason: str, desc: str):
+        self.code = code
+        self.reason = reason
+        self.desc = desc
+        super(CWebpEncodeError, self).__init__(code, f'{reason}: {desc}')
+
+
 def check_cwebp_subprocess_result(result: dict):
     if not result['ok']:
-        raise ChildProcessError(result['code'], result['msg'])
+        msg_lines = result['msg']
+        if msg_lines[1] == 'Error! Cannot encode picture as WebP':
+            m = re.match(r'Error code: (?P<code>\d+) \((?P<reason>\w+): (?P<desc>.+)\)', msg_lines[2])
+            if m:
+                code, reason, desc = m.groups()
+                raise CWebpEncodeError(code=code, reason=reason, desc=desc)
+        raise CWebpGenericError(result['code'], msg_lines)
     return result
 
 
