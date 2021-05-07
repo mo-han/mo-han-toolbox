@@ -4,7 +4,7 @@ from abc import ABC
 from mylib.easy import *
 
 
-class FilenameTagsABC(ABC):
+class FilenameTagsSetABC(ABC):
     def __init__(self):
         self.tags_set = set()
         self.tags_dict = dict()
@@ -71,7 +71,7 @@ class FilenameTagsABC(ABC):
         return self
 
 
-class SingleFilenameTags(FilenameTagsABC):
+class EnclosedFilenameTagsSet(FilenameTagsSetABC):
     def __init__(self, path: str, *, preamble='.', begin='[', end=']', sep=' '):
         super().__init__()
         self.config = dict(preamble=repr(preamble), begin=repr(begin), end=repr(end), sep=repr(sep))
@@ -82,7 +82,7 @@ class SingleFilenameTags(FilenameTagsABC):
         self.preamble = preamble
         self.preamble_re = re.escape(preamble)
         self.sep = sep
-        tags_pattern = fr'[^{self.preamble_re}]{self.preamble_re}' \
+        tags_pattern = fr'{self.preamble_re}' \
                        fr'{self.begin_re}[^{self.begin_re}{self.end_re}]*{self.end_re}'
         # print(tags_pattern)
         parent_dir, body, ext = split_path_dir_base_ext(path)
@@ -92,7 +92,7 @@ class SingleFilenameTags(FilenameTagsABC):
         self.extension = ext
         try:
             before_tags, the_tags, after_tags = re.split(fr'({tags_pattern})', body, maxsplit=1)
-            # print(before_tags, the_tags, after_tags)
+            print(before_tags, the_tags, after_tags)
             tags_s = str(the_tags[len(self.preamble) + len(self.begin):-len(self.end)]).strip()
             tags_l = tags_s.split(sep) if tags_s else []
         except ValueError:
