@@ -119,7 +119,7 @@ class CWebpGenericError(ChildProcessError):
 
 
 class CWebpEncodeError(CWebpGenericError):
-    class E(metaclass=AttrConstMetaClass):
+    class E(metaclass=AttrConstEllipsisForStringMetaClass):
         BAD_DIMENSION = ...
 
     def __init__(self, code: int, reason: str, desc: str):
