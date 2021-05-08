@@ -189,7 +189,8 @@ you_get.util.strings.legitimize = you_get.util.fs.legitimize = new_legitimize
 # 综上所述，下面这行可以注释掉了（已经注释掉了）
 # you_get.extractor.get_filename = you_get.common.get_filename = you_get.util.strings.get_filename
 # 下面则是将B站下载模块替换成修改版，所用的源码替换函数是`code_modify_you_get_bilibili`
-you_get.extractors.bilibili = python_module_from_source_code('you_get.extractors.bilibili', code_modify_you_get_bilibili)
+you_get.extractors.bilibili = python_module_from_source_code('you_get.extractors.bilibili',
+                                                             code_modify_you_get_bilibili)
 you_get_filename = you_get.util.strings.get_filename
 
 
@@ -264,7 +265,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
             d['audio_quality'] = qn
 
     # 更新视频页面的HTML文档（超长字符串）
-    def update_html(self):
+    def ensure_html_updated(self):
         url, doc = self.html
         if url != self.url:
             url = self.url
@@ -294,7 +295,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         return headers
 
     def get_title(self):
-        self.update_html()
+        self.ensure_html_updated()
         _, h = self.html
         t = seq_call_return((
             {'target': lambda: h.xpath('//*[@class="video-title"]')[0].attrib['title']},
@@ -316,7 +317,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
             f.write(str(self.get_tags()))
 
     def get_desc(self):
-        self.update_html()
+        self.ensure_html_updated()
         _, h = self.html
         desc = seq_call_return((
             {'target': lambda: h.xpath('//div[@id="v_desc"]')[0].text_content()},
@@ -325,7 +326,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         return desc
 
     def get_tags(self):
-        self.update_html()
+        self.ensure_html_updated()
         _, h = self.html
         return [e.text_content().strip() for e in h.xpath('//*[@class="tag-link"]')]
 
@@ -355,32 +356,33 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
             prefix = BILIBILI_VIDEO_URL_PREFIX
         return prefix + vid
 
-    # [av号][BV号]
-    def get_vid_label(self, fmt='[{}]'):
+    # [bilibili <BV_id> <av_id>]
+    def get_vid_label(self):
         the_vid = self.get_vid()
-        label = fmt.format(the_vid)
         if the_vid.startswith('BV'):
-            self.update_html()
+            self.ensure_html_updated()
             _, h = self.html
             canonical = h.xpath('//link[@rel="canonical"]')[0].attrib['href']
-            avid = re.search(r'/(av\d+)/', canonical).group(1)
-            label += fmt.format(avid)
+            av_id = re.search(r'/(av\d+)/', canonical).group(1)
+            id_str = f'{the_vid} {av_id}'
         elif the_vid.startswith('ep'):
-            self.update_html()
+            self.ensure_html_updated()
             _, h = self.html
             og_url = h.xpath('//meta[@property="og:url"]')[0].attrib['content']
-            ss = re.search(r'/play/(ss\d+)', og_url).group(1)
-            label += fmt.format(ss)
-        return label
+            ss_id = re.search(r'/play/(ss\d+)', og_url).group(1)
+            id_str = f'{the_vid} {ss_id}'
+        else:
+            id_str = the_vid
+        return f'[bilibili {id_str}]'
 
     # 上传者（UP主）用户名
     def get_author(self):
-        self.update_html()
+        self.ensure_html_updated()
         _, h = self.html
         return h.xpath('//meta[@name="author"]')[0].attrib['content']
 
-    def get_author_label(self, fmt='[{}]'):
-        return fmt.format(self.get_author())
+    def get_author_label(self):
+        return f'[{self.get_author()}]'
 
     # 根据限定的最高画质或者选择的下载画质，从解析得到的视频流中，删除多余的、用不到的
     def del_unwanted_dash_streams(self):
