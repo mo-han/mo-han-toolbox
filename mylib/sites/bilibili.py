@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 import json
 import os
 import re
@@ -19,13 +17,17 @@ from lxml import html
 from mylib import web_client
 from mylib.__deprecated__ import concat_videos, merge_m4s
 from mylib._misc import safe_print, safe_basename
-from mylib.ex.ostk import ensure_sigint_signal
-from mylib.ex import fstk
-from mylib.ex.text import regex_find, ellipt_end
-from mylib.ex.tricks import str2range
 from mylib.easy import python_module_from_source_code
 from mylib.easy.tricks import seq_call_return
+from mylib.ex import fstk
+from mylib.ex import http_headers
+from mylib.ex.ostk import ensure_sigint_signal
+from mylib.ex.text import regex_find, ellipt_end
+from mylib.ex.tricks import str2range
 from mylib.ex.tui import LinePrinter
+
+API_HEADERS_HANDLER: http_headers.HTTPHeadersHandler = http_headers.HTTPHeadersHandler().user_agent(
+    http_headers.UserAgentExamples.GOOGLE_CHROME_WINDOWS)
 
 BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'
 BILIBILI_EPISODE_URL_PREFIX = 'https://www.bilibili.com/bangumi/play/'
@@ -215,7 +217,12 @@ def find_bilibili_vid(x: str or int) -> str or None:
     return vid
 
 
-def vid_to_bvid_web_api(vid: str or int, cookies: dict = None) -> str or None:
+def api_web_interface_view(**kwargs):
+    url = 'https://api.bilibili.com/x/web-interface/view'
+    return requests.get(url, params=kwargs, headers=API_HEADERS_HANDLER.headers).json()
+
+
+def vid_to_bvid_via_web_api(vid: str or int, cookies: dict = None) -> str or None:
     if isinstance(vid, str):
         if vid[:2] in ('av', 'AV'):
             aid = vid[2:]
@@ -225,9 +232,7 @@ def vid_to_bvid_web_api(vid: str or int, cookies: dict = None) -> str or None:
         aid = vid
     else:
         raise TypeError('avid must be str or int')
-    url = 'https://api.bilibili.com/x/web-interface/archive/stat'
-    r = requests.get(url, params={'aid': aid}, **web_client.make_requests_kwargs(cookies=cookies))
-    j = r.json()
+    j = api_web_interface_view(aid=aid)
     if j['code'] == 0 and j['data']:
         return j['data']['bvid']
     else:
@@ -308,8 +313,8 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         fp = fp or self.get_title() + '.info'
         fp = you_get_filename(fp)
         print(fp)
-        with open(fp, 'w', encoding='utf8') as f:
-            f.write('#encoding=utf8\n\n')
+        with open(fp, 'w', encoding='utf-8-sig') as f:
+            # f.write('#encoding=utf8\n\n')
             f.write(self.url)
             f.write('\n\n')
             f.write(self.get_desc())
@@ -407,7 +412,7 @@ def download_bilibili_video(url: str or int,
     if not output:
         output = '.'
     if '://' not in url:
-        url = bilibili_url_from_vid(vid_to_bvid_web_api(find_bilibili_vid(url) or url))
+        url = bilibili_url_from_vid(vid_to_bvid_via_web_api(find_bilibili_vid(url) or url))
 
     if info:
         dl_kwargs = {'info_only': True}
