@@ -13,18 +13,18 @@ class Constants:
 
 class UserAgentExamples:
     """https://www.networkinghowtos.com/howto/common-user-agent-list/"""
-    google_chrome_windows = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
-    google_chrome_android = 'Mozilla/5.0 (Linux; Android 11) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.82 Mobile Safari/537.36'
-    mozilla_firefox_windows = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:53.0) Gecko/20100101 Firefox/53.0'
-    mozilla_firefox_android = 'Mozilla/5.0 (Android 11; Mobile) Gecko/88.0 Firefox/88.0'
-    microsoft_edge = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14393'
-    apple_ipad = 'Mozilla/5.0 (iPad; CPU OS 8_4_1 like Mac OS X) AppleWebKit/600.1.4 (KHTML, like Gecko) Version/8.0 Mobile/12H321 Safari/600.1.4'
-    apple_iphone = 'Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1'
-    google_bot = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
-    bing_bot = 'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)'
-    curl = 'curl/7.35.0'
-    wget = 'Wget'
-    lynx = 'Lynx'
+    GOOGLE_CHROME_WINDOWS = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
+    GOOGLE_CHROME_ANDROID = 'Mozilla/5.0 (Linux; Android 11) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.82 Mobile Safari/537.36'
+    MOZILLA_FIREFOX_WINDOWS = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:53.0) Gecko/20100101 Firefox/53.0'
+    MOZILLA_FIREFOX_ANDROID = 'Mozilla/5.0 (Android 11; Mobile) Gecko/88.0 Firefox/88.0'
+    MICROSOFT_EDGE = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14393'
+    APPLE_IPAD = 'Mozilla/5.0 (iPad; CPU OS 8_4_1 like Mac OS X) AppleWebKit/600.1.4 (KHTML, like Gecko) Version/8.0 Mobile/12H321 Safari/600.1.4'
+    APPLE_IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_1 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.0 Mobile/14E304 Safari/602.1'
+    GOOGLE_BOT = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+    BING_BOT = 'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)'
+    CURL = 'curl/7.35.0'
+    WGET = 'Wget'
+    LYNX = 'Lynx'
 
 
 class CurlCookieJar(http.cookiejar.MozillaCookieJar):
@@ -113,19 +113,48 @@ def make_cookie_str(cookies: dict) -> str:
 
 
 class HTTPHeadersHandler:
-    def __init__(self, headers: dict):
-        self.headers = headers
+    def __init__(self, headers: dict = None):
+        self.headers = headers or {}
 
-    def _set_sth(self, key: str, value):
-        self.headers[key.title()] = value
+    @staticmethod
+    @functools.lru_cache()
+    def _name_to_field(x: str):
+        return x.replace('_', '-').title()
+
+    def _set_sth(self, name: str, value):
+        value_convertors = {'Cookie': make_cookie_str}
+        field = self._name_to_field(name)
+        if field in value_convertors:
+            value = value_convertors[field](value)
+        self.headers[field] = value
         return self
 
-    def __getattr__(self, item: str):
-        if item.startswith('set_'):
-            key = str_remove_prefix(item, 'set_').replace('_', '-')
-            return functools.partial(self._set_sth, key)
-        return getattr(self.headers, item)
+    def _get_sth(self, name: str, *args):
+        return self.headers.get(self._name_to_field(name))
 
-    def set_cookie(self, cookies: dict):
-        self.headers['Cookie'] = make_cookie_str(cookies)
+    def _del_sth(self, name: str, *args):
+        try:
+            del self.headers[self._name_to_field(name)]
+        except KeyError:
+            pass
         return self
+
+    def __getattr__(self, name: str):
+        def _set_or_get(value=None):
+            """if value given, set item to value; if value is None, get item; if value is ... or False, del item."""
+            if value is None:
+                func = self._get_sth
+            elif value in (..., False):
+                func = self._del_sth
+            else:
+                func = self._set_sth
+            return func(name, value)
+
+        _set_or_get.__name__ = name
+        self.__dict__[name] = _set_or_get
+        return _set_or_get
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self.headers})'
+
+
