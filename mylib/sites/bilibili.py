@@ -314,7 +314,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         fp = you_get_filename(fp)
         print(fp)
         with open(fp, 'w', encoding='utf-8-sig') as f:
-            f.write('#encoding=utf8\n\n')
+            # f.write('#encoding=utf8\n\n')
             f.write(self.url)
             f.write('\n\n')
             f.write(self.get_desc())
