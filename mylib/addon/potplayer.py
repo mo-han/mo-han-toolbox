@@ -150,11 +150,13 @@ class PotPlayerKit:
         fstk.x_rename(src, new, move_to_dir=move_to, append_src_ext=keep_ext)
 
     def rename_file_gui(self, alt_tab: bool = False):
-        try:
-            fileinfo = self.get_fileinfo(alt_tab=alt_tab)
-        except TimeoutError:
-            print('! TIMEOUT: clipboard data')
-            return
+        while 1:
+            try:
+                fileinfo = self.get_fileinfo(alt_tab=alt_tab)
+                break
+            except TimeoutError:
+                print('! TIMEOUT: clipboard data')
+                sleep(1)
         src = fileinfo['path']
         rename_dialog(src)
 
