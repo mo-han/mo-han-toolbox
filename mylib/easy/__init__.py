@@ -5,6 +5,7 @@ import functools
 import importlib.util
 import inspect
 import locale
+import itertools
 
 from . import io
 from . import shutil
@@ -212,18 +213,13 @@ class ACall:
 
 class ALotCall:
     def __init__(self, *calls: T.Union[ACall, T.Iterable[ACall]]):
-        self.calls = []
-        for x in calls:
-            if isinstance(x, ACall):
-                self.calls.append(x)
-            else:
-                self.calls.extend(x)
+        self.all_calls_iter = itertools.chain(*[[i] if isinstance(i, ACall) else i for i in calls])
 
     def any(self, **kwargs_of_call_get):
-        return any((call.get(**kwargs_of_call_get) for call in self.calls))
+        return any((call.get(**kwargs_of_call_get) for call in self.all_calls_iter))
 
     def any_result(self, **kwargs_of_call_get):
-        for call in self.calls:
+        for call in self.all_calls_iter:
             r = call.get(**kwargs_of_call_get)
             if r:
                 return r
