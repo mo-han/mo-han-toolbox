@@ -8,18 +8,16 @@ api_headers_handler: http_headers.HTTPHeadersHandler = http_headers.HTTPHeadersH
     http_headers.UserAgentExamples.GOOGLE_CHROME_WINDOWS)
 
 
-class SortReplyBy:
-    time = 0
-    popular = 2
-
-
 class BilibiliWebAPIError(Exception):
+    class Code:
+        ACCESS_DENIED = -403
+
     def __init__(self, code, message):
         self.code = code
         self.message = message
 
     def __str__(self):
-        print(f'[Code {self.code}] {self.message}')
+        return f'[Code {self.code}] {self.message}'
 
 
 def check_response_json(x: dict):
@@ -28,7 +26,15 @@ def check_response_json(x: dict):
         raise BilibiliWebAPIError(code, x['message'])
 
 
-class SimpleBilibiliWebAPI:
+class BilibiliWebAPISimple:
+    class Const:
+        REPLY_SORT_RECENT = 0
+        REPLY_SORT_POPULAR = 2
+
+    def __init__(self, cookies: dict = None, cache_request: bool = False):
+        self.cookies = cookies
+        self.cache_request = cache_request
+
     @functools.lru_cache(maxsize=None)
     def vid2aid(self, x):
         if isinstance(x, int):
@@ -50,47 +56,102 @@ class SimpleBilibiliWebAPI:
             if re.fullmatch(r'BV[\da-zA-Z]10', x):
                 return x
             if re.fullmatch(r'(av|AV)\d+', x):
-                return self.aid2bvid(self.vid2aid(x))
+                return self.aid2bvid(int(x[2:]))
             raise ValueError('invalid video ID')
+        if isinstance(x, int):
+            return self.aid2bvid(x)
         raise TypeError('invalid video ID type')
 
     @functools.lru_cache(maxsize=None)
     def aid2bvid(self, aid):
-        j = self.web_interface_archive_stat(aid=aid)
-        return j['data']['bvid']
+        j = self.get_archive_stat_of_web_interface(aid=aid)
+        return j['bvid']
 
     @functools.lru_cache(maxsize=None)
     def bvid2aid(self, bvid):
-        j = self.web_interface_archive_stat(bvid=bvid)
-        return j['data']['aid']
+        j = self.get_archive_stat_of_web_interface(bvid=bvid)
+        return j['aid']
 
-    @staticmethod
-    def request_json(url, **params):
-        r = http_headers.requests.get(url, params=params, headers=api_headers_handler.headers)
+    def _request_json(self, url, **params):
+        r = http_headers.requests.get(url, params=params, headers=api_headers_handler.headers, cookies=self.cookies)
         j = r.json()
         check_response_json(j)
-        return j
+        return j['data']
 
-    def web_interface_view(self, **params):
+    @functools.lru_cache(maxsize=None)
+    def _request_json_cached(self, url, **params):
+        return self._request_json(url, **params)
+
+    def request_json(self, url: str, **params):
+        if self.cache_request:
+            return self._request_json_cached(url, **params)
+        else:
+            return self._request_json(url, **params)
+
+    def get_view_of_web_interface(self, **params):
         return self.request_json('https://api.bilibili.com/x/web-interface/view', **params)
 
-    def web_interface_archive_stat(self, **params):
+    def get_archive_stat(self, **params):
+        return self.request_json('https://api.bilibili.com/archive_stat/stat', **params)
+
+    def get_archive_stat_of_web_interface(self, **params):
         return self.request_json('https://api.bilibili.com/x/web-interface/archive/stat', **params)
 
-    def reply(self, vid, page_num: int = 1, sort=SortReplyBy.popular, simple=True):
+    def get_archive_desc_of_web_interface(self, **params):
+        return self.request_json('https://api.bilibili.com/x/web-interface/archive/desc', **params)
+
+    def get_tags(self, simple=True, **params):
+        j = self.request_json('https://api.bilibili.com/x/tag/archive/tags', **params)
+        if not simple:
+            return j
+        return [d['tag_name'] for d in j]
+
+    def get_parts(self, **params):
+        return self.request_json('https://api.bilibili.com/x/player/pagelist', **params)
+
+    get_page_list = get_parts
+
+    def get_streams(self):
+        # https://www.bilibili.com/read/cv9113313/
+        # https://api.bilibili.com/pgc/player/web/playurl?fnval=80&cid={c}  （这是番剧的）
+        # https://api.bilibili.com/x/player/playurl?fnval=80&avid={a}&cid={c}  （这是视频的）
+        ...
+
+    get_play_url = get_streams
+
+    @staticmethod
+    def excerpt_single_reply(x: dict):
+        return dict(who=(x['member']['uname']), what=(x['content']['message']),
+                    when=datetime.datetime.fromtimestamp(x['ctime']).isoformat())
+
+    def get_replies(self, vid, page_num: int = 1, sort=Const.REPLY_SORT_POPULAR, simple=True):
         aid = self.vid2aid(vid)
         j = self.request_json('https://api.bilibili.com/x/v2/reply',
-                              **dict(oid=aid, type=1, pn=page_num, sort=sort))
+                              **dict(oid=aid, pn=page_num, type=1, sort=sort, jsonp='jsonp'))
         if not simple:
             return j
 
-        def excerpt_single_reply(x: dict):
-            return dict(u=(x['member']['uname']), m=(x['content']['message']),
-                        t=datetime.datetime.fromtimestamp(x['ctime']).isoformat())
-
         r = []
-        for reply in j['data']['replies']:
-            this = excerpt_single_reply(reply)
-            children = [excerpt_single_reply(i) for i in reply.get('replies', [])]
+        for reply in j['replies']:
+            this = self.excerpt_single_reply(reply)
+            children = [self.excerpt_single_reply(i) for i in reply.get('replies') or []]
             r.append((this, children))
         return r
+
+    @staticmethod
+    def convert_simple_replies_to_text(simple_replies: T.List[T.Tuple[T.Dict[str, str], T.List[T.Dict[str, str]]]],
+                                       in_lines=False):
+        lines = []
+        for reply, children in simple_replies:
+            lines.append(f"[{reply['when'].replace('T', ' ')}] {reply['who']}")
+            lines.extend(f'{line}' for line in reply["what"].splitlines())
+            lines.append('')
+            for child_reply in children:
+                lines.append(f"    [{child_reply['when'].replace('T', ' ')}] {child_reply['who']}")
+                lines.extend(f"    {line}" for line in child_reply['what'].splitlines())
+                lines.append('')
+        if in_lines:
+            return lines
+        return '\n'.join(lines)
+
+    rpl2txt = convert_simple_replies_to_text
