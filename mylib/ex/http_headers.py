@@ -27,7 +27,7 @@ class UserAgentExamples:
     LYNX = 'Lynx'
 
 
-class CurlCookieJar(http.cookiejar.MozillaCookieJar):
+class CURLCookieJar(http.cookiejar.MozillaCookieJar):
     """fix issue: MozillaCookieJar ignores '#HttpOnly_' lines"""
     filename_types = (str, io.StringIO)
 
@@ -68,15 +68,14 @@ class CurlCookieJar(http.cookiejar.MozillaCookieJar):
             self._really_load(fd, filename, ignore_discard, ignore_expires)
 
 
-def ensure_json_cookies(data: T.JSONType) -> T.List[dict]:
-    if isinstance(data, list):
-        cookies = data
-    elif isinstance(data, dict):
-        if 'cookies' in data:
-            if isinstance(data['cookies'], list):
-                cookies = data['cookies']
-            else:
-                raise ValueError("data['cookies'] is not list")
+def ensure_json_list_cookies(json_data: T.JSONType):
+    if isinstance(json_data, list):
+        cookies = json_data
+    elif isinstance(json_data, dict):
+        if 'cookies' in json_data:
+            cookies = json_data['cookies']
+            if not isinstance(cookies, list):
+                raise TypeError("data['cookies']", list)
         else:
             raise ValueError("data['cookies'] not exist")
     else:
@@ -85,17 +84,18 @@ def ensure_json_cookies(data: T.JSONType) -> T.List[dict]:
 
 
 def json_cookies_to_dict(json_data: T.JSONType = None, json_filepath: str = None, ) -> dict:
-    if json_data:
+    if json_data is not None:
         pass
     elif json_filepath:
         json_data = fstk.read_json_file(json_filepath)
     else:
         raise ValueError('no json source given')
-    d = {}
-    cookies = ensure_json_cookies(json_data)
-    for cookie in cookies:
-        d[cookie['name']] = cookie['value']
-    return d
+    try:
+        cookie_list = ensure_json_list_cookies(json_data)
+        return {cookie['name']: cookie['value'] for cookie in cookie_list if isinstance(cookie, dict)}
+    except ValueError:
+        if isinstance(json_data, dict):
+            return json_data
 
 
 def netscape_cookies_to_dict(cookies_text: str = None, cookies_filepath: str = None, *,
@@ -103,13 +103,33 @@ def netscape_cookies_to_dict(cookies_text: str = None, cookies_filepath: str = N
     if cookies_text:
         cookies_filepath = io.StringIO(cookies_text)
     if cookies_filepath:
-        cj = CurlCookieJar(cookies_filepath)
+        cj = CURLCookieJar(cookies_filepath)
         cj.load(ignore_discard=ignore_discard, ignore_expires=ignore_expires)
         return requests.utils.dict_from_cookiejar(cj)
 
 
-def make_cookie_str(cookies: dict) -> str:
+def make_cookie_str(cookies: dict):
     return '; '.join([f'{k}={v}' for k, v in cookies.items()])
+
+
+def parse_cookie_str(s: str):
+    s = str_remove_prefix(s, 'Cookie: ')
+    return dict([(a, b) for a, b in [i.split('=', maxsplit=1) for i in s.split('; ')]])
+
+
+def get_cookies_dict_from(x):
+    if isinstance(x, str):
+        if path_is_file(x):
+            if x.endswith('.json'):
+                return json_cookies_to_dict(json_filepath=x)
+            else:
+                return netscape_cookies_to_dict(cookies_filepath=x)
+        else:
+            return parse_cookie_str(x)
+    elif isinstance(x, (list, dict)):
+        return json_cookies_to_dict(x)
+    else:
+        raise TypeError('x', (str, list, dict))
 
 
 class HTTPHeadersHandler:
@@ -122,10 +142,10 @@ class HTTPHeadersHandler:
         return x.replace('_', '-').title()
 
     def _set_sth(self, name: str, value):
-        value_convertors = {'Cookie': make_cookie_str}
+        value_func = {'Cookie': make_cookie_str}
         field = self._name_to_field(name)
-        if field in value_convertors:
-            value = value_convertors[field](value)
+        if field in value_func:
+            value = value_func[field](value)
         self.headers[field] = value
         return self
 
@@ -156,5 +176,3 @@ class HTTPHeadersHandler:
 
     def __repr__(self):
         return f'{self.__class__.__name__}({self.headers})'
-
-

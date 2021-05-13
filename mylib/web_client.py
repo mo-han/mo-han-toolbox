@@ -15,7 +15,7 @@ import requests.utils
 from mylib.easy.typing import JSONType
 from mylib.ex import fstk, ostk
 from .easy import *
-from mylib.ex.http_headers import CurlCookieJar
+from mylib.ex.http_headers import CURLCookieJar
 from .easy.logging import get_logger, LOG_FMT_MESSAGE_ONLY
 from .easy.io import SubscriptableFileIO
 from mylib.easy.tricks import singleton, iter_factory_retry
@@ -102,7 +102,7 @@ def cookies_dict_from_json(json_data_or_filepath: JSONType or str, disable_filep
 
 
 def cookies_dict_from_netscape_file(filepath: str, ignore_discard=True, ignore_expires=True) -> dict:
-    cj = CurlCookieJar(filepath)
+    cj = CURLCookieJar(filepath)
     cj.load(ignore_discard=ignore_discard, ignore_expires=ignore_expires)
     return requests.utils.dict_from_cookiejar(cj)
 
