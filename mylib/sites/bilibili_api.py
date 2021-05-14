@@ -111,13 +111,18 @@ class BilibiliWebAPISimple:
 
     get_page_list = get_parts
 
-    def get_streams(self):
-        # https://www.bilibili.com/read/cv9113313/
-        # https://api.bilibili.com/pgc/player/web/playurl?fnval=80&cid={c}  （这是番剧的）
-        # https://api.bilibili.com/x/player/playurl?fnval=80&avid={a}&cid={c}  （这是视频的）
-        ...
+    def get_pgc_play_url(self, cid, **params):
+        return self.request_json('https://api.bilibili.com/pgc/player/web/playurl', **params)
 
-    get_play_url = get_streams
+    def get_pugv_play_url(self, aid, ep_id, cid, **params):
+        return self.request_json('https://api.bilibili.com/pugv/player/web/playurl',
+                                 avid=aid, ep_id=ep_id, cid=cid, **params)
+
+    def get_aid_play_url(self, cid, aid, **params):
+        return self.request_json('https://api.bilibili.com/x/player/playurl', cid=cid, avid=aid, **params)
+
+    def get_streams(self):
+        ...
 
     @staticmethod
     def excerpt_single_reply(x: dict):
