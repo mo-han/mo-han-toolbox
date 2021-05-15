@@ -111,17 +111,18 @@ class BilibiliWebAPISimple:
 
     get_page_list = get_parts
 
-    def get_pgc_play_url(self, cid, **params):
+    def get_play_url_pgc(self, cid, **params):
         return self.request_json('https://api.bilibili.com/pgc/player/web/playurl', **params)
 
-    def get_pugv_play_url(self, aid, ep_id, cid, **params):
+    def get_play_url_pugc(self, aid, ep_id, cid, **params):
         return self.request_json('https://api.bilibili.com/pugv/player/web/playurl',
                                  avid=aid, ep_id=ep_id, cid=cid, **params)
 
-    def get_aid_play_url(self, cid, aid, **params):
+    def get_play_url_ugc(self, cid, aid, **params):
         return self.request_json('https://api.bilibili.com/x/player/playurl', cid=cid, avid=aid, **params)
 
-    def get_streams(self):
+    def get_streams(self, vid, **params):
+        # https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/video/videostream_url.md
         ...
 
     @staticmethod
