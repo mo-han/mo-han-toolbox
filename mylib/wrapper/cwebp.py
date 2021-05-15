@@ -14,7 +14,7 @@ logger = logging.get_logger(__name__)
 
 class CLIArgs(CLIArgumentsList):
     @staticmethod
-    def keyword_to_option_string(keyword):
+    def _spec_convert_keyword_to_option_name(keyword):
         return '-' + keyword
 
 

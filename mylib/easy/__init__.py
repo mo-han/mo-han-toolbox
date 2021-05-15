@@ -117,12 +117,12 @@ class CLIArgumentsList(list):
         for arg in args:
             self.add_arg(arg)
         for k, v in kwargs.items():
-            option_string = self.keyword_to_option_string(k)
+            option_string = self._spec_convert_keyword_to_option_name(k)
             self.add_option(option_string, v)
         return self
 
     @staticmethod
-    def keyword_to_option_string(keyword):
+    def _spec_convert_keyword_to_option_name(keyword):
         if len(keyword) > 1:
             k = '--' + '-'.join(keyword.split('_'))
         else:
