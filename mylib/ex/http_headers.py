@@ -132,7 +132,7 @@ def get_cookies_dict_from(x):
         raise TypeError('x', (str, list, dict))
 
 
-class HTTPHeadersHandler:
+class HTTPHeadersBuilder:
     def __init__(self, headers: dict = None):
         self.headers = headers or {}
 

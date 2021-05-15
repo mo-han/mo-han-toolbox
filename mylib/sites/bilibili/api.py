@@ -4,8 +4,11 @@ import datetime
 from mylib.ex import http_headers
 from mylib.easy import *
 
-api_headers_handler: http_headers.HTTPHeadersHandler = http_headers.HTTPHeadersHandler().user_agent(
-    http_headers.UserAgentExamples.GOOGLE_CHROME_WINDOWS)
+BILIBILI_HOME_PAGE_URL = 'https://www.bilibili.com'
+
+common_headers = http_headers.HTTPHeadersBuilder().user_agent(
+    http_headers.UserAgentExamples.GOOGLE_CHROME_WINDOWS).referer(BILIBILI_HOME_PAGE_URL).origin(
+    BILIBILI_HOME_PAGE_URL).headers
 
 
 class BilibiliWebAPIError(Exception):
@@ -73,7 +76,7 @@ class BilibiliWebAPISimple:
         return j['aid']
 
     def _request_json(self, url, **params):
-        r = http_headers.requests.get(url, params=params, headers=api_headers_handler.headers, cookies=self.cookies)
+        r = http_headers.requests.get(url, params=params, headers=common_headers, cookies=self.cookies)
         j = r.json()
         check_response_json(j)
         return j['data']
@@ -111,7 +114,7 @@ class BilibiliWebAPISimple:
 
     get_page_list = get_parts
 
-    def get_play_url_pgc(self, cid, **params):
+    def get_play_url_pgc(self, **params):
         return self.request_json('https://api.bilibili.com/pgc/player/web/playurl', **params)
 
     def get_play_url_pugc(self, aid, ep_id, cid, **params):

@@ -1,7 +1,7 @@
 import sys
 from glob import glob
 
-from mylib.sites.bilibili import jijidown_rename_alpha
+from mylib.sites.bilibili.__to_be_deprecated__ import jijidown_rename_alpha
 
 if __name__ == '__main__':
     # _, base = os.path.split(sys.argv[1])

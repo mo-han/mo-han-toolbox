@@ -25,9 +25,9 @@ from mylib.ex.ostk import ensure_sigint_signal
 from mylib.ex.text import regex_find, ellipt_end
 from mylib.ex.tricks import str2range
 from mylib.ex.tui import LinePrinter
-from mylib.sites import bilibili_api
+from mylib.sites.bilibili import api
 
-API_HEADERS_HANDLER: http_headers.HTTPHeadersHandler = http_headers.HTTPHeadersHandler().user_agent(
+API_HEADERS_HANDLER: http_headers.HTTPHeadersBuilder = http_headers.HTTPHeadersBuilder().user_agent(
     http_headers.UserAgentExamples.GOOGLE_CHROME_WINDOWS)
 
 BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'
@@ -256,7 +256,7 @@ def bilibili_url_from_vid(vid: str) -> str:
 class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     def __init__(self, *args, cookies: str or dict = None, qn_max=116, qn_want=None):
         super().__init__(*args)
-        self.simple_api = bilibili_api.BilibiliWebAPISimple()
+        self.simple_api = api.BilibiliWebAPISimple()
         self.do_not_write_any_file = False
         self.cookie = None
         if cookies:
