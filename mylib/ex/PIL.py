@@ -16,7 +16,7 @@ def save_image_to_bytes(img: Image.Image, save_fmt=None, **kwargs):
 
 
 def open_bytes_as_image(b: bytes, mode="r"):
-    with io.BytesIO() as _:
-        _.write(b)
-        _.seek(0)
-        return Image.open(_, mode=mode)
+    fd = io.BytesIO()  # DO NOT CLOSE THIS FILE OBJECT!
+    fd.write(b)
+    fd.seek(0)
+    return Image.open(fd, mode=mode)

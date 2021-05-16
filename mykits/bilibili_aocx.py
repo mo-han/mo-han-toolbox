@@ -7,7 +7,7 @@ import os
 from glob import glob
 import argparse
 
-from mylib.sites.bilibili import BilibiliAppCacheEntry
+from mylib.sites.bilibili.__to_be_deprecated__ import BilibiliAppCacheEntry
 from mylib.easy.argparse import CompactHelpFormatterWithDefaults
 
 

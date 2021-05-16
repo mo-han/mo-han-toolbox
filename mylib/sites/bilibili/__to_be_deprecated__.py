@@ -25,8 +25,9 @@ from mylib.ex.ostk import ensure_sigint_signal
 from mylib.ex.text import regex_find, ellipt_end
 from mylib.ex.tricks import str2range
 from mylib.ex.tui import LinePrinter
+from mylib.sites.bilibili import api
 
-API_HEADERS_HANDLER: http_headers.HTTPHeadersHandler = http_headers.HTTPHeadersHandler().user_agent(
+API_HEADERS_HANDLER: http_headers.HTTPHeadersBuilder = http_headers.HTTPHeadersBuilder().user_agent(
     http_headers.UserAgentExamples.GOOGLE_CHROME_WINDOWS)
 
 BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'
@@ -217,9 +218,9 @@ def find_bilibili_vid(x: str or int) -> str or None:
     return vid
 
 
-def api_web_interface_view(**kwargs):
+def api_web_interface_view(cookies: dict = None, **kwargs):
     url = 'https://api.bilibili.com/x/web-interface/view'
-    return requests.get(url, params=kwargs, headers=API_HEADERS_HANDLER.headers).json()
+    return requests.get(url, params=kwargs, headers=API_HEADERS_HANDLER.headers, cookies=cookies).json()
 
 
 def vid_to_bvid_via_web_api(vid: str or int, cookies: dict = None) -> str or None:
@@ -232,7 +233,7 @@ def vid_to_bvid_via_web_api(vid: str or int, cookies: dict = None) -> str or Non
         aid = vid
     else:
         raise TypeError('avid must be str or int')
-    j = api_web_interface_view(aid=aid)
+    j = api_web_interface_view(aid=aid, cookies=cookies)
     if j['code'] == 0 and j['data']:
         return j['data']['bvid']
     else:
@@ -255,6 +256,8 @@ def bilibili_url_from_vid(vid: str) -> str:
 class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     def __init__(self, *args, cookies: str or dict = None, qn_max=116, qn_want=None):
         super().__init__(*args)
+        self.simple_api = api.BilibiliWebAPISimple()
+        self.do_not_write_any_file = False
         self.cookie = None
         if cookies:
             self.set_cookie(cookies)
@@ -283,15 +286,13 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     # 前者将cookies字典变成单字符串，后者负责读取cookies文件
     def set_cookie(self, cookies: str or dict):
         if isinstance(cookies, dict):
-            c = web_client.cookie_str_from_dict(cookies)
+            cookie_str = http_headers.make_cookie_str(cookies)
         elif isinstance(cookies, str):
-            if os.path.isfile(cookies):
-                c = web_client.cookie_str_from_dict(web_client.cookies_dict_from_netscape_file(cookies))
-            else:
-                c = cookies
+            cookie_str = http_headers.make_cookie_str(http_headers.get_cookies_dict_from(cookies))
         else:
             raise TypeError("'{}' is not cookies file path or single-line cookie str or cookies dict".format(cookies))
-        self.cookie = c
+        self.cookie = cookie_str
+        self.simple_api.cookies = http_headers.parse_cookie_str(cookie_str)
 
     def bilibili_headers(self, referer=None, cookie=None):
         if not cookie:
@@ -310,15 +311,17 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         return t
 
     def write_info_file(self, fp: str = None):
+        if self.do_not_write_any_file:
+            return
         fp = fp or self.get_title() + '.info'
         fp = you_get_filename(fp)
         print(fp)
         with open(fp, 'w', encoding='utf-8-sig') as f:
             # f.write('#encoding=utf8\n\n')
             f.write(self.url)
-            f.write('\n\n')
+            f.write('\n---\n')
             f.write(self.get_desc())
-            f.write('\n\n')
+            f.write('\n---\n')
             f.write(str(self.get_tags()))
 
     def get_desc(self):

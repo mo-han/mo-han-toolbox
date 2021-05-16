@@ -772,7 +772,7 @@ def url_from_clipboard():
         from mylib.sites.youtube import find_url_in_text
         urls = find_url_in_text(t)
     elif pattern in ('bilibili', 'bili'):
-        from mylib.sites.bilibili import find_url_in_text
+        from mylib.sites.bilibili.__to_be_deprecated__ import find_url_in_text
         urls = find_url_in_text(t)
     elif pattern in ('hc.fyi', 'hentai.cafe', 'hentaicafe'):
         p = r'https://hentai.cafe/hc.fyi/\d+'
@@ -812,7 +812,7 @@ potplayer_rename.add_argument('-F', '--no-keep-front', action='store_true', help
 
 
 def bilibili_download_func():
-    from mylib.sites.bilibili import download_bilibili_video
+    from mylib.sites.bilibili.__to_be_deprecated__ import download_bilibili_video
     args = rtd.args
     if args.verbose:
         print(args)
