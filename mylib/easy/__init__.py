@@ -6,6 +6,7 @@ import importlib.util
 import inspect
 import locale
 import itertools
+import urllib.parse
 
 from . import io
 from . import shutil
@@ -166,11 +167,17 @@ def python_module_from_filepath(module_name, filepath):
     return module
 
 
+def timeout_call(timeout, target, *args, **kwargs):
+    if timeout < 0:
+        raise ValueError('timeout < 0')
+    th = thread_factory(daemon=True)(target, *args, **kwargs)
+
+
 class ACall:
     target: T.Callable
     args: tuple
     kwargs: dict
-    time: T.Optional[float]
+    timer: T.Optional[float]
     result: T.Any
     exception: T.Optional[Exception]
 
@@ -178,7 +185,7 @@ class ACall:
         self.set(target, *args, **kwargs).clear()
 
     def clear(self):
-        self.time = None
+        self.timer = None
         self.result = None
         self.exception = None
         return self
@@ -189,8 +196,10 @@ class ACall:
         self.kwargs = kwargs
         return self
 
-    def get(self, ignore_exceptions: T.Union[Exception, T.Tuple[Exception]] = (), exception_handler=None):
+    def _get(self, ignore_exceptions: T.Union[Exception, T.Tuple[Exception]] = (), exception_handler=None):
         self.clear()
+        counter = time.perf_counter
+        t0 = counter()
         try:
             self.result = self.target(*self.args, **self.kwargs)
             return self.result
@@ -199,16 +208,21 @@ class ACall:
         except Exception as e:
             if not exception_handler:
                 self.exception = e
+                raise e
             else:
-                exception_handler(e)
-
-    def timing_get(self, **kwargs_of_self_get):
-        counter = time.perf_counter
-        t0 = counter()
-        try:
-            return self.get(**kwargs_of_self_get)
+                return exception_handler(e)
         finally:
-            self.time = counter() - t0
+            self.timer = counter() - t0
+
+    def get(self, timeout=None, **kwargs_of_self_get):
+        if timeout is None:
+            return self._get(**kwargs_of_self_get)
+        thread = thread_factory(daemon=True)(self._get, **kwargs_of_self_get)
+        thread.start()
+        thread.join(timeout)
+        if self.exception:
+            raise self.exception
+        return self.result
 
 
 class ALotCall:
@@ -484,3 +498,12 @@ def get_re_groups(source: str, match_pattern=None, match_flags=None, match_metho
 class AttrConstEllipsisForStringMetaClass(type):
     def __new__(mcs, name, bases, namespace):
         return super().__new__(mcs, name, bases, {k: k if v is ... else v for k, v in namespace.items()})
+
+
+def parse_host_port_address(addr: str):
+    parse = urllib.parse.urlparse
+    r = parse(addr)
+    if not r.scheme:
+        r = parse('socket://' + addr)
+    return r
+

@@ -34,3 +34,36 @@ def resolve_path_to_dirs_files(x: PathSourceType, *,
         else:
             xl = [x]
     return glob_or_exist_to_dirs_files(xl, glob_recurse=glob_recurse, exist_prior_to_glob=exist_prior_to_glob)
+
+
+class ConsolePrinter:
+    def __init__(self, file=sys.stdout):
+        self.file = file
+
+    @property
+    def width(self):
+        return shutil.get_terminal_size()[0]
+
+    def split_line(self, char='-'):
+        print(char * (self.width - 1), file=self.file)
+
+    ll = split_line
+
+    def clear_line(self, mask_char=' '):
+        print(f'\r{mask_char * (self.width - 1)}\r', end='', file=self.file)
+
+    cl = clear_line
+
+    def in_line(self, *args, cursor_at_end=True):
+        self.clear_line()
+        if cursor_at_end:
+            print(*args, end='', file=self.file, flush=True)
+        else:
+            print(*args, end='\r', file=self.file)
+
+    il = in_line
+
+    def new_line(self):
+        print('', file=self.file)
+
+    nl = new_line

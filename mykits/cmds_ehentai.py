@@ -4,6 +4,7 @@ from mylib.sites import ehentai
 
 apr = ArgumentParserRigger()
 an = apr.an
+cp = ConsolePrinter()
 
 
 def _sorted_path_of_hentai_at_home_downloaded_gallery(gallery_path, gallery_type=''):
@@ -56,6 +57,54 @@ def hath_sort(src: PathSourceType, *, verbose=False, dry_run=False):
         except Exception as e:
             if verbose:
                 print(f'! {src}: {repr(e)}')
+
+
+an.address = None
+
+
+@apr.sub(apr.replace_underscore(), aliases=['ehv.rc'])
+@apr.arg(an.address, help='remote address for adb connect')
+@apr.map(an.address)
+def ehviewer_remote_control(remote_address: str):
+    """remote control ehviewer app via adb"""
+    from mylib.ex.pure_python_adb import ADBClient
+    from pynput.keyboard import Listener, KeyCode, Key
+
+    client = ADBClient()
+    if not client.connect(remote_address):
+        print(f'! cannot connect to {remote_address}')
+        sys.exit(1)
+    devices = [d for d in client.devices() if d.serial == remote_address]
+    if devices:
+        device = devices[0]
+    else:
+        device = [d for d in client.devices() if d.serial.startswith(remote_address)][0]
+    width, height = map(int,
+                        re.search(r'cur=(\d+)x(\d+)', device.shell('dumpsys window displays')).groups())
+    center_x, center_y = width / 2, height / 2
+    center_y_lower = center_y + 130
+
+    def on_press(key: Key):
+        key2input = {
+            KeyCode(char='s'): [(device.input_swipe, (center_x, center_y, center_x, center_y, 0.6)),
+                                (device.input_tap, (center_x, center_y_lower))],
+            KeyCode(char='j'): [(device.input_roll, (0, -1))],
+            KeyCode(char='k'): [(device.input_roll, (0, 1))],
+            KeyCode(char='h'): [(device.input_roll, (0, -10))],
+            KeyCode(char='l'): [(device.input_roll, (0, 10))],
+            KeyCode(char='n'): [(device.input_roll, (0, -100))],
+            KeyCode(char='m'): [(device.input_roll, (0, 100))],
+            Key.esc: [(sys.exit, (2,))],
+        }
+        call_list = key2input.get(key, [])
+        for func, args in call_list:
+            cp.il(f'{func.__name__}{args}')
+            func(*args)
+
+    with Listener(on_press=on_press) as lr:
+        print('# launched')
+        cp.ll()
+        lr.join()
 
 
 def main():

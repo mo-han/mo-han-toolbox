@@ -9,3 +9,4 @@ py-getch  #MIT #getch #console
 readkeys  #EUPL-1.2 #getch #console #getkey #Python>=3.8
 pytermgui  #MIT #console #TUI
 asciimatics  #Apache-2.0 #console #TUI
+windows-curses  #PSF2 #console #curses #ms-windows
