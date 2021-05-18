@@ -32,6 +32,10 @@ def line2args(line: str):
     return args
 
 
+ytdl_regex_pattern = re.compile(r'youtube|youtu\.be|iwara|pornhub|\[ph[\da-f]{13}]|kissjav|xvideos')
+bldl_regex_pattern = re.compile(r'(/|^)BV[\da-zA-Z]{10}|(/|^)av\d+\W|(/|^)ep\d+|(/|^)ss\d+')
+
+
 class MyAssistantBot(SimpleBot):
     def __init__(self, conf_file: str, **kwargs):
         self._conf_file = conf_file
@@ -53,8 +57,7 @@ class MyAssistantBot(SimpleBot):
         abandon_errors = self.__get_conf__().get('abandon_errors') or []
         return any(map(lambda x: x in s, abandon_errors))
 
-    @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(
-        re.compile(r'youtube|youtu\.be|iwara|pornhub|\[ph[\da-f]{13}]|kissjav|xvideos')))
+    @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(ytdl_regex_pattern))
     def _ytdl(self, update: Update, *args):
         print(self._ytdl.__name__)
         if not self.__predicate_update__(update, *args):
@@ -91,8 +94,7 @@ class MyAssistantBot(SimpleBot):
                 self.__requeue_failed_update__(update)
         self.__del_undone_update__(undone_key, update)
 
-    @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(
-        re.compile(r'BV[\da-zA-Z]{10}|av\d+\W|(/|^)ep\d+|(/|^)ss\d+')))
+    @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(bldl_regex_pattern))
     def _bldl(self, update, *args):
         print(self._bldl.__name__)
         undone_key = self._bldl.__name__
