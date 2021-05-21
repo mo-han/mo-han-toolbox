@@ -4,8 +4,8 @@ import ctypes
 import functools
 import importlib.util
 import inspect
-import locale
 import itertools
+import locale
 import urllib.parse
 
 from . import io
@@ -167,74 +167,90 @@ def python_module_from_filepath(module_name, filepath):
     return module
 
 
-def timeout_call(timeout, target, *args, **kwargs):
-    if timeout < 0:
-        raise ValueError('timeout < 0')
-    th = thread_factory(daemon=True)(target, *args, **kwargs)
-
-
 class ACall:
     target: T.Callable
     args: tuple
     kwargs: dict
-    timer: T.Optional[float]
+    delta_t: T.Optional[float]
+    ok: bool
     result: T.Any
     exception: T.Optional[Exception]
+    ignore_exceptions: T.Union[Exception, T.Tuple[Exception]]
+    exception_handler: T.Callable[[Exception], T.Any]
+    timeout: T.Optional[float]
 
     def __init__(self, target, *args, **kwargs):
-        self.set(target, *args, **kwargs).clear()
+        self.set_call(target, *args, **kwargs).set_exceptions().set_timeout().clear()
 
     def clear(self):
-        self.timer = None
+        self.delta_t = None
+        self.ok = False
         self.result = None
         self.exception = None
         return self
 
-    def set(self, target, *args, **kwargs):
+    def set_call(self, target, *args, **kwargs):
         self.target = target
         self.args = args
         self.kwargs = kwargs
         return self
 
-    def _get(self, ignore_exceptions: T.Union[Exception, T.Tuple[Exception]] = (), exception_handler=None):
-        self.clear()
+    def set_exceptions(self, ignore_exceptions: T.Union[Exception, T.Tuple[Exception]] = (), exception_handler=None):
+        self.ignore_exceptions = ignore_exceptions
+        self.exception_handler = exception_handler
+        return self
+
+    def set_timeout(self, timeout=None):
+        # if timeout and timeout < 0:
+        #     raise ValueError('timeout < 0')
+        self.timeout = timeout
+        return self
+
+    def get_without_time_limit(self, *args, **kwargs):
         counter = time.perf_counter
+        self.clear()
         t0 = counter()
         try:
-            self.result = self.target(*self.args, **self.kwargs)
+            self.result = self.target(*(args or self.args), **(kwargs or self.kwargs))
+            self.ok = True
             return self.result
-        except ignore_exceptions:
+        except self.ignore_exceptions:
             pass
         except Exception as e:
-            if not exception_handler:
+            if not self.exception_handler:
                 self.exception = e
                 raise e
             else:
-                return exception_handler(e)
+                return self.exception_handler(e)
         finally:
-            self.timer = counter() - t0
+            self.delta_t = counter() - t0
 
-    def get(self, timeout=None, **kwargs_of_self_get):
-        if timeout is None:
-            return self._get(**kwargs_of_self_get)
-        thread = thread_factory(daemon=True)(self._get, **kwargs_of_self_get)
+    def get_in_limited_time(self, *args, **kwargs):
+        thread = thread_factory(daemon=True)(self.get_without_time_limit, *args, **kwargs)
         thread.start()
-        thread.join(timeout)
+        thread.join(self.timeout)  # join will terminate the thread (or not?)
+        if self.ok:
+            return self.result
         if self.exception:
             raise self.exception
-        return self.result
+        raise TimeoutError()
+
+    def get(self, *args, **kwargs):
+        if self.timeout is None:
+            return self.get_without_time_limit(*args, **kwargs)
+        return self.get_in_limited_time(*args, **kwargs)
 
 
 class ALotCall:
     def __init__(self, *calls: T.Union[ACall, T.Iterable[ACall]]):
         self.all_calls_iter = itertools.chain(*[[i] if isinstance(i, ACall) else i for i in calls])
 
-    def any(self, **kwargs_of_call_get):
-        return any((call.get(**kwargs_of_call_get) for call in self.all_calls_iter))
+    def any(self, *args, **kwargs):
+        return any((call.get(*args, **kwargs) for call in self.all_calls_iter))
 
-    def any_result(self, **kwargs_of_call_get):
+    def any_result(self, *args, **kwargs):
         for call in self.all_calls_iter:
-            r = call.get(**kwargs_of_call_get)
+            r = call.get(*args, **kwargs)
             if r:
                 return r
 
@@ -507,3 +523,109 @@ def parse_host_port_address(addr: str):
         r = parse('socket://' + addr)
     return r
 
+
+class ByteStreamBufferedReaderScraperPreAlpha:
+    def __init__(self, stream: T.Union[io.BufferedReader, T.BinaryIO], timeout=None):
+        self.stream = stream
+        self._inactive_event = threading.Event()
+        self.buffer = bytearray()
+        self.lock_buffer = threading.Lock()
+        if timeout is None:
+            self.peek_stream = stream.peek
+            self.read_stream = stream.read
+        else:
+            self.peek_stream = ACall(stream.peek).set_timeout(timeout).get_in_limited_time
+            self.read_stream = ACall(stream.read).set_timeout(timeout).get_in_limited_time
+
+    @property
+    def is_inactive(self):
+        return self._inactive_event.wait(0)
+
+    def wait_inactive(self, timeout=None):
+        return self._inactive_event.wait(timeout)
+
+    def set_inactive(self):
+        self._inactive_event.set()
+
+    def start_scape_into(self, b):
+        thread_factory(daemon=True)(self.scrape_into, b).start()
+
+    def scrape_into(self, stream):
+        while 1:
+            try:
+                peek = self.peek_stream()
+            except TimeoutError:
+                self.set_inactive()
+                break
+            else:
+                n = len(peek)
+                if n:
+                    read = self.read_stream(n)
+                    stream.write(read)
+                    stream.flush()
+                    self.write(read)
+                else:
+                    self.set_inactive()
+                    break
+
+    def write(self, b):
+        self.lock_buffer.acquire()
+        self.buffer.extend(b)
+        self.lock_buffer.release()
+
+    def read(self, size=-1):
+        self.lock_buffer.acquire()
+        b = self.buffer[:size]
+        if size == -1 or size == len(self.buffer):
+            self.buffer.clear()
+        else:
+            self.buffer[:] = self.buffer[size:]
+        self.lock_buffer.release()
+        return b
+
+    def peek(self, size=-1):
+        self.lock_buffer.acquire()
+        b = self.buffer[:size]
+        self.lock_buffer.release()
+        return b
+
+
+class SubProcessBytePipeTranscriberPreAlpha:
+
+    def __init__(self, p: subprocess.Popen, pipe_timeout=None):
+        if not isinstance(p.stdout, io.BufferedReader) or not isinstance(p.stderr, io.BufferedReader):
+            raise ValueError('`p` must have both `stdout` and `stderr` as `io.BufferedReader`')
+        self.p = p
+        self.o = ByteStreamBufferedReaderScraperPreAlpha(p.stdout, timeout=pipe_timeout)
+        self.e = ByteStreamBufferedReaderScraperPreAlpha(p.stderr, timeout=pipe_timeout)
+        self._all_pipe_scrapers_inactive_barrier = threading.Barrier(3)
+        self._all_pipe_scrapers_inactive_event = threading.Event()
+        thread_factory(daemon=True)(self._wait_pipe_scraper_inactive, self.o).start()
+        thread_factory(daemon=True)(self._wait_pipe_scraper_inactive, self.e).start()
+
+    @property
+    def is_complete(self):
+        return self.p.poll() is not None
+
+    @property
+    def is_inactive(self):
+        return self.wait_inactive()
+
+    def wait_inactive(self):
+        if self._all_pipe_scrapers_inactive_event.wait(0):
+            return True
+        self._all_pipe_scrapers_inactive_barrier.wait()
+        self._all_pipe_scrapers_inactive_event.set()
+        return self.wait_inactive()
+
+    def _wait_pipe_scraper_inactive(self, x: ByteStreamBufferedReaderScraperPreAlpha):
+        x.wait_inactive()
+        self._all_pipe_scrapers_inactive_barrier.wait()
+
+    def start(self):
+        self.o.start_scape_into(sys.stdout.buffer)
+        self.e.start_scape_into(sys.stderr.buffer)
+
+    def wait_complete(self):
+        self.wait_inactive()
+        return self.p.wait()
