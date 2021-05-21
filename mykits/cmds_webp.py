@@ -103,7 +103,7 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
 an.B = an.trash_bin = ''
 
 
-@apr.sub(apr.replace_underscore())
+@apr.sub(apr.rename_underscore())
 @apr.true('r', 'recursive')
 @apr.true('c', 'clean')
 @apr.true('z', 'cbz')

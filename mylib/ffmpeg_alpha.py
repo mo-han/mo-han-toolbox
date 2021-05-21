@@ -363,11 +363,12 @@ def get_width_height(filepath) -> (int, int):
     return d['width'], d['height']
 
 
-@mylib.easy.deco_factory_param_value_choices({'res_limit': (None, 'FHD', 'HD', 'qHD', 'QHD', '4K')})
+@mylib.easy.deco_factory_param_value_choices({'res_limit': (None, 'FHD', 'HD', 'qHD', 'QHD', '4K', '360p')})
 def get_vf_res_scale_down(width: int, height: int, res_limit='FHD', vf: str = None) -> str or None:
     """generate 'scale=<w>:<h>' value for ffmpeg `vf` option, to scale down the given resolution
     return empty str if the given resolution is enough low thus scaling is not needed"""
-    d = {'FHD': (1920, 1080), 'HD': (1280, 720), 'qHD': (960, 540), 'QHD': (2560, 1440), '4K': (3840, 2160)}
+    d = {'FHD': (1920, 1080), 'HD': (1280, 720), 'qHD': (960, 540), 'QHD': (2560, 1440), '4K': (3840, 2160),
+         '360p': (640, 360)}
     auto_calc = -2
     if not res_limit:
         return
@@ -456,6 +457,8 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
             res_limit = 'QHD'
         elif kw.lower() == '4k':
             res_limit = '4K'
+        elif kw.lower() == '360p':
+            res_limit = '360p'
         elif kw in ('2ch', 'stereo'):
             ffmpeg_args.add(ac=2)
         elif kw == 'hevc':

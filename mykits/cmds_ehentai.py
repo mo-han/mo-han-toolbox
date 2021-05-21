@@ -34,7 +34,7 @@ def _sorted_path_of_hentai_at_home_downloaded_gallery(gallery_path, gallery_type
 an.src = an.v = an.verbose = an.D = an.dry_run = ''
 
 
-@apr.sub(apr.replace_underscore())
+@apr.sub(apr.rename_underscore())
 @apr.arg(an.src, nargs='*')
 @apr.true(an.v, an.verbose)
 @apr.true(an.D, apr.dst2opt(an.dry_run))
@@ -62,7 +62,7 @@ def hath_sort(src: PathSourceType, *, verbose=False, dry_run=False):
 an.address = None
 
 
-@apr.sub(apr.replace_underscore(), aliases=['ehv.rc'])
+@apr.sub(apr.rename_underscore(), aliases=['ehv.rc'])
 @apr.arg(an.address, help='remote address for adb connect')
 @apr.map(an.address)
 def ehviewer_remote_control(remote_address: str):

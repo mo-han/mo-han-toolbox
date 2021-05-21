@@ -51,7 +51,7 @@ def find_replace(src, find, replace='', encoding='utf-8', regex=False, recurse=F
                     stderr_print(line)
 
 
-@apr.sub(apr.replace_underscore())
+@apr.sub(apr.rename_underscore())
 @apr.arg(an.text, nargs='?')
 @apr.map(an.text)
 def obsidian_reformat(s: str):

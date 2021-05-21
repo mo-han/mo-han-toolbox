@@ -56,7 +56,7 @@ class ArgumentParserRigger:
         return AttrName()
 
     @staticmethod
-    def replace_underscore(repl: str = '.'):
+    def rename_underscore(repl: str = '.'):
         def rename(x: str):
             return x.replace('_', repl)
 
@@ -206,3 +206,4 @@ class ArgumentParserRigger:
     an = attr_name
     dst2opt = make_option_name_from_dest_name
     opt2dst = make_dest_name_from_option_name
+    rnu = rename_underscore

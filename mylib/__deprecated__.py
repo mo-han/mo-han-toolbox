@@ -11,7 +11,7 @@ from time import sleep
 from typing import Callable, Generator
 
 from mylib.ex import fstk
-from mylib.easy import typing, T
+from mylib.easy import *
 from mylib.ex.ostk import Clipboard
 
 
@@ -277,3 +277,85 @@ def threading_call_factory(delay: float or int = None):
         threading_call(wrapped_target, *args, **kwargs)
 
     return wrapped_threading_call
+
+
+class BufferedReaderChunksWrapper:
+    current_chunk_size: int
+    current_chunk_room: int
+
+    def __init__(self, readable_buffer: io.BufferedReader, timeout=None, chunk_size=4096):
+        if not isinstance(readable_buffer, io.BufferedReader):
+            raise TypeError('readable_buffer', io.BufferedReader)
+        self.buffer = readable_buffer
+        self.timeout = timeout
+        self.inactive = False
+        self.chunks_queue = queue.Queue()
+        self.chunk_memory_view = memoryview(bytearray(chunk_size))
+        self.reset_current_chunk()
+        if timeout is None:
+            self.peek = readable_buffer.peek
+            self.read = readable_buffer.read
+        else:
+            self.peek = ACall(readable_buffer.peek).set_timeout(timeout).get_in_limited_time
+            self.read = ACall(readable_buffer.read).set_timeout(timeout).get_in_limited_time
+
+    @property
+    def chunk_max_size(self):
+        return len(self.chunk_memory_view)
+
+    @property
+    def current_chunk_bytearray(self):
+        return bytearray(self.chunk_memory_view[:self.current_chunk_size])
+
+    def submit_current_chunk_bytearray(self):
+        self.chunks_queue.put(self.current_chunk_bytearray)
+        self.reset_current_chunk()
+
+    def submit_current_chunk_bytearray_only_if_full(self):
+        if self.current_chunk_size >= self.chunk_max_size:
+            self.submit_current_chunk_bytearray()
+
+    def extend_current_chunk(self, x):
+        new_size = self.current_chunk_size + len(x)
+        self.chunk_memory_view[self.current_chunk_size:new_size] = x
+        self.current_chunk_size = new_size
+        self.current_chunk_room = self.chunk_max_size - new_size
+
+    def reset_current_chunk(self):
+        self.current_chunk_size = 0
+        self.current_chunk_room = self.chunk_max_size
+
+    def scrape_to(self, dst_io):
+        try:
+            peek = self.peek()
+            if peek:
+                self.inactive = False
+                data = self.read(len(peek))
+                dst_io.write(data)
+                dm = memoryview(data)
+                dm_size = len(data)
+                while self.current_chunk_room < dm_size:
+                    dm_1, dm = dm[:self.current_chunk_room], dm[self.current_chunk_room:]
+                    dm_size = len(dm)
+                    self.extend_current_chunk(dm_1)
+                    self.submit_current_chunk_bytearray()
+                else:
+                    self.extend_current_chunk(dm)
+                    self.submit_current_chunk_bytearray_only_if_full()
+            else:
+                self.inactive = True
+                self.submit_current_chunk_bytearray()
+        except TimeoutError:
+            self.inactive = True
+            self.submit_current_chunk_bytearray()
+
+    def get_chunk(self, block: bool = True, timeout: float = None):
+        q = self.chunks_queue
+        if q.qsize():
+            return q.get(block=block, timeout=timeout)
+        elif self.inactive:
+            return None
+        else:
+            return q.get(block=block, timeout=timeout)
+
+
