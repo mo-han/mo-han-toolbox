@@ -43,3 +43,49 @@ for line in sys.stdin:
         continue
     print('/'.join(parts))
 ```
+
+
+微信 盛言奉天城韵 配音视频
+```python
+import lxml.html
+import splinter
+
+from mylib.easy import *
+from mylib.wrapper import aria2c
+
+b = splinter.browser.FirefoxWebDriver(headless=True)
+
+
+def visit_util_title(url):
+    b.visit(url)
+    while not b.title:
+        sleep(.1)
+
+
+def visit_blank():
+    b.visit('about:blank')
+    while b.html != '<html><head></head><body></body></html>' or b.title:
+        sleep(.1)
+
+
+home = ''
+b.visit(home)
+ht = lxml.html.fromstring(b.html)
+pages = {i.attrib['href'] for i in ht.xpath('//section/section/a')}
+pages = sorted(pages)
+for page in pages:
+    visit_blank()
+    visit_util_title(page)
+    title = b.title
+    if not title:
+        raise RuntimeError(repr(title), page)
+    print(title)
+    print(page)
+    ht = lxml.html.fromstring(b.html)
+    for i, v in enumerate(ht.find_class('video_fill'), 1):
+        v_url = v.attrib['origin_src']
+        fp = f'{title} {i}.mp4'
+        print(fp)
+        print(v_url)
+        aria2c.run_aria2c(v_url, o=fp)
+```

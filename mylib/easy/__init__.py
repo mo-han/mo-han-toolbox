@@ -18,6 +18,9 @@ path_is_file = os.path.isfile
 path_is_dir = os.path.isdir
 path_exist = os.path.exists
 path_dirname = os.path.dirname
+path_basename = os.path.basename
+path_common = os.path.commonpath
+path_common_prefix = os.path.commonprefix
 path_join = os.path.join
 path_split = os.path.split
 path_split_ext = os.path.splitext
@@ -599,6 +602,7 @@ class ByteStreamBufferedReaderScraperPreAlpha:
 
     def start_scape(self):
         thread_factory(daemon=True)(self.scrape).start()
+        return self
 
     def scrape(self):
         while 1:

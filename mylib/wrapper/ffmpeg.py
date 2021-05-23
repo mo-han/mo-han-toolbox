@@ -33,8 +33,38 @@ class FFmpegCommand:
         self.input_list = []
         self.output_list = []
 
-    def add_input(self, *args, **kwargs):
-        self.input_list.append(FFmpegCLIArgs('-i', *args, **kwargs))
+    def add_input(self, input_url, **kwargs):
+        self.input_list.append(FFmpegCLIArgs(**kwargs).add(i=input_url))
+        return self
 
-    def add_output(self, *args, **kwargs):
-        self.output_list.append(FFmpegCLIArgs(*args, **kwargs))
+    def add_output(self, output_url, **kwargs):
+        self.output_list.append(FFmpegCLIArgs(**kwargs).add(output_url))
+        return self
+
+    def build(self):
+        cmd = FFmpegCLIArgs(*self.head)
+        for i in self.input_list:
+            cmd.add(*i)
+        for o in self.output_list:
+            cmd.add(*o)
+        return cmd
+
+
+def concat_simple(src_list, output_url):
+    concat_lines = [f"file '{i}'" for i in src_list]
+    concat_lines.insert(0, f'# auto generated ffmpeg concat list by {__name__}.{concat_simple.__name__}')
+    concat_info = '\n'.join(concat_lines)
+    if output_url is ...:
+        dirname_set = {path_dirname(i) for i in src_list}
+        basename_prefix = path_common_prefix([path_basename(i) for i in src_list])
+        ext_set = {os.path.splitext(i)[1] for i in src_list}
+        if not len(dirname_set) == 1 or not basename_prefix or not len(ext_set):
+            raise ValueError('cannot guess a valid output url')
+        output_url = path_join(dirname_set.pop(), f'{basename_prefix.strip()}{ext_set.pop()}')
+    print(concat_info)
+    cmd = FFmpegCommand(). \
+        add_input('-', f='concat', safe=0, protocol_whitelist='file,pipe'). \
+        add_output(output_url, c='copy'). \
+        build()
+    p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+    p.communicate(concat_info.encode())

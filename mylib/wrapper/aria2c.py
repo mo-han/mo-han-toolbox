@@ -2,6 +2,9 @@
 
 from mylib.ex import http_headers
 from mylib.easy import *
+from mylib.easy import logging
+
+logger = logging.get_logger(__name__)
 
 
 class Aria2cCLIArgs(CLIArgumentsList):
@@ -24,4 +27,6 @@ def run_aria2c(*link, cookies: dict = None, headers: dict = None, **options):
         cli_args.set_cookies(cookies)
     if headers:
         cli_args.set_headers(headers)
-    return subprocess.run(cli_args.add(**options).add(*link))
+    cli_args.add(**options).add(*link)
+    logger.info(cli_args)
+    return subprocess.run(cli_args)
