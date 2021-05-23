@@ -58,7 +58,7 @@ def convert_cookies_json_to_netscape(json_data_or_filepath: JSONType or str, dis
             line += true_
         else:
             line += false_
-        line += '{}\t{}\t{}'.format(c.get('expirationDate', 0), c['name'], c['value'])
+        line += '{}\t{}\t{}'.format(c.get_result('expirationDate', 0), c['name'], c['value'])
         lines.append(line)
     return '\n'.join(lines)
 

@@ -296,8 +296,8 @@ class BufferedReaderChunksWrapper:
             self.peek = readable_buffer.peek
             self.read = readable_buffer.read
         else:
-            self.peek = ACall(readable_buffer.peek).set_timeout(timeout).get_in_limited_time
-            self.read = ACall(readable_buffer.read).set_timeout(timeout).get_in_limited_time
+            self.peek = ACall(readable_buffer.peek).set_timeout(timeout).get_result_threading
+            self.read = ACall(readable_buffer.read).set_timeout(timeout).get_result_threading
 
     @property
     def chunk_max_size(self):

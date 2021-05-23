@@ -206,7 +206,7 @@ class ACall:
         self.timeout = timeout
         return self
 
-    def get_without_time_limit(self, *args, **kwargs):
+    def get_result_sync(self, *args, **kwargs):
         counter = time.perf_counter
         self.clear()
         t0 = counter()
@@ -225,8 +225,8 @@ class ACall:
         finally:
             self.delta_t = counter() - t0
 
-    def get_in_limited_time(self, *args, **kwargs):
-        thread = thread_factory(daemon=True)(self.get_without_time_limit, *args, **kwargs)
+    def get_result_threading(self, *args, **kwargs):
+        thread = thread_factory(daemon=True)(self.get_result_sync, *args, **kwargs)
         thread.start()
         thread.join(self.timeout)  # join will terminate the thread (or not?)
         if self.ok:
@@ -235,10 +235,10 @@ class ACall:
             raise self.exception
         raise TimeoutError()
 
-    def get(self, *args, **kwargs):
+    def get_result(self, *args, **kwargs):
         if self.timeout is None:
-            return self.get_without_time_limit(*args, **kwargs)
-        return self.get_in_limited_time(*args, **kwargs)
+            return self.get_result_sync(*args, **kwargs)
+        return self.get_result_threading(*args, **kwargs)
 
 
 class ALotCall:
@@ -246,11 +246,11 @@ class ALotCall:
         self.all_calls_iter = itertools.chain(*[[i] if isinstance(i, ACall) else i for i in calls])
 
     def any(self, *args, **kwargs):
-        return any((call.get(*args, **kwargs) for call in self.all_calls_iter))
+        return any((call.get_result(*args, **kwargs) for call in self.all_calls_iter))
 
     def any_result(self, *args, **kwargs):
         for call in self.all_calls_iter:
-            r = call.get(*args, **kwargs)
+            r = call.get_result(*args, **kwargs)
             if r:
                 return r
 
@@ -524,18 +524,62 @@ def parse_host_port_address(addr: str):
     return r
 
 
+class PipePair:
+    def __init__(self, text_mode=False, **kwargs):
+        r, w = os.pipe()
+        self.r = self.readable_pipe = os.fdopen(r, 'r' if text_mode else 'rb', **kwargs)
+        self.w = self.writable_pipe = os.fdopen(w, 'w' if text_mode else 'wb', **kwargs)
+        self.r_w_pair = (self.r, self.w)
+
+
 class ByteStreamBufferedReaderScraperPreAlpha:
-    def __init__(self, stream: T.Union[io.BufferedReader, T.BinaryIO], timeout=None):
+    def __init__(self, stream: T.Union[io.BufferedReader, T.BinaryIO], timeout=None,
+                 relay_to=None, scrape_to_bytearray=True, scrape_to_pipe=False):
         self.stream = stream
         self._inactive_event = threading.Event()
-        self.buffer = bytearray()
-        self.lock_buffer = threading.Lock()
+
         if timeout is None:
-            self.peek_stream = stream.peek
-            self.read_stream = stream.read
+            self.stream_peek = stream.peek
+            self.stream_read = stream.read
         else:
-            self.peek_stream = ACall(stream.peek).set_timeout(timeout).get_in_limited_time
-            self.read_stream = ACall(stream.read).set_timeout(timeout).get_in_limited_time
+            self.stream_peek = ACall(stream.peek).set_timeout(timeout).get_result_threading
+            self.stream_read = ACall(stream.read).set_timeout(timeout).get_result_threading
+
+        if relay_to:
+            self.relay = self._relay
+            self._relay_dst = relay_to
+        else:
+            self.relay = self._pass
+
+        if scrape_to_bytearray:
+            self.bytearray = bytearray()
+            self.bytearray_lock = threading.Lock()
+            self.write_bytearray = self._write_bytearray
+            self.read_bytearray = self._read_bytearray
+            self.peek_bytearray = self._peek_bytearray
+        else:
+            self.write_bytearray = self._pass
+
+        if scrape_to_pipe:
+            r, w = PipePair(text_mode=False).r_w_pair
+            r: io.BufferedReader
+            self.write_pipe = w.write
+            self.flush_pipe = w.flush
+            self.close_pipe = w.close
+            self.read_pipe = r.read
+            self.peek_pipe = r.peek
+        else:
+            self.write_pipe = self._pass
+            self.flush_pipe = self._pass
+            self.close_pipe = self._pass
+
+    @staticmethod
+    def _pass(*args):
+        pass
+
+    def _relay(self, b):
+        self._relay_dst.buffer.write(b)
+        self._relay_dst.buffer.flush()
 
     @property
     def is_inactive(self):
@@ -546,58 +590,63 @@ class ByteStreamBufferedReaderScraperPreAlpha:
 
     def set_inactive(self):
         self._inactive_event.set()
+        self.close_pipe()
 
-    def start_scape_into(self, b):
-        thread_factory(daemon=True)(self.scrape_into, b).start()
+    def start_scape(self):
+        thread_factory(daemon=True)(self.scrape).start()
 
-    def scrape_into(self, stream):
+    def scrape(self):
         while 1:
             try:
-                peek = self.peek_stream()
+                peek = self.stream_peek()
             except TimeoutError:
                 self.set_inactive()
                 break
             else:
                 n = len(peek)
                 if n:
-                    read = self.read_stream(n)
-                    stream.write(read)
-                    stream.flush()
-                    self.write(read)
+                    read = self.stream_read(n)
+                    self.relay(read)
+                    self.write_bytearray(read)
+                    self.write_pipe(read)
+                    self.flush_pipe()
                 else:
                     self.set_inactive()
                     break
 
-    def write(self, b):
-        self.lock_buffer.acquire()
-        self.buffer.extend(b)
-        self.lock_buffer.release()
+    def _write_bytearray(self, b):
+        self.bytearray_lock.acquire()
+        self.bytearray.extend(b)
+        self.bytearray_lock.release()
+        return self
 
-    def read(self, size=-1):
-        self.lock_buffer.acquire()
-        b = self.buffer[:size]
-        if size == -1 or size == len(self.buffer):
-            self.buffer.clear()
+    def _read_bytearray(self, size=-1) -> bytearray:
+        self.bytearray_lock.acquire()
+        b = self.bytearray[:size]
+        if size == -1 or size == len(self.bytearray):
+            self.bytearray.clear()
         else:
-            self.buffer[:] = self.buffer[size:]
-        self.lock_buffer.release()
+            self.bytearray[:] = self.bytearray[size:]
+        self.bytearray_lock.release()
         return b
 
-    def peek(self, size=-1):
-        self.lock_buffer.acquire()
-        b = self.buffer[:size]
-        self.lock_buffer.release()
+    def _peek_bytearray(self, size=-1) -> bytearray:
+        self.bytearray_lock.acquire()
+        b = self.bytearray[:size]
+        self.bytearray_lock.release()
         return b
 
 
 class SubProcessBytePipeTranscriberPreAlpha:
 
-    def __init__(self, p: subprocess.Popen, pipe_timeout=None):
+    def __init__(self, p: subprocess.Popen, pipe_timeout=None, to_pipe=False, to_bytearray=True):
         if not isinstance(p.stdout, io.BufferedReader) or not isinstance(p.stderr, io.BufferedReader):
             raise ValueError('`p` must have both `stdout` and `stderr` as `io.BufferedReader`')
         self.p = p
-        self.o = ByteStreamBufferedReaderScraperPreAlpha(p.stdout, timeout=pipe_timeout)
-        self.e = ByteStreamBufferedReaderScraperPreAlpha(p.stderr, timeout=pipe_timeout)
+        self.o = ByteStreamBufferedReaderScraperPreAlpha(p.stdout, timeout=pipe_timeout, relay_to=sys.stdout,
+                                                         scrape_to_bytearray=to_bytearray, scrape_to_pipe=to_pipe)
+        self.e = ByteStreamBufferedReaderScraperPreAlpha(p.stderr, timeout=pipe_timeout, relay_to=sys.stderr,
+                                                         scrape_to_bytearray=to_bytearray, scrape_to_pipe=to_pipe)
         self._all_pipe_scrapers_inactive_barrier = threading.Barrier(3)
         self._all_pipe_scrapers_inactive_event = threading.Event()
         thread_factory(daemon=True)(self._wait_pipe_scraper_inactive, self.o).start()
@@ -623,8 +672,8 @@ class SubProcessBytePipeTranscriberPreAlpha:
         self._all_pipe_scrapers_inactive_barrier.wait()
 
     def start(self):
-        self.o.start_scape_into(sys.stdout.buffer)
-        self.e.start_scape_into(sys.stderr.buffer)
+        self.o.start_scape()
+        self.e.start_scape()
 
     def wait_complete(self):
         self.wait_inactive()
