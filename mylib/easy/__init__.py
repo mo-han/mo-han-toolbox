@@ -547,7 +547,12 @@ class ByteStreamBufferedReaderScraperPreAlpha:
 
         if relay_to:
             self.relay = self._relay
-            self._relay_dst = relay_to
+            if isinstance(relay_to, io.TextIOWrapper):
+                relay_to = relay_to.buffer
+            if isinstance(relay_to, io.BufferedWriter):
+                self._relay_dst = relay_to
+            else:
+                raise TypeError('relay_to', io.BufferedWriter)
         else:
             self.relay = self._pass
 
@@ -578,8 +583,8 @@ class ByteStreamBufferedReaderScraperPreAlpha:
         pass
 
     def _relay(self, b):
-        self._relay_dst.buffer.write(b)
-        self._relay_dst.buffer.flush()
+        self._relay_dst.write(b)
+        self._relay_dst.flush()
 
     @property
     def is_inactive(self):
