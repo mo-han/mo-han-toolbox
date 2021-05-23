@@ -3,7 +3,7 @@ from mylib.easy import *
 from mylib.easy import logging
 
 
-class CLIArgs(CLIArgumentsList):
+class FFmpegCLIArgs(CLIArgumentsList):
     merge_option_nargs = False
 
     @staticmethod
@@ -23,5 +23,18 @@ class Error(Exception):
                 self.cause = 'plugin', 'load', None
 
 
-class FFmpeg:
-    ...
+class FFmpegCommand:
+    def __init__(self, path='ffmpeg', banner: bool = True, loglevel: str = None, overwrite: bool = ...):
+        self.head = FFmpegCLIArgs(path, hide_banner=not banner, loglevel=loglevel)
+        if overwrite is True:
+            self.head.add(y=True)
+        if overwrite is False:
+            self.head.add(n=True)
+        self.input_list = []
+        self.output_list = []
+
+    def add_input(self, *args, **kwargs):
+        self.input_list.append(FFmpegCLIArgs('-i', *args, **kwargs))
+
+    def add_output(self, *args, **kwargs):
+        self.output_list.append(FFmpegCLIArgs(*args, **kwargs))
