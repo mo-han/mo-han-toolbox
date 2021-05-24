@@ -80,7 +80,7 @@ def deco_factory_copy_signature(signature_source: T.Callable):
 
 
 class CLIArgumentsList(list):
-    merge_option_nargs = True
+    merge_option_nargs = False
 
     def __init__(self, *args, **kwargs):
         super().__init__()
@@ -128,10 +128,10 @@ class CLIArgumentsList(list):
     @staticmethod
     def _spec_convert_keyword_to_option_name(keyword):
         if len(keyword) > 1:
-            k = '--' + '-'.join(keyword.split('_'))
+            opt_name = '--' + '-'.join(keyword.split('_'))
         else:
-            k = '-' + keyword
-        return k
+            opt_name = '-' + keyword
+        return opt_name
 
 
 def get_os_default_encoding():
