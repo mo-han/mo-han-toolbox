@@ -12,7 +12,7 @@ class GLDLCLIArgs(CLIArgumentsList):
 
 
 def new_gallery_dl_cmd(*args, **kwargs):
-    cmd = GLDLCLIArgs('gallery-dl', v=True, R=10, c=fstk.make_path('%conf_path%', env_var=True),
+    cmd = GLDLCLIArgs('gallery-dl', R=10, c=fstk.make_path('%conf_path%', env_var=True),
                       o='base-directory="."', )
     return cmd
 
@@ -86,7 +86,7 @@ def loop():
 
 def main():
     args = sys.argv[1:]
-    ostk.set_console_title(str(args))
+    ostk.set_console_title(f'{path_basename(__file__)} - {args}')
     if not args:
         loop()
     else:
