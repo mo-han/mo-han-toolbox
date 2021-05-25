@@ -7,18 +7,22 @@ if os.name != 'nt':
     raise NotImplementedError('launch new console window')
 
 
+conf_path = fstk.make_path('%gallery-dl.conf', env_var=True)
+base_dir = fstk.make_path('%gallery-dl.base-directory%', env_var=True).strip('"')
+
+
 class GLDLCLIArgs(CLIArgumentsList):
     merge_option_nargs = False
 
 
 def new_gallery_dl_cmd(*args, **kwargs):
     cmd = GLDLCLIArgs('gallery-dl', R=10, c=fstk.make_path('%conf_path%', env_var=True),
-                      o='base-directory="."', )
+                      o=f'base-directory={base_dir}', )
     return cmd
 
 
 def get_cookies_path(middle_name):
-    return fstk.make_path('%cookies_dir%', f'cookies.{middle_name}.txt', env_var=True)
+    return fstk.make_path('%cookies.dir%', f'cookies.{middle_name}.txt', env_var=True)
 
 
 def per_site(args: T.List[str]):
@@ -54,7 +58,7 @@ def per_site(args: T.List[str]):
                                 'directory=["[{user[name]}] pixiv {user[userId]} {category} {creatorId}"]']),
                 *args, url]
     elif 'twitter.com' in url:
-        args = [*GLDLCLIArgs(o=['filename="twitter.{tweet_id}-{num:03d}.{date:%%Y-%%m-%%d}.{filename}.{extension}"',
+        args = [*GLDLCLIArgs(o=['filename="twitter.{tweet_id}-{num:03d}.{date:%Y-%m-%d}.{filename}.{extension}"',
                                 'directory=["[{author[nick]}] {category} @{author[name]}"]', 'videos=true',
                                 'retweets=false', 'content=true']),
                 *args, url]
