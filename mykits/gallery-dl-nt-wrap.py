@@ -33,7 +33,7 @@ def per_site(args: T.List[str]):
     elif first == 'fanbox':
         url = f'https://{args.pop(0)}.fanbox.cc'
     elif first == 'twitter':
-        url = f'https://twitter.com/{args.pop(0)}/media'
+        url = f'https://twitter.com/{args.pop(0).lstrip("@")}/media'
     elif first == 'danbooru':
         url = f'https://danbooru.donmai.us/posts?tags={args.pop(0)}'
     elif first == 'gelbooru':
