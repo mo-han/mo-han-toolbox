@@ -12,14 +12,16 @@ from mylib.easy import logging
 logger = logging.get_logger(__name__)
 
 
-class CLIArgs(CLIArgumentsList):
+class CWebpCLIArgs(CLIArgumentsList):
+    merge_option_nargs = True
+
     @staticmethod
     def _spec_convert_keyword_to_option_name(keyword):
         return '-' + keyword
 
 
 def new_cwebp_cmd():
-    return CLIArgs('cwebp')
+    return CWebpCLIArgs('cwebp')
 
 
 def cwebp(src: str or bytes, dst: str or False or None or Ellipsis = ..., **kwargs):
@@ -43,7 +45,7 @@ def cwebp(src: str or bytes, dst: str or False or None or Ellipsis = ..., **kwar
 
     resize = kwargs.pop('resize', None)
     if isinstance(resize, (int, float)) and resize > 0 and resize != 1:
-        resize = round(resize, 2)
+        # resize = round(resize, 2)
         if src_bytes is None:
             src_img = Image.open(src)
         else:
@@ -132,6 +134,8 @@ class CWebpEncodeError(CWebpGenericError):
 def check_cwebp_subprocess_result(result: dict):
     if not result['ok']:
         msg_lines = result['msg']
+        if msg_lines[0].startswith('Error! '):
+            raise CWebpGenericError(result['code'], msg_lines[0][7:])
         if msg_lines[1] == 'Error! Cannot encode picture as WebP':
             m = re.match(r'Error code: (?P<code>\d+) \((?P<reason>\w+): (?P<desc>.+)\)', msg_lines[2])
             if m:
