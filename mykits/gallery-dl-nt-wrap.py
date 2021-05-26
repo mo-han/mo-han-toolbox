@@ -7,7 +7,7 @@ if os.name != 'nt':
     raise NotImplementedError('launch new console window')
 
 
-conf_path = fstk.make_path('%gallery-dl.conf', env_var=True)
+conf_path = fstk.make_path('%gallery-dl.conf%', env_var=True)
 base_dir = fstk.make_path('%gallery-dl.base-directory%', env_var=True).strip('"')
 
 
@@ -16,7 +16,7 @@ class GLDLCLIArgs(CLIArgumentsList):
 
 
 def new_gallery_dl_cmd(*args, **kwargs):
-    cmd = GLDLCLIArgs('gallery-dl', R=10, c=fstk.make_path('%conf_path%', env_var=True),
+    cmd = GLDLCLIArgs('gallery-dl', R=10, c=conf_path,
                       o=f'base-directory={base_dir}', )
     return cmd
 
