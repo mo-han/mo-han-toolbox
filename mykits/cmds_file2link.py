@@ -8,16 +8,17 @@ an = apr.an
 an.s = an.src = ''
 
 
-@apr.sub(aliases=['imgid'])
+@apr.sub()
 @apr.opt(an.s, an.src, nargs='*')
 @apr.map(an.src)
-def image_post_id(fp_list):
+def post_id(fp_list):
     sites_post_url_fmt = {
         'sankaku': 'https://chan.sankakucomplex.com/post/show/{}',
         'pixiv': 'https://www.pixiv.net/artworks/{}',
         'danbooru': 'https://danbooru.donmai.us/posts/{}',
         'gelbooru': 'https://gelbooru.com/index.php?page=post&s=view&id={}',
         'idolcomplex': 'https://idol.sankakucomplex.com/post/show/{}',
+        'twitter': 'https://twitter.com/twitter/statuses/{}',
     }
     for bn in map(path_basename, resolve_path_to_dirs_files(fp_list)[1] or ostk.clipboard.get().splitlines()):
         print(f'@ {bn}')

@@ -1,14 +1,37 @@
 #!/usr/bin/env python3
-import shlex
+import webbrowser
 
 from mylib.ex.console_app import *
 
 if os.name != 'nt':
     raise NotImplementedError('launch new console window')
 
-
 conf_path = fstk.make_path('%gallery-dl.conf%', env_var=True)
 base_dir = fstk.make_path('%gallery-dl.base-directory%', env_var=True).strip('"')
+
+
+def _console_pause_nt():
+    os.system('pause')
+
+
+def _console_pause():
+    os.system('read -p "press any key to continue . . ." -srn1')
+
+
+def _console_new_run_nt(cmd):
+    os.system(f'start /min {cmd}')
+
+
+def _console_new_run(cmd):
+    os.system(f'xterm -iconic -e {cmd}')
+
+
+if os.name == 'nt':
+    console_new_run = _console_new_run_nt
+    console_pause = _console_pause_nt
+else:
+    console_new_run = _console_new_run
+    console_pause = _console_pause
 
 
 class GLDLCLIArgs(CLIArgumentsList):
@@ -26,24 +49,7 @@ def get_cookies_path(middle_name):
 
 
 def per_site(args: T.List[str]):
-    first = args.pop(0)
-
-    if first.startswith('/users/') or first.startswith('/artworks/'):
-        url = 'https://www.pixiv.net' + first
-    elif first == 'fanbox':
-        url = f'https://{args.pop(0)}.fanbox.cc'
-    elif first == 'twitter':
-        url = f'https://twitter.com/{args.pop(0).lstrip("@")}/media'
-    elif first == 'danbooru':
-        url = f'https://danbooru.donmai.us/posts?tags={args.pop(0)}'
-    elif first == 'gelbooru':
-        url = f'https://gelbooru.com/index.php?page=post&s=list&tags={args.pop(0)}'
-    elif first == 'sankaku':
-        url = f'https://chan.sankakucomplex.com/?tags={args.pop(0)}'
-    elif first == 'idol':
-        url = f'https://idol.sankakucomplex.com/?tags={args.pop(0)}'
-    else:
-        url = first
+    url = args2url(args)
 
     if 'pixiv.net' in url:
         args = [*GLDLCLIArgs(ugoira_conv=True,
@@ -87,6 +93,27 @@ def per_site(args: T.List[str]):
     return args
 
 
+def args2url(args):
+    first = args.pop(0)
+    if first.startswith('/users/') or first.startswith('/artworks/'):
+        url = 'https://www.pixiv.net' + first
+    elif first == 'fanbox':
+        url = f'https://{args.pop(0)}.fanbox.cc'
+    elif first == 'twitter':
+        url = f'https://twitter.com/{args.pop(0).lstrip("@")}/media'
+    elif first == 'danbooru':
+        url = f'https://danbooru.donmai.us/posts?tags={args.pop(0)}'
+    elif first == 'gelbooru':
+        url = f'https://gelbooru.com/index.php?page=post&s=list&tags={args.pop(0)}'
+    elif first == 'sankaku':
+        url = f'https://chan.sankakucomplex.com/?tags={args.pop(0)}'
+    elif first == 'idol':
+        url = f'https://idol.sankakucomplex.com/?tags={args.pop(0)}'
+    else:
+        url = first
+    return url
+
+
 def loop():
     cp = ConsolePrinter()
     cp.ll()
@@ -97,7 +124,7 @@ def loop():
                 continue
             if line == 'q':
                 sys.exit(0)
-            os.system(f'start /min {__file__} {line}')
+            console_new_run(f'{__file__} {line}')
         except KeyboardInterrupt:
             sys.exit(2)
 
@@ -108,12 +135,16 @@ def main():
     if not args:
         loop()
     else:
+        if args[0] == 'o':
+            args.pop(0)
+            url = args2url(args)
+            return webbrowser.open_new_tab(url)
         cmd = new_gallery_dl_cmd() + per_site(args)
         try:
             p = subprocess.Popen(cmd)
             print(p.args)
             if p.wait():
-                os.system('pause')
+                console_pause()
         except KeyboardInterrupt:
             sys.exit(2)
 
