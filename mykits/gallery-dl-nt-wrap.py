@@ -58,7 +58,7 @@ def per_site(args: T.List[str]):
                                 'directory=["[{user[name]}] pixiv {user[userId]} {category} {creatorId}"]']),
                 *args, url]
     elif 'twitter.com' in url:
-        args = [*GLDLCLIArgs(o=['filename="twitter.{tweet_id}-{num:03d}.{date:%Y-%m-%d}.{filename}.{extension}"',
+        args = [*GLDLCLIArgs(o=['filename="twitter.{tweet_id}_p{num}.{date:%Y-%m-%d}.{filename}.{extension}"',
                                 'directory=["[{author[nick]}] {category} @{author[name]}"]', 'videos=true',
                                 'retweets=false', 'content=true']),
                 *args, url]

@@ -501,19 +501,6 @@ def deco_cached_call(target):
     return deco
 
 
-def get_re_groups(source: str, match_pattern=None, match_flags=None, match_method: T.Callable = re.match):
-    """get_re_group_data(string[, pattern[, flags[, method]]]) -> (group(0), groups(), groupdict())"""
-    args = [source]
-    if match_pattern:
-        args.insert(0, match_pattern)
-    if match_flags:
-        args.append(match_flags)
-    m = match_method(*args)
-    if m is None:
-        return type(source)(), tuple(), dict()
-    return m.group(0), m.groups(), m.groupdict()
-
-
 class AttrConstEllipsisForStringMetaClass(type):
     def __new__(mcs, name, bases, namespace):
         return super().__new__(mcs, name, bases, {k: k if v is ... else v for k, v in namespace.items()})
@@ -687,3 +674,21 @@ class SubProcessBytePipeTranscriberPreAlpha:
     def wait_complete(self):
         self.wait_inactive()
         return self.p.wait()
+
+
+class REMatchWrapper:
+    def __init__(self, match_obj):
+        self.match = match_obj
+
+    @property
+    def group0(self):
+        m = self.match
+        return m.group(0) if m else None
+
+    def groups(self, default=None):
+        m = self.match
+        return m.groups(default=default) if m else tuple()
+
+    def group_dict(self, default=None):
+        m = self.match
+        return m.groupdict(default=default) if m else dict()

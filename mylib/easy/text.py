@@ -52,7 +52,7 @@ def find_words(s: str, allow_mix_non_word_chars='\''):
     if allow_mix_non_word_chars is True:
         return [p for p in s.split() if re.search(r'\w', p)]
     elif allow_mix_non_word_chars:
-        pattern = fr'[\w{allow_mix_non_word_chars}]+'
+        pattern = fr'[\w{re.escape(allow_mix_non_word_chars)}]+'
         return [p.strip() for p in re.findall(pattern, s)]
     else:
         return re.findall(r'\w+', s)

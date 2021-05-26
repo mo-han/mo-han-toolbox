@@ -3,7 +3,7 @@
 import sys
 import logging
 
-from archived.hentai import HentaiCafeKit
+from __dump__.hentai import HentaiCafeKit
 from mylib.easy.logging import LOG_FMT_MESSAGE_ONLY
 from mylib.easy.ostk import ensure_sigint_signal
 

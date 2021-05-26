@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 from mylib.easy import *
 from mylib.easy.argparse import *
-from mylib.ex import fstk
-from mylib.ex import ostk
+from mylib.ex import fstk, text, ostk
 
 
 def __ref():
-    return fstk
+    return fstk, text
 
 
 PathSourceTypeTuple = list, str, T.NoneType

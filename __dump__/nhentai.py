@@ -6,7 +6,7 @@ import logging
 from mylib._misc import ExitCode
 from mylib.easy.logging import LOG_FMT_MESSAGE_ONLY
 from mylib.easy.ostk import ensure_sigint_signal
-from archived.hentai import NHentaiKit
+from __dump__.hentai import NHentaiKit
 
 if __name__ == '__main__':
     ensure_sigint_signal()
