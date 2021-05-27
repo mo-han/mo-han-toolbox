@@ -54,43 +54,58 @@ def per_site(args: T.List[str]):
     if 'pixiv.net' in url:
         args = [*GLDLCLIArgs(ugoira_conv=True,
                              o=['cookies-update=true',
-                                'filename="pixiv.{id}_p{num}.{date:%Y-%m-%d}.{title}.{extension}"',
+                                'filename="{category}.{id}_p{num}.{date:%Y-%m-%d}.{title}.{extension}"',
                                 'directory=["[{user[name]}] {category} {user[id]}"]']),
                 *args, url]
     elif 'fanbox.cc' in url:
         args = [*GLDLCLIArgs(cookies=get_cookies_path('fanbox'),
                              o=['cookies-update=true', 'videos=true',
-                                'filename="{category}.{creatorId}.{id}_p{num}.{date!S:.10}.{filename}.{extension}"',
+                                'filename="{category}.{id}_p{num}.{date!S:.10}.{filename}.@{creatorId}.{extension}"',
                                 'directory=["[{user[name]}] pixiv {user[userId]} {category} {creatorId}"]']),
                 *args, url]
     elif 'twitter.com' in url:
-        args = [*GLDLCLIArgs(o=['filename="twitter.{tweet_id}_p{num}.{date:%Y-%m-%d}.{filename}.{extension}"',
-                                'directory=["[{author[nick]}] {category} @{author[name]}"]', 'videos=true',
-                                'retweets=false', 'content=true']),
+        args = [*GLDLCLIArgs(o=['videos=true', 'retweets=false', 'content=true',
+                                'filename="twitter.{tweet_id}_p{num}.{date:%Y-%m-%d}.{filename}.{extension}"',
+                                'directory=["[{author[nick]}] {category} @{author[name]}"]']),
                 *args, url]
     elif 'danbooru.donmai.us' in url:
         args = [*GLDLCLIArgs(cookies=get_cookies_path('danbooru'),
-                             o=['cookies-update=true', 'videos=true',
-                                'filename="danbooru.{id}.{created_at:.10}.{md5}.'
-                                '{tag_string_character:L64/(various)/}.{extension}"', 'videos=true',
-                                'directory=["{category} {search_tags}"]', ]),
+                             o=['cookies-update=true', 'videos=true', 'tags=true',
+                                'directory=["{category} {search_tags}"]',
+                                'filename="{category}.{id}.{created_at:.10}.{md5}.'
+                                '{tag_string_character!S:L80/(various)/}.{tag_string_artist!S:L80/(various)/}.'
+                                '{extension}"', ]),
                 *args, url]
     elif 'gelbooru.com' in url:
         args = [*GLDLCLIArgs(cookies=get_cookies_path('gelbooru'),
-                             o=['cookies-update=true', 'videos=true',
+                             o=['cookies-update=true', 'videos=true', 'tags=true',
                                 'directory=["{category} {search_tags}"]',
-                                'filename="{category}.{id}.{date!S:.10}.{md5}.{extension}"']),
+                                'filename="{category}.{id}.{date!S:.10}.{md5}.'
+                                '{tags_character!S:L80/(various)/}.{tags_artist!S:L80/(various)/}.{extension}"', ]),
                 *args, url]
-    elif 'sankakucomplex.com' in url:
+    elif 'chan.sankakucomplex.com' in url:
         args = [*GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
-                             o=['cookies-update=true', 'videos=true',
+                             o=['cookies-update=true', 'videos=true', 'tags=true',
                                 'directory=["{category} {search_tags}"]',
-                                'filename="{category}.{id}.{date!S:.10}.{md5}.{extension}"']),
+                                'filename="{category}.{id}.{date!S:.10}.{md5}.'
+                                '{tag_string_character!S:L80/(various)/}.{tag_string_artist!S:L80/(various)/}.'
+                                '{extension}"', ]),
+                *args, url]
+    elif 'idol.sankakucomplex.com' in url:
+        args = [*GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
+                             o=['cookies-update=true', 'videos=true', 'tags=true',
+                                'directory=["{category} {search_tags}"]',
+                                'filename="{category}.{id}.{date!S:.10}.{md5}.'
+                                '{tags_idol!S:L80/(various)/}.{extension}"', ]),
                 *args, url]
     else:
         raise NotImplementedError(url)
 
     return args
+
+
+def pop_tag_from_args(args):
+    return re.sub(r'[\[\]]', '', args.pop(0))
 
 
 def args2url(args):
@@ -102,13 +117,13 @@ def args2url(args):
     elif first == 'twitter':
         url = f'https://twitter.com/{args.pop(0).lstrip("@")}/media'
     elif first == 'danbooru':
-        url = f'https://danbooru.donmai.us/posts?tags={args.pop(0)}'
+        url = f'https://danbooru.donmai.us/posts?tags={pop_tag_from_args(args)}'
     elif first == 'gelbooru':
-        url = f'https://gelbooru.com/index.php?page=post&s=list&tags={args.pop(0)}'
+        url = f'https://gelbooru.com/index.php?page=post&s=list&tags={pop_tag_from_args(args)}'
     elif first == 'sankaku':
-        url = f'https://chan.sankakucomplex.com/?tags={args.pop(0)}'
+        url = f'https://chan.sankakucomplex.com/?tags={pop_tag_from_args(args)}'
     elif first == 'idol':
-        url = f'https://idol.sankakucomplex.com/?tags={args.pop(0)}'
+        url = f'https://idol.sankakucomplex.com/?tags={pop_tag_from_args(args)}'
     else:
         url = first
     return url

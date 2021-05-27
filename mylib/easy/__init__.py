@@ -14,6 +14,7 @@ from . import typing
 from .__often_used_imports__ import *
 
 T = typing
+
 path_is_file = os.path.isfile
 path_is_dir = os.path.isdir
 path_exist = os.path.exists
@@ -209,7 +210,7 @@ class ACall:
         self.timeout = timeout
         return self
 
-    def get_result_sync(self, *args, **kwargs):
+    def get_result_forever(self, *args, **kwargs):
         counter = time.perf_counter
         self.clear()
         t0 = counter()
@@ -228,8 +229,8 @@ class ACall:
         finally:
             self.delta_t = counter() - t0
 
-    def get_result_threading(self, *args, **kwargs):
-        thread = thread_factory(daemon=True)(self.get_result_sync, *args, **kwargs)
+    def get_result_timeout(self, *args, **kwargs):
+        thread = thread_factory(daemon=True)(self.get_result_forever, *args, **kwargs)
         thread.start()
         thread.join(self.timeout)  # join will terminate the thread (or not?)
         if self.ok:
@@ -240,8 +241,8 @@ class ACall:
 
     def get_result(self, *args, **kwargs):
         if self.timeout is None:
-            return self.get_result_sync(*args, **kwargs)
-        return self.get_result_threading(*args, **kwargs)
+            return self.get_result_forever(*args, **kwargs)
+        return self.get_result_timeout(*args, **kwargs)
 
 
 class ALotCall:
@@ -532,8 +533,8 @@ class ByteStreamBufferedReaderScraperPreAlpha:
             self.stream_peek = stream.peek
             self.stream_read = stream.read
         else:
-            self.stream_peek = ACall(stream.peek).set_timeout(timeout).get_result_threading
-            self.stream_read = ACall(stream.read).set_timeout(timeout).get_result_threading
+            self.stream_peek = ACall(stream.peek).set_timeout(timeout).get_result_timeout
+            self.stream_read = ACall(stream.read).set_timeout(timeout).get_result_timeout
 
         if relay_to:
             self.relay = self._relay
