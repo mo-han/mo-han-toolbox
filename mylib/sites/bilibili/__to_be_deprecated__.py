@@ -371,7 +371,8 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
             self.ensure_html_updated()
             _, h = self.html
             canonical = h.xpath('//link[@rel="canonical"]')[0].attrib['href']
-            av_id = re.search(r'/(av\d+)/', canonical).group(1)
+            # av_id = re.search(r'/(av\d+)/', canonical).group(1)
+            av_id = f'av{self.simple_api.bvid2aid(the_vid)}'
             id_str = f'{the_vid} {av_id}'
         elif the_vid.startswith('ep'):
             self.ensure_html_updated()
