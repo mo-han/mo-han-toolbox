@@ -79,7 +79,10 @@ class BilibiliWebAPISimple:
         r = http_headers.requests.get(url, params=params, headers=common_headers, cookies=self.cookies)
         j = r.json()
         check_response_json(j)
-        return j['data']
+        try:
+            return j['data']
+        except KeyError:
+            return j['result']
 
     @functools.lru_cache(maxsize=None)
     def _request_json_cached(self, url, **params):
@@ -121,7 +124,7 @@ class BilibiliWebAPISimple:
         return self.request_json('https://api.bilibili.com/pugv/player/web/playurl',
                                  avid=aid, ep_id=ep_id, cid=cid, **params)
 
-    def get_play_url_ugc(self, cid, aid, **params):
+    def get_play_url_x(self, cid, aid, **params):
         return self.request_json('https://api.bilibili.com/x/player/playurl', cid=cid, avid=aid, **params)
 
     def get_streams(self, vid, **params):
