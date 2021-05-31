@@ -2,6 +2,7 @@
 import PIL.Image
 import pywintypes
 import win32clipboard
+import psutil
 
 from mylib.easy.ostk import *
 
@@ -173,8 +174,29 @@ def fs_move_cli(src, dst, quiet=True, verbose=False):
 def set_console_title(title: str, *, shell=True, escape=True):
     if shell:
         if escape:
-            title = re.sub(r'([&<>^])', '^\1', title)
+            title = re.sub(r'([&<>^%])', '^\1', title)
         os.system(f'title {title}')
     else:
         # https://stackoverflow.com/a/12626424/7966259
         ctypes.windll.kernel32.SetConsoleTitleW(title)
+
+
+def deco_factory_daemon_subprocess(*, flag_env_var_name='__this_daemon_subprocess__', **kwargs_for_subprocess):
+    def deco(target):
+        @functools.wraps(target)
+        def tgt(*args, **kwargs):
+            if os.environ.get(flag_env_var_name) == __file__:
+                target(*args, **kwargs)
+            else:
+                os.environ[flag_env_var_name] = __file__
+                real_argv = psutil.Process(os.getpid()).cmdline()
+                exec_dir, exec_basename = path_split(real_argv[0])
+                if exec_basename.lower() == 'python.exe':
+                    real_argv[0] = shutil.which('pythonw.exe')
+                kwargs = dict(env=os.environ, stdout=subprocess.PIPE, stderr=subprocess.PIPE, )
+                kwargs.update(kwargs_for_subprocess)
+                subprocess.Popen(real_argv, **kwargs)
+
+        return tgt
+
+    return deco

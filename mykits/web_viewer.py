@@ -1,3 +1,4 @@
+import psutil
 import webview.window
 
 from mylib.ex.console_app import *
@@ -26,6 +27,7 @@ an.url = an.t = an.title = ''
 @apr.arg(an.url)
 @apr.opt(an.t, an.title)
 @apr.map(an.url, an.title)
+@ostk.deco_factory_daemon_subprocess()
 def view_page(url, title='pywebview'):
     parse = urllib.parse.urlparse
     r = parse(url)
@@ -35,6 +37,10 @@ def view_page(url, title='pywebview'):
     webview.start(window_handler, w)
 
 
-if __name__ == '__main__':
+def main():
     apr.parse()
     apr.run()
+
+
+if __name__ == '__main__':
+    main()

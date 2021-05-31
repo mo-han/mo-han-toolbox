@@ -105,7 +105,8 @@ def per_site(args: T.List[str]):
 
 
 def pop_tag_from_args(args):
-    return re.sub(r'[\[\]]', '', args.pop(0))
+    return fstk.sanitize_xu(re.sub(r'[\[\]]', '', args.pop(0)), reverse=True,
+                            unescape_html=False, decode_url=False, unify_white_space=False)
 
 
 def args2url(args):

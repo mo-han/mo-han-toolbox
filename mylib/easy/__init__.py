@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """THIS MODULE MUST ONLY DEPEND ON STANDARD LIBRARIES OR BUILT-IN"""
+import contextlib
 import ctypes
 import functools
 import importlib.util
@@ -30,7 +31,7 @@ path_normalize = os.path.normpath
 
 
 def __refer_sth():
-    return io, shutil
+    return io, shutil, contextlib
 
 
 class SingletonMetaClass(type):
