@@ -1,5 +1,4 @@
 .idea/
-!.idea/dictionaries
 .vscode/
 __pycache__/
 build/

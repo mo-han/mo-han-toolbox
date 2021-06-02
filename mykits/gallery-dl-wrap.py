@@ -98,6 +98,12 @@ def per_site(args: T.List[str]):
                                 'filename="{category}.{id}.{date!S:.10}.{md5}.'
                                 '{tags_idol!S:L80/(various)/}.{extension}"', ]),
                 *args, url]
+    elif 'newgrounds.com' in url:
+        args = [*GLDLCLIArgs(o=['cookies-update=true', 'videos=true', 'tags=true',
+                                'directory=["[{user}] {category}"]',
+                                'filename="{category}.{index}.{date!S:.10}.'
+                                '{title}.{artist!S:L80/(various)/}.{extension}"', ]),
+                *args, url]
     else:
         raise NotImplementedError(url)
 
@@ -125,6 +131,8 @@ def args2url(args):
         url = f'https://chan.sankakucomplex.com/?tags={pop_tag_from_args(args)}'
     elif first == 'idol':
         url = f'https://idol.sankakucomplex.com/?tags={pop_tag_from_args(args)}'
+    elif first in ('ng', 'newgrounds'):
+        url = f'https://{pop_tag_from_args(args)}.newgrounds.com/art'
     else:
         url = first
     return url
