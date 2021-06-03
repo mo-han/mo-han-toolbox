@@ -28,6 +28,9 @@ path_split = os.path.split
 path_split_ext = os.path.splitext
 path_relative = os.path.relpath
 path_normalize = os.path.normpath
+path_get_size = os.path.getsize
+path_ctime = os.path.getctime
+path_mtime = os.path.getmtime
 
 
 def __refer_sth():
