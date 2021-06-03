@@ -449,16 +449,22 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
             ffmpeg_args.add(c='copy')
         elif kw in ('FHD', 'fhd'):
             res_limit = 'FHD'
+            tags.append('FHD')
         elif kw in ('HD', 'hd'):
             res_limit = 'HD'
+            tags.append('HD')
         elif kw in ('qHD',):
             res_limit = 'qHD'
+            tags.append('qHD')
         elif kw in ('QHD', 'qhd'):
             res_limit = 'QHD'
+            tags.append('QHD')
         elif kw.lower() == '4k':
             res_limit = '4K'
+            tags.append('4K')
         elif kw.lower() == '360p':
             res_limit = '360p'
+            tags.append('360p')
         elif kw in ('2ch', 'stereo'):
             ffmpeg_args.add(ac=2)
         elif kw == 'hevc':
