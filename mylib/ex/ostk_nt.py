@@ -171,9 +171,9 @@ def fs_move_cli(src, dst, quiet=True, verbose=False):
         raise ValueError(src)
 
 
-def set_console_title(title: str, *, shell=True, escape=True):
+def set_console_title(title: str, *, shell=False, escape_for_shell=True):
     if shell:
-        if escape:
+        if escape_for_shell:
             title = re.sub(r'([&<>^%])', '^\1', title)
         os.system(f'title {title}')
     else:
