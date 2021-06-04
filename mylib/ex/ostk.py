@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import shlex
+import tkinter
 from collections import defaultdict
 
 from filetype import filetype
@@ -14,15 +15,16 @@ else:
     from mylib.easy.ostk import *
 
 
+def get_screen_size_via_tkinter():
+    tk = tkinter.Tk()
+    w = tk.winfo_screenwidth()
+    h = tk.winfo_screenheight()
+    tk.destroy()
+    return w, h
+
+
 def check_file_ext(fp: str, ext_list: T.Iterable):
     return os.path.isfile(fp) and os.path.splitext(fp)[-1].lower() in ext_list
-
-
-def shlex_join(split):
-    try:
-        return shlex.join(split)
-    except AttributeError:
-        return ' '.join([shlex.quote(s) for s in split])
 
 
 def shlex_double_quotes_join(split):
