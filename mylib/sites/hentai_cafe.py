@@ -2,7 +2,6 @@
 # encoding=utf8
 import requests_html as rqh
 
-from mylib.ets_.i1_traits import *
 from mylib.easy import logging
 from mylib.web_client import parse_https_url
 
