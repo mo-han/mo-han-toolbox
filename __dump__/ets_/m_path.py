@@ -3,7 +3,7 @@
 import pathlib
 
 from .i1_traits import *
-from ..shards.path_check import is_path_valid
+from mylib.shards.path_check import is_path_valid
 
 
 class PathSynthesizer:

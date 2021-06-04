@@ -2,7 +2,7 @@
 # encoding=utf8
 from .i1_traitsui_qt import *
 from .m_path import Path
-from ..shards import i18n
+from mylib.shards import i18n
 
 i18n.preset_alpha()
 tt = i18n.tt
