@@ -181,7 +181,7 @@ def set_console_title(title: str, *, shell=False, escape_for_shell=True):
         ctypes.windll.kernel32.SetConsoleTitleW(title)
 
 
-def deco_factory_daemon_subprocess(*, flag_env_var_name='__this_daemon_subprocess__', **kwargs_for_subprocess):
+def deco_factory_pythonw_subprocess(*, flag_env_var_name='__this_daemon_subprocess__', **kwargs_for_subprocess):
     def deco(target):
         @functools.wraps(target)
         def tgt(*args, **kwargs):
@@ -191,7 +191,8 @@ def deco_factory_daemon_subprocess(*, flag_env_var_name='__this_daemon_subproces
                 real_argv = psutil.Process(os.getpid()).cmdline()
                 exec_dir, exec_basename = path_split(real_argv[0])
                 if exec_basename.lower() == 'python.exe':
-                    real_argv[0] = shutil.which('pythonw.exe')
+                    # real_argv[0] = shutil.which('pythonw.exe')
+                    real_argv[0] = path_join(exec_dir, 'pythonw.exe')
                 kwargs = dict(env=os.environ, stdout=subprocess.PIPE, stderr=subprocess.PIPE, )
                 kwargs.update(kwargs_for_subprocess)
                 os.environ[flag_env_var_name] = __file__

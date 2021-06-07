@@ -29,7 +29,7 @@ an.url = an.t = an.title = ''
 @apr.arg(an.url)
 @apr.opt(an.t, an.title)
 @apr.map(an.url, an.title)
-@ostk.deco_factory_daemon_subprocess()
+@ostk.deco_factory_pythonw_subprocess()
 def view_page(url, title=None):
     parse = urllib.parse.urlparse
     r = parse(url)
