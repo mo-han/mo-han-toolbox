@@ -5,6 +5,50 @@ from mylib.sites import ehentai
 apr = ArgumentParserRigger()
 an = apr.an
 cp = ConsolePrinter()
+an.src = an.v = an.verbose = an.D = an.dry_run = an.address = an.c = an.cookies = an.p = an.proxy = ''
+
+
+def main():
+    apr.parse()
+    apr.run()
+
+
+@apr.sub(apr.rnu(), aliases=['mvfav'])
+@apr.arg(an.cookies)
+@apr.arg('from', choices=[str(i) for i in range(10)], help='src fav slot', metavar='from')
+@apr.arg('to', choices=[str(i) for i in range(10)], help='dst fav slot', metavar='to')
+@apr.opt(an.p, an.proxy)
+@apr.true(an.v, an.verbose)
+@apr.map(an.cookies, 'from', 'to', an.proxy, an.verbose)
+def migrate_favorites(cookies, from_favorite, to_favorite, proxy, verbose):
+    """move all favorites in one slot to another"""
+    from mylib.ex.splinter import Browser, http_headers, BrowserWrapper, make_proxy_settings
+
+    if from_favorite == to_favorite:
+        raise ValueError('from same as to')
+    url = f'https://exhentai.org/favorites.php?favcat={from_favorite}'
+    dst = f'fav{to_favorite}'
+    choose_all = 'alltoggle'
+    action = 'ddact'
+    apply = 'apply'
+
+    with BrowserWrapper(Browser(profile_preferences={
+        **make_proxy_settings(proxy),
+        'permissions.default.image': 2
+    }, headless=not verbose)) as w:
+        w.visit(url)
+        w.add_cookies(http_headers.get_cookies_dict_from(cookies))
+        w.visit(url)
+        while 1:
+            while w.not_exist(id=choose_all, wait_time=0.2):
+                sleep(0.2)
+            if w.not_exist(css='.itg'):
+                break
+            w.find(id=choose_all).last.check()
+            w.find(name=action).last.select(dst)
+            w.find(name=apply).last.click()
+        if verbose:
+            input('press enter to exit')
 
 
 def _sorted_path_of_hentai_at_home_downloaded_gallery(gallery_path, gallery_type=''):
@@ -29,9 +73,6 @@ def _sorted_path_of_hentai_at_home_downloaded_gallery(gallery_path, gallery_type
     new_root = fstk.make_path(root_dir, creators_s)
     dst: str = join_path_dir_base_ext(new_root, f'{sanitized_title} {info["gid_resize"]}', ext)
     return dst
-
-
-an.src = an.v = an.verbose = an.D = an.dry_run = ''
 
 
 @apr.sub(apr.rename_underscore())
@@ -59,13 +100,10 @@ def hath_sort(src: PathSourceType, *, verbose=False, dry_run=False):
                 print(f'! {src}: {repr(e)}')
 
 
-an.address = None
-
-
-@apr.sub(apr.rename_underscore(), aliases=['ehv.rc'])
+@apr.sub(apr.rename_underscore(), aliases=['rc'])
 @apr.arg(an.address, help='remote address for adb connect')
 @apr.map(an.address)
-def ehviewer_remote_control(remote_address: str):
+def remote_control(remote_address: str):
     """remote control ehviewer app via adb"""
     from mylib.ex.pure_python_adb import ADBClient
     from pynput.keyboard import Listener, KeyCode, Key
@@ -107,6 +145,5 @@ def ehviewer_remote_control(remote_address: str):
         lr.join()
 
 
-def main():
-    apr.parse()
-    apr.run()
+if __name__ == '__main__':
+    main()

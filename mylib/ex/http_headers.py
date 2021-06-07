@@ -69,17 +69,18 @@ class CURLCookieJar(http.cookiejar.MozillaCookieJar):
 
 
 def ensure_json_list_cookies(json_data: T.JSONType):
+    json_data_var_name = 'json_data'
     if isinstance(json_data, list):
         cookies = json_data
     elif isinstance(json_data, dict):
         if 'cookies' in json_data:
             cookies = json_data['cookies']
             if not isinstance(cookies, list):
-                raise TypeError("data['cookies']", list)
+                raise TypeError(f"{json_data_var_name}['cookies']", list)
         else:
-            raise ValueError("data['cookies'] not exist")
+            raise ValueError(f"{json_data_var_name}['cookies'] not exist")
     else:
-        raise TypeError('data', T.JSONType)
+        raise TypeError(json_data_var_name, T.JSONType)
     return cookies
 
 
