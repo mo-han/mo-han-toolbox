@@ -697,3 +697,54 @@ class REMatchWrapper:
     def group_dict(self, default=None):
         m = self.match
         return m.groupdict(default=default) if m else dict()
+
+
+def call_factory_retry(target, max_retries: int = 3, exceptions=Exception,
+                       enable_default=False, default=None,
+                       exception_predicate: T.Callable[[Exception], bool] = None,
+                       exception_handler: T.Callable[[Exception], T.Any] = None):
+    exceptions = exceptions or ()
+    predicate = exception_predicate or (lambda e: True)
+    handle = exception_handler or (lambda e: None)
+    max_retries = int(max_retries)
+    initial_counter = max_retries if max_retries < 0 else max_retries + 1
+
+    @deco_factory_copy_signature(target)
+    def tgt(*args, **kwargs):
+        cnt = initial_counter
+        err = None
+        while cnt:
+            try:
+                return target(*args, **kwargs)
+            except exceptions as e:
+                if predicate(e):
+                    handle(e)
+                    err = e
+                    cnt -= 1
+                    continue
+                else:
+                    if enable_default:
+                        return default
+                    raise
+        else:
+            if enable_default:
+                return default
+            raise err
+
+    return tgt
+
+
+def deco_factory_retry(max_retries: int = 3, exceptions=Exception,
+                       enable_default=False, default=None,
+                       exception_predicate: T.Callable[[Exception], bool] = None,
+                       exception_handler: T.Callable[[Exception], T.Any] = None) -> T.Decorator:
+
+    def _call_target_retry(target):
+        return call_factory_retry(target, max_retries=max_retries, exceptions=exceptions,
+                                  enable_default=enable_default, default=default,
+                                  exception_predicate=exception_predicate, exception_handler=exception_handler)
+
+    def deco(target):
+        return _call_target_retry(target)
+
+    return deco
