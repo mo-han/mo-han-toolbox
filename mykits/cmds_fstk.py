@@ -14,14 +14,22 @@ apr = ArgumentParserRigger()
 an = apr.an
 path_is_file = os.path.isfile
 path_is_dir = os.path.isdir
+an.s = an.src = an.PATH = an.dst = an.D = an.in_dst = an.S = an.in_src = an.v = an.verbose = an.F = an.conflict = ''
+an.x = an.exclude = an.dry_run = an.R = an.recurse = an.p = an.pattern = an.r = an.replace = an.t = an.filter_type = ''
+
+
+def main():
+    apr.parse()
+    apr.run()
 
 
 class FilesystemError(OSError):
     pass
 
 
-an.s = an.src = an.PATH = an.dst = an.D = an.in_dst = an.S = an.in_src = an.v = an.verbose = an.F = an.conflict = None
-an.x = an.exclude = an.dry_run = an.R = an.recurse = None
+@apr.sub(apr.rnu(), help='remove sub-dirs, put sub-files in flat structure', aliases=['flat.dir'])
+def flatten_dir():
+    ...
 
 
 @apr.sub(help='move multiple src to/into dst')
@@ -77,14 +85,6 @@ def mv2(dst: str, src: T.Union[T.List[str], str, T.NoneType] = None, *, in_dst: 
             moved_dst = fstk.move_as(a_src, the_dst, on_exist=on_exist, dry_run=dry_run, predicate_path_use_cache=False)
             if verbose:
                 print(f'"{moved_dst}" <- "{a_src}"')
-
-
-an.p = an.pattern = an.r = an.replace = an.t = an.filter_type = ''
-
-
-def main():
-    apr.parse()
-    apr.run()
 
 
 if __name__ == '__main__':
