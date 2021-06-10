@@ -135,6 +135,8 @@ def args2url(args):
         url = f'https://{pop_tag_from_args(args)}.newgrounds.com/art'
     else:
         url = first
+    if url.startswith('https://twitter.com/') and not url.endswith('/media'):
+        url += '/media'
     return url
 
 
