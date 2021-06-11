@@ -15,6 +15,8 @@ from . import typing
 from .__often_used_imports__ import *
 
 T = typing
+REGEX_HEX_CHAR = '[0-9a-fA-F]'
+REGEX_GUID = '-'.join([f'{REGEX_HEX_CHAR}{{{n}}}' for n in (8, 4, 4, 4, 12)])
 
 path_is_file = os.path.isfile
 path_is_dir = os.path.isdir
@@ -742,7 +744,6 @@ def deco_factory_retry(max_retries: int = 3, exceptions=Exception,
                        enable_default=False, default=None,
                        exception_predicate: T.Callable[[Exception], bool] = None,
                        exception_handler: T.Callable[[Exception], T.Any] = None) -> T.Decorator:
-
     def _call_target_retry(target):
         return call_factory_retry(target, max_retries=max_retries, exceptions=exceptions,
                                   enable_default=enable_default, default=default,
