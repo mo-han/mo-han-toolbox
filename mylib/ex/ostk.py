@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import shlex
-import tkinter
 from collections import defaultdict
 
 from filetype import filetype
@@ -16,6 +15,7 @@ else:
 
 
 def get_screen_size_via_tkinter():
+    import tkinter
     tk = tkinter.Tk()
     w = tk.winfo_screenwidth()
     h = tk.winfo_screenheight()
