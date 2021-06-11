@@ -103,11 +103,11 @@ class SimpleBot(ABC):
             if ismethod(v) and hasattr(v, 'handler'):
                 v: BotHandlerMethod
                 _type, _kwargs = v.handler
+                _kwargs: dict
                 _kwargs['callback'] = v  # important
                 if _type == CommandHandler:
-                    self.__commands_list__.append((n, v))
-                    if 'command' not in _kwargs:
-                        _kwargs['command'] = n
+                    command = _kwargs.setdefault('command', n)
+                    self.__commands_list__.append((command, v))
                 if self.__filters__:
                     _filters = _kwargs.get('filters')
                     _kwargs['filters'] = merge_filters_and(self.__filters__, _filters)
