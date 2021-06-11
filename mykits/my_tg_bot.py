@@ -60,6 +60,7 @@ class MyAssistantBot(SimpleBot):
     @deco_factory_bot_handler_method(CommandHandler, on_menu=True, command='freevmessuuid')
     def free_ss_site_vmess_uuid(self, update: Update, *args):
         import mylib.sites.misc
+        self.__typing__(update)
         uuid = mylib.sites.misc.free_ss_site_vmess_uuid()
         self.__reply_text__(uuid, update)
 
