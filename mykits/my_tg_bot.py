@@ -57,6 +57,12 @@ class MyAssistantBot(SimpleBot):
         abandon_errors = self.__get_conf__().get('abandon_errors') or []
         return any(map(lambda x: x in s, abandon_errors))
 
+    @deco_factory_bot_handler_method(CommandHandler, on_menu=True, command='freevmessuuid')
+    def free_ss_site_v2ray_uid(self, update: Update, *args):
+        import mylib.sites.misc
+        uuid = mylib.sites.misc.free_ss_site_vmess_uuid()
+        self.__reply_text__(uuid, update)
+
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(ytdl_regex_pattern))
     def _ytdl(self, update: Update, *args):
         print(self._ytdl.__name__)

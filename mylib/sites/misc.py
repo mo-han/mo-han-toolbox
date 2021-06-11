@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-# encoding=utf8
-
-import requests
+from mylib.ex.html import *
 
 
 def get_cloudflare_ipaddr_hostmonit(key="o1zrmHAF"):
@@ -9,3 +7,11 @@ def get_cloudflare_ipaddr_hostmonit(key="o1zrmHAF"):
     url = 'https://api.hostmonit.com/get_optimization_ip'
     r = requests.post(url, json={"key": key}, headers={'Content-Type': 'application/json'})
     return r.json()
+
+
+def free_ss_site_vmess_uuid():
+    r = requests.get('https://free-ss.site/')
+    for e in lxml.html.fromstring(r.text).cssselect('script'):
+        s = e.text
+        if s and 'www.kernels.bid' in s:
+            return re.findall(REGEX_GUID, s)[0]

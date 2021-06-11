@@ -100,10 +100,10 @@ class SimpleBot(ABC):
     def __register_handlers__(self):
         self.__commands_list__ = []
         for n, v in getmembers(self):
-            v: BotHandlerMethod
             if ismethod(v) and hasattr(v, 'handler'):
+                v: BotHandlerMethod
                 _type, _kwargs = v.handler
-                _kwargs['callback'] = v
+                _kwargs['callback'] = v  # important
                 if _type == CommandHandler:
                     self.__commands_list__.append((n, v))
                     if 'command' not in _kwargs:
