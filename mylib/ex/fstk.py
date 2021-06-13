@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from filetype import filetype
+
 from mylib.easy.fstk import *
 from . import tricks
 
@@ -26,3 +28,8 @@ def write_sqlite_dict_file(filepath, data, *, with_dill=False, dill_detect_trace
             sd.clear()
         sd.update(data)
         sd.commit()
+
+
+def file_mime_has(file, what):
+    guess = filetype.guess(file)
+    return guess and what in guess.mime

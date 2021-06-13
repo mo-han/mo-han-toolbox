@@ -2,8 +2,6 @@
 import shlex
 from collections import defaultdict
 
-from filetype import filetype
-
 from mylib.easy import *
 
 if os.name == 'nt':
@@ -97,8 +95,3 @@ def filter_filename_tail(filepath_list, valid_tails, filter_tails, filter_extens
             if tail in filter_tails or ext in filter_extensions:
                 rv.append((dn, fn, tail, ext))
     return rv
-
-
-def filetype_is(filepath, keyword):
-    guess = filetype.guess(filepath)
-    return guess and keyword in guess.mime
