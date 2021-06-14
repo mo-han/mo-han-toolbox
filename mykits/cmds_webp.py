@@ -112,7 +112,10 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, verbose=False)
     """convert non-webp picture inside zip file"""
     lgr = logging.get_logger(convert_in_zip.__name__, 'INFO' if verbose else 'ERROR', fmt=logging.LOG_FMT_MESSAGE_ONLY)
 
-    _, files = resolve_path_to_dirs_files(src)
+    dirs, files = resolve_path_to_dirs_files(src)
+    if not files:
+        files = []
+        [files.extend(resolve_path_to_dirs_files(path_join(dp, '**'), glob_recurse=True)[-1]) for dp in dirs]
     for fp in files:
         if not fstk.does_file_mime_has(fp, 'zip'):
             continue
