@@ -104,7 +104,7 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
 @apr.sub(apr.rnu(), aliases=['cvt.zip'])
 @apr.arg(an.src, nargs='*')
 @apr.opt(an.w, an.workdir, default='.')
-@apr.opt(an.x, an.extension, default='.cbz')
+@apr.opt(an.x, an.extension, default='.cbz', help='file extension')
 @apr.true(an.v, an.verbose)
 @apr.opt('k', 'workers', type=int, metavar='N')
 @apr.map(an.src, workdir=an.workdir, workers='workers', ext_name=an.extension, verbose=an.verbose)
