@@ -116,11 +116,12 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, verbose=False)
     if not files:
         files = []
         [files.extend(resolve_path_to_dirs_files(path_join(dp, '**'), glob_recurse=True)[-1]) for dp in dirs]
+
     for fp in files:
+        has_non_webp = False
         if not fstk.does_file_mime_has(fp, 'zip'):
             continue
         with zipfile.ZipFile(fp) as zf:
-            has_non_webp = False
             for i in zf.infolist():
                 if i.is_dir():
                     continue
@@ -131,19 +132,23 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, verbose=False)
                         continue
                     has_non_webp = True
                     break
-            if not has_non_webp:
-                continue
-            if verbose:
-                lgr.info(fp)
-            unzip_dir = path_join(workdir, split_path_dir_base_ext(fp)[1])
-            zf.extractall(unzip_dir)
-        auto_cvt(unzip_dir, recursive=True, clean=True, cbz=False, workers=workers, verbose=verbose)
-        new_zip = shutil.make_archive(unzip_dir, 'zip', unzip_dir, verbose=verbose)
-        if ext_name:
-            new_zip = fstk.rename_file_ext(new_zip, ext_name)
-            fp = fstk.rename_file_ext(fp, ext_name)
-        fstk.move_as(new_zip, fp)
-        shutil.rmtree(unzip_dir)
+        if not has_non_webp:
+            continue
+        if verbose:
+            lgr.info(fp)
+        unzip_dir = path_join(workdir, split_path_dir_base_ext(fp)[1])
+        zf.extractall(unzip_dir)
+        try:
+            auto_cvt(unzip_dir, recursive=True, clean=True, cbz=False, workers=workers, verbose=verbose)
+            new_zip = shutil.make_archive(unzip_dir, 'zip', unzip_dir, verbose=verbose)
+            if ext_name:
+                new_zip = fstk.rename_file_ext(new_zip, ext_name)
+                fp = fstk.rename_file_ext(fp, ext_name)
+            fstk.move_as(new_zip, fp)
+        except KeyboardInterrupt:
+            sys.exit(2)
+        finally:
+            shutil.rmtree(unzip_dir)
 
 
 @apr.sub(apr.rename_underscore())
