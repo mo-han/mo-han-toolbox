@@ -146,7 +146,8 @@ def check_cwebp_subprocess_result(result: dict):
             if m:
                 code, reason, desc = m.groups()
                 raise CWebpEncodeError(code=code, reason=reason, desc=desc)
-        if msg_lines[0] == 'Input file read error':
+        if msg_lines[0].startswith('Input file read error') or msg_lines[1].startswith(
+                'Error! Could not process file') or msg_lines[2].startswith('Error! Cannot read input picture file'):
             raise CWebpInputReadError(r_code, msg_lines)
         raise CWebpGenericError(r_code, msg_lines)
     return result
