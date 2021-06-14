@@ -128,20 +128,27 @@ class CWebpEncodeError(CWebpGenericError):
         self.code = code
         self.reason = reason
         self.desc = desc
-        super(CWebpEncodeError, self).__init__(code, f'{reason}: {desc}')
+        super().__init__(code, f'{reason}: {desc}')
+
+
+class CWebpInputReadError(CWebpGenericError):
+    pass
 
 
 def check_cwebp_subprocess_result(result: dict):
     if not result['ok']:
         msg_lines = result['msg']
+        r_code = result['code']
         if msg_lines[0].startswith('Error! '):
-            raise CWebpGenericError(result['code'], msg_lines[0][7:])
+            raise CWebpGenericError(r_code, msg_lines[0][7:])
         if msg_lines[1] == 'Error! Cannot encode picture as WebP':
             m = re.match(r'Error code: (?P<code>\d+) \((?P<reason>\w+): (?P<desc>.+)\)', msg_lines[2])
             if m:
                 code, reason, desc = m.groups()
                 raise CWebpEncodeError(code=code, reason=reason, desc=desc)
-        raise CWebpGenericError(result['code'], msg_lines)
+        if msg_lines[0] == 'Input file read error':
+            raise CWebpInputReadError(r_code, msg_lines)
+        raise CWebpGenericError(r_code, msg_lines)
     return result
 
 

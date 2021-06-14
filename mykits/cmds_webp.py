@@ -22,6 +22,7 @@ apr = ArgumentParserRigger()
 an = apr.an
 cpr = ConsolePrinter()
 an.B = an.trash_bin = an.src = an.file = an.x = an.extension = an.w = an.workdir = an.v = an.verbose = ''
+an.T = an.strict = ''
 
 
 class Counter:
@@ -95,6 +96,9 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
             print(traceback.format_exc())
             print(f'! {image_fp_rel}')
             os_exit_force(1)
+    except cwebp.CWebpInputReadError as e:
+        print(traceback.format_exc())
+        print(f'! {image_fp_rel}')
     except Exception:
         print(traceback.format_exc())
         print(f'! {image_fp_rel}')
@@ -105,10 +109,12 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
 @apr.arg(an.src, nargs='*')
 @apr.opt(an.w, an.workdir, default='.')
 @apr.opt(an.x, an.extension, default='.cbz', help='file extension')
+@apr.true(an.T, an.strict)
 @apr.true(an.v, an.verbose)
 @apr.opt('k', 'workers', type=int, metavar='N')
-@apr.map(an.src, workdir=an.workdir, workers='workers', ext_name=an.extension, verbose=an.verbose)
-def convert_in_zip(src, workdir='.', workers=None, ext_name=None, verbose=False):
+@apr.map(an.src, workdir=an.workdir, workers='workers', ext_name=an.extension,
+         strict_mode=an.strict, verbose=an.verbose)
+def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=False, verbose=False):
     """convert non-webp picture inside zip file"""
     lgr = logging.get_logger(convert_in_zip.__name__, 'INFO' if verbose else 'ERROR', fmt=logging.LOG_FMT_MESSAGE_ONLY)
 
@@ -118,7 +124,7 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, verbose=False)
         [files.extend(resolve_path_to_dirs_files(path_join(dp, '**'), glob_recurse=True)[-1]) for dp in dirs]
 
     for fp in files:
-        has_non_webp = False
+        need_to_convert = False
         if not fstk.does_file_mime_has(fp, 'zip'):
             continue
         with zipfile.ZipFile(fp) as zf:
@@ -128,11 +134,21 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, verbose=False)
                 with zf.open(i.filename) as af:
                     mime = filetype.guess_mime(af.read(512))
                 if mime and 'image' in mime:
-                    if mime in ('image/webp', 'image/gif',):  # image type to pass by
+                    if mime == 'image/gif':
                         continue
-                    has_non_webp = True
-                    break
-            if not has_non_webp:
+                    elif mime == 'image/webp':
+                        need_to_convert = False
+                        if strict_mode:
+                            continue
+                        else:
+                            break
+                    else:
+                        need_to_convert = True
+                        if strict_mode:
+                            break
+                        else:
+                            continue
+            if not need_to_convert:
                 continue
             if verbose:
                 lgr.info(fp)
