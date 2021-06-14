@@ -8,9 +8,9 @@ import filetype
 from humanize import naturaldelta
 from send2trash import send2trash
 
+import zipfile
 from mylib.ex.console_app import *
-from mylib.ex.tui import LinePrinter
-from mylib.easy import *
+from mylib.easy import logging
 from mylib.wrapper import cwebp
 
 PIXELS_BASELINE = 1280 * 1920
@@ -20,7 +20,8 @@ MAX_COMPRESS = 0.667
 
 apr = ArgumentParserRigger()
 an = apr.an
-lp = LinePrinter()
+cpr = ConsolePrinter()
+an.B = an.trash_bin = an.src = an.file = an.x = an.extension = an.w = an.workdir = an.v = an.verbose = ''
 
 
 class Counter:
@@ -100,7 +101,46 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
         os_exit_force(1)
 
 
-an.B = an.trash_bin = ''
+@apr.sub(apr.rnu(), aliases=['cvt.zip'])
+@apr.arg(an.src, nargs='*')
+@apr.opt(an.w, an.workdir, default='.')
+@apr.opt(an.x, an.extension, default='.cbz')
+@apr.true(an.v, an.verbose)
+@apr.opt('k', 'workers', type=int, metavar='N')
+@apr.map(an.src, workdir=an.workdir, workers='workers', ext_name=an.extension, verbose=an.verbose)
+def convert_in_zip(src, workdir='.', workers=None, ext_name=None, verbose=False):
+    """convert non-webp picture inside zip file"""
+    lgr = logging.get_logger(convert_in_zip.__name__, 'INFO' if verbose else 'ERROR', fmt=logging.LOG_FMT_MESSAGE_ONLY)
+
+    _, files = resolve_path_to_dirs_files(src)
+    for fp in files:
+        if not fstk.does_file_mime_has(fp, 'zip'):
+            continue
+        with zipfile.ZipFile(fp) as zf:
+            has_non_webp = False
+            for i in zf.infolist():
+                if i.is_dir():
+                    continue
+                with zf.open(i.filename) as af:
+                    mime = filetype.guess_mime(af.read(512))
+                if mime and 'image' in mime:
+                    if mime in ('image/webp', 'image/gif',):  # image type to pass by
+                        continue
+                    has_non_webp = True
+                    break
+            if not has_non_webp:
+                continue
+            if verbose:
+                lgr.info(fp)
+            unzip_dir = path_join(workdir, split_path_dir_base_ext(fp)[1])
+            zf.extractall(unzip_dir)
+        auto_cvt(unzip_dir, recursive=True, clean=True, cbz=False, workers=workers, verbose=verbose)
+        new_zip = shutil.make_archive(unzip_dir, 'zip', unzip_dir, verbose=verbose)
+        if ext_name:
+            new_zip = fstk.rename_file_ext(new_zip, ext_name)
+            fp = fstk.rename_file_ext(fp, ext_name)
+        fstk.move_as(new_zip, fp)
+        shutil.rmtree(unzip_dir)
 
 
 @apr.sub(apr.rename_underscore())
@@ -111,38 +151,40 @@ an.B = an.trash_bin = ''
 @apr.true(an.B, apr.dst2opt(an.trash_bin), help='delete to trash bin')
 @apr.arg('src', nargs='*')
 @apr.map('src', recursive='recursive', clean='clean', cbz='cbz', workers='workers', trash_bin=an.trash_bin)
-def auto_cvt(src, recursive, clean, cbz, workers, trash_bin=False):
+def auto_cvt(src, recursive, clean, cbz, workers=None, trash_bin=False, verbose=False):
     """convert images to webp with auto-clean, auto-compress-to-cbz, adaptive-quality-scale"""
+    workers = workers or os.cpu_count() - 1 or os.cpu_count()
+    lgr = logging.get_logger(auto_cvt.__name__, 'INFO' if verbose else 'ERROR', fmt=logging.LOG_FMT_MESSAGE_ONLY)
     delete = send2trash if trash_bin else shutil.remove
+
     dirs, files = resolve_path_to_dirs_files(src)
     src = dirs + files
     ostk.ensure_sigint_signal()
-    workers = workers or os.cpu_count() - 1 or os.cpu_count()
     cnt = Counter()
     t0 = time.time()
-    print(f'# workers={workers}')
+    lgr.info(f'# workers={workers}')
     try:
         for s in src:
-            print(f'@ {s}')
+            lgr.info(f'@ {s}')
             with ThreadPoolExecutor(max_workers=workers) as executor:
                 for fp in fstk.find_iter('f', s, recursive=recursive):
                     executor.submit(convert_adaptive, fp, counter=cnt, print_path_relative_to=s)
             if clean:
-                print('# clean already converted original image files')
+                lgr.info('# clean already converted original image files')
                 for fp in fstk.find_iter('f', s, recursive=recursive):
                     ext_lower = os.path.splitext(fp)[-1].lower()
                     fp_webp = fp + '.webp'
                     if ext_lower != '.webp' and os.path.isfile(fp_webp) and os.path.getsize(fp_webp):
                         delete(fp)
-                        print(f'- {fp}')
+                        lgr.info(f'- {fp}')
                         continue
                     if ext_lower == '.thumb':
                         delete(fp)
-                        print(f'- {fp}')
+                        lgr.info(f'- {fp}')
                         continue
             if cbz:
                 if os.path.isdir(s):
-                    print('# zip folder into cbz file')
+                    lgr.info('# zip folder into cbz file')
                     dirs_with_image = []
                     for dp, sub_dirs, files in os.walk(s):
                         for f in files:
@@ -154,22 +196,23 @@ def auto_cvt(src, recursive, clean, cbz, workers, trash_bin=False):
                         try:
                             fstk.make_zipfile_from_dir(cbz_fp, dp)
                         except NotADirectoryError:
-                            print(f'! {dp}')
-                        print(f'+ {cbz_fp} <- {dp}')
+                            lgr.info(f'! {dp}')
+                        lgr.info(f'+ {cbz_fp} <- {dp}')
                         try:
                             delete(dp)
                         except (OSError, WindowsError):
                             sleep(1)
                             delete(dp)
-                        print(f'- {dp}')
+                        lgr.info(f'- {dp}')
     finally:
-        lp.l()
         t = time.time() - t0
         n = cnt.n
+        if verbose:
+            cpr.ll()
         if n:
-            print(f'{n} images in {naturaldelta(t)}, {naturaldelta(t / n)} per image')
+            lgr.info(f'{n} images in {naturaldelta(t)}, {naturaldelta(t / n)} per image')
         else:
-            print(f'# no image file converted')
+            lgr.info(f'# no image file converted')
 
 
 def main():

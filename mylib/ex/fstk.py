@@ -30,6 +30,6 @@ def write_sqlite_dict_file(filepath, data, *, with_dill=False, dill_detect_trace
         sd.commit()
 
 
-def file_mime_has(file, what):
+def does_file_mime_has(file, mime_keyword):
     guess = filetype.guess(file)
-    return guess and what in guess.mime
+    return guess and mime_keyword in guess.mime

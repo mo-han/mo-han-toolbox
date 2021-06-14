@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
-import contextlib
 import fnmatch
 import html
-import itertools
 import json
 import urllib.parse
 import zipfile
@@ -449,3 +447,12 @@ def regex_rename_basename(src_path, pattern, replace, *, ignore_ext=False, on_ex
     if not dry_run:
         os.makedirs(os.path.dirname(new), exist_ok=True)
     return move_as(src_path, new, on_exist=on_exist, dry_run=dry_run)
+
+
+def rename_file_ext(fp, new_ext: str):
+    prefix, ext = path_split_ext(fp)
+    if not new_ext.startswith('.'):
+        new_ext = '.' + new_ext
+    new = prefix + new_ext
+    os.rename(fp, new)
+    return new
