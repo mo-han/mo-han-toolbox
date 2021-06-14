@@ -132,12 +132,12 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, verbose=False)
                         continue
                     has_non_webp = True
                     break
-        if not has_non_webp:
-            continue
-        if verbose:
-            lgr.info(fp)
-        unzip_dir = path_join(workdir, split_path_dir_base_ext(fp)[1])
-        zf.extractall(unzip_dir)
+            if not has_non_webp:
+                continue
+            if verbose:
+                lgr.info(fp)
+            unzip_dir = path_join(workdir, split_path_dir_base_ext(fp)[1])
+            zf.extractall(unzip_dir)
         try:
             auto_cvt(unzip_dir, recursive=True, clean=True, cbz=False, workers=workers, verbose=verbose)
             new_zip = shutil.make_archive(unzip_dir, 'zip', unzip_dir, verbose=verbose)
