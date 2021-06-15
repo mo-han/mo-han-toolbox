@@ -30,7 +30,6 @@ def shutil_copy_file_obj_faster_with_parallel_read_write_thread(src_fd, dst_fd, 
             try:
                 buf = src_fd.read(length)
             except Exception as e:
-                print('read exception')
                 d['e'] = e
             else:
                 if buf:
@@ -75,7 +74,7 @@ def shutil_copy_file_obj_faster_with_parallel_read_write_thread(src_fd, dst_fd, 
     if error:
         t_write.join()
         t_read.join()
-        print('raise', repr(error))
+        # print('raise', repr(error))
         raise error
 
 
