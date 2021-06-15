@@ -12,7 +12,7 @@ def __refer_sth():
     return copyfileobj
 
 
-def shutil_copy_file_obj_fast(src_fd, dst_fd, length: int = None):
+def shutil_copy_file_obj_fast_large_buffer_size(src_fd, dst_fd, length: int = None):
     length = length or global_config['copy.buffer.size']
     while 1:
         buf = src_fd.read(length)
@@ -21,7 +21,7 @@ def shutil_copy_file_obj_fast(src_fd, dst_fd, length: int = None):
         dst_fd.write(buf)
 
 
-def shutil_copy_file_obj_faster(src_fd, dst_fd, length: int = None):
+def shutil_copy_file_obj_faster_threaded_read_write(src_fd, dst_fd, length: int = None):
     length = length or global_config['copy.buffer.size']
     q_max = 2
     q = queue.Queue(maxsize=q_max)
@@ -80,7 +80,8 @@ def shutil_copy_file_obj_faster(src_fd, dst_fd, length: int = None):
         raise
 
 
-patched_shutil.copyfileobj = shutil_copy_file_obj_faster
+# patched_shutil.copyfileobj = shutil_copy_file_obj_faster_threaded_read_write
+patched_shutil.copyfileobj = shutil_copy_file_obj_fast_large_buffer_size
 copy = patched_shutil.copy
 copy2 = patched_shutil.copy2
 
