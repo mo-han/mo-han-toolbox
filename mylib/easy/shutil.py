@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import functools
 import shutil as patched_shutil
 from shutil import *
 
@@ -8,80 +7,80 @@ from .__often_used_imports__ import *
 global_config = {'copy.buffer.size': 16 * 1024 * 1024}
 
 
-def __refer_sth():
-    return copyfileobj
+def shutil_copy_file_obj_fast_with_larger_default_buffer_size(src_fd, dst_fd,
+                                                              length: int = global_config['copy.buffer.size']):
+    return copyfileobj(src_fd, dst_fd, length)
 
 
-def shutil_copy_file_obj_fast_large_buffer_size(src_fd, dst_fd, length: int = None):
-    length = length or global_config['copy.buffer.size']
-    while 1:
-        buf = src_fd.read(length)
-        if not buf:
-            break
-        dst_fd.write(buf)
-
-
-def shutil_copy_file_obj_faster_threaded_read_write(src_fd, dst_fd, length: int = None):
+def shutil_copy_file_obj_faster_with_parallel_read_write_thread(src_fd, dst_fd, length: int = None):
     length = length or global_config['copy.buffer.size']
     q_max = 2
     q = queue.Queue(maxsize=q_max)
+    d = {'e': None, 't': 0, 'E': None}
     stop = threading.Event()
-    registers = [0.0]
 
-    def read():
-        t0 = time.perf_counter()
+    def read_loop():
         while 1:
-            if stop.isSet():
+            if stop.is_set():
                 break
-            t1 = time.perf_counter()
-            td = t1 - t0
-            t0 = t1
             if q.qsize() == q_max:
-                sleep(td)
+                sleep(d['t'])
                 continue
-            buf = src_fd.read(length)
-            if buf:
-                q.put(buf)
-            else:
-                q.put(None)
-                break
-
-    def write():
-        t0 = time.perf_counter()
-        while 1:
-            if stop.isSet():
-                break
-            t1 = time.perf_counter()
-            td = t1 - t0
-            registers[0] = td
-            t0 = t1
+            t0 = time.perf_counter()
             try:
-                buf = q.get()
-            except queue.Empty:
-                sleep(td)
-                continue
+                buf = src_fd.read(length)
+            except Exception as e:
+                print('read exception')
+                d['e'] = e
+            else:
+                if buf:
+                    q.put(buf)
+                else:
+                    q.put(None)
+                    break
+            d['t'] = time.perf_counter() - t0
+        # print(read_loop.__name__, 'stopped')
+
+    def write_loop():
+        while 1:
+            if stop.is_set():
+                break
+            buf = q.get()
             if buf is None:
                 break
             else:
                 dst_fd.write(buf)
+        # print(write_loop.__name__, 'stopped')
 
-    t_read = threading.Thread(target=read)
-    t_write = threading.Thread(target=write)
+    t_read = threading.Thread(target=read_loop)
+    t_write = threading.Thread(target=write_loop)
     t_read.start()
     t_write.start()
-    try:
-        while 1:
+
+    while 1:
+        try:
             if t_write.is_alive():
-                t_write.join(registers[0])
+                t_write.join(d['t'])
             else:
                 break
-    except (KeyboardInterrupt, SystemExit):
-        stop.set()
-        raise
+            if d['e']:
+                stop.set()
+                d['E'] = d['e']
+                break
+        except (KeyboardInterrupt, SystemExit) as e:
+            stop.set()
+            d['E'] = e
+            break
+    error = d['E']
+    if error:
+        t_write.join()
+        t_read.join()
+        print('raise', repr(error))
+        raise error
 
 
-# patched_shutil.copyfileobj = shutil_copy_file_obj_faster_threaded_read_write
-patched_shutil.copyfileobj = shutil_copy_file_obj_fast_large_buffer_size
+patched_shutil.copyfileobj = shutil_copy_file_obj_faster_with_parallel_read_write_thread
+# patched_shutil.copyfileobj = shutil_copy_file_obj_fast_with_larger_default_buffer_size
 copy = patched_shutil.copy
 copy2 = patched_shutil.copy2
 
@@ -110,65 +109,6 @@ def dir_is_empty(dirname):
     if not os.path.isdir(dirname):
         raise NotADirectoryError(dirname)
     return not bool(os.listdir(dirname))
-
-
-def move_loyally___alpha(src, dst, *,
-                         remove_empty_src_dir_handler=os.rmdir):
-    try:
-        if not os.path.exists(src):
-            raise FileNotFoundError(src)
-        elif os.path.isdir(src):
-            if not os.path.exists(dst):
-                r = patched_shutil.move(src, dst)
-            elif os.path.isfile(dst):
-                raise DirectoryToFileError(src, dst)
-            elif os.path.isdir(dst):
-                for sub in os.listdir(src):
-                    patched_shutil.move(os.path.join(src, sub), dst)
-                remove_empty_src_dir_handler(src)
-                r = dst
-            else:
-                raise NeitherFileNorDirectoryError(dst)
-        elif os.path.isfile(src):
-            if os.path.isdir(dst):
-                raise FileToDirectoryError(src, dst)
-            else:
-                r = patched_shutil.move(src, dst)
-        else:
-            raise NeitherFileNorDirectoryError(src)
-        return r
-    except Error as e:
-        if e.args:
-            msg = e.args[0]
-            m = re.match(r"Destination path '(.+)' already exists", msg)
-            if m:
-                raise FileExistsError(m.group(1))
-            else:
-                raise
-        else:
-            raise
-
-
-def move_safe___alpha(src, dst, *, error_on_exist=True, overwrite_exist=False, conflict_count=0,
-                      remove_empty_src_dir_handler=os.rmdir):
-    _move = functools.partial(move_loyally___alpha, remove_empty_src_dir_handler=remove_empty_src_dir_handler)
-    if error_on_exist:
-        if os.path.exists(dst):
-            raise FileExistsError(dst)
-        else:
-            return _move(src, dst)
-
-    if overwrite_exist or not os.path.exists(dst):
-        return _move(src, dst)
-
-    conflict_count += 1
-    filepath_without_ext, ext = os.path.splitext(dst)
-    new_dst = filepath_without_ext + f' ({conflict_count})' + ext
-    if os.path.exists(new_dst):
-        return move_safe___alpha(src, dst, error_on_exist=error_on_exist, overwrite_exist=overwrite_exist,
-                                 conflict_count=conflict_count)
-    else:
-        return _move(src, new_dst)
 
 
 def remove(path):

@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 # encoding=utf8
 import fnmatch
+import functools
 import os
 import re
 import shutil
+import shutil as patched_shutil
 import threading
 from glob import glob
 from queue import Queue
+from shutil import Error
 from time import sleep
 from typing import Callable, Generator
 
 from mylib.easy import T
+from mylib.easy.shutil import DirectoryToFileError, NeitherFileNorDirectoryError, FileToDirectoryError
 from mylib.ex import fstk
 from mylib.easy import *
 from mylib.ex.ostk import Clipboard
@@ -371,3 +375,62 @@ def get_re_groups(source: str, match_pattern=None, match_flags=None, match_metho
     if m is None:
         return type(source)(), tuple(), dict()
     return m.group(0), m.groups(), m.groupdict()
+
+
+def move_loyally___alpha(src, dst, *,
+                         remove_empty_src_dir_handler=os.rmdir):
+    try:
+        if not os.path.exists(src):
+            raise FileNotFoundError(src)
+        elif os.path.isdir(src):
+            if not os.path.exists(dst):
+                r = patched_shutil.move(src, dst)
+            elif os.path.isfile(dst):
+                raise DirectoryToFileError(src, dst)
+            elif os.path.isdir(dst):
+                for sub in os.listdir(src):
+                    patched_shutil.move(os.path.join(src, sub), dst)
+                remove_empty_src_dir_handler(src)
+                r = dst
+            else:
+                raise NeitherFileNorDirectoryError(dst)
+        elif os.path.isfile(src):
+            if os.path.isdir(dst):
+                raise FileToDirectoryError(src, dst)
+            else:
+                r = patched_shutil.move(src, dst)
+        else:
+            raise NeitherFileNorDirectoryError(src)
+        return r
+    except Error as e:
+        if e.args:
+            msg = e.args[0]
+            m = re.match(r"Destination path '(.+)' already exists", msg)
+            if m:
+                raise FileExistsError(m.group(1))
+            else:
+                raise
+        else:
+            raise
+
+
+def move_safe___alpha(src, dst, *, error_on_exist=True, overwrite_exist=False, conflict_count=0,
+                      remove_empty_src_dir_handler=os.rmdir):
+    _move = functools.partial(move_loyally___alpha, remove_empty_src_dir_handler=remove_empty_src_dir_handler)
+    if error_on_exist:
+        if os.path.exists(dst):
+            raise FileExistsError(dst)
+        else:
+            return _move(src, dst)
+
+    if overwrite_exist or not os.path.exists(dst):
+        return _move(src, dst)
+
+    conflict_count += 1
+    filepath_without_ext, ext = os.path.splitext(dst)
+    new_dst = filepath_without_ext + f' ({conflict_count})' + ext
+    if os.path.exists(new_dst):
+        return move_safe___alpha(src, dst, error_on_exist=error_on_exist, overwrite_exist=overwrite_exist,
+                                 conflict_count=conflict_count)
+    else:
+        return _move(src, new_dst)

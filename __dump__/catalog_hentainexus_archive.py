@@ -1,6 +1,7 @@
 import webbrowser
 from functools import reduce
 
+import mylib.__deprecated__
 from mylib.ex.fstk import *
 from mylib.ex.fstk import read_sqlite_dict_file
 from mylib.ex.ostk import clipboard as cb
@@ -110,7 +111,7 @@ def prompt_rename(fp):
     os.makedirs(os.path.dirname(new), exist_ok=True)
     try:
         print(f'{new} <- {fp}')
-        shutil.move_safe___alpha(fp, new)
+        mylib.__deprecated__.move_safe___alpha(fp, new)
     except FileExistsError:
         print(f'! {fp}')
         cb.set(split_path_dir_base_ext(new)[1])
@@ -152,7 +153,7 @@ for fp in find_iter('f', src):
             d, b = os.path.split(new)
             new = make_path(d, sanitize_xu(b))
             print(f'{new} <- {fp}')
-            shutil.move_safe___alpha(fp, new)
+            mylib.__deprecated__.move_safe___alpha(fp, new)
         except FileExistsError:
             print(f'! {fp}')
             cb.set(split_path_dir_base_ext(new)[1])
