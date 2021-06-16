@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 import traceback
+import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from pprint import pprint
 
 import PIL.Image
 import filetype
-from humanize import naturaldelta
+from humanize import naturaldelta, naturalsize
 from send2trash import send2trash
 
-import zipfile
-from mylib.ex.console_app import *
 from mylib.easy import logging
+from mylib.ex.console_app import *
 from mylib.wrapper import cwebp
 
 PIXELS_BASELINE = 1280 * 1920
@@ -70,7 +70,7 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
         with open(image_fp, 'rb') as fd:
             image_file_bytes = fd.read()
         cvt_gen = cwebp.cwebp_adaptive_gen___alpha(image_file_bytes, max_size=max_size, max_compress=MAX_COMPRESS,
-                                                  max_q=MAX_Q, min_q=MIN_Q, min_scale=min_scale)
+                                                   max_q=MAX_Q, min_q=MIN_Q, min_scale=min_scale)
         for result in cvt_gen:
             d_dst = result['dst']
             print(f"* ({d_dst['width']}x{d_dst['height']}, q={d_dst.get('q', '?')}, scale={d_dst.get('scale', 1)}, "
@@ -154,14 +154,16 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
                     shutil.rmtree(unzip_dir)
                 continue
         try:
-            if verbose:
-                lgr.info(fp)
+            old_size = path_get_size(fp)
             auto_cvt(unzip_dir, recursive=True, clean=True, cbz=False, workers=workers, verbose=verbose)
             new_zip = shutil.make_archive(unzip_dir, 'zip', unzip_dir, verbose=verbose)
             if ext_name:
                 new_zip = fstk.rename_file_ext(new_zip, ext_name)
                 fp = fstk.rename_file_ext(fp, ext_name)
+            new_size = path_get_size(new_zip)
             fstk.move_as(new_zip, fp)
+            lgr.info(fp)
+            lgr.info(f'{new_size / old_size:.1%} ({naturalsize(new_size, True)} / {naturalsize(old_size, True)})')
         except KeyboardInterrupt:
             sys.exit(2)
         finally:

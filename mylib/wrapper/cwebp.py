@@ -3,7 +3,7 @@ import enum
 import math
 from functools import partial
 
-from mylib.ex.PIL import open_bytes_as_image, save_image_to_bytes, ImageFile, Image
+from mylib.ex.PIL import open_bytes_as_image, save_image_to_bytes, enable_load_truncated_image, Image
 from mylib.easy import *
 from mylib.easy import logging
 
@@ -110,7 +110,7 @@ def cwebp(src: T.Union[str, bytes], dst: T.Union[str, bool, T.NoneType, T.Ellips
     except CWebpInputReadError as e:
         # if {'Corrupt JPEG data: premature end of data segment', 'Bogus marker length'} & set(rj['msg']):
         try:
-            ImageFile.LOAD_TRUNCATED_IMAGES = True
+            enable_load_truncated_image()
             if isinstance(src, bytes):
                 img = open_bytes_as_image(src)
             else:

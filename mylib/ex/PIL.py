@@ -21,3 +21,11 @@ def open_bytes_as_image(b: bytes, mode="r"):
     fd.write(b)
     fd.seek(0)
     return Image.open(fd, mode=mode)
+
+
+def enable_load_truncated_image():
+    ImageFile.LOAD_TRUNCATED_IMAGES = True
+
+
+def disable_load_truncated_image():
+    ImageFile.LOAD_TRUNCATED_IMAGES = False
