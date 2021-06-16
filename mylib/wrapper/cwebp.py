@@ -106,15 +106,18 @@ def cwebp_call(src: T.Union[str, bytes], dst: T.Union[str, bool, T.NoneType, T.E
 
 
 def cwebp(src: T.Union[str, bytes], dst: T.Union[str, bool, T.NoneType, T.EllipsisType] = ..., **kwargs):
+    rj = cwebp_call(src, dst, **kwargs)
     try:
-        return check_cwebp_call_result(cwebp_call(src, dst, **kwargs))
+        return check_cwebp_call_result(rj)
     except CWebpInputReadError:
-        if 'Corrupt JPEG data: premature end of data segment' in cwebp_call(src, dst, **kwargs)['msg']:
+        if {'Corrupt JPEG data: premature end of data segment', 'Bogus marker length'} & set(rj['msg']):
             if isinstance(src, bytes):
                 img = open_bytes_as_image(src)
             else:
                 img = Image.open(src)
             return check_cwebp_call_result(cwebp_call(save_image_to_bytes(img, dst, **kwargs)))
+        else:
+            raise
 
 
 def cwebp_help_text():

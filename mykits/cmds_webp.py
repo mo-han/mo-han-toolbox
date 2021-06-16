@@ -93,9 +93,8 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
             print(f'! {image_fp_rel}')
             os_exit_force(1)
     except cwebp.CWebpInputReadError as e:
-        print(repr(e))
+        print(traceback.format_exc())
         print(f'! {image_fp_rel}')
-
     except Exception:
         print(traceback.format_exc())
         print(f'! {image_fp_rel}')
