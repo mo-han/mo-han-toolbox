@@ -115,7 +115,7 @@ def cwebp(src: T.Union[str, bytes], dst: T.Union[str, bool, T.NoneType, T.Ellips
                 img = open_bytes_as_image(src)
             else:
                 img = Image.open(src)
-            return check_cwebp_call_result(cwebp_call(save_image_to_bytes(img, dst, **kwargs)))
+            return check_cwebp_call_result(cwebp_call(save_image_to_bytes(img), dst, **kwargs))
         else:
             raise
 
