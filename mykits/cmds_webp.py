@@ -69,8 +69,8 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
     try:
         with open(image_fp, 'rb') as fd:
             image_file_bytes = fd.read()
-        cv_gen = cwebp.cwebp_adaptive_iter___alpha(image_file_bytes, max_size=max_size, max_compress=MAX_COMPRESS,
-                                                   max_q=MAX_Q, min_q=MIN_Q, min_scale=min_scale)
+        cv_gen = cwebp.cwebp_adaptive_gen___alpha(image_file_bytes, max_size=max_size, max_compress=MAX_COMPRESS,
+                                                  max_q=MAX_Q, min_q=MIN_Q, min_scale=min_scale)
         for result in cv_gen:
             d = cwebp.check_cwebp_subprocess_result(result)
             d_dst = d['dst']

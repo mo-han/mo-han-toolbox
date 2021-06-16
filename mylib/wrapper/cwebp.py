@@ -146,15 +146,17 @@ def check_cwebp_subprocess_result(result: dict):
             if m:
                 code, reason, desc = m.groups()
                 raise CWebpEncodeError(code=code, reason=reason, desc=desc)
-        if msg_lines[0].startswith('Input file read error') or msg_lines[1].startswith(
-                'Error! Could not process file') or msg_lines[2].startswith('Error! Cannot read input picture file'):
+        lambda x: any(map(x.startswith, ('Input file read error', 'Error! Cannot read input picture file')))
+        if any(map(
+                lambda x: any(map(x.startswith, ('Input file read error', 'Error! Cannot read input picture file'))),
+                msg_lines)):
             raise CWebpInputReadError(r_code, msg_lines)
         raise CWebpGenericError(r_code, msg_lines)
     return result
 
 
-def cwebp_adaptive_iter___alpha(src, max_size: int, max_compress: float, max_q: int, min_q: int, min_scale: float,
-                                *, q_step=5, scale_step=0.05):
+def cwebp_adaptive_gen___alpha(src, max_size: int, max_compress: float, max_q: int, min_q: int, min_scale: float,
+                               *, q_step=5, scale_step=0.05):
     q_step_by_100 = q_step / 100
 
     cwebp_src = partial(cwebp, src, '-')
