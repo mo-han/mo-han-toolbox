@@ -69,26 +69,22 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
     try:
         with open(image_fp, 'rb') as fd:
             image_file_bytes = fd.read()
-        cv_gen = cwebp.cwebp_adaptive_gen___alpha(image_file_bytes, max_size=max_size, max_compress=MAX_COMPRESS,
+        cvt_gen = cwebp.cwebp_adaptive_gen___alpha(image_file_bytes, max_size=max_size, max_compress=MAX_COMPRESS,
                                                   max_q=MAX_Q, min_q=MIN_Q, min_scale=min_scale)
-        for result in cv_gen:
-            d = cwebp.check_cwebp_subprocess_result(result)
-            d_dst = d['dst']
+        for result in cvt_gen:
+            d_dst = result['dst']
             print(f"* ({d_dst['width']}x{d_dst['height']}, q={d_dst.get('q', '?')}, scale={d_dst.get('scale', 1)}, "
                   f"psnr={d_dst['psnr']['all']}, size={d_dst['size']}, compress={d_dst['compress']}) <- {image_fp_rel}")
         with open(webp_fp, 'wb') as f:
-            f.write(d['out'])
+            f.write(result['out'])
     except cwebp.SkipOverException as e:
         print(f'# ({e.msg}) {image_fp_rel}')
     except KeyError as e:
         print(traceback.format_exc())
         print(f'! {image_fp_rel}')
         if e.args[0] == 'dst':
-            pprint(d)
+            pprint(result)
         os_exit_force(1)
-    # except ChildProcessError as e:
-    #     if e.args[1] == ["Saving file '-'"]:
-    #         raise KeyboardInterrupt
     except cwebp.CWebpEncodeError as e:
         if e.reason == e.E.BAD_DIMENSION:
             print(f'! ({e.reason}) <- {image_fp_rel}')
@@ -97,8 +93,9 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
             print(f'! {image_fp_rel}')
             os_exit_force(1)
     except cwebp.CWebpInputReadError as e:
-        print(traceback.format_exc())
+        print(repr(e))
         print(f'! {image_fp_rel}')
+
     except Exception:
         print(traceback.format_exc())
         print(f'! {image_fp_rel}')

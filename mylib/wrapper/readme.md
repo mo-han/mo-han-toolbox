@@ -17,7 +17,7 @@ cwebp.image_from_bytes
 
 src = 'src/image/filepath' or b'image file bytes'
 dst = '-' or 'dst/image/filepath'  # '-' get cwebp output image bytes from stdout and put it into dict
-cwebp.cwebp(src, q=50, resize=0.5, print_ssim=True)
+cwebp.cwebp_call(src, q=50, resize=0.5, print_ssim=True)
 ```
 output something like this:
 ```python

@@ -5,7 +5,7 @@ from functools import partial
 
 from PIL import Image
 
-from mylib.ex.PIL import open_bytes_as_image
+from mylib.ex.PIL import open_bytes_as_image, save_image_to_bytes
 from mylib.easy import *
 from mylib.easy import logging
 
@@ -24,7 +24,7 @@ def new_cwebp_cmd():
     return CWebpCLIArgs('cwebp')
 
 
-def cwebp(src: str or bytes, dst: str or False or None or Ellipsis = ..., **kwargs):
+def cwebp_call(src: T.Union[str, bytes], dst: T.Union[str, bool, T.NoneType, T.EllipsisType] = ..., **kwargs):
     if isinstance(src, str):
         src_bytes = None
         src_size = os.path.getsize(src)
@@ -57,18 +57,16 @@ def cwebp(src: str or bytes, dst: str or False or None or Ellipsis = ..., **kwar
         dst_data['scale'] = resize
 
     cmd = new_cwebp_cmd().add(**kwargs).add(o=dst).add('--', src)
-    r = subprocess.run(cmd, input=src_bytes, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.run(cmd, input=src_bytes, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     encoding = get_os_default_encoding()
-    msg_lines = r.stderr.decode(encoding).splitlines()
-    ok = r.returncode == 0
-    d = {
-        # 'stdout': r.stdout,
-        # 'stderr': r.stderr,
+    msg_lines = p.stderr.decode(encoding).splitlines()
+    ok = p.returncode == 0
+    rj = {
         'kwargs': kwargs,
-        'out': r.stdout,
+        'out': p.stdout,
         'msg': msg_lines,
-        'cmd': r.args,
-        'code': r.returncode,
+        'cmd': p.args,
+        'code': p.returncode,
         'ok': ok,
         'src': src_data,
     }
@@ -103,8 +101,20 @@ def cwebp(src: str or bytes, dst: str or False or None or Ellipsis = ..., **kwar
                     name = segments.pop(0).split(':')[0]
                     dst_data[name] = {left: float(right) for left, right in [seg.split(':') for seg in segments]}
         dst_data['compress'] = round(dst_data['size'] / src_data['size'], 3)
-        d['dst'] = dst_data
-    return d
+        rj['dst'] = dst_data
+    return rj
+
+
+def cwebp(src: T.Union[str, bytes], dst: T.Union[str, bool, T.NoneType, T.EllipsisType] = ..., **kwargs):
+    try:
+        return check_cwebp_call_result(cwebp_call(src, dst, **kwargs))
+    except CWebpInputReadError:
+        if 'Corrupt JPEG data: premature end of data segment' in cwebp_call(src, dst, **kwargs)['msg']:
+            if isinstance(src, bytes):
+                img = open_bytes_as_image(src)
+            else:
+                img = Image.open(src)
+            return check_cwebp_call_result(cwebp_call(save_image_to_bytes(img, dst, **kwargs)))
 
 
 def cwebp_help_text():
@@ -135,7 +145,7 @@ class CWebpInputReadError(CWebpGenericError):
     pass
 
 
-def check_cwebp_subprocess_result(result: dict):
+def check_cwebp_call_result(result: dict):
     if not result['ok']:
         msg_lines = result['msg']
         r_code = result['code']
@@ -158,7 +168,7 @@ def cwebp_adaptive_gen___alpha(src, max_size: int, max_compress: float, max_q: i
                                *, q_step=5, scale_step=0.05):
     q_step_by_100 = q_step / 100
 
-    cwebp_src = partial(cwebp, src, '-')
+    _cwebp = partial(cwebp, src, '-')
 
     def calc_dst_size_compress_divided_by_max(cwebp_data: dict):
         o_size = cwebp_data['dst']['size']
@@ -167,14 +177,14 @@ def cwebp_adaptive_gen___alpha(src, max_size: int, max_compress: float, max_q: i
 
     scale = min_scale
     q = min_q
-    d = cwebp_src(resize=scale, q=q)
+    d = _cwebp(resize=scale, q=q)
     yield d
     size_by_max, compress_by_max = calc_dst_size_compress_divided_by_max(d)
     if size_by_max > 1 or compress_by_max > 1:
         if max_size / d['src']['size'] > max_compress:
             raise SkipOverException('modest file size, keep original')
         else:
-            yield cwebp_src(resize=scale, size=max_size)
+            yield _cwebp(resize=scale, size=max_size)
             return
 
     q += min(int((1 - size_by_max) / q_step_by_100), int((1 - compress_by_max) / q_step_by_100)) * q_step
@@ -185,7 +195,7 @@ def cwebp_adaptive_gen___alpha(src, max_size: int, max_compress: float, max_q: i
 
     while q >= min_q:
         scale = 1
-        d = cwebp_src(resize=scale, q=q)
+        d = _cwebp(resize=scale, q=q)
         yield d
         size_by_max, compress_by_max = calc_dst_size_compress_divided_by_max(d)
         if size_by_max <= 1 and compress_by_max <= 1:
@@ -202,7 +212,7 @@ def cwebp_adaptive_gen___alpha(src, max_size: int, max_compress: float, max_q: i
             continue
 
         while scale >= min_scale:
-            d = cwebp_src(resize=scale, q=q)
+            d = _cwebp(resize=scale, q=q)
             yield d
             size_by_max, compress_by_max = calc_dst_size_compress_divided_by_max(d)
             if size_by_max <= 1 and compress_by_max <= 1:
@@ -216,5 +226,5 @@ def cwebp_adaptive_gen___alpha(src, max_size: int, max_compress: float, max_q: i
             q -= q_step
 
     else:
-        yield cwebp_src(resize=scale, size=max_size)
+        yield _cwebp(resize=scale, size=max_size)
         return
