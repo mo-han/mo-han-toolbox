@@ -2,11 +2,12 @@
 import io
 
 from PIL import Image
+from PIL import ImageFile
 from PIL import ImageGrab
 
 
 def __refer_sth():
-    return ImageGrab
+    return ImageGrab, ImageFile
 
 
 def save_image_to_bytes(img: Image.Image, save_fmt=None, **kwargs):
