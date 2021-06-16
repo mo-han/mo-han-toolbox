@@ -146,7 +146,6 @@ def check_cwebp_subprocess_result(result: dict):
             if m:
                 code, reason, desc = m.groups()
                 raise CWebpEncodeError(code=code, reason=reason, desc=desc)
-        lambda x: any(map(x.startswith, ('Input file read error', 'Error! Cannot read input picture file')))
         if any(map(
                 lambda x: any(map(x.startswith, ('Input file read error', 'Error! Cannot read input picture file'))),
                 msg_lines)):
