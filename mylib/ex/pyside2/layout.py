@@ -3,6 +3,18 @@ from PySide2.QtCore import Qt, QMargins, QPoint, QRect, QSize
 from PySide2.QtWidgets import QLayout, QSizePolicy
 
 
+class QtLayoutFactory:
+    def __init__(self, layout_class, owner=None):
+        self.layout: QLayout = layout_class()
+        if owner:
+            owner.setLayout(self.layout)
+
+    def add_widgets(self, *widgets):
+        for w in widgets:
+            self.layout.addWidget(w)
+        return self
+
+
 class HFlowQLayout(QLayout):
     def __init__(self, parent=None):
         super(HFlowQLayout, self).__init__(parent)
