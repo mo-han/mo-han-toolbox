@@ -1,23 +1,37 @@
 #!/usr/bin/env python3
-from PySide2.QtCore import Qt, QMargins, QPoint, QRect, QSize
-from PySide2.QtWidgets import QLayout, QSizePolicy
+from PySide2.QtCore import *
+from PySide2.QtWidgets import *
+from mylib.easy import T
 
 
-class QtLayoutFactory:
-    def __init__(self, layout_class, owner=None):
-        self.layout: QLayout = layout_class()
-        if owner:
-            owner.setLayout(self.layout)
+class WrapperForQLayout:
+    def __init__(self, layout_class, layout_owner=None, parent=None):
+        self.layout: QLayout = layout_class(parent)
+        if layout_owner:
+            layout_owner.setLayout(self.layout)
 
     def add_widgets(self, *widgets):
         for w in widgets:
-            self.layout.addWidget(w)
+            if isinstance(w, T.Iterable):
+                for i in w:
+                    self.layout.addWidget(i)
+            else:
+                self.layout.addWidget(w)
         return self
+
+
+class WrapperForQScrollArea(WrapperForQLayout):
+    def __init__(self, layout_class, parent=None, resizable=True):
+        self.scroll_area = QScrollArea(parent)
+        self.inner_widget = QWidget(parent)  # parent?
+        self.scroll_area.setWidget(self.inner_widget)
+        self.scroll_area.setWidgetResizable(resizable)
+        super().__init__(layout_class, self.inner_widget, parent)
 
 
 class HFlowQLayout(QLayout):
     def __init__(self, parent=None):
-        super(HFlowQLayout, self).__init__(parent)
+        super().__init__(parent)
         if parent is not None:
             self.setContentsMargins(QMargins(0, 0, 0, 0))
         self._item_list = []

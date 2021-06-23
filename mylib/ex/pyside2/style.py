@@ -14,5 +14,7 @@ def qt_style_sheet(style, selector=None):
     else:
         raise TypeError('style')
     if selector:
+        if hasattr(selector, '__name__'):
+            selector = selector.__name__
         style_sheet = f'{selector} {{{style_sheet}}}'
     return style_sheet
