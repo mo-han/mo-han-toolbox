@@ -2,7 +2,7 @@
 import traceback
 from typing import Generator
 
-from PySide2.QtCore import QObject, QRunnable
+from PySide2.QtCore import QObject, QRunnable, QThreadPool
 
 from mylib.ex.pyside2.signal import *
 
@@ -32,6 +32,11 @@ class ThreadWorker(QRunnable):
         signal_batch_connect({
             s.started: started, s.finished: finished, s.result: result, s.i_result: i_result, s.error: error
         })
+        return self
+
+    def start_in_pool(self, thread_pool: QThreadPool, priority: int = 0):
+        thread_pool.start(self, priority=priority)
+        return self
 
     @Slot()
     def run(self):
@@ -52,6 +57,7 @@ class ThreadWorker(QRunnable):
             self.signals.error.emit(ThreadWorkerError(e, traceback.format_exc()))
         finally:
             self.signals.finished.emit()
+        return self
 
 # class Call:
 #     def __init__(self, callee, *args, **kwargs):

@@ -34,3 +34,17 @@ class EzQPushButton(QPushButton, MixinForQWidget):
     @on_click.setter
     def on_click(self, value):
         self.reconnect_signal(self.clicked, value)
+
+    @Slot()
+    def enable(self):
+        self.setEnabled(True)
+        return self
+
+    @Slot()
+    def disable(self):
+        self.setDisabled(True)
+        return self
+
+
+class TextEzQLabel(QLabel, MixinForQWidget):
+    ...
