@@ -193,8 +193,8 @@ class ACall:
     exception_handler: T.Callable[[Exception], T.Any]
     timeout: T.Optional[float]
 
-    def __init__(self, target, *args, **kwargs):
-        self.set_call(target, *args, **kwargs).set_exceptions().set_timeout().clear()
+    def __init__(self, callee, *args, **kwargs):
+        self.set_call(callee, *args, **kwargs).set_exceptions().set_timeout().clear()
 
     def clear(self):
         self.delta_t = None
@@ -220,7 +220,7 @@ class ACall:
         self.timeout = timeout
         return self
 
-    def get_result_forever(self, *args, **kwargs):
+    def get_result_blocking(self, *args, **kwargs):
         counter = time.perf_counter
         self.clear()
         t0 = counter()
@@ -240,7 +240,7 @@ class ACall:
             self.delta_t = counter() - t0
 
     def get_result_timeout(self, *args, **kwargs):
-        thread = thread_factory(daemon=True)(self.get_result_forever, *args, **kwargs)
+        thread = thread_factory(daemon=True)(self.get_result_blocking, *args, **kwargs)
         thread.start()
         thread.join(self.timeout)  # join will terminate the thread (or not?)
         if self.ok:
@@ -251,7 +251,7 @@ class ACall:
 
     def get_result(self, *args, **kwargs):
         if self.timeout is None:
-            return self.get_result_forever(*args, **kwargs)
+            return self.get_result_blocking(*args, **kwargs)
         return self.get_result_timeout(*args, **kwargs)
 
 

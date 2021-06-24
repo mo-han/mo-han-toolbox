@@ -5,14 +5,16 @@ from mylib.easy import T
 
 
 class WrapperForQLayout:
-    def __init__(self, layout_class, layout_owner=None, parent=None):
-        self.layout: QLayout = layout_class(parent)
-        if layout_owner:
-            layout_owner.setLayout(self.layout)
+    def __init__(self, layout_class, widget=None, parent=None):
+        self.widget = widget or QWidget(parent)
+        self.layout: QLayout = layout_class(self.widget)
+        self.widget.setLayout(self.layout)
 
     def add_widgets(self, *widgets):
         for w in widgets:
-            if isinstance(w, T.Iterable):
+            if isinstance(w, WrapperForQLayout):
+                self.layout.addWidget(w.widget)
+            elif isinstance(w, T.Iterable):
                 for i in w:
                     self.layout.addWidget(i)
             else:
@@ -22,11 +24,11 @@ class WrapperForQLayout:
 
 class WrapperForQScrollArea(WrapperForQLayout):
     def __init__(self, layout_class, parent=None, resizable=True):
-        self.scroll_area = QScrollArea(parent)
-        self.inner_widget = QWidget(parent)  # parent?
-        self.scroll_area.setWidget(self.inner_widget)
-        self.scroll_area.setWidgetResizable(resizable)
-        super().__init__(layout_class, self.inner_widget, parent)
+        self.area = QScrollArea(parent)
+        widget = QWidget(self.area)
+        self.area.setWidget(widget)
+        self.area.setWidgetResizable(resizable)
+        super().__init__(layout_class, widget, parent=parent)
 
 
 class HFlowQLayout(QLayout):
