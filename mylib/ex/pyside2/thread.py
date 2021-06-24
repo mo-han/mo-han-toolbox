@@ -2,7 +2,7 @@
 import traceback
 from typing import Generator
 
-from PySide2.QtCore import QObject, Signal, Slot, QRunnable
+from PySide2.QtCore import QObject, QRunnable
 
 from mylib.ex.pyside2.signal import *
 
@@ -29,7 +29,7 @@ class ThreadWorker(QRunnable):
 
     def connect_signals(self, started=None, finished=None, result=None, i_result=None, error=None):
         s = self.signals
-        connect_signal_slot({
+        signal_batch_connect({
             s.started: started, s.finished: finished, s.result: result, s.i_result: i_result, s.error: error
         })
 

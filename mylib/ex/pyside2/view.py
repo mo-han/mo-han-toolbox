@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 from PySide2.QtCore import QItemSelectionModel
-from PySide2.QtWidgets import QAbstractItemView
 
 
-class WrapperForModelView:
+class EzQModelView:
     def __init__(self, model, view):
         self.model = model
         self.view = view
