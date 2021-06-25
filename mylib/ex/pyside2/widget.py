@@ -25,6 +25,18 @@ class MixinForQWidget:
     def reconnect_signal(self, signal, new=None, old=None):
         self.connections[signal] = signal_reconnect(signal, new, old)
 
+    @property
+    def qss(self: QWidget):
+        return self.styleSheet()
+
+    @qss.setter
+    def qss(self: QWidget, value):
+        self.setStyleSheet(value)
+
+    def set_qss(self: QWidget, style, selector=None):
+        self.setStyleSheet(qt_style_sheet(style, selector))
+        return self
+
 
 class EzQPushButton(QPushButton, MixinForQWidget):
     @property
@@ -46,5 +58,5 @@ class EzQPushButton(QPushButton, MixinForQWidget):
         return self
 
 
-class TextEzQLabel(QLabel, MixinForQWidget):
-    ...
+class EzQLabel(QLabel, MixinForQWidget):
+    pass

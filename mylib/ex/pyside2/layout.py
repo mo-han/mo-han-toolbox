@@ -17,7 +17,7 @@ class WrapperForQLayout:
             elif isinstance(w, T.Iterable):
                 for i in w:
                     self.layout.addWidget(i)
-            else:
+            elif w:
                 self.layout.addWidget(w)
         return self
 
