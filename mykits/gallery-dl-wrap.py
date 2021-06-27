@@ -95,7 +95,7 @@ def per_site(args: T.List[str]):
         args = [*GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
                              o=['cookies-update=true', 'videos=true', 'tags=true',
                                 'directory=["{category} {search_tags}"]',
-                                'filename="{category}.{id}.{date!S:.10}.{md5}.'
+                                'filename="{category}.{id}.{created_at!S:.10}.{md5}.'
                                 '{tags_idol!S:L80/(various)/}.{extension}"', ]),
                 *args, url]
     elif 'newgrounds.com' in url:
@@ -128,9 +128,17 @@ def args2url(args):
     elif first == 'gelbooru':
         url = f'https://gelbooru.com/index.php?page=post&s=list&tags={pop_tag_from_args(args)}'
     elif first == 'sankaku':
-        url = f'https://chan.sankakucomplex.com/?tags={pop_tag_from_args(args)}'
-    elif first == 'idol':
-        url = f'https://idol.sankakucomplex.com/?tags={pop_tag_from_args(args)}'
+        x = pop_tag_from_args(args)
+        if x.isdigit():
+            url = f'https://chan.sankakucomplex.com/post/show/{x}'
+        else:
+            url = f'https://chan.sankakucomplex.com/?tags={x}'
+    elif first in ('idol', 'idolcomplex'):
+        x = pop_tag_from_args(args)
+        if x.isdigit():
+            url = f'https://idol.sankakucomplex.com/post/show/{x}'
+        else:
+            url = f'https://idol.sankakucomplex.com/?tags={x}'
     elif first in ('ng', 'newgrounds'):
         url = f'https://{pop_tag_from_args(args)}.newgrounds.com/art'
     else:
