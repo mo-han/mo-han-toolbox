@@ -1,7 +1,10 @@
 zh-Hans:
-  testhelloworld: 你好世界！
-  Rename: 重命名
-  Path: 路径
-  Source: 源
   Bytes: 字节
+  Path: 路径
+  Rename: 重命名
   Replace: 替换
+  Source: 源
+  __separator__:
+  foo.bar:
+  hhh:
+  testhelloworld: 你好世界！
