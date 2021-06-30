@@ -7,6 +7,10 @@ from PySide2.QtCore import QObject, QRunnable, QThreadPool
 from mylib.ex.pyside2.signal import *
 
 
+def __ref_sth():
+    return
+
+
 class ThreadWorkerError:
     def __init__(self, e: Exception, trace: str):
         self.exception = e
@@ -27,6 +31,10 @@ class ThreadWorker(QRunnable):
         self.call_tuple = callee, args, kwargs
         self.signals = ThreadWorkerSignal()
 
+    def set_parent(self, parent=None):
+        self.signals.setParent(parent)
+        return self
+
     def connect_signals(self, started=None, finished=None, result=None, i_result=None, error=None):
         s = self.signals
         signal_batch_connect({
@@ -45,14 +53,17 @@ class ThreadWorker(QRunnable):
         try:
             r = callee(*args, **kwargs)
             if isinstance(r, Generator):
-                for i in r:
-                    self.signals.i_result.emit(i)
+                while True:
+                    ir = next(r)
+                    self.signals.i_result.emit(ir)
+                # for i in r:
+                #     self.signals.i_result.emit(i)
             else:
                 self.signals.result.emit(r)
         except StopIteration as e:
             if e.value:
                 self.signals.result.emit(e.value)
-                self.signals.error.emit(ThreadWorkerError(e, traceback.format_exc()))
+                # self.signals.error.emit(ThreadWorkerError(e, traceback.format_exc()))
         except Exception as e:
             self.signals.error.emit(ThreadWorkerError(e, traceback.format_exc()))
         finally:

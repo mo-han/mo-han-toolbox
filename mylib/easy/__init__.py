@@ -16,7 +16,7 @@ from .__often_used_imports__ import *
 
 T = typing
 REGEX_HEX_CHAR = '[0-9a-fA-F]'
-REGEX_GUID = '-'.join([f'{REGEX_HEX_CHAR}{{{n}}}' for n in (8, 4, 4, 4, 12)])
+REGEX_GUID = '-'.join([f'{REGEX_HEX_CHAR}{{{__i}}}' for __i in (8, 4, 4, 4, 12)])
 
 path_is_file = os.path.isfile
 path_is_dir = os.path.isdir
@@ -753,3 +753,18 @@ def deco_factory_retry(max_retries: int = 3, exceptions=Exception,
         return _call_target_retry(target)
 
     return deco
+
+
+class FirstCountLastStop:
+    def __init__(self):
+        self.first = 0
+        self.total = 0
+        self.last = 0
+        self.stop = 1
+
+    def set_first_and_total(self, first, count):
+        self.first = first
+        self.total = count
+        self.stop = first + count
+        self.last = self.stop - 1
+        return self

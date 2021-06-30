@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 from PySide2.QtCore import *
 from PySide2.QtWidgets import *
+
 from mylib.easy import T
 
 
-class WrapperForQLayout:
-    def __init__(self, layout_class, widget=None, parent=None):
-        self.widget = widget or QWidget(parent)
+class EzQLayout:
+    def __init__(self, layout_class, owner_widget=None, parent=None):
+        self.widget = owner_widget or QWidget(parent)
         self.layout: QLayout = layout_class(self.widget)
         self.widget.setLayout(self.layout)
 
     def add_widgets(self, *widgets):
         for w in widgets:
-            if isinstance(w, WrapperForQLayout):
+            if isinstance(w, EzQLayout):
                 self.layout.addWidget(w.widget)
             elif isinstance(w, T.Iterable):
                 for i in w:
@@ -22,7 +23,7 @@ class WrapperForQLayout:
         return self
 
 
-class WrapperForQScrollArea(WrapperForQLayout):
+class EzQScrollArea(EzQLayout):
     def __init__(self, layout_class, parent=None, resizable=True):
         self.area = QScrollArea(parent)
         widget = QWidget(self.area)

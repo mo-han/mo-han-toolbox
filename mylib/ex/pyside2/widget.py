@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
+from PySide2.QtGui import *
 from PySide2.QtWidgets import *
-from mylib.ex.pyside2.signal import *
 
+from mylib.ex.pyside2.signal import *
 from mylib.ex.pyside2.style import *
 
 
@@ -36,6 +37,14 @@ class MixinForQWidget:
     def set_qss(self: QWidget, style, selector=None):
         self.setStyleSheet(qt_style_sheet(style, selector))
         return self
+
+    def new_shortcut(self, key_sequence: QKeySequence,
+                     connect_to: T.Union[T.Callable[..., T.Any], T.Iterable[T.Callable[..., T.Any]]],
+                     parent_widget=...):
+        shortcut = QShortcut(key_sequence, self if parent_widget is ... else parent_widget, None)
+        if connect_to:
+            signal_connect(shortcut.activated, connect_to)
+        return shortcut
 
 
 class EzQPushButton(QPushButton, MixinForQWidget):

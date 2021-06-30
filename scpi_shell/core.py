@@ -242,9 +242,9 @@ class SCPIShell(cmd.Cmd):
             self.read = self.link.read
             self.connected = True
         elif conn_type_lower.startswith(STR_SERIAL):
-            if address.count(':'):
+            if address.total(':'):
                 port, setting = address.split(':', maxsplit=1)
-                if setting.count(','):
+                if setting.total(','):
                     baud, bits = setting.split(',', maxsplit=1)
                     data_bits, parity_bit, stop_bits = bits
                     com = Serial(port=port, baudrate=int(baud), bytesize=int(data_bits), parity=parity_bit.upper(),
