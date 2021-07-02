@@ -119,7 +119,10 @@ class InternalItemsEzQListModel(QAbstractListModel):
 
     @staticmethod
     def convert_edit_data_to_item(data):
-        return eval(data)
+        try:
+            return eval(data)
+        except (SyntaxError, NameError):
+            return str(data)
 
     def setData(self, index, value, role=Qt.EditRole):
         if not index.isValid():

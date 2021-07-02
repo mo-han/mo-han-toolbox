@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
 from PySide2.QtCore import QItemSelectionModel, QAbstractItemModel
-from PySide2.QtWidgets import QAbstractItemView
+from PySide2.QtWidgets import QAbstractItemView, QScroller
+
+
+def qt_set_left_mouse_gesture_scrolling(obj):
+    QScroller.grabGesture(obj.viewport(), QScroller.ScrollerGestureType.LeftMouseButtonGesture)
+    return QScroller.scroller(obj)
+
+
+def qt_set_pixel_scrolling(view: QAbstractItemView):
+    view.setVerticalScrollMode(view.ScrollPerPixel)
 
 
 class EzQModelView:

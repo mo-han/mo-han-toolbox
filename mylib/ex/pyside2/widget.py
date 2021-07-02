@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
+from PySide2.QtCore import *
 
 from mylib.ex.pyside2.signal import *
 from mylib.ex.pyside2.style import *
@@ -45,6 +46,19 @@ class MixinForQWidget:
         if connect_to:
             signal_connect(shortcut.activated, connect_to)
         return shortcut
+
+
+class EzQApplication(QApplication, MixinForQWidget):
+    def set_qt_translate(self, locale_name: str = None, filename_in_translations: str = None,
+                         parent=...):
+        translator = QTranslator(self if parent is ... else parent)
+        if locale_name:
+            translator.load(f'qt_{locale_name.replace("-", "_")}.qm',
+                            QLibraryInfo.location(QLibraryInfo.TranslationsPath))
+        if filename_in_translations:
+            translator.load(filename_in_translations, QLibraryInfo.location(QLibraryInfo.TranslationsPath))
+        self.installTranslator(translator)
+        return self
 
 
 class EzQPushButton(QPushButton, MixinForQWidget):
