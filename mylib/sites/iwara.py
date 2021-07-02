@@ -4,17 +4,20 @@ from urllib.parse import urlparse, urlunparse
 
 import youtube_dl.extractor.iwara as ytdl_iwara
 
-from mylib.easy.text import regex_find
-from mylib.ex.html import *
+from mylib import easy
+from mylib.easy import text
+from mylib.ex import html
 from mylib.web_client import get_html_element_tree
 
-HE = lxml.html.HtmlElement
+HE = html.lxml_html.HtmlElement
+
+regex = easy.re
 
 
-def find_url_in_text(text: str) -> list:
+def find_url_in_text(s: str) -> list:
     prefix = 'https://iwara.tv'
     pattern = '/videos/[0-9a-zA-Z]+'
-    urls = [prefix + e for e in regex_find(pattern, text, dedup=True) if 'thumbnail' not in e]
+    urls = [prefix + e for e in text.regex_find(pattern, s, dedup=True) if 'thumbnail' not in e]
     return urls
 
 
@@ -36,7 +39,7 @@ class IwaraIE(ytdl_iwara.IwaraIE, metaclass=ABCMeta):
 
 
 def iter_all_video_url_of_user(who: str, ecchi=True, only_urls=False):
-    m = re.match(r'.*iwara\.tv/users/(.+)/?', who)
+    m = regex.match(r'.*iwara\.tv/users/(.+)/?', who)
     if m:
         who = m.group(1)
     domain = 'ecchi.iwara.tv' if ecchi else 'iwara.tv'
@@ -44,8 +47,8 @@ def iter_all_video_url_of_user(who: str, ecchi=True, only_urls=False):
     end = False
 
     while not end:
-        r = call_factory_retry(requests.get)(url)
-        h = HTMLResponseParser(r).check_ok_or_raise().get_html_element()
+        r = easy.call_factory_retry(html.rq.get)(url)
+        h = html.HTMLResponseParser(r).check_ok_or_raise().get_html_element()
         for e in h.cssselect('.field-item a'):
             href = e.attrib['href']
             img_d = e.find('img').attrib
@@ -67,4 +70,4 @@ def iter_all_video_url_of_user(who: str, ecchi=True, only_urls=False):
 
 
 def find_video_id_in_link(link: str):
-    return re.match(r'.*/videos/([0-9a-z]+)', link).group(1)
+    return regex.match(r'.*/videos/([0-9a-z]+)', link).group(1)

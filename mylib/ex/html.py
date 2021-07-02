@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-import lxml.html
-import requests
+import lxml.html as lxml_html
+import requests as rq
 
-from mylib.easy import *
+from mylib import easy
 
 
 class ResponseError(Exception):
@@ -10,7 +10,7 @@ class ResponseError(Exception):
 
 
 class HTMLResponseParser:
-    def __init__(self, response=requests.Response):
+    def __init__(self, response=rq.Response):
         self._response = response
 
     @property
@@ -30,6 +30,6 @@ class HTMLResponseParser:
             raise ResponseError(self.r)
         return self
 
-    @functools.lru_cache()
-    def get_html_element(self) -> lxml.html.HtmlElement:
-        return lxml.html.fromstring(self.r.text)
+    @easy.functools.lru_cache()
+    def get_html_element(self) -> lxml_html.HtmlElement:
+        return lxml_html.fromstring(self.r.text)
