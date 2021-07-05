@@ -63,8 +63,8 @@ def iter_all_video_url_of_user(who: str, ecchi=True, only_urls=False):
                 yield {'title': title, 'url': url, 'thumbnail': thumbnail}
         find_next = h.cssselect('.pager-next a')
         if find_next:
-            next = find_next[-1]
-            url = f'https://{domain}{next.attrib["href"]}'
+            go_next = find_next[-1]
+            url = f'https://{domain}{go_next.attrib["href"]}'
         else:
             end = True
 
