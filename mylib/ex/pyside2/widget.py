@@ -11,7 +11,7 @@ def qt_text_label(s: str, parent=None, style=None):
     lb = QLabel(parent)
     lb.setText(s)
     if style:
-        lb.setStyleSheet(qt_style_sheet(style))
+        lb.setStyleSheet(ez_qt_style_sheet(style))
     return lb
 
 
@@ -24,8 +24,9 @@ class MixinForQWidget:
             self._connections = {}
             return self._connections
 
-    def reconnect_signal(self, signal, new=None, old=None):
-        self.connections[signal] = signal_reconnect(signal, new, old)
+    def signal_reconnect(self, signal, new=None, old=None):
+        self.connections[signal] = ez_qt_signal_reconnect(signal, new, old)
+
 
     @property
     def qss(self: QWidget):
@@ -36,7 +37,7 @@ class MixinForQWidget:
         self.setStyleSheet(value)
 
     def set_qss(self: QWidget, style, selector=None):
-        self.setStyleSheet(qt_style_sheet(style, selector))
+        self.setStyleSheet(ez_qt_style_sheet(style, selector))
         return self
 
     def new_shortcut(self, key_sequence: QKeySequence,
@@ -44,11 +45,11 @@ class MixinForQWidget:
                      parent_widget=...):
         shortcut = QShortcut(key_sequence, self if parent_widget is ... else parent_widget, None)
         if connect_to:
-            signal_connect(shortcut.activated, connect_to)
+            ez_qt_signal_connect(shortcut.activated, connect_to)
         return shortcut
 
 
-class EzQApplication(QApplication, MixinForQWidget):
+class EzQtApplication(QApplication, MixinForQWidget):
     def set_qt_translate(self, locale_name: str = None, filename_in_translations: str = None,
                          parent=...):
         translator = QTranslator(self if parent is ... else parent)
@@ -61,14 +62,14 @@ class EzQApplication(QApplication, MixinForQWidget):
         return self
 
 
-class EzQPushButton(QPushButton, MixinForQWidget):
+class EzQtPushButton(QPushButton, MixinForQWidget):
     @property
     def on_click(self):
         return self.connections.get(self.clicked, [])
 
     @on_click.setter
     def on_click(self, value):
-        self.reconnect_signal(self.clicked, value)
+        self.signal_reconnect(self.clicked, value)
 
     @Slot()
     def enable(self):
@@ -81,5 +82,5 @@ class EzQPushButton(QPushButton, MixinForQWidget):
         return self
 
 
-class EzQLabel(QLabel, MixinForQWidget):
+class EzQtLabel(QLabel, MixinForQWidget):
     pass

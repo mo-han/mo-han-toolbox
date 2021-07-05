@@ -4,7 +4,7 @@ from PySide2.QtWidgets import QWidget
 from mylib.easy import T
 
 
-def qt_style_sheet(style, selector=None):
+def ez_qt_style_sheet(style, selector=None):
     if isinstance(style, dict):
         style_sheet = '; '.join(f'{k.replace("_", "-")}: {v}' for k, v in style.items())
     elif isinstance(style, str):

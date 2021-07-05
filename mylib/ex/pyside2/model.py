@@ -6,9 +6,10 @@ from PySide2.QtGui import QStandardItemModel
 from PySide2.QtWidgets import QApplication
 
 from mylib.easy import FirstCountLastStop, T
+from mylib.ex.pyside2.signal import ez_qt_signal_connect
 
 
-class InternalItemsEzQListModel(QAbstractListModel):
+class EzQtInternalItemsListModel(QAbstractListModel):
     items_changed = Signal()
     an_item_changed = Signal(QModelIndex)
 
@@ -19,7 +20,7 @@ class InternalItemsEzQListModel(QAbstractListModel):
         self._items = []
         self.items_header = items_header
         self.data_getter_mapping = {Qt.DisplayRole: self.get_display_data, Qt.BackgroundRole: self.get_background_data}
-        self.items_changed.connect(self.layoutChanged)
+        ez_qt_signal_connect(self.items_changed, self.layoutChanged)
 
     @property
     def items_size(self):

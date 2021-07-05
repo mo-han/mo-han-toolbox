@@ -45,7 +45,7 @@ from PySide2.QtWidgets import QApplication, QMainWindow, QMessageBox
 SCRIPT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 
 
-class UILoader(QUiLoader):
+class EzQtUILoader(QUiLoader):
     """
     Subclass :class:`~PySide.QtUiTools.QUiLoader` to create the user interface
     in a base instance.
@@ -112,8 +112,8 @@ class UILoader(QUiLoader):
             return widget
 
 
-def load_ui(uifile, baseinstance=None, customWidgets=None,
-            workingDirectory=None):
+def ez_qt_load_ui(uifile, baseinstance=None, customWidgets=None,
+                  workingDirectory=None):
     """
     Dynamically load a user interface from the given ``uifile``.
     ``uifile`` is a string containing a file name of the UI file to load.
@@ -136,7 +136,7 @@ def load_ui(uifile, baseinstance=None, customWidgets=None,
     return the newly created instance of the user interface.
     """
 
-    loader = UILoader(baseinstance, customWidgets)
+    loader = EzQtUILoader(baseinstance, customWidgets)
 
     if workingDirectory is not None:
         loader.setWorkingDirectory(workingDirectory)
@@ -150,7 +150,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self, parent=None):
         QMainWindow.__init__(self, parent)
-        load_ui(os.path.join(SCRIPT_DIRECTORY, 'mainwindow.ui'), self)
+        ez_qt_load_ui(os.path.join(SCRIPT_DIRECTORY, 'mainwindow.ui'), self)
 
     @Slot(bool)
     def on_clickMe_clicked(self, is_checked):

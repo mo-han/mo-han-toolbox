@@ -5,7 +5,7 @@ from PySide2.QtWidgets import *
 from mylib.easy import T
 
 
-class EzQLayout:
+class EzQtLayout:
     def __init__(self, layout_class, owner_widget=None, parent=None):
         self.widget = owner_widget or QWidget(parent)
         self.layout: QLayout = layout_class(self.widget)
@@ -13,7 +13,7 @@ class EzQLayout:
 
     def add_widgets(self, *widgets):
         for w in widgets:
-            if isinstance(w, EzQLayout):
+            if isinstance(w, EzQtLayout):
                 self.layout.addWidget(w.widget)
             elif isinstance(w, T.Iterable):
                 for i in w:
@@ -23,7 +23,7 @@ class EzQLayout:
         return self
 
 
-class EzQScrollArea(EzQLayout):
+class EzQtScrollArea(EzQtLayout):
     def __init__(self, layout_class, parent=None, resizable=True):
         self.area = QScrollArea(parent)
         widget = QWidget(self.area)
@@ -32,7 +32,7 @@ class EzQScrollArea(EzQLayout):
         super().__init__(layout_class, widget, parent=parent)
 
 
-class HFlowQLayout(QLayout):
+class EzQtHFlow(QLayout):
     def __init__(self, parent=None):
         super().__init__(parent)
         if parent is not None:
@@ -71,7 +71,7 @@ class HFlowQLayout(QLayout):
         return height
 
     def setGeometry(self, rect):
-        super(HFlowQLayout, self).setGeometry(rect)
+        super(EzQtHFlow, self).setGeometry(rect)
         self._re_calc_height_from_layout(rect, False)
 
     def sizeHint(self):

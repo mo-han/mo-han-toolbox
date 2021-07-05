@@ -11,25 +11,25 @@ def __ref_sth():
     return
 
 
-class ThreadWorkerError:
+class EzQtThreadWorkerError:
     def __init__(self, e: Exception, trace: str):
         self.exception = e
         self.traceback_str = trace
 
 
-class ThreadWorkerSignal(QObject):
+class EzQtThreadWorkerSignal(QObject):
     started = Signal()
     finished = Signal()
     result = Signal(object)
     i_result = Signal(object)
-    error = Signal(ThreadWorkerError)
+    error = Signal(EzQtThreadWorkerError)
 
 
-class ThreadWorker(QRunnable):
+class EzQtThreadWorker(QRunnable):
     def __init__(self, callee, *args, **kwargs):
-        super(ThreadWorker, self).__init__()
+        super(EzQtThreadWorker, self).__init__()
         self.call_tuple = callee, args, kwargs
-        self.signals = ThreadWorkerSignal()
+        self.signals = EzQtThreadWorkerSignal()
 
     def set_parent(self, parent=None):
         self.signals.setParent(parent)
@@ -37,7 +37,7 @@ class ThreadWorker(QRunnable):
 
     def connect_signals(self, started=None, finished=None, result=None, i_result=None, error=None):
         s = self.signals
-        signal_batch_connect({
+        ez_qt_signal_batch_connect({
             s.started: started, s.finished: finished, s.result: result, s.i_result: i_result, s.error: error
         })
         return self
@@ -65,7 +65,7 @@ class ThreadWorker(QRunnable):
                 self.signals.result.emit(e.value)
                 # self.signals.error.emit(ThreadWorkerError(e, traceback.format_exc()))
         except Exception as e:
-            self.signals.error.emit(ThreadWorkerError(e, traceback.format_exc()))
+            self.signals.error.emit(EzQtThreadWorkerError(e, traceback.format_exc()))
         finally:
             self.signals.finished.emit()
         return self
