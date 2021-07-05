@@ -104,6 +104,13 @@ def per_site(args: T.List[str]):
                                 'filename="{category}.{index}.{date!S:.10}.'
                                 '{title}.{artist!S:L80/(various)/}.{extension}"', ]),
                 *args, url]
+    elif 'kemono.party' in url:
+        args = [*GLDLCLIArgs(cookies=get_cookies_path('kemonoparty'),
+                             o=['cookies-update=true', 'videos=true', 'tags=true', 'metadata=true',
+                                'directory=["[{username}] {category} {service} {user}"]',
+                                'filename="{category}.{service}.{user}.{id}_p{num}.{date!S:.10}.{filename}.'
+                                '{title}.{content}.{extension}"', ]),
+                *args, url]
     else:
         raise NotImplementedError(url)
 
