@@ -19,26 +19,28 @@ class MixinForQWidget:
     @property
     def connections(self):
         try:
-            return self._connections
+            return self.__signal_connections
         except AttributeError:
-            self._connections = {}
-            return self._connections
+            self.__signal_connections = {}
+            return self.__signal_connections
 
     def signal_reconnect(self, signal, new=None, old=None):
         self.connections[signal] = ez_qt_signal_reconnect(signal, new, old)
 
-
-    @property
-    def qss(self: QWidget):
+    def get_qss(self: QWidget):
         return self.styleSheet()
-
-    @qss.setter
-    def qss(self: QWidget, value):
-        self.setStyleSheet(value)
 
     def set_qss(self: QWidget, style, selector=None):
         self.setStyleSheet(ez_qt_style_sheet(style, selector))
         return self
+
+    @property
+    def qss(self):
+        return self.get_qss()
+
+    @qss.setter
+    def qss(self: QWidget, value):
+        self.set_qss(value)
 
     def new_shortcut(self, key_sequence: QKeySequence,
                      connect_to: T.Union[T.Callable[..., T.Any], T.Iterable[T.Callable[..., T.Any]]],

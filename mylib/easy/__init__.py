@@ -768,3 +768,20 @@ class FirstCountLastStop:
         self.stop = first + count
         self.last = self.stop - 1
         return self
+
+
+class EzTypeError(TypeError):
+    def __init__(self, name, *args, expect=None, given=None):
+        super(EzTypeError, self).__init__(name, *args)
+        if expect:
+            self.expect = expect
+        if given:
+            self.given = given
+
+    @property
+    def has_expect(self):
+        return hasattr(self, 'expect')
+
+    @property
+    def has_given(self):
+        return hasattr(self, 'given')
