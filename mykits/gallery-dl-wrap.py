@@ -38,6 +38,20 @@ class GLDLCLIArgs(CLIArgumentsList):
     merge_option_nargs = False
 
 
+def make_options_list(options_dict: dict):
+    r = []
+    for k, v in options_dict.items():
+        if isinstance(v, str):
+            r.append(f'{k}={v}')
+        elif isinstance(v, T.Iterable):
+            il = []
+            for i in v:
+                if isinstance(i, str):
+                    il.append(f'"{i}"')
+            r.append(f'{k}=[{", ".join(il)}]')
+    return r
+
+
 def new_gallery_dl_cmd(*args, **kwargs):
     cmd = GLDLCLIArgs('gallery-dl', R=10, c=conf_path,
                       o=f'base-directory={base_dir}', )
@@ -111,6 +125,11 @@ def per_site(args: T.List[str]):
                                 'filename="{category}.{service}.{user}.{id}_p{num}.{date!S:.10}.{filename}.'
                                 '{title}.{content}.{extension}"', ]),
                 *args, url]
+    elif 'nhentai' in url:
+        args = [*GLDLCLIArgs(o=make_options_list(dict(
+            directory=['{title} [{category} {gallery_id}]'],
+            filename='{filename}.{extension}'
+        ))), *args, url]
     else:
         raise NotImplementedError(url)
 
@@ -148,6 +167,8 @@ def args2url(args):
             url = f'https://idol.sankakucomplex.com/?tags={x}'
     elif first in ('ng', 'newgrounds'):
         url = f'https://{pop_tag_from_args(args)}.newgrounds.com/art'
+    elif first in ('kemono', 'kemonoparty', 'kemono.party'):
+        url = f'https://kemono.party/{pop_tag_from_args(args)}'
     else:
         url = first
     if url.startswith('https://twitter.com/') and not url.endswith('/media'):
