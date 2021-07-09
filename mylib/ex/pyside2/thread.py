@@ -38,7 +38,7 @@ class EzQtThreadWorker(QObject, QRunnable):
         return self
 
     def connect_signals(self, started=None, finished=None, result=None, i_result=None, error=None):
-        ez_qt_signal_batch_connect({
+        ez_qt_signal_map({
             self.signal_started: started, self.signal_finished: finished, self.signal_result: result,
             self.signal_i_result: i_result, self.signal_error: error
         })

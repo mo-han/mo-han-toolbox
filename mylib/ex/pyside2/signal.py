@@ -36,7 +36,7 @@ def ez_qt_signal_disconnect(signal, slot=None):
         pass
 
 
-def ez_qt_signal_batch_connect(mapping: dict):
+def ez_qt_signal_map(mapping: dict):
     r = {}
     for signal, slot in mapping.items():
         r[signal] = ez_qt_signal_connect(signal, slot)
