@@ -11,7 +11,7 @@ def qt_text_label(s: str, parent=None, style=None):
     lb = QLabel(parent)
     lb.setText(s)
     if style:
-        lb.setStyleSheet(ez_qt_style_sheet(style))
+        lb.setStyleSheet(ez_qss(style))
     return lb
 
 
@@ -31,7 +31,7 @@ class MixinForQWidget:
         return self.styleSheet()
 
     def set_qss(self: QWidget, style, selector=None):
-        self.setStyleSheet(ez_qt_style_sheet(style, selector))
+        self.setStyleSheet(ez_qss(style, selector))
         return self
 
     @property
