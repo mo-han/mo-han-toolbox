@@ -126,6 +126,7 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
             continue
         with zipfile.ZipFile(fp) as zf:
             if any(map(lambda x: path_basename(x) == flag_filename_of_webp_converted, zf.namelist())):
+                lgr.info(f'# skip {fp}')
                 continue
             for i in zf.infolist():
                 if i.is_dir():
