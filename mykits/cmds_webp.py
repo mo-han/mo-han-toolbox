@@ -112,6 +112,7 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
          strict_mode=an.strict, verbose=an.verbose)
 def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=False, verbose=False):
     """convert non-webp picture inside zip file"""
+    flag_filename_of_webp_converted = '__ALREADY_WEBP_CONVERTED__'
     lgr = logging.get_logger(convert_in_zip.__name__, 'INFO' if verbose else 'ERROR', fmt=logging.LOG_FMT_MESSAGE_ONLY)
 
     dirs, files = resolve_path_to_dirs_files(src)
@@ -124,11 +125,13 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
         if not fstk.does_file_mime_has(fp, 'zip'):
             continue
         with zipfile.ZipFile(fp) as zf:
+            if any(map(lambda x: path_basename(x) == flag_filename_of_webp_converted, zf.namelist())):
+                continue
             for i in zf.infolist():
                 if i.is_dir():
                     continue
-                with zf.open(i.filename) as af:
-                    mime = filetype.guess_mime(af.read(512))
+                with zf.open(i.filename) as i_file_io:
+                    mime = filetype.guess_mime(i_file_io.read(512))
                 if mime and 'image' in mime:
                     if mime == 'image/gif':
                         continue
@@ -153,6 +156,7 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
                 if path_is_dir(unzip_dir):
                     shutil.rmtree(unzip_dir)
                 continue
+            fstk.touch(path_join(unzip_dir, flag_filename_of_webp_converted))
         try:
             old_size = path_get_size(fp)
             auto_cvt(unzip_dir, recursive=True, clean=True, cbz=False, workers=workers, verbose=verbose)
