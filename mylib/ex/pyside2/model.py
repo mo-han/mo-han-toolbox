@@ -10,17 +10,18 @@ from mylib.ex.pyside2.signal import ez_qt_signal_connect
 
 
 class EzQtInternalItemsListModel(QAbstractListModel):
-    items_changed = Signal()
-    an_item_changed = Signal(QModelIndex)
+    batch_size = 100
+    signal_items_changed = Signal()
+    signal_an_item_changed = Signal(QModelIndex)
 
-    def __init__(self, parent=None, batch_size=100, items_header='Items'):
+    def __init__(self, parent=None, batch_size=None, items_header='Items'):
         super().__init__(parent)
-        self._batch_size = batch_size
+        self._batch_size = batch_size or self.batch_size
         self._current_size = 0
         self._items = []
         self.items_header = items_header
         self.data_getter_mapping = {Qt.DisplayRole: self.get_display_data, Qt.BackgroundRole: self.get_background_data}
-        ez_qt_signal_connect(self.items_changed, self.layoutChanged)
+        ez_qt_signal_connect(self.signal_items_changed, self.layoutChanged)
 
     @property
     def items_size(self):
@@ -35,12 +36,12 @@ class EzQtInternalItemsListModel(QAbstractListModel):
     @contextlib.contextmanager
     def ctx_change_items(self):
         yield
-        self.items_changed.emit()
+        self.signal_items_changed.emit()
 
     @contextlib.contextmanager
     def ctx_change_an_item(self, index):
         yield
-        self.an_item_changed.emit(index)
+        self.signal_an_item_changed.emit(index)
 
     @staticmethod
     def convert_model_index_to_item_index(index: QModelIndex):

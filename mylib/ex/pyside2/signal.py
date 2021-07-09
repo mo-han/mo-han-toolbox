@@ -12,8 +12,7 @@ def ez_qt_signal_connect(signal, slot):
     r = []
     if isinstance(slot, Iterable):
         for i_slot in slot:
-            signal.connect(i_slot)
-            r.append(i_slot)
+            ez_qt_signal_connect(signal, i_slot)
     elif slot:
         signal.connect(slot)
         r.append(slot)
