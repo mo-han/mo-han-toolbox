@@ -79,7 +79,7 @@ def move_into_dir(src, dst, pattern, alias, dry_run, sub_dir):
     sub_dirs_l = next(os.walk(dst))[1]
     __ = []
     for sub_dir_basename in sub_dirs_l:
-        if re.fullmatch(r'#\w+=', sub_dir_basename):
+        if re.fullmatch(r'#\w+', sub_dir_basename):
             for sub_sub_dir_basename in next(os.walk(path_join(dst, sub_dir_basename)))[1]:
                 __.append(path_join(sub_dir_basename, sub_sub_dir_basename))
         else:

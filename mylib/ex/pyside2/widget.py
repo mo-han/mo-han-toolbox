@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
+from PySide2.QtCore import QPoint
 from PySide2.QtGui import *
+from PySide2.QtGui import QPainter, QRegion
 from PySide2.QtWidgets import *
 from PySide2.QtCore import *
+from PySide2.QtWidgets import QWidget
 
+from mylib import easy
 from mylib.ex.pyside2.signal import *
 from mylib.ex.pyside2.style import *
 
@@ -15,7 +19,7 @@ def qt_text_label(s: str, parent=None, style=None):
     return lb
 
 
-class MixinForQWidget:
+class EzQtWidgetMixin:
     @property
     def connections(self):
         try:
@@ -50,8 +54,13 @@ class MixinForQWidget:
             ez_qt_signal_connect(shortcut.activated, connect_to)
         return shortcut
 
+    @easy.contextlib.contextmanager
+    def ctx_delete_later(self: QWidget):
+        yield self
+        self.deleteLater()
 
-class EzQtApplication(QApplication, MixinForQWidget):
+
+class EzQtApplication(QApplication, EzQtWidgetMixin):
     def set_qt_translate(self, locale_name: str = None, filename_in_translations: str = None,
                          parent=...):
         translator = QTranslator(self if parent is ... else parent)
@@ -64,7 +73,7 @@ class EzQtApplication(QApplication, MixinForQWidget):
         return self
 
 
-class EzQtPushButton(QPushButton, MixinForQWidget):
+class EzQtPushButton(QPushButton, EzQtWidgetMixin):
     @property
     def on_click(self):
         return self.connections.get(self.clicked, [])
@@ -84,5 +93,34 @@ class EzQtPushButton(QPushButton, MixinForQWidget):
         return self
 
 
-class EzQtLabel(QLabel, MixinForQWidget):
+class EzQtLabel(QLabel, EzQtWidgetMixin):
     pass
+
+
+class EzQtDelegateWidgetMixin:
+    __qt_painter__: QPainter
+
+    @easy.contextlib.contextmanager
+    def ctx_painter_translate_offset(self, *offset):
+        self.__qt_painter__.save()
+        self.__qt_painter__.translate(*offset)
+        yield self.__qt_painter__
+        self.__qt_painter__.restore()
+
+    def set_painter(self, painter):
+        self.__qt_painter__ = painter
+        return self
+
+    def draw_widget(self, flags=QWidget.DrawChildren):
+        painter = self.__qt_painter__
+        self: QWidget
+        self.render(painter, QPoint(), QRegion(), flags)
+
+    def draw_widget_snap(self):
+        painter = self.__qt_painter__
+        self: QWidget
+        painter.drawPixmap(QPoint(), self.grab())
+
+    def draw(self, *offset):
+        with self.ctx_painter_translate_offset(*offset):
+            self.draw_widget()

@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """THIS MODULE MUST ONLY DEPEND ON STANDARD LIBRARIES OR BUILT-IN"""
-import contextlib
-import ctypes
-import functools
+import contextlib as contextlib
+import ctypes as ctypes
+import functools as functools
+import importlib as importlib
 import importlib.util
-import inspect
-import itertools
-import locale
+import inspect as inspect
+import itertools as itertools
+import locale as locale
+import urllib as urllib
 import urllib.parse
 
 from . import io

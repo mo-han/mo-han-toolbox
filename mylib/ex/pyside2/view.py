@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from PySide2.QtCore import QItemSelectionModel, QAbstractItemModel
 from PySide2.QtWidgets import QAbstractItemView, QScroller
+
 from mylib.ex.pyside2.signal import ez_qt_signal_connect
 
 

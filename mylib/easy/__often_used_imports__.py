@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-import glob
-import os
-import pathlib
-import queue
-import re
-import subprocess
-import sys
-import threading
-import time
+import glob as glob
+import os as os
+import pathlib as pathlib
+import queue as queue
+import re as re
+import subprocess as subprocess
+import sys as sys
+import threading as threading
+import time as time
 from time import sleep
 
 
