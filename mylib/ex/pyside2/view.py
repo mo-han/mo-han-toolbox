@@ -5,12 +5,12 @@ from PySide2.QtWidgets import QAbstractItemView, QScroller
 from mylib.ex.pyside2.signal import ez_qt_signal_connect
 
 
-def ez_qt_set_left_mouse_gesture_scrolling(obj):
+def ez_qt_view_left_mouse_gesture_scrolling(obj):
     QScroller.grabGesture(obj.viewport(), QScroller.ScrollerGestureType.LeftMouseButtonGesture)
     return QScroller.scroller(obj)
 
 
-def ez_qt_set_pixel_scrolling(view: QAbstractItemView):
+def ez_qt_view_pixel_scrolling(view: QAbstractItemView):
     view.setVerticalScrollMode(view.ScrollPerPixel)
 
 
@@ -25,11 +25,24 @@ class EzQtModelViewWrapper:
         self.index = self.model.index
         self.data = self.model.data
 
-    def connect_signal_selection_changed(self, callee_as_slot):
+    def set_delegate(self, delegate=None, for_row=None, for_col=None):
+        if delegate:
+            self.view.setItemDelegate(delegate)
+        if for_row:
+            self.view.setItemDelegateForRow(for_row)
+        if for_col:
+            self.view.setItemDelegateForColumn(for_col)
+        return self
+
+    def set_alternating_row(self, enable=True):
+        self.view.setAlternatingRowColors(enable)
+        return self
+
+    def signal_connect_selection_changed(self, callee_as_slot):
         ez_qt_signal_connect(self.selection_model.selectionChanged, callee_as_slot)
         return self
 
-    def connect_signal_current_changed(self, callee_as_slot):
+    def signal_connect_current_changed(self, callee_as_slot):
         ez_qt_signal_connect(self.selection_model.selectionChanged, callee_as_slot)
         return self
 
