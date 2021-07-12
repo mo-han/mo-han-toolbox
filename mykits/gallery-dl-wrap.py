@@ -69,18 +69,18 @@ def per_site(args: T.List[str]):
         args = [*GLDLCLIArgs(ugoira_conv=True,
                              o=['cookies-update=true',
                                 'filename="{category}.{id}_p{num}.{date:%Y-%m-%d}.{title}.{extension}"',
-                                'directory=["[{user[name]}] {category} {user[id]}"]']),
+                                'directory=["{category} {user[name]} {user[id]}"]']),
                 *args, url]
     elif 'fanbox.cc' in url:
         args = [*GLDLCLIArgs(cookies=get_cookies_path('fanbox'),
                              o=['cookies-update=true', 'videos=true',
                                 'filename="{category}.{id}_p{num}.{date!S:.10}.{filename}.@{creatorId}.{extension}"',
-                                'directory=["[{user[name]}] pixiv {user[userId]} {category} {creatorId}"]']),
+                                'directory=["pixiv {user[name]} {user[userId]} {category} {creatorId}"]']),
                 *args, url]
     elif 'twitter.com' in url:
         args = [*GLDLCLIArgs(o=['videos=true', 'retweets=false', 'content=true',
                                 'filename="twitter.{tweet_id}_p{num}.{date:%Y-%m-%d}.{filename}.{extension}"',
-                                'directory=["[{author[nick]}] {category} @{author[name]}"]']),
+                                'directory=["{category} {author[nick]} @{author[name]}"]']),
                 *args, url]
     elif 'danbooru.donmai.us' in url:
         args = [*GLDLCLIArgs(cookies=get_cookies_path('danbooru'),
@@ -121,7 +121,7 @@ def per_site(args: T.List[str]):
     elif 'kemono.party' in url:
         args = [*GLDLCLIArgs(cookies=get_cookies_path('kemonoparty'),
                              o=['cookies-update=true', 'videos=true', 'tags=true', 'metadata=true',
-                                'directory=["[{username}] {category} {service} {user}"]',
+                                'directory=["{category} {service} {username} {user}"]',
                                 'filename="{category}.{service}.{user}.{id}_p{num}.{date!S:.10}.{filename}.'
                                 '{title}.{content}.{extension}"', ]),
                 *args, url]
