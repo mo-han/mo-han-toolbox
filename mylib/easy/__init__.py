@@ -787,3 +787,13 @@ class EzTypeError(TypeError):
     @property
     def has_given(self):
         return hasattr(self, 'given')
+
+
+def find_most_frequent_in_iterable(x):
+    count = {}
+    for i in x:
+        count[i] = count.get(i, 0) + 1
+    if not count:
+        return []
+    the_max = max(count.values())
+    return [k for k, v in count.items() if v == the_max]

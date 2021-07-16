@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import lxml.html as lxml_html
-import requests as rq
+import requests as requests
 
 from mylib import easy
 
@@ -10,7 +10,7 @@ class ResponseError(Exception):
 
 
 class HTMLResponseParser:
-    def __init__(self, response=rq.Response):
+    def __init__(self, response=requests.Response):
         self._response = response
 
     @property

@@ -47,7 +47,7 @@ def iter_all_video_url_of_user(who: str, ecchi=True, only_urls=False):
     end = False
 
     while not end:
-        r = easy.call_factory_retry(html.rq.get)(url)
+        r = easy.call_factory_retry(html.requests.get)(url)
         h = html.HTMLResponseParser(r).check_ok_or_raise().get_html_element()
         for e in h.cssselect('.field-item a'):
             href = e.attrib['href']
