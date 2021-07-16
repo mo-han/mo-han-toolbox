@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pprint import pprint
 
 import PIL.Image
+import chardet
 import filetype
 from humanize import naturaldelta, naturalsize
 from send2trash import send2trash
@@ -101,7 +102,7 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
         os_exit_force(1)
 
 
-@apr.sub(apr.rnu(), aliases=['cvt.zip'])
+@apr.sub(apr.rnu(), aliases=['cvt.in.zip', 'cvt.zip'])
 @apr.arg(an.src, nargs='*')
 @apr.opt(an.w, an.workdir, default='.')
 @apr.opt(an.x, an.extension, default='.cbz', help='file extension')
@@ -110,7 +111,8 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
 @apr.opt('k', 'workers', type=int, metavar='N')
 @apr.map(an.src, workdir=an.workdir, workers='workers', ext_name=an.extension,
          strict_mode=an.strict, verbose=an.verbose)
-def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=False, verbose=False):
+def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=False, verbose=False,
+                   fallback_filename_encoding=get_os_default_encoding()):
     """convert non-webp picture inside zip file"""
     flag_filename_of_webp_converted = '__ALREADY_WEBP_CONVERTED__'
     lgr = logging.get_logger(convert_in_zip.__name__, 'INFO' if verbose else 'ERROR', fmt=logging.LOG_FMT_MESSAGE_ONLY)
@@ -122,16 +124,44 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
 
     for fp in files:
         need_to_convert = False
+
         if not fstk.does_file_mime_has(fp, 'zip'):
             continue
+
         with zipfile.ZipFile(fp) as zf:
             if any(map(lambda x: path_basename(x) == flag_filename_of_webp_converted, zf.namelist())):
                 lgr.info(f'# skip {fp}')
                 continue
+
+            possible_encodings = []
+            for i in zf.infolist():
+                if i.flag_bits & 0x800:  # UTF-8 filename flag
+                    continue
+                filename_cp437 = i.filename.encode('cp437')
+                guess_encoding = chardet.detect(filename_cp437)['encoding'] or fallback_filename_encoding
+                if guess_encoding.startswith('ISO-8859') or guess_encoding in ('IBM866',):
+                    guess_encoding = fallback_filename_encoding
+                if guess_encoding == 'ascii':
+                    continue
+                possible_encodings.append(guess_encoding)
+            the_most_encodings = find_most_frequent_in_iterable(possible_encodings)
+            # print(possible_encodings)
+            # print(the_most_encodings)
+            if len(the_most_encodings) == 1:
+                encoding = the_most_encodings[0]
+                for i in zf.infolist():
+                    if i.flag_bits & 0x800:  # UTF-8 filename flag
+                        continue
+                    filename_cp437 = i.filename.encode('cp437')
+                    i.filename = filename_cp437.decode(encoding)
+                    zf.NameToInfo[i.filename] = i
+            elif the_most_encodings:
+                raise NotImplementedError(the_most_encodings)
+
             for i in zf.infolist():
                 if i.is_dir():
                     continue
-                with zf.open(i.filename) as i_file_io:
+                with zf.open(i) as i_file_io:
                     mime = filetype.guess_mime(i_file_io.read(512))
                 if mime and 'image' in mime:
                     if mime == 'image/gif':
@@ -148,6 +178,7 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
                             break
                         else:
                             continue
+
             if not need_to_convert:
                 continue
             unzip_dir = path_join(workdir, split_path_dir_base_ext(fp)[1])
@@ -157,10 +188,11 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
                 if path_is_dir(unzip_dir):
                     shutil.rmtree(unzip_dir)
                 continue
-            fstk.touch(path_join(unzip_dir, flag_filename_of_webp_converted))
+
         try:
             old_size = path_get_size(fp)
             auto_cvt(unzip_dir, recursive=True, clean=True, cbz=False, workers=workers, verbose=verbose)
+            fstk.touch(path_join(unzip_dir, flag_filename_of_webp_converted))
             new_zip = shutil.make_archive(unzip_dir, 'zip', unzip_dir, verbose=verbose)
             if ext_name:
                 new_zip = fstk.rename_file_ext(new_zip, ext_name)
