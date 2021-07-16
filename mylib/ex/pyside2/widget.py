@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
-from PySide2.QtCore import QPoint
-from PySide2.QtGui import *
-from PySide2.QtGui import QPainter, QRegion
-from PySide2.QtWidgets import *
 from PySide2.QtCore import *
-from PySide2.QtWidgets import QWidget
+from PySide2.QtGui import *
+from PySide2.QtWidgets import *
 
 from mylib import easy
 from mylib.ex.pyside2.signal import *
@@ -17,6 +14,12 @@ def qt_text_label(s: str, parent=None, style=None):
     if style:
         lb.setStyleSheet(ez_qss(style))
     return lb
+
+
+@easy.contextlib.contextmanager
+def ez_qt_ctx_delete_later(w):
+    yield
+    w.deleteLater()
 
 
 class EzQtWidgetMixin:

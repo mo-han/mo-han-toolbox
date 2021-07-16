@@ -9,7 +9,7 @@ from mylib.easy import FirstCountLastStop, T
 from mylib.ex.pyside2.signal import ez_qt_signal_connect
 
 
-class EzQtInternalItemsListModel(QAbstractListModel):
+class EzQtInternalItemsListModelExample(QAbstractListModel):
     batch_size = 100
     signal_items_changed = Signal()
     signal_an_item_changed = Signal(QModelIndex)

@@ -18,12 +18,13 @@ class EzQtModelViewWrapper:
     EditTriggerEnum = QAbstractItemView.EditTrigger
 
     def __init__(self, model, view):
-        self.model: QAbstractItemModel = model
         self.view: QAbstractItemView = view
-        self.view.setModel(self.model)
-        self.selection_model: QItemSelectionModel = self.view.selectionModel()
-        self.index = self.model.index
-        self.data = self.model.data
+        self.view.setModel(model)
+        self.__model = self.view.model()
+
+    @property
+    def selection_model(self):
+        return self.view.selectionModel()
 
     def set_delegate(self, delegate=None, for_row=None, for_col=None):
         if delegate:
@@ -44,6 +45,19 @@ class EzQtModelViewWrapper:
 
     def signal_connect_current_changed(self, callee_as_slot):
         ez_qt_signal_connect(self.selection_model.selectionChanged, callee_as_slot)
+        return self
+
+    @property
+    def model(self):
+        return self.__model
+
+    @model.setter
+    def model(self, value):
+        self.set_model(value)
+
+    def set_model(self, model):
+        self.view.setModel(model)
+        self.__model = model
         return self
 
     @property
