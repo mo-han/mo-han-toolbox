@@ -381,7 +381,9 @@ def move_as(src, dst, *, on_exist: OnExist = OnExist.OVERWRITE, dry_run=False, p
         if dry_run:
             return dst
         else:
-            os.makedirs(path_dirname(path_normalize(dst)), exist_ok=True)
+            dst_dir = path_dirname(path_normalize(dst))
+            if dst_dir:
+                os.makedirs(dst_dir, exist_ok=True)
             return wrapped_shutil_move(src, dst)
 
     if predicate_fs_path('d', src, use_cache=predicate_path_use_cache):

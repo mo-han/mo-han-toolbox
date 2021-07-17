@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
+from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
-from PySide2.QtCore import *
 
+from mylib import easy
 from mylib.ex.pyside2.signal import *
 from mylib.ex.pyside2.style import *
 
@@ -11,44 +12,58 @@ def qt_text_label(s: str, parent=None, style=None):
     lb = QLabel(parent)
     lb.setText(s)
     if style:
-        lb.setStyleSheet(qt_style_sheet(style))
+        lb.setStyleSheet(ez_qss(style))
     return lb
 
 
-class MixinForQWidget:
+@easy.contextlib.contextmanager
+def ez_qt_ctx_delete_later(w):
+    yield
+    w.deleteLater()
+
+
+class EzQtWidgetMixin:
     @property
     def connections(self):
         try:
-            return self._connections
+            return self.__signal_connections
         except AttributeError:
-            self._connections = {}
-            return self._connections
+            self.__signal_connections = {}
+            return self.__signal_connections
 
-    def reconnect_signal(self, signal, new=None, old=None):
-        self.connections[signal] = signal_reconnect(signal, new, old)
+    def signal_reconnect(self, signal, new=None, old=None):
+        self.connections[signal] = ez_qt_signal_reconnect(signal, new, old)
+
+    def get_qss(self: QWidget):
+        return self.styleSheet()
+
+    def set_qss(self: QWidget, style, selector=None):
+        self.setStyleSheet(ez_qss(style, selector))
+        return self
 
     @property
-    def qss(self: QWidget):
-        return self.styleSheet()
+    def qss(self):
+        return self.get_qss()
 
     @qss.setter
     def qss(self: QWidget, value):
-        self.setStyleSheet(value)
-
-    def set_qss(self: QWidget, style, selector=None):
-        self.setStyleSheet(qt_style_sheet(style, selector))
-        return self
+        self.set_qss(value)
 
     def new_shortcut(self, key_sequence: QKeySequence,
                      connect_to: T.Union[T.Callable[..., T.Any], T.Iterable[T.Callable[..., T.Any]]],
                      parent_widget=...):
         shortcut = QShortcut(key_sequence, self if parent_widget is ... else parent_widget, None)
         if connect_to:
-            signal_connect(shortcut.activated, connect_to)
+            ez_qt_signal_connect(shortcut.activated, connect_to)
         return shortcut
 
+    @easy.contextlib.contextmanager
+    def ctx_delete_later(self: QWidget):
+        yield self
+        self.deleteLater()
 
-class EzQApplication(QApplication, MixinForQWidget):
+
+class EzQtApplication(QApplication, EzQtWidgetMixin):
     def set_qt_translate(self, locale_name: str = None, filename_in_translations: str = None,
                          parent=...):
         translator = QTranslator(self if parent is ... else parent)
@@ -61,14 +76,14 @@ class EzQApplication(QApplication, MixinForQWidget):
         return self
 
 
-class EzQPushButton(QPushButton, MixinForQWidget):
+class EzQtPushButton(QPushButton, EzQtWidgetMixin):
     @property
     def on_click(self):
         return self.connections.get(self.clicked, [])
 
     @on_click.setter
     def on_click(self, value):
-        self.reconnect_signal(self.clicked, value)
+        self.signal_reconnect(self.clicked, value)
 
     @Slot()
     def enable(self):
@@ -81,5 +96,34 @@ class EzQPushButton(QPushButton, MixinForQWidget):
         return self
 
 
-class EzQLabel(QLabel, MixinForQWidget):
+class EzQtLabel(QLabel, EzQtWidgetMixin):
     pass
+
+
+class EzQtDelegateWidgetMixin:
+    __qt_painter__: QPainter
+
+    @easy.contextlib.contextmanager
+    def ctx_painter_translate_offset(self, *offset):
+        self.__qt_painter__.save()
+        self.__qt_painter__.translate(*offset)
+        yield self.__qt_painter__
+        self.__qt_painter__.restore()
+
+    def set_painter(self, painter):
+        self.__qt_painter__ = painter
+        return self
+
+    def draw_widget(self, flags=QWidget.DrawChildren):
+        painter = self.__qt_painter__
+        self: QWidget
+        self.render(painter, QPoint(), QRegion(), flags)
+
+    def draw_widget_snap(self):
+        painter = self.__qt_painter__
+        self: QWidget
+        painter.drawPixmap(QPoint(), self.grab())
+
+    def draw(self, *offset):
+        with self.ctx_painter_translate_offset(*offset):
+            self.draw_widget()

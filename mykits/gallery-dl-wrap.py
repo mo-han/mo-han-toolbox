@@ -38,6 +38,20 @@ class GLDLCLIArgs(CLIArgumentsList):
     merge_option_nargs = False
 
 
+def make_options_list(options_dict: dict):
+    r = []
+    for k, v in options_dict.items():
+        if isinstance(v, str):
+            r.append(f'{k}={v}')
+        elif isinstance(v, T.Iterable):
+            il = []
+            for i in v:
+                if isinstance(i, str):
+                    il.append(f'"{i}"')
+            r.append(f'{k}=[{", ".join(il)}]')
+    return r
+
+
 def new_gallery_dl_cmd(*args, **kwargs):
     cmd = GLDLCLIArgs('gallery-dl', R=10, c=conf_path,
                       o=f'base-directory={base_dir}', )
@@ -55,18 +69,18 @@ def per_site(args: T.List[str]):
         args = [*GLDLCLIArgs(ugoira_conv=True,
                              o=['cookies-update=true',
                                 'filename="{category}.{id}_p{num}.{date:%Y-%m-%d}.{title}.{extension}"',
-                                'directory=["[{user[name]}] {category} {user[id]}"]']),
+                                'directory=["{category} {user[name]} {user[id]}"]']),
                 *args, url]
     elif 'fanbox.cc' in url:
         args = [*GLDLCLIArgs(cookies=get_cookies_path('fanbox'),
                              o=['cookies-update=true', 'videos=true',
                                 'filename="{category}.{id}_p{num}.{date!S:.10}.{filename}.@{creatorId}.{extension}"',
-                                'directory=["[{user[name]}] pixiv {user[userId]} {category} {creatorId}"]']),
+                                'directory=["pixiv {user[name]} {user[userId]} {category} {creatorId}"]']),
                 *args, url]
     elif 'twitter.com' in url:
         args = [*GLDLCLIArgs(o=['videos=true', 'retweets=false', 'content=true',
                                 'filename="twitter.{tweet_id}_p{num}.{date:%Y-%m-%d}.{filename}.{extension}"',
-                                'directory=["[{author[nick]}] {category} @{author[name]}"]']),
+                                'directory=["{category} {author[nick]} @{author[name]}"]']),
                 *args, url]
     elif 'danbooru.donmai.us' in url:
         args = [*GLDLCLIArgs(cookies=get_cookies_path('danbooru'),
@@ -104,6 +118,18 @@ def per_site(args: T.List[str]):
                                 'filename="{category}.{index}.{date!S:.10}.'
                                 '{title}.{artist!S:L80/(various)/}.{extension}"', ]),
                 *args, url]
+    elif 'kemono.party' in url:
+        args = [*GLDLCLIArgs(cookies=get_cookies_path('kemonoparty'),
+                             o=['cookies-update=true', 'videos=true', 'tags=true', 'metadata=true',
+                                'directory=["{category} {service} {username} {user}"]',
+                                'filename="{category}.{service}.{user}.{id}_p{num}.{date!S:.10}.{filename}.'
+                                '{title}.{content}.{extension}"', ]),
+                *args, url]
+    elif 'nhentai' in url:
+        args = [*GLDLCLIArgs(o=make_options_list(dict(
+            directory=['{title} [{category} {gallery_id}]'],
+            filename='{filename}.{extension}'
+        ))), *args, url]
     else:
         raise NotImplementedError(url)
 
@@ -141,6 +167,8 @@ def args2url(args):
             url = f'https://idol.sankakucomplex.com/?tags={x}'
     elif first in ('ng', 'newgrounds'):
         url = f'https://{pop_tag_from_args(args)}.newgrounds.com/art'
+    elif first in ('kemono', 'kemonoparty', 'kemono.party'):
+        url = f'https://kemono.party/{pop_tag_from_args(args)}'
     else:
         url = first
     if url.startswith('https://twitter.com/') and not url.endswith('/media'):

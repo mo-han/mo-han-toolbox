@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """THIS MODULE MUST ONLY DEPEND ON STANDARD LIBRARIES OR BUILT-IN"""
-import contextlib
-import ctypes
-import functools
+import contextlib as contextlib
+import ctypes as ctypes
+import functools as functools
+import importlib as importlib
 import importlib.util
-import inspect
-import itertools
-import locale
+import inspect as inspect
+import itertools as itertools
+import locale as locale
+import urllib as urllib
 import urllib.parse
 
 from . import io
@@ -768,3 +770,30 @@ class FirstCountLastStop:
         self.stop = first + count
         self.last = self.stop - 1
         return self
+
+
+class EzTypeError(TypeError):
+    def __init__(self, name, *args, expect=None, given=None):
+        super(EzTypeError, self).__init__(name, *args)
+        if expect:
+            self.expect = expect
+        if given:
+            self.given = given
+
+    @property
+    def has_expect(self):
+        return hasattr(self, 'expect')
+
+    @property
+    def has_given(self):
+        return hasattr(self, 'given')
+
+
+def find_most_frequent_in_iterable(x):
+    count = {}
+    for i in x:
+        count[i] = count.get(i, 0) + 1
+    if not count:
+        return []
+    the_max = max(count.values())
+    return [k for k, v in count.items() if v == the_max]

@@ -11,7 +11,7 @@ def get_cloudflare_ipaddr_hostmonit(key="o1zrmHAF"):
 
 def free_ss_site_vmess_uuid():
     r = requests.get('https://free-ss.site/')
-    for e in lxml.html.fromstring(r.text).cssselect('script'):
+    for e in lxml_html.fromstring(r.text).cssselect('script'):
         s = e.text
         if s and 'www.kernels.bid' in s:
-            return re.findall(REGEX_GUID, s)[0]
+            return easy.re.findall(easy.REGEX_GUID, s)[0]
