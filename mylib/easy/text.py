@@ -133,8 +133,8 @@ def ellipt_middle(s: str, limit: int, *, the_ellipsis: str = '...', encoding: st
     half_limit = (limit - len(the_ellipsis.encode(encoding=encoding) if encoding else the_ellipsis)) // 2
     common_params = dict(encoding=encoding, the_ellipsis='', limit=half_limit)
     half_s_len = len(s) // 2 + 1
-    left = ellipt_end(s[:half_s_len], left_side=True, **common_params)
-    right = ellipt_end(s[half_s_len:], left_side=False, **common_params)
+    left = ellipt_end(s[:half_s_len], left_side=False, **common_params)
+    right = ellipt_end(s[half_s_len:], left_side=True, **common_params)
     lr = f'{left}{right}'
     if the_ellipsis:
         if len(lr) == len(s):

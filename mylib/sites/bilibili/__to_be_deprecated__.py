@@ -172,7 +172,7 @@ def code_modify_you_get_extractor(x: str):
 
 
 def new_legitimize(text: str, os=...):
-    return ellipt_middle(fstk.sanitize(text, fstk.POTENTIAL_INVALID_CHARS_MAP), 200, encoding='u8').lstrip('.')
+    return ellipt_middle(fstk.sanitize(text, fstk.POTENTIAL_INVALID_CHARS_MAP), 200, encoding='utf8').lstrip('.')
 
 
 you_get.extractor = python_module_from_source_code('you_get.extractor', code_modify_you_get_extractor)
