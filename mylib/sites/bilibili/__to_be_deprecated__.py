@@ -22,7 +22,7 @@ from mylib.easy.tricks import seq_call_return
 from mylib.ex import fstk
 from mylib.ex import http_headers
 from mylib.ex.ostk import ensure_sigint_signal
-from mylib.ex.text import regex_find, ellipt_end
+from mylib.ex.text import regex_find, ellipt_end, ellipt_middle
 from mylib.ex.tricks import str2range
 from mylib.ex.tui import LinePrinter
 from mylib.sites.bilibili import api
@@ -172,7 +172,7 @@ def code_modify_you_get_extractor(x: str):
 
 
 def new_legitimize(text: str, os=...):
-    return ellipt_end(fstk.sanitize(text, fstk.POTENTIAL_INVALID_CHARS_MAP), 200, encoding='u8').lstrip('.')
+    return ellipt_middle(fstk.sanitize(text, fstk.POTENTIAL_INVALID_CHARS_MAP), 200, encoding='u8').lstrip('.')
 
 
 you_get.extractor = python_module_from_source_code('you_get.extractor', code_modify_you_get_extractor)
