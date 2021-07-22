@@ -149,6 +149,8 @@ def ehviewer_images_catalog(root_dir, *, dry_run: bool = False, db_json_path: st
                 #         break
             if comic_magazine_title:
                 folder = comic_magazine_title.replace('COMIC X-E ROS', 'COMIC X-EROS')
+            elif 'anthology' in tags.get('misc', []):
+                folder = '(anthology)'
             elif creators:
                 if len(creators) > 3:
                     folder = VARIOUS
