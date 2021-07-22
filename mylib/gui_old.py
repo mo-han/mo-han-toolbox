@@ -5,7 +5,7 @@ import re
 import shutil
 from collections import defaultdict
 
-from mylib.easy.tricks import deco_factory_retry, singleton, remove_from_list
+from .ex.tricks import deco_factory_retry, singleton, remove_from_list
 from .easy import dedup_list
 from mylib.easy.ostk import ensure_sigint_signal
 from .__deprecated__ import real_join_path

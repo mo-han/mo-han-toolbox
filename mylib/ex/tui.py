@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
+import mylib.ex.tricks
 from mylib.easy import *
-from mylib.easy import text, tricks
-
-ATTENTION_DO_NO_USE_THIS = __name__
+from mylib.easy import text
 
 CRLF = f'\r\n'
 
@@ -14,7 +13,7 @@ def get_terminal_width():
 class LinePrinter:
     def __init__(self, width: int = 0, output=sys.stdout):
         self.output = output
-        self.width = tricks.constrained(width, int, 'x > 0', enable_default=True, default=0)
+        self.width = mylib.ex.tricks.constrained(width, int, 'x > 0', enable_default=True, default=0)
 
     def print(self, text: str = '', **kwargs):
         print(text, file=self.output, flush=True, **kwargs)

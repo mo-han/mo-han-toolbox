@@ -13,6 +13,7 @@ from telegram import ChatAction, Bot, Update, ParseMode, constants, Message
 from telegram.ext import Updater, Filters, CallbackContext
 from telegram.ext.filters import MergedFilter
 
+import mylib.ex.tricks
 from .easy import *
 from mylib.easy import ostk, text
 from mylib.ex import fstk, tricks
@@ -202,22 +203,22 @@ class SimpleBot(ABC):
             print(f'saved: {len(read_data["undone"])} undone, {len(read_data["queued"])} queued ({si_format(t)}s used)')
 
     def __pre_pickle_update_auto__(self, u: Update):
-        for p in (path for path, obj in tricks.walk_obj_iter(u, keepout_types=(Bot,)) if isinstance(obj, Bot)):
-            tricks.deep_setattr(u, BP, *p)
+        for p in (path for path, obj in mylib.ex.tricks.walk_obj_iter(u, keepout_types=(Bot,)) if isinstance(obj, Bot)):
+            mylib.ex.tricks.deep_setattr(u, BP, *p)
         if self._debug_mode and not tricks.is_picklable_with_dill_trace(u):
-            for p in (path for path, obj in tricks.walk_obj_iter(u, keepout_types=(Bot,)) if isinstance(obj, Bot)):
+            for p in (path for path, obj in mylib.ex.tricks.walk_obj_iter(u, keepout_types=(Bot,)) if isinstance(obj, Bot)):
                 print(p)
 
     def __post_pickle_update_auto__(self, u: Update):
-        for p in (path for path, obj in tricks.walk_obj_iter(u, keepout_types=(BotPlaceholder,)) if
+        for p in (path for path, obj in mylib.ex.tricks.walk_obj_iter(u, keepout_types=(BotPlaceholder,)) if
                   isinstance(obj, BotPlaceholder)):
-            tricks.deep_setattr(u, self.__bot__, *p)
+            mylib.ex.tricks.deep_setattr(u, self.__bot__, *p)
 
     def __pre_pickle_update__(self, u: Update):
         msg = u.message
         msg.bot = msg.from_user.bot = msg.chat.bot = BP
         if self._debug_mode and not tricks.is_picklable_with_dill_trace(u):
-            for p in (path for path, obj in tricks.walk_obj_iter(u, keepout_types=(Bot,)) if isinstance(obj, Bot)):
+            for p in (path for path, obj in mylib.ex.tricks.walk_obj_iter(u, keepout_types=(Bot,)) if isinstance(obj, Bot)):
                 print(p)
 
     def __post_pickle_update__(self, u: Update):

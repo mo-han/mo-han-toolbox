@@ -5,11 +5,6 @@ import signal
 import tempfile
 
 from mylib.easy import *
-from mylib.easy import tricks
-
-
-def __refer_sth_do_not_use_this():
-    return tricks
 
 
 def ensure_sigint_signal():

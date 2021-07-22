@@ -9,6 +9,7 @@ import filetype
 
 import mylib.easy
 import mylib.easy.io
+import mylib.ex.tricks
 from mylib.__deprecated__ import fs_find_iter
 from mylib.easy import *
 from mylib.easy.filename_tags import EnclosedFilenameTagsSet
@@ -246,9 +247,9 @@ class FFmpegRunnerAlpha:
                copy_all: bool = True, map_preset: str = None, metadata_file: str = None,
                **output_kwargs):
         if isinstance(start, str):
-            start = tricks.seconds_from_colon_time(start)
+            start = mylib.ex.tricks.seconds_from_colon_time(start)
         if isinstance(end, str):
-            end = tricks.seconds_from_colon_time(end)
+            end = mylib.ex.tricks.seconds_from_colon_time(end)
         if start < 0:
             start = max([get_real_duration(f) for f in input_paths]) + start
         if end < 0:
@@ -320,9 +321,9 @@ class FFmpegRunnerAlpha:
         self.reset_args()
 
         if isinstance(start, str):
-            start = tricks.seconds_from_colon_time(start)
+            start = mylib.ex.tricks.seconds_from_colon_time(start)
         if isinstance(end, str):
-            end = tricks.seconds_from_colon_time(end)
+            end = mylib.ex.tricks.seconds_from_colon_time(end)
         if start < 0:
             start = max([get_real_duration(f) for f in input_paths]) + start
         if end < 0:
@@ -608,7 +609,7 @@ def guess_video_crf(src, codec, *, redo=False, work_dir=None, auto_clean=True):
 class FFmpegSegmentsContainer:
     nickname = 'ffsegcon'
     tag_file = 'FFMPEG_SEGMENTS_CONTAINER.TAG'
-    tag_sig = 'Signature: ' + tricks.hex_hash(tag_file.encode())
+    tag_sig = 'Signature: ' + mylib.ex.tricks.hex_hash(tag_file.encode())
     picture_file = 'p.mp4'
     non_visual_file = 'nv.mkv'
     test_json = 't.json'
@@ -669,7 +670,7 @@ class FFmpegSegmentsContainer:
                 self.input_data = {S_FILENAME: b, S_SEGMENT: {}, S_NON_SEGMENT: {}}
                 with mylib.easy.io.SubscriptableFileIO(_path) as f:
                     middle = f.size // 2
-                    root_base = '.{}-{}'.format(self.nickname, tricks.hex_hash(
+                    root_base = '.{}-{}'.format(self.nickname, mylib.ex.tricks.hex_hash(
                         f[:4096] + f[middle - 2048:middle + 2048] + f[-4096:])[:8])
                 work_dir = work_dir or d
                 _path = self.root = os.path.join(work_dir, root_base)  # file path -> dir path
@@ -1021,7 +1022,7 @@ class FFmpegSegmentsContainer:
         all_segments = self.list_all_segments()
         lock_segments = self.list_lock_segments()
         done_segments = self.list_done_segments()
-        return tricks.remove_from_list(tricks.remove_from_list(all_segments, lock_segments), done_segments)
+        return mylib.ex.tricks.remove_from_list(mylib.ex.tricks.remove_from_list(all_segments, lock_segments), done_segments)
 
     def list_lock_segments(self):
         segments = []

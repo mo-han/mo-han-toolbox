@@ -5,8 +5,7 @@ import requests
 from mylib.ex.fstk import write_json_file, sanitize_xu
 from mylib.easy import *
 from mylib.easy.logging import get_logger
-from mylib.ex.tricks import AttributeInflection
-from mylib.easy.tricks import Attreebute, width_of_int
+from mylib.ex.tricks import AttributeInflection, Attreebute, width_of_int
 from mylib.web_client import HTTPResponseInspection, parse_https_url, make_requests_kwargs, DownloadPool
 
 FANBOX_DOMAIN = 'fanbox.cc'

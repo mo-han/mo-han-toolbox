@@ -18,7 +18,7 @@ from .easy import *
 from mylib.ex.http_headers import CURLCookieJar
 from .easy.logging import get_logger, LOG_FMT_MESSAGE_ONLY
 from .easy.io import SubscriptableFileIO
-from mylib.easy.tricks import singleton, iter_factory_retry
+from .ex.tricks import singleton, iter_factory_retry
 from .easy import thread_factory
 
 MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE = '# Netscape HTTP Cookie File'
