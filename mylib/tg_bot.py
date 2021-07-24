@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """telegram bot utilities"""
-import itertools
 import shlex
 import traceback
 from abc import ABC
+from concurrent.futures import ThreadPoolExecutor
 from functools import reduce
 from inspect import getmembers, ismethod
 from typing import Callable
@@ -13,9 +13,9 @@ from telegram import ChatAction, Bot, Update, ParseMode, constants, Message
 from telegram.ext import Updater, Filters, CallbackContext
 from telegram.ext.filters import MergedFilter
 
-from .easy import *
 from mylib.easy import ostk, text
 from mylib.ex import fstk, tricks
+from .easy import *
 from .easy import python_module_from_source_code
 
 
@@ -66,6 +66,9 @@ def merge_filters_or(*filters):
 
 
 class SimpleBot(ABC):
+    __task_queue__: queue.Queue
+    __task_poll__: ThreadPoolExecutor
+
     def __init__(self, token, *,
                  timeout=None, whitelist=None, filters=None, runtime_data: dict = None,
                  auto_run=True, debug_mode=False,
@@ -126,19 +129,43 @@ class SimpleBot(ABC):
     def __typing__(self, update: Update):
         self.__bot__.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING)
 
-    @staticmethod
-    def __reply_text__(any_text: str, update: Update, **kwargs):
-        for t in text.split_by_length_or_newline(any_text, constants.MAX_MESSAGE_LENGTH):
-            update.message.reply_text(t, **kwargs)
+    def __send_text__(self, any_text: str, to_where, **kwargs):
+        if isinstance(to_where, Update):
+            def _send(sth):
+                to_where.message.reply_text(sth, **kwargs)
+        elif isinstance(to_where, (int, str)):
+            def _send(sth):
+                self.__bot__.send_message(to_where, sth, **kwargs)
+        else:
+            raise TypeError(to_where, (Update, int, str))
+        if len(any_text) > constants.MAX_MESSAGE_LENGTH:
+            for s in text.split_by_new_line_with_max_length(any_text, constants.MAX_MESSAGE_LENGTH):
+                _send(s)
+        else:
+            _send(any_text)
 
-    def __reply_markdown__(self, md_text: str, update: Update):
-        self.__reply_text__(md_text, update, parse_mode=ParseMode.MARKDOWN)
+    def __send_markdown__(self, md_text: str, to_where, **kwargs):
+        self.__send_text__(md_text, to_where, parse_mode=ParseMode.MARKDOWN, **kwargs)
 
-    __reply_md__ = __reply_markdown__
+    __reply_md__ = __send_markdown__
 
-    def __reply_md_code_block__(self, code_text, update: Update):
-        for ct in text.split_by_length_or_newline(code_text, constants.MAX_MESSAGE_LENGTH - 7):
-            self.__reply_markdown__(f'```\n{ct}```', update)
+    def __send_code_block__(self, code_text, to_where):
+        for ct in text.split_by_new_line_with_max_length(code_text, constants.MAX_MESSAGE_LENGTH - 7):
+            self.__send_markdown__(f'```\n{ct}```', to_where)
+
+    def __send_traceback__(self, to_where):
+        if not self._debug_mode:
+            return
+        tb = traceback.format_exc()
+        print(tb)
+        self.__send_code_block__(f'{tb}', to_where)
+
+    def __task_loop__(self):
+        q = self.__task_queue__ = queue.Queue()
+        p = self.__task_poll__
+        while True:
+            task = 
+
 
     def __run__(self, poll_timeout=None):
         poll_param = {}
@@ -180,7 +207,7 @@ class SimpleBot(ABC):
             doc = (v.__doc__ or '...').split('\n', maxsplit=1)[0].strip()
             lines.append(f'{n} - {doc}')
         menu_str = '\n'.join(lines)
-        self.__reply_markdown__(f'```\n{menu_str}```', update)
+        self.__send_markdown__(f'```\n{menu_str}```', update)
 
     def __save_rt_data__(self, data_file_path=None):
         # def pickle_bot(bot_obj: Bot):
@@ -229,7 +256,7 @@ class SimpleBot(ABC):
         update_queue.put(update)
         s = f'{self.__requeue_failed_update__.__name__}: qsize={update_queue.qsize()}'
         print(s)
-        self.__reply_md_code_block__(s, update)
+        self.__send_code_block__(s, update)
         if save:
             self.__save_rt_data__()
 
@@ -247,18 +274,11 @@ class SimpleBot(ABC):
         try:
             self.__save_rt_data__()
         except:
-            self.__reply_traceback__(update)
-
-    def __reply_traceback__(self, update):
-        if not self._debug_mode:
-            return
-        tb = traceback.format_exc()
-        print(tb)
-        self.__reply_md_code_block__(f'{tb}', update)
+            self.__send_traceback__(update)
 
     def __del_undone_update__(self, key: str, update: Update):
         del self.__rt_data__['undone'][key]
         try:
             self.__save_rt_data__()
         except:
-            self.__reply_traceback__(update)
+            self.__send_traceback__(update)

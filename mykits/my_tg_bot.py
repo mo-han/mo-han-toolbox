@@ -62,7 +62,7 @@ class MyAssistantBot(SimpleBot):
         import mylib.sites.misc
         self.__typing__(update)
         uuid = mylib.sites.misc.free_ss_site_vmess_uuid()
-        self.__reply_text__(uuid, update)
+        self.__send_text__(uuid, update)
 
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(ytdl_regex_pattern))
     def _ytdl(self, update: Update, *args):
@@ -70,7 +70,7 @@ class MyAssistantBot(SimpleBot):
         if not self.__predicate_update__(update, *args):
             echo = f'# {update.message.text}'
             print(echo)
-            self.__reply_md_code_block__(echo, update)
+            self.__send_code_block__(echo, update)
             return
         undone_key = self._ytdl.__name__
         self.__add_undone_update__(undone_key, update)
@@ -80,7 +80,7 @@ class MyAssistantBot(SimpleBot):
                     args]
             args_s = ' '.join([shlex.quote(a) for a in args])
             try:
-                self.__reply_md_code_block__(f'+ {args_s}', update)
+                self.__send_code_block__(f'+ {args_s}', update)
                 p, out, err = ytdl_retry_frozen(*args)
                 echo = ''.join(
                     [re.sub(r'.*\[download]', '[download]', decode_fallback_locale(b).rsplit('\r', maxsplit=1)[-1]) for
@@ -88,16 +88,16 @@ class MyAssistantBot(SimpleBot):
                      out.readlines()[-10:]])
                 if p.returncode:
                     if self.__str_contain_abandon_errors__(echo):
-                        self.__reply_md_code_block__(f'- {args_s}\n{echo}', update)
+                        self.__send_code_block__(f'- {args_s}\n{echo}', update)
                         continue
-                    self.__reply_md_code_block__(f'! {args_s}\n{echo}', update)
+                    self.__send_code_block__(f'! {args_s}\n{echo}', update)
                     self.__requeue_failed_update__(update)
                 else:
-                    self.__reply_md_code_block__(f'* {args_s}\n{echo}', update)
+                    self.__send_code_block__(f'* {args_s}\n{echo}', update)
             except Exception as e:
                 print('ERROR')
-                self.__reply_md_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
-                self.__reply_traceback__(update)
+                self.__send_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
+                self.__send_traceback__(update)
                 self.__requeue_failed_update__(update)
         self.__del_undone_update__(undone_key, update)
 
@@ -110,25 +110,25 @@ class MyAssistantBot(SimpleBot):
         for args in args_l:
             args_s = ' '.join([shlex.quote(a) for a in args])
             try:
-                self.__reply_md_code_block__(f'+ {args_s}', update)
+                self.__send_code_block__(f'+ {args_s}', update)
                 p, out, err = bldl_retry_frozen(*args)
                 if p.returncode:
                     echo = ''.join(
                         [decode_fallback_locale(b).rsplit('\r', maxsplit=1)[-1] for b in out.readlines()[-5:]])
                     if self.__str_contain_abandon_errors__(echo):
                         print(f' EXIT CODE: {p.returncode}')
-                        self.__reply_md_code_block__(f'- {args_s}\n{echo}', update)
+                        self.__send_code_block__(f'- {args_s}\n{echo}', update)
                         continue
                     print(f' EXIT CODE: {p.returncode}')
                     self.__requeue_failed_update__(update)
-                    self.__reply_md_code_block__(f'- {args_s}\n{echo}', update)
+                    self.__send_code_block__(f'- {args_s}\n{echo}', update)
                 else:
                     echo = ''.join([s for s in [decode_fallback_locale(b) for b in out.readlines()] if '─┤' not in s])
-                    self.__reply_md_code_block__(f'* {args_s}\n{echo}', update)
+                    self.__send_code_block__(f'* {args_s}\n{echo}', update)
             # except TypeError:
             #     raise
             except Exception as e:
-                self.__reply_md_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
+                self.__send_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
                 self.__requeue_failed_update__(update)
         self.__del_undone_update__(undone_key, update)
 
@@ -136,17 +136,17 @@ class MyAssistantBot(SimpleBot):
     def _secret(self, update: Update, *args):
         self.__typing__(update)
         for name in ('effective_message', 'effective_user'):
-            self.__reply_md_code_block__(f'{name}\n{pformat(getattr(update, name).to_dict())}', update)
-        self.__reply_md_code_block__(f'bot.get_me()\n{pformat(self.__bot__.get_me().to_dict())}', update)
+            self.__send_code_block__(f'{name}\n{pformat(getattr(update, name).to_dict())}', update)
+        self.__send_code_block__(f'bot.get_me()\n{pformat(self.__bot__.get_me().to_dict())}', update)
 
     @deco_factory_bot_handler_method(CommandHandler, on_menu=True, pass_args=True)
     def sleep(self, u: Update, c: CallbackContext):
         """sleep some time (unit: sec)"""
         args = c.args or [0]
         t = float(args[0])
-        self.__reply_text__(f'sleep {t} seconds', u)
+        self.__send_text__(f'sleep {t} seconds', u)
         time.sleep(t)
-        self.__reply_text__('awake...', u)
+        self.__send_text__('awake...', u)
 
     @deco_factory_bot_handler_method(CommandHandler, on_menu=True, pass_args=True)
     def errors(self, u: Update, c: CallbackContext):
@@ -154,22 +154,22 @@ class MyAssistantBot(SimpleBot):
         args = c.args
         if not args:
             usage_s = '/errors {+,-,:} [T]'
-            self.__reply_md_code_block__(usage_s, u)
+            self.__send_code_block__(usage_s, u)
             return
         arg0, arg1 = args[0], ' '.join(args[1:])
         errors = self.__get_conf__().get('abandon_errors', [])
         if arg0 == ':':
-            self.__reply_md_code_block__(pformat(errors), u)
+            self.__send_code_block__(pformat(errors), u)
         elif arg0 == '+':
             errors = sorted(set(errors) | {arg1})
             self.__set_conf__(abandon_errors=errors)
-            self.__reply_md_code_block__(pformat(errors), u)
+            self.__send_code_block__(pformat(errors), u)
         elif arg0 == '-':
             errors = sorted(set(errors) - {arg1})
             self.__set_conf__(abandon_errors=errors)
-            self.__reply_md_code_block__(pformat(errors), u)
+            self.__send_code_block__(pformat(errors), u)
         else:
-            self.__reply_md_code_block__(pformat(errors), u)
+            self.__send_code_block__(pformat(errors), u)
 
     def __save_rt_data__(self, data_file_path=None):
         data_file_path = data_file_path or self._data_file
