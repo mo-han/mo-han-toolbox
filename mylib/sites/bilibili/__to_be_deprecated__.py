@@ -18,12 +18,11 @@ from mylib import web_client
 from mylib.__deprecated__ import concat_videos, merge_m4s
 from mylib._misc import safe_print, safe_basename
 from mylib.easy import python_module_from_source_code
-from mylib.easy.tricks import seq_call_return
 from mylib.ex import fstk
 from mylib.ex import http_headers
 from mylib.ex.ostk import ensure_sigint_signal
 from mylib.ex.text import regex_find, ellipt_end, ellipt_middle
-from mylib.ex.tricks import str2range
+from mylib.ex.tricks import str2range, seq_call_return
 from mylib.ex.tui import LinePrinter
 from mylib.sites.bilibili import api
 

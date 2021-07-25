@@ -17,7 +17,7 @@ from mylib.__deprecated__ import fs_inplace_rename, fs_inplace_rename_regex, lis
 from mylib.cli import arg_type_pow2, arg_type_range_factory, add_dry_run
 from mylib.easy import *
 from mylib.easy.argparse import CompactHelpFormatterWithDefaults
-from mylib.easy.tricks import Attreebute, eval_or_str, deco_factory_exit_on_keyboard_interrupt
+from mylib.ex.tricks import Attreebute, eval_or_str, deco_factory_exit_on_keyboard_interrupt
 from mylib.ex import fstk, tui
 from mylib.ex.fstk import make_path, ctx_pushd
 from mylib.ex.ostk import clipboard, set_console_title

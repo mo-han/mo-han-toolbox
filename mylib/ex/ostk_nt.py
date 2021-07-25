@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-import PIL.Image
 import pywintypes
 import win32clipboard
-import psutil
 
+import mylib.ex.tricks
 from mylib.easy.ostk import *
 
 
@@ -67,21 +66,21 @@ class Clipboard(metaclass=SingletonMetaClass):
             raise TypeError("'{}' is not str or int".format(x))
         return x
 
-    @tricks.deco_with_self_context
+    @mylib.ex.tricks.deco_with_self_context
     def clear(self):
         self._wcb.EmptyClipboard()
         return self
 
-    @tricks.deco_with_self_context
+    @mylib.ex.tricks.deco_with_self_context
     def set(self, data, cf=_wcb.CF_UNICODETEXT):
         cf = self.valid_format(cf)
         return self._wcb.SetClipboardData(cf, data)
 
-    @tricks.deco_with_self_context
+    @mylib.ex.tricks.deco_with_self_context
     def set_text___fixme(self, text):
         return self._wcb.SetClipboardText(text)
 
-    @tricks.deco_with_self_context
+    @mylib.ex.tricks.deco_with_self_context
     def get(self, cf=_wcb.CF_UNICODETEXT):
         cf = self.valid_format(cf)
         if self._wcb.IsClipboardFormatAvailable(cf):
@@ -90,8 +89,10 @@ class Clipboard(metaclass=SingletonMetaClass):
             data = None
         return data
 
-    @tricks.deco_with_self_context
+    @mylib.ex.tricks.deco_with_self_context
     def set_image(self, image):
+        import PIL.Image
+
         if isinstance(image, str):
             if re.match(r'data:image/\w+;base64, [A-Za-z0-9+/=]+', image):
                 raise NotImplementedError('base64 image data')
@@ -121,7 +122,7 @@ class Clipboard(metaclass=SingletonMetaClass):
             lines = [line.strip() for line in str(self.get()).splitlines()]
             return [line for line in lines if os.path.exists(line)]
 
-    @tricks.deco_with_self_context
+    @mylib.ex.tricks.deco_with_self_context
     def get_all(self) -> dict:
         d = {}
         for k, v in self.cf_dict.items():
@@ -185,6 +186,8 @@ def deco_factory_pythonw_subprocess(*, flag_env_var_name='__this_daemon_subproce
     def deco(target):
         @functools.wraps(target)
         def tgt(*args, **kwargs):
+            import psutil
+
             if os.environ.get(flag_env_var_name) == __file__:
                 target(*args, **kwargs)
             else:
