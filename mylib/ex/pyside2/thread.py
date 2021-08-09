@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 import traceback
 from typing import Generator
 
@@ -15,6 +16,13 @@ class EzQtThreadWorkerError:
     def __init__(self, e: Exception, trace: str):
         self.exception = e
         self.traceback_str = trace
+
+    def print_trace(self):
+        print(self.traceback_str)
+
+
+def ez_qt_thread_worker_error_print_traceback(e: EzQtThreadWorkerError, *args, file=sys.stderr, **kwargs):
+    print(e.traceback_str, *args, file=sys.stderr, **kwargs)
 
 
 class EzQtThreadWorker(QObject, QRunnable):

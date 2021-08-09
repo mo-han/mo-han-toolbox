@@ -49,10 +49,10 @@ class EzQtWidgetMixin:
     def qss(self: QWidget, value):
         self.set_qss(value)
 
-    def new_shortcut(self, key_sequence: QKeySequence,
+    def add_shortcut(self, key_sequence: Qt.Key or str,
                      connect_to: T.Union[T.Callable[..., T.Any], T.Iterable[T.Callable[..., T.Any]]],
                      parent_widget=...):
-        shortcut = QShortcut(key_sequence, self if parent_widget is ... else parent_widget, None)
+        shortcut = QShortcut(QKeySequence(key_sequence), self if parent_widget is ... else parent_widget, None)
         if connect_to:
             ez_qt_signal_connect(shortcut.activated, connect_to)
         return shortcut
@@ -97,7 +97,18 @@ class EzQtPushButton(QPushButton, EzQtWidgetMixin):
 
 
 class EzQtLabel(QLabel, EzQtWidgetMixin):
-    pass
+    str_fmt = '{}'
+
+    def the_str_fmt(self, fmt: str):
+        self.str_fmt = fmt
+        return self
+
+    def the_text(self, x=..., *args, **kwargs):
+        if x is ...:
+            return self.text()
+        else:
+            self.setText(self.str_fmt.format(x, *args, **kwargs))
+            return self
 
 
 class EzQtDelegateWidgetMixin:

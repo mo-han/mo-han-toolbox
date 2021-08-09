@@ -797,3 +797,40 @@ def find_most_frequent_in_iterable(x):
         return []
     the_max = max(count.values())
     return [k for k, v in count.items() if v == the_max]
+
+
+class Timer:
+    def __init__(self, n=1):
+        self.n = n
+        self.reset()
+
+    def __enter__(self):
+        self.t0 = time.perf_counter()
+        self.records = []
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.elapse = time.perf_counter() - self.t0
+
+    def reset(self):
+        return self.__enter__()
+
+    def range(self):
+        return range(self.n)
+
+    @property
+    def average(self):
+        return self.elapse / self.n
+
+    def acquire(self):
+        t = time.perf_counter() - self.t0
+        self.records.append(t)
+        return t
+
+
+def parse_netloc(url: str):
+    urlparse = urllib.parse.urlparse
+    p = urlparse(url)
+    if not p.scheme and not p.netloc:
+        p = urlparse('scheme://' + url)
+    return dict(netloc=p.netloc, hostname=p.hostname, port=p.port, username=p.username, password=p.password)
