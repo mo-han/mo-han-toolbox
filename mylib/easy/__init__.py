@@ -10,6 +10,7 @@ import itertools as itertools
 import locale as locale
 import urllib as urllib
 import urllib.parse
+import collections as collections
 
 from . import io
 from . import shutil
@@ -519,14 +520,6 @@ class AttrConstEllipsisForStringMetaClass(type):
         return super().__new__(mcs, name, bases, {k: k if v is ... else v for k, v in namespace.items()})
 
 
-def parse_host_port_address(addr: str):
-    parse = urllib.parse.urlparse
-    r = parse(addr)
-    if not r.scheme:
-        r = parse('socket://' + addr)
-    return r
-
-
 class PipePair:
     def __init__(self, text_mode=False, **kwargs):
         r, w = os.pipe()
@@ -828,9 +821,14 @@ class Timer:
         return t
 
 
-def parse_netloc(url: str):
+def ez_parse_netloc(url: str):
     urlparse = urllib.parse.urlparse
     p = urlparse(url)
     if not p.scheme and not p.netloc:
         p = urlparse('scheme://' + url)
-    return dict(netloc=p.netloc, hostname=p.hostname, port=p.port, username=p.username, password=p.password)
+    return p
+
+
+def ez_named_tuple_replace(named_tuple, **kwargs):
+    # noinspection PyProtectedMember
+    return named_tuple._replace(**kwargs)
