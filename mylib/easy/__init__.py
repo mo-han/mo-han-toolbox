@@ -10,7 +10,6 @@ import itertools as itertools
 import locale as locale
 import urllib as urllib
 import urllib.parse
-import collections as collections
 
 from . import io
 from . import shutil

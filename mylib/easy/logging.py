@@ -12,11 +12,9 @@ LOG_FMT_1LEVEL_DATE_TIME_ZONE = '[%(levelname).1s][%(asctime)s][%(name)s] %(mess
 LOG_DATE_FMT_SEC = '%Y-%m-%d %H:%M:%S'
 LOG_DATE_FMT_SEC_ZONE = '%Y-%m-%d %H:%M:%S%z'
 
-LOG_FMT = LOG_FMT_1LEVEL_NO_TIME
-LOG_DATE_FMT = LOG_DATE_FMT_SEC_ZONE
 
-
-def get_logger(logger_name: str, level: str = 'INFO', fmt=LOG_FMT, date_fmt=LOG_DATE_FMT, handlers_l: list = None):
+def get_logger(logger_name: str, level: str = 'INFO', fmt=LOG_FMT_1LEVEL_NO_TIME, date_fmt=LOG_DATE_FMT_SEC_ZONE,
+               handlers_l: list = None):
     formatter = Formatter(fmt=fmt, datefmt=date_fmt)
     logger = getLogger(logger_name)
     logger.setLevel(level)
