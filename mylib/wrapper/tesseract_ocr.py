@@ -10,7 +10,7 @@ class TesseractOCRCLIWrapper:
         self.lang_args = CLIArgumentsList()
         self.cmd = CLIArgumentsList()
         self.image_bytes = None
-        self.logger = logging.get_logger(f'{__name__}.{self.__class__.__name__}')
+        self.logger = logging.ez_get_logger(f'{__name__}.{self.__class__.__name__}')
         self.set_all_languages()
 
     def get_all_languages(self):

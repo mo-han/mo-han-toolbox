@@ -831,3 +831,15 @@ def ez_parse_netloc(url: str):
 def ez_named_tuple_replace(named_tuple, **kwargs):
     # noinspection PyProtectedMember
     return named_tuple._replace(**kwargs)
+
+
+class EzArguments:
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+
+
+@functools.lru_cache()
+def ez_snake_case_to_camel_case(s: str):
+    first, *others = s.split('_')
+    return ''.join([first.lower(), *map(str.title, others)])

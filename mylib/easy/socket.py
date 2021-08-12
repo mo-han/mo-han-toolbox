@@ -3,6 +3,11 @@ from socket import *
 from ..easy import ez_parse_netloc
 
 
+def ez_parse_host_port(url):
+    r = ez_parse_netloc(url)
+    return r.hostname, r.port
+
+
 class EzSocket(socket):
     address: tuple
 

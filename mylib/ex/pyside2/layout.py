@@ -11,17 +11,25 @@ class EzQtLayoutWrapper:
         self.layout = layout_class(self.widget)
         self.widget.setLayout(self.layout)
 
+    @staticmethod
+    def __get_widget_from__(x):
+        if isinstance(x, QWidget):
+            return x
+        elif hasattr(x, 'widget') and isinstance(x.widget, QWidget):
+            return x.widget
+        else:
+            raise ValueError('get no widget from this object')
+
     def add_widgets(self, *widgets):
-        for w in widgets:
-            if isinstance(w, EzQtLayoutWrapper):
-                self.layout.addWidget(w.widget)
-            elif isinstance(w, T.Iterable):
-                args = list(w)
-                if isinstance(args[0], EzQtLayoutWrapper):
-                    args[0] = args[0].widget
-                self.layout.addWidget(*args)
-            elif w:
-                self.layout.addWidget(w)
+        layout = self.layout
+        for x in widgets:
+            if isinstance(x, T.Iterable):
+                args = list(x)
+                first, *others = args
+                w = self.__get_widget_from__(first)
+                layout.addWidget(w, *others)
+            else:
+                layout.addWidget(self.__get_widget_from__(x))
         return self
 
 

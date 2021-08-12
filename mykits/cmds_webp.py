@@ -115,7 +115,8 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
                    fallback_filename_encoding=get_os_default_encoding()):
     """convert non-webp picture inside zip file"""
     flag_filename_of_webp_converted = '__ALREADY_WEBP_CONVERTED__'
-    lgr = logging.get_logger(convert_in_zip.__name__, 'INFO' if verbose else 'ERROR', fmt=logging.LOG_FMT_MESSAGE_ONLY)
+    lgr = logging.ez_get_logger(convert_in_zip.__name__, 'INFO' if verbose else 'ERROR',
+                                fmt=logging.LOG_FMT_MESSAGE_ONLY)
 
     dirs, files = resolve_path_to_dirs_files(src)
     if not files:
@@ -218,7 +219,7 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
 def auto_cvt(src, recursive, clean, cbz, workers=None, trash_bin=False, verbose=False):
     """convert images to webp with auto-clean, auto-compress-to-cbz, adaptive-quality-scale"""
     workers = workers or os.cpu_count() - 1 or os.cpu_count()
-    lgr = logging.get_logger(auto_cvt.__name__, 'INFO' if verbose else 'ERROR', fmt=logging.LOG_FMT_MESSAGE_ONLY)
+    lgr = logging.ez_get_logger(auto_cvt.__name__, 'INFO' if verbose else 'ERROR', fmt=logging.LOG_FMT_MESSAGE_ONLY)
     delete = send2trash if trash_bin else shutil.remove
 
     dirs, files = resolve_path_to_dirs_files(src)

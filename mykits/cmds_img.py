@@ -29,7 +29,7 @@ def ocr(image=None, lang=None, verbose=False):
     tess = TesseractOCRCLIWrapper(config['bin'])
     if verbose:
         tess.logger.setLevel('DEBUG')
-        logging.set_logger_format(tess.logger, '# %(message)s')
+        tess.logger.set_all_handlers_format('# %(message)s')
     lang = lang or config.get('lang')
     image = image or grabclipboard()
     if lang:

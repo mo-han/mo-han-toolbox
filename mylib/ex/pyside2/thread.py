@@ -5,7 +5,7 @@ from typing import Generator
 
 from PySide2.QtCore import QObject, QRunnable, QThreadPool
 
-from mylib.ex.pyside2.signal import *
+from .signal import *
 
 
 def __ref_sth():
@@ -15,14 +15,10 @@ def __ref_sth():
 class EzQtThreadWorkerError:
     def __init__(self, e: Exception, trace: str):
         self.exception = e
-        self.traceback_str = trace
+        self.trace = trace
 
-    def print_trace(self):
-        print(self.traceback_str)
-
-
-def ez_qt_thread_worker_error_print_traceback(e: EzQtThreadWorkerError, *args, file=sys.stderr, **kwargs):
-    print(e.traceback_str, *args, file=sys.stderr, **kwargs)
+    def print_trace(self, *args, file=sys.stderr, **kwargs):
+        print(self.trace, *args, file=file, **kwargs)
 
 
 class EzQtThreadWorker(QObject, QRunnable):

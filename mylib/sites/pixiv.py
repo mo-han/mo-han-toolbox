@@ -4,7 +4,7 @@
 import requests
 from mylib.ex.fstk import write_json_file, sanitize_xu
 from mylib.easy import *
-from mylib.easy.logging import get_logger
+from mylib.easy.logging import ez_get_logger
 from mylib.ex.tricks import AttributeInflection, Attreebute, width_of_int
 from mylib.web_client import HTTPResponseInspection, parse_https_url, make_requests_kwargs, DownloadPool
 
@@ -13,7 +13,7 @@ FANBOX_HOMEPAGE = 'https://' + FANBOX_DOMAIN
 FANBOX_API_URL = 'https://' + 'api.' + FANBOX_DOMAIN
 S_BODY = 'body'
 
-logger = get_logger(__name__)
+logger = ez_get_logger(__name__)
 
 
 def fanbox_creator_id_from_url(url: str) -> str or None:

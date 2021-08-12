@@ -16,7 +16,7 @@ from mylib.easy.typing import JSONType
 from mylib.ex import fstk, ostk
 from .easy import *
 from mylib.ex.http_headers import CURLCookieJar
-from .easy.logging import get_logger, LOG_FMT_MESSAGE_ONLY
+from .easy.logging import ez_get_logger, LOG_FMT_MESSAGE_ONLY
 from .easy.io import SubscriptableFileIO
 from .ex.tricks import singleton, iter_factory_retry
 from .easy import thread_factory
@@ -311,7 +311,7 @@ class DownloadPool(ThreadPoolExecutor):
         self.queue = Queue()
         self.timeout = timeout
         self.name = name or self.__class__.__name__
-        self.logger = get_logger('.'.join((__name__, self.name)), fmt=LOG_FMT_MESSAGE_ONLY)
+        self.logger = ez_get_logger('.'.join((__name__, self.name)), fmt=LOG_FMT_MESSAGE_ONLY)
         self.recv_size_queue = Queue()
         self.bytes_per_sec = 0
         self.emergency_queue = Queue()
