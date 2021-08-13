@@ -267,6 +267,9 @@ def ensure_open_file(filepath, mode='r', **kwargs):
 
 @contextlib.contextmanager
 def ctx_pushd(dst: str, ensure_dst: bool = False):
+    if dst == '':
+        yield
+        return
     if ensure_dst:
         cd = ensure_chdir
     else:
