@@ -68,7 +68,7 @@ class BrowserWrapper:
 
 def make_proxy_settings(address, as_kwargs=False):
     if isinstance(address, str):
-        pr = http_headers.parse_host_port_address(address)
+        pr = http_headers.ez_parse_netloc(address)
         host = pr.hostname
         port = pr.port
     elif isinstance(address, T.Iterable):

@@ -3,9 +3,13 @@ from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 
-from mylib import easy
-from mylib.ex.pyside2.signal import *
-from mylib.ex.pyside2.style import *
+from .util import *
+from .thread import *
+from ... import easy
+from ...easy import logging
+from .const import *
+
+_module_logger = logging.ez_get_logger(__name__, 'DEBUG')
 
 
 def qt_text_label(s: str, parent=None, style=None):
@@ -49,10 +53,10 @@ class EzQtWidgetMixin:
     def qss(self: QWidget, value):
         self.set_qss(value)
 
-    def new_shortcut(self, key_sequence: QKeySequence,
+    def add_shortcut(self, key_sequence: Qt.Key or str,
                      connect_to: T.Union[T.Callable[..., T.Any], T.Iterable[T.Callable[..., T.Any]]],
                      parent_widget=...):
-        shortcut = QShortcut(key_sequence, self if parent_widget is ... else parent_widget, None)
+        shortcut = QShortcut(QKeySequence(key_sequence), self if parent_widget is ... else parent_widget, None)
         if connect_to:
             ez_qt_signal_connect(shortcut.activated, connect_to)
         return shortcut
@@ -97,7 +101,18 @@ class EzQtPushButton(QPushButton, EzQtWidgetMixin):
 
 
 class EzQtLabel(QLabel, EzQtWidgetMixin):
-    pass
+    str_fmt = '{}'
+
+    def the_str_fmt(self, fmt: str):
+        self.str_fmt = fmt
+        return self
+
+    def the_text(self, x=..., *args, **kwargs):
+        if x is ...:
+            return self.text()
+        else:
+            self.setText(self.str_fmt.format(x, *args, **kwargs))
+            return self
 
 
 class EzQtDelegateWidgetMixin:
@@ -127,3 +142,36 @@ class EzQtDelegateWidgetMixin:
     def draw(self, *offset):
         with self.ctx_painter_translate_offset(*offset):
             self.draw_widget()
+
+
+class EzQtLogViewer(QPlainTextEdit, EzQtObjectMixin):
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.set(read_only=True)
+        self.thread_pool = QThreadPool()
+        self.thread_pool.setMaxThreadCount(1)
+        self.queue = easy.queue.Queue()
+        self.handler = logging.QueueHandler(self.queue)
+
+    def set_format(self, fmt=None, date_fmt=None):
+        formatter = logging.Formatter(fmt=fmt, datefmt=date_fmt)
+        self.handler.setFormatter(formatter)
+        return self
+
+    def iter_msg(self):
+        html_fmt = {
+            logging.DEBUG: f'<font color="{EzColors.limegreen}">{{}}</font>',
+            logging.INFO: f'<font color="{EzColors.blue}">{{}}</font>',
+            logging.WARNING: f'<font color="{EzColors.darkorange}">{{}}</font>',
+            logging.ERROR: f'<font color="{EzColors.red}">{{}}</font>',
+            logging.CRITICAL: f'<font color="{EzColors.deeppink}">{{}}</font>',
+        }
+        while True:
+            record: logging.LogRecord = self.queue.get()
+            msg = html_fmt[record.levelno].format(self.handler.format(record))
+            yield msg
+
+    def start(self):
+        EzQtThreadWorker(self.iter_msg).connect_signals(
+            i_result=self.appendHtml).start_in_pool(self.thread_pool)
+        return self

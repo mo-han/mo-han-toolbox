@@ -519,14 +519,6 @@ class AttrConstEllipsisForStringMetaClass(type):
         return super().__new__(mcs, name, bases, {k: k if v is ... else v for k, v in namespace.items()})
 
 
-def parse_host_port_address(addr: str):
-    parse = urllib.parse.urlparse
-    r = parse(addr)
-    if not r.scheme:
-        r = parse('socket://' + addr)
-    return r
-
-
 class PipePair:
     def __init__(self, text_mode=False, **kwargs):
         r, w = os.pipe()
@@ -797,3 +789,57 @@ def find_most_frequent_in_iterable(x):
         return []
     the_max = max(count.values())
     return [k for k, v in count.items() if v == the_max]
+
+
+class Timer:
+    def __init__(self, n=1):
+        self.n = n
+        self.reset()
+
+    def __enter__(self):
+        self.t0 = time.perf_counter()
+        self.records = []
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.elapse = time.perf_counter() - self.t0
+
+    def reset(self):
+        return self.__enter__()
+
+    def range(self):
+        return range(self.n)
+
+    @property
+    def average(self):
+        return self.elapse / self.n
+
+    def acquire(self):
+        t = time.perf_counter() - self.t0
+        self.records.append(t)
+        return t
+
+
+def ez_parse_netloc(url: str):
+    urlparse = urllib.parse.urlparse
+    p = urlparse(url)
+    if not p.scheme and not p.netloc:
+        p = urlparse('scheme://' + url)
+    return p
+
+
+def ez_named_tuple_replace(named_tuple, **kwargs):
+    # noinspection PyProtectedMember
+    return named_tuple._replace(**kwargs)
+
+
+class EzArguments:
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+
+
+@functools.lru_cache()
+def ez_snake_case_to_camel_case(s: str):
+    first, *others = s.split('_')
+    return ''.join([first.lower(), *map(str.title, others)])

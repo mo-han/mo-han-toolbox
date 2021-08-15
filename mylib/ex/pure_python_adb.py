@@ -20,7 +20,7 @@ ppadb.client.Host = ppadb.command.host.Host
 
 class ADBClient(ppadb.client.Client):
     def connect(self, address: str):
-        r = parse_host_port_address(address)
+        r = ez_parse_netloc(address)
         return self.remote_connect(r.hostname, r.port or 5555)
 
 

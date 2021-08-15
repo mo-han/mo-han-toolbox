@@ -13,7 +13,7 @@ import mylib.ex.tricks
 from mylib.__deprecated__ import fs_find_iter
 from mylib.easy import *
 from mylib.easy.filename_tags import EnclosedFilenameTagsSet
-from mylib.easy.logging import get_logger, LOG_FMT_MESSAGE_ONLY
+from mylib.easy.logging import ez_get_logger, LOG_FMT_MESSAGE_ONLY
 from mylib.ex import fstk, tricks, tui, ostk
 
 S_ORIGINAL = 'original'
@@ -172,7 +172,7 @@ class FFmpegRunnerAlpha:
 
     def __init__(self, banner: bool = True, loglevel: str = None, overwrite: bool = None,
                  capture_out_err: bool = False):
-        self.logger = get_logger(f'{__name__}.{self.__class__.__name__}')
+        self.logger = ez_get_logger(f'{__name__}.{self.__class__.__name__}')
         self.capture_stdout_stderr = capture_out_err
         self.set_head(banner=banner, loglevel=loglevel, overwrite=overwrite)
 
@@ -415,7 +415,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
         lvl = 'WARNING'
     ff.logger.setLevel(lvl)
     vf_list = get_filter_list(vf)
-    logger = get_logger(f'{__name__}.smartconv', fmt=LOG_FMT_MESSAGE_ONLY)
+    logger = ez_get_logger(f'{__name__}.smartconv', fmt=LOG_FMT_MESSAGE_ONLY)
     codecs_d = {'h': 'hevc', 'a': None, 'hq': 'hevc_qsv', 'aq': 'h264_qsv', 'v': 'vp9'}
     tags = []
 
@@ -653,7 +653,7 @@ class FFmpegSegmentsContainer:
         return "{} at '{}' from '{}'".format(FFmpegSegmentsContainer.__name__, self.root, self.input_filepath)
 
     def __init__(self, path: str, work_dir: str = None, single_video_stream: bool = True, log_lvl=None):
-        self.logger = get_logger(f'{__name__}.{self.nickname}')
+        self.logger = ez_get_logger(f'{__name__}.{self.nickname}')
         self.ff = FFmpegRunnerAlpha(banner=False, loglevel='warning', overwrite=True, capture_out_err=True)
         if log_lvl:
             self.logger.setLevel(log_lvl)

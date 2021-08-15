@@ -4,7 +4,7 @@ from pprint import pformat
 from telegram.ext import MessageHandler
 
 from mylib.cli import new_argument_parser
-from mylib.easy.logging import get_logger
+from mylib.easy.logging import ez_get_logger
 from mylib.easy.text import decode_fallback_locale
 from mylib.ex.tricks import monitor_sub_process_tty_frozen, deco_factory_retry, ProcessTTYFrozen
 from mylib.ex.fstk import read_json_file, write_json_file, read_sqlite_dict_file
@@ -201,7 +201,7 @@ def main():
         print(parsed_args)
     else:
         log_lvl = 'INFO'
-    get_logger('telegram').setLevel(log_lvl)
+    ez_get_logger('telegram').setLevel(log_lvl)
     bot = MyAssistantBot(config_file, timeout=timeout, auto_run=False, debug_mode=parsed_args.verbose)
     bot.__run__()
 

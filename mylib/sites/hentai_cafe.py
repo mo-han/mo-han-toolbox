@@ -8,7 +8,7 @@ from mylib.web_client import parse_https_url
 HOST = 'hentai.cafe'
 URL_ROOT = f'https://{HOST}'
 
-__logger__ = logging.get_logger(f'sites.{__name__}')
+__logger__ = logging.ez_get_logger(f'sites.{__name__}')
 
 
 class HentaiCafeURL(Regex):

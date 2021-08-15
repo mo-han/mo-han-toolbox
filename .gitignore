@@ -20,3 +20,4 @@ traitsui
 .ipynb_checkpoints/
 mykits/cmds_*.yml
 python36.dll
+.venv

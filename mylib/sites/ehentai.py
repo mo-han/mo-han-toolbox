@@ -61,7 +61,7 @@ def guess_creators_from_ehentai_title(x: str):
 
 
 def ehviewer_images_catalog(root_dir, *, dry_run: bool = False, db_json_path: str = 'ehdb.json'):
-    logger = logging.get_logger('ehvimg', fmt=logging.LOG_FMT_MESSAGE_ONLY)
+    logger = logging.ez_get_logger('ehvimg', fmt=logging.LOG_FMT_MESSAGE_ONLY)
     logmsg_move = '* move {} -> {}'
     logmsg_skip = '# skip {}'
     logmsg_data = '+ /g/{}/{}'

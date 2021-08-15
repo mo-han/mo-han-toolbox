@@ -5,7 +5,7 @@ from mylib.ex import fstk
 from mylib.ex.console_app import *
 from mylib.easy import logging
 
-_logger = logging.get_logger(__name__)
+_logger = logging.ez_get_logger(__name__)
 
 FILE_DIR_CHOICES = {'f', 'd', 'fd'}
 ON_EXIST_CHOICES = {'error', 'overwrite', 'rename'}

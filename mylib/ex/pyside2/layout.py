@@ -5,25 +5,35 @@ from PySide2.QtWidgets import *
 from mylib.easy import T
 
 
-class EzQtLayout:
+class EzQtLayoutWrapper:
     def __init__(self, layout_class, owner_widget=None, parent=None):
         self.widget = owner_widget or QWidget(parent)
-        self.layout: QLayout = layout_class(self.widget)
+        self.layout = layout_class(self.widget)
         self.widget.setLayout(self.layout)
 
+    @staticmethod
+    def __get_widget_from__(x):
+        if isinstance(x, QWidget):
+            return x
+        elif hasattr(x, 'widget') and isinstance(x.widget, QWidget):
+            return x.widget
+        else:
+            raise ValueError('get no widget from this object')
+
     def add_widgets(self, *widgets):
-        for w in widgets:
-            if isinstance(w, EzQtLayout):
-                self.layout.addWidget(w.widget)
-            elif isinstance(w, T.Iterable):
-                for i in w:
-                    self.layout.addWidget(i)
-            elif w:
-                self.layout.addWidget(w)
+        layout = self.layout
+        for x in widgets:
+            if isinstance(x, T.Iterable):
+                args = list(x)
+                first, *others = args
+                w = self.__get_widget_from__(first)
+                layout.addWidget(w, *others)
+            else:
+                layout.addWidget(self.__get_widget_from__(x))
         return self
 
 
-class EzQtScrollArea(EzQtLayout):
+class EzQtScrollArea(EzQtLayoutWrapper):
     def __init__(self, layout_class, parent=None, resizable=True):
         self.area = QScrollArea(parent)
         widget = QWidget(self.area)
