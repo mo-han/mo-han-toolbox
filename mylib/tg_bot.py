@@ -9,7 +9,7 @@ from inspect import getmembers, ismethod
 from typing import Callable
 
 from si_prefix import si_format
-from telegram import ChatAction, Bot, Update, ParseMode, constants, Message
+from telegram import ChatAction, Bot, Update, ParseMode, constants, Message, Chat
 from telegram.ext import Updater, Filters, CallbackContext
 from telegram.ext.filters import MergedFilter
 
@@ -63,6 +63,11 @@ def merge_filters_and(*filters):
 def merge_filters_or(*filters):
     filters = list(set(filters) - {None})
     return reduce(lambda x, y: MergedFilter(x, or_filter=y), filters)
+
+
+class SimpleBotTask:
+    data: dict
+    done = False
 
 
 class SimpleBot(ABC):
@@ -161,11 +166,7 @@ class SimpleBot(ABC):
         self.__send_code_block__(f'{tb}', to_where)
 
     def __task_loop__(self):
-        q = self.__task_queue__ = queue.Queue()
-        p = self.__task_poll__
-        while True:
-            task = 
-
+        ...
 
     def __run__(self, poll_timeout=None):
         poll_param = {}
