@@ -152,6 +152,10 @@ class EzQtLogViewer(QPlainTextEdit, EzQtObjectMixin):
         self.thread_pool.setMaxThreadCount(1)
         self.queue = easy.queue.Queue()
         self.handler = logging.QueueHandler(self.queue)
+        self._flag_to_stop = False
+
+    def stop(self):
+        self._flag_to_stop = True
 
     def set_format(self, fmt=None, date_fmt=None):
         formatter = logging.Formatter(fmt=fmt, datefmt=date_fmt)
@@ -167,11 +171,18 @@ class EzQtLogViewer(QPlainTextEdit, EzQtObjectMixin):
             logging.CRITICAL: f'<font color="{EzColors.deeppink}">{{}}</font>',
         }
         while True:
-            record: logging.LogRecord = self.queue.get()
-            msg = html_fmt[record.levelno].format(self.handler.format(record))
+            if self._flag_to_stop:
+                break
+            try:
+                record: logging.LogRecord = self.queue.get(timeout=1)
+            except queue.Empty:
+                continue
+            msg = self.handler.format(record).strip().replace('\n', '<br>')
+            msg = html_fmt[record.levelno].format(f'<pre>{msg}</pre>')
             yield msg
 
     def start(self):
+        self._flag_to_stop = False
         EzQtThreadWorker(self.iter_msg).connect_signals(
             i_result=self.appendHtml).start_in_pool(self.thread_pool)
         return self
