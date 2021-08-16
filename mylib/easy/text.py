@@ -71,7 +71,7 @@ def pattern_replace(s: str, pattern: str, replace: str, *, regex=False, ignore_c
             return s.replace(pattern, replace)
 
 
-def split_by_length_or_newline(x: str, length: int):
+def split_by_new_line_with_max_length(x: str, length: int):
     parts = []
     while x:
         if len(x) > length:
