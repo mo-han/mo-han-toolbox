@@ -145,6 +145,9 @@ class EzQtDelegateWidgetMixin:
 
 
 class EzQtLogViewer(QPlainTextEdit, EzQtObjectMixin):
+    # html_fmt = '<font color="{color}"><pre>中文测试{{}}</pre></font>'
+    html_fmt = '<pre style="font-family:consolas; color:{color}">中文测试{{}}</pre>'
+
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.set(read_only=True)
@@ -152,10 +155,20 @@ class EzQtLogViewer(QPlainTextEdit, EzQtObjectMixin):
         self.thread_pool.setMaxThreadCount(1)
         self.queue = easy.queue.Queue()
         self.handler = logging.QueueHandler(self.queue)
-        self._flag_to_stop = False
+        self.flag_stop = False
+        self.log_fmt = self.get_log_msg_fmt()
 
     def stop(self):
-        self._flag_to_stop = True
+        self.flag_stop = True
+
+    def get_log_msg_fmt(self):
+        return {k: self.html_fmt.format(**v) for k, v in {
+            logging.DEBUG: dict(color=EzColors.limegreen),
+            logging.INFO: dict(color=EzColors.blue),
+            logging.WARNING: dict(color=EzColors.darkorange),
+            logging.ERROR: dict(color=EzColors.darkred),
+            logging.CRITICAL: dict(color=EzColors.deeppink),
+        }.items()}
 
     def set_format(self, fmt=None, date_fmt=None):
         formatter = logging.Formatter(fmt=fmt, datefmt=date_fmt)
@@ -163,26 +176,19 @@ class EzQtLogViewer(QPlainTextEdit, EzQtObjectMixin):
         return self
 
     def iter_msg(self):
-        html_fmt = {
-            logging.DEBUG: f'<font color="{EzColors.limegreen}">{{}}</font>',
-            logging.INFO: f'<font color="{EzColors.blue}">{{}}</font>',
-            logging.WARNING: f'<font color="{EzColors.darkorange}">{{}}</font>',
-            logging.ERROR: f'<font color="{EzColors.red}">{{}}</font>',
-            logging.CRITICAL: f'<font color="{EzColors.deeppink}">{{}}</font>',
-        }
+
         while True:
-            if self._flag_to_stop:
+            if self.flag_stop:
                 break
             try:
                 record: logging.LogRecord = self.queue.get(timeout=1)
             except queue.Empty:
                 continue
-            msg = self.handler.format(record).strip()
-            msg = html_fmt[record.levelno].format(f'<pre>{msg}</pre>')
+            msg = self.log_fmt[record.levelno].format(self.handler.format(record).strip())
             yield msg
 
     def start(self):
-        self._flag_to_stop = False
+        self.flag_stop = False
         EzQtThreadWorker(self.iter_msg).connect_signals(
             i_result=self.appendHtml).start_in_pool(self.thread_pool)
         return self
