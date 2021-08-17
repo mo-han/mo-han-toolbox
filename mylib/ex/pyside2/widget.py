@@ -177,7 +177,7 @@ class EzQtLogViewer(QPlainTextEdit, EzQtObjectMixin):
                 record: logging.LogRecord = self.queue.get(timeout=1)
             except queue.Empty:
                 continue
-            msg = self.handler.format(record).strip().replace('\n', '<br>')
+            msg = self.handler.format(record).strip()
             msg = html_fmt[record.levelno].format(f'<pre>{msg}</pre>')
             yield msg
 
