@@ -146,7 +146,7 @@ class EzQtDelegateWidgetMixin:
 
 class EzQtLogViewer(QPlainTextEdit, EzQtObjectMixin):
     # html_fmt = '<font color="{color}"><pre>中文测试{{}}</pre></font>'
-    html_fmt = '<pre style="font-family:consolas; color:{color}">中文测试{{}}</pre>'
+    html_fmt = '<pre style="font-family:consolas; color:{color}">{{}}</pre>'
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
