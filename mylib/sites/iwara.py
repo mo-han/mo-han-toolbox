@@ -33,6 +33,14 @@ class IwaraIE(ytdl_iwara.IwaraIE, metaclass=ABCMeta):
             uploader = html.xpath('//div[@class="node-info"]//div[@class="submitted"]//a[@class="username"]')[0].text
             data['uploader'] = uploader
             # print('#', 'uploader:', uploader)
+            file_url = data['url']
+            query = easy.urllib.parse.urlparse(url).query
+            query_file: str = easy.urllib.parse.parse_qs(query)['file'][0]
+            filename = query_file.split('/')[-1]
+            parts = filename.split('_')
+            sn = parts[0]
+            id_ = parts[1]
+            data['id'] = f'{id_} {sn}'
         except IndexError:
             pass
         return data
