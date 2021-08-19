@@ -59,6 +59,7 @@ class AttrName(metaclass=SingletonMetaClass):
         pass
 
     def __getattr__(self, item: str) -> str:
+        self.__dict__[item] = item
         return item
 
 

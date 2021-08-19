@@ -144,7 +144,7 @@ class EzQtDelegateWidgetMixin:
             self.draw_widget()
 
 
-class EzQtLogViewer(QPlainTextEdit, EzQtObjectMixin):
+class EzQtLogViewer(QPlainTextEdit, EzQtObjectMixin, logging.EzLoggingMixin):
     # html_fmt = '<font color="{color}"><pre>中文测试{{}}</pre></font>'
     html_fmt = '<pre style="font-family:consolas; color:{color}">{{}}</pre>'
 
@@ -176,9 +176,10 @@ class EzQtLogViewer(QPlainTextEdit, EzQtObjectMixin):
         return self
 
     def iter_msg(self):
-
+        self.__logger__.debug('start')
         while True:
             if self.flag_stop:
+                self.__logger__.debug('stop')
                 break
             try:
                 record: logging.LogRecord = self.queue.get(timeout=1)
