@@ -798,11 +798,19 @@ class Timer:
 
     def __enter__(self):
         self.t0 = time.perf_counter()
+        self.duration = 0
         self.records = []
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.elapse = time.perf_counter() - self.t0
+        self.duration = self.elapse()
+
+    def start(self):
+        return self.__enter__()
+
+    def stop(self):
+        self.__exit__(None, None, None)
+        return self
 
     def reset(self):
         return self.__enter__()
@@ -812,12 +820,15 @@ class Timer:
 
     @property
     def average(self):
-        return self.elapse / self.n
+        return self.duration / self.n
 
-    def acquire(self):
-        t = time.perf_counter() - self.t0
+    def record(self):
+        t = self.elapse()
         self.records.append(t)
         return t
+
+    def elapse(self):
+        return time.perf_counter() - self.t0
 
 
 def ez_parse_netloc(url: str):
