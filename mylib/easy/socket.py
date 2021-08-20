@@ -20,7 +20,7 @@ class EzSocket(socket):
         self.address = host, port
         return self
 
-    def connect(self, address=None):
+    def connect(self, address=None) -> 'EzSocket':
         address = address or self.address
         super(EzSocket, self).connect(address)
         return self
