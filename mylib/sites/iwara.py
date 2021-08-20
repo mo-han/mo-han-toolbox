@@ -29,18 +29,21 @@ class IwaraIE(ytdl_iwara.IwaraIE, metaclass=ABCMeta):
         data = super()._real_extract(url)
         # youtube_dl_x.safe_title(data)
         try:
-            html = get_html_element_tree(url)
-            uploader = html.xpath('//div[@class="node-info"]//div[@class="submitted"]//a[@class="username"]')[0].text
+            h = get_html_element_tree(url)
+            uploader = h.xpath('//div[@class="node-info"]//div[@class="submitted"]//a[@class="username"]')[0].text
             data['uploader'] = uploader
             # print('#', 'uploader:', uploader)
-            file_url = data['url']
-            query = easy.urllib.parse.urlparse(url).query
-            query_file: str = easy.urllib.parse.parse_qs(query)['file'][0]
-            filename = query_file.split('/')[-1]
-            parts = filename.split('_')
-            sn = parts[0]
-            id_ = parts[1]
-            data['id'] = f'{id_} {sn}'
+            for v in data['formats']:
+                file_url = v.get('url')
+                if file_url:
+                    query = easy.urllib.parse.urlparse(file_url).query
+                    query_file: str = easy.urllib.parse.parse_qs(query)['file'][0]
+                    filename = query_file.split('/')[-1]
+                    parts = filename.split('_')
+                    sn = parts[0]
+                    id_ = parts[1]
+                    data['id'] = f'{id_} {sn}'
+                    break
         except IndexError:
             pass
         return data
