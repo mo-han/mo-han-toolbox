@@ -3,11 +3,12 @@ import webbrowser
 
 from mylib.ex.console_app import *
 
-if os.name != 'nt':
-    raise NotImplementedError('launch new console window')
+# if os.name != 'nt':
+#     raise NotImplementedError('launch new console window')
 
-conf_path = fstk.make_path('%gallery-dl.conf%', env_var=True)
-base_dir = fstk.make_path('%gallery-dl.base-directory%', env_var=True).strip('"')
+env_var = os.environ
+conf_path = fstk.make_path(env_var['gallery_dl_conf']).strip('"')
+base_dir = fstk.make_path(env_var['gallery_dl_base_directory']).strip('"')
 
 
 def _console_pause_nt():
@@ -59,7 +60,7 @@ def new_gallery_dl_cmd(*args, **kwargs):
 
 
 def get_cookies_path(middle_name):
-    return fstk.make_path('%cookies.dir%', f'cookies.{middle_name}.txt', env_var=True)
+    return fstk.make_path(env_var['cookies_dir'], f'cookies.{middle_name}.txt')
 
 
 def per_site(args: T.List[str]):
