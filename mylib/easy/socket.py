@@ -24,3 +24,7 @@ class EzSocket(socket):
         address = address or self.address
         super(EzSocket, self).connect(address)
         return self
+
+    def shutdown(self, how: int = SHUT_RDWR) -> 'EzSocket':
+        super(EzSocket, self).shutdown(how)
+        return self
