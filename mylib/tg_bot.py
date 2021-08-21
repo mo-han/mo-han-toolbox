@@ -10,20 +10,13 @@ from typing import Callable
 
 from si_prefix import si_format
 from telegram import ChatAction, Bot, Update, ParseMode, constants, Message, Chat
-from telegram.ext import Updater, Filters, CallbackContext
+from telegram.ext import Updater, Filters, CallbackContext, PicklePersistence
 from telegram.ext.filters import MergedFilter
 
 from mylib.easy import ostk, text
 from mylib.ex import fstk, tricks
 from .easy import *
 from .easy import python_module_from_source_code
-
-
-class BotPlaceholder:
-    pass
-
-
-BOT_PLACEHOLDER = BP = BotPlaceholder()
 
 
 def modify_telegram_ext_commandhandler(s: str) -> str:
@@ -73,19 +66,28 @@ class SimpleBotTask:
 class SimpleBot(ABC):
     __task_queue__: queue.Queue
     __task_poll__: ThreadPoolExecutor
+    __string_updates_unhandled__ = 'updates unhandled'
+    __string_updates_unfinished__ = 'updates unfinished'
 
     def __init__(self, token, *,
-                 timeout=None, whitelist=None, filters=None, runtime_data: dict = None,
+                 timeout=None, whitelist=None, filters=None,
+                 persistence_pickle_filename='telegram_bot.dat',
                  auto_run=True, debug_mode=False,
                  **kwargs):
-        self._debug_mode = debug_mode
-        self.__rt_data__ = runtime_data or {}
+        self.__timeout__ = timeout
         self.__filters__ = filters
-        self.__updater__ = Updater(token, use_context=True,
+        self._debug_mode = debug_mode
+
+        self.__persistence__ = PicklePersistence(persistence_pickle_filename)
+        bot_data = self.__persistence__.get_bot_data()
+        self.__unhandled_updates__ = bot_data.setdefault(self.__string_updates_unhandled__, set())
+        self.__unfinished_updates__ = bot_data.setdefault(self.__string_updates_unfinished__, set())
+        self.__updater__ = Updater(token, use_context=True, persistence=self.__persistence__,
                                    request_kwargs={'read_timeout': timeout, 'connect_timeout': timeout},
                                    **kwargs)
-        self.__get_me__(timeout=timeout)
-        self.__init_rt_data__()
+        self.__restore_updates_into_queue()
+
+        self.__get_me__()
         print(self.__about_this_bot__())
         self.__register_whitelist__(whitelist)
         self.__register_handlers__()
@@ -121,8 +123,8 @@ class SimpleBot(ABC):
                     _kwargs['filters'] = merge_filters_and(self.__filters__, _filters)
                 self.__updater__.dispatcher.add_handler(_type(**_kwargs))
 
-    def __get_me__(self, timeout=None):
-        me = self.__bot__.get_me(timeout=timeout)
+    def __get_me__(self):
+        me = self.__bot__.get_me(timeout=self.__timeout__)
         fullname = me.first_name or ''
         last_name = me.last_name
         if last_name:
@@ -134,36 +136,36 @@ class SimpleBot(ABC):
     def __typing__(self, update: Update):
         self.__bot__.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING)
 
-    def __send_text__(self, any_text: str, to_where, **kwargs):
-        if isinstance(to_where, Update):
+    def __send_text__(self, any_text: str, dst, **kwargs):
+        if isinstance(dst, Update):
             def _send(sth):
-                to_where.message.reply_text(sth, **kwargs)
-        elif isinstance(to_where, (int, str)):
+                dst.message.reply_text(sth, **kwargs)
+        elif isinstance(dst, (int, str)):
             def _send(sth):
-                self.__bot__.send_message(to_where, sth, **kwargs)
+                self.__bot__.send_message(dst, sth, **kwargs)
         else:
-            raise TypeError(to_where, (Update, int, str))
+            raise TypeError(dst, (Update, int, str))
         if len(any_text) > constants.MAX_MESSAGE_LENGTH:
             for s in text.split_by_new_line_with_max_length(any_text, constants.MAX_MESSAGE_LENGTH):
                 _send(s)
         else:
             _send(any_text)
 
-    def __send_markdown__(self, md_text: str, to_where, **kwargs):
-        self.__send_text__(md_text, to_where, parse_mode=ParseMode.MARKDOWN, **kwargs)
+    def __send_markdown__(self, md_text: str, dst, **kwargs):
+        self.__send_text__(md_text, dst, parse_mode=ParseMode.MARKDOWN, **kwargs)
 
-    __reply_md__ = __send_markdown__
+    __send_md__ = __send_markdown__
 
-    def __send_code_block__(self, code_text, to_where):
+    def __send_code_block__(self, code_text, dst):
         for ct in text.split_by_new_line_with_max_length(code_text, constants.MAX_MESSAGE_LENGTH - 7):
-            self.__send_markdown__(f'```\n{ct}```', to_where)
+            self.__send_markdown__(f'```\n{ct}```', dst)
 
-    def __send_traceback__(self, to_where):
+    def __send_traceback__(self, dst):
         if not self._debug_mode:
             return
         tb = traceback.format_exc()
         print(tb)
-        self.__send_code_block__(f'{tb}', to_where)
+        self.__send_code_block__(f'{tb}', dst)
 
     def __task_loop__(self):
         ...
@@ -182,12 +184,15 @@ class SimpleBot(ABC):
         return '\n'.join(lines)
 
     def __about_this_bot__(self):
-        return f'bot:\n' \
-               f'{self.__fullname__} @{self.__username__}\n\n' \
-               f'running on device:\n' \
-               f'{ostk.USERNAME} @ {ostk.HOSTNAME} ({ostk.OSNAME})\n\n' \
-               f'load {len(self.__rt_data__["queued"]) + len(self.__rt_data__["undone"])} update(s) ' \
-               f'since {self.__rt_data__["mtime"]}'
+        return f'''
+bot:
+{self.__fullname__} @{self.__username__}
+
+on device:
+{ostk.USERNAME} @ {ostk.HOSTNAME} ({ostk.OSNAME})
+
+{len(self.__unhandled_updates__)} unhandled and {len(self.__unfinished_updates__)} unfinished updates
+'''.strip()
 
     @deco_factory_bot_handler_method(CommandHandler, on_menu=True)
     def start(self, update: Update, context: CallbackContext):
@@ -210,76 +215,28 @@ class SimpleBot(ABC):
         menu_str = '\n'.join(lines)
         self.__send_markdown__(f'```\n{menu_str}```', update)
 
-    def __save_rt_data__(self, data_file_path=None):
-        # def pickle_bot(bot_obj: Bot):
-        #     return (lambda: self.__bot__), ()
-        # copyreg.pickle(Bot, pickle_bot)
-        # ABOVE CODE IS NOT A SOLUTION!
-        t0 = time.perf_counter()
-        data = self.__rt_data__
-        data['mtime'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-        if data_file_path:
-            undone = data.setdefault('undone', {})
-            queued = data.setdefault('queued', [])
-            updates: T.List[Update] = [*undone.values(), *queued]
-            [self.__pre_pickle_update__(u) for u in updates]
-            fstk.write_sqlite_dict_file(data_file_path, data, with_dill=True)
-            [self.__post_pickle_update__(u) for u in updates]
-            read_data = fstk.read_sqlite_dict_file(data_file_path, with_dill=True)
-            t = time.perf_counter() - t0
-            print(f'saved: {len(read_data["undone"])} undone, {len(read_data["queued"])} queued ({si_format(t)}s used)')
-
-    def __pre_pickle_update_auto__(self, u: Update):
-        for p in (path for path, obj in tricks.walk_obj_iter(u, keepout_types=(Bot,)) if isinstance(obj, Bot)):
-            tricks.deep_setattr(u, BP, *p)
-        if self._debug_mode and not tricks.is_picklable_with_dill_trace(u):
-            for p in (path for path, obj in tricks.walk_obj_iter(u, keepout_types=(Bot,)) if isinstance(obj, Bot)):
-                print(p)
-
-    def __post_pickle_update_auto__(self, u: Update):
-        for p in (path for path, obj in tricks.walk_obj_iter(u, keepout_types=(BotPlaceholder,)) if
-                  isinstance(obj, BotPlaceholder)):
-            tricks.deep_setattr(u, self.__bot__, *p)
-
-    def __pre_pickle_update__(self, u: Update):
-        msg = u.message
-        msg.bot = msg.from_user.bot = msg.chat.bot = BP
-        if self._debug_mode and not tricks.is_picklable_with_dill_trace(u):
-            for p in (path for path, obj in tricks.walk_obj_iter(u, keepout_types=(Bot,)) if isinstance(obj, Bot)):
-                print(p)
-
-    def __post_pickle_update__(self, u: Update):
-        msg = u.message
-        msg.bot = msg.from_user.bot = msg.chat.bot = self.__bot__
-
-    def __requeue_failed_update__(self, update: Update, save=False):
+    def __requeue_update__(self, update: Update):
         update_queue = self.__updater__.dispatcher.update_queue
         update_queue.put(update)
-        s = f'{self.__requeue_failed_update__.__name__}: qsize={update_queue.qsize()}'
+        s = f'''
+{self.__requeue_update__.__name__}:
+qsize={update_queue.qsize()}
+'''.strip()
         print(s)
         self.__send_code_block__(s, update)
-        if save:
-            self.__save_rt_data__()
 
-    def __init_rt_data__(self):
-        self.__rt_data__.setdefault('mtime', 'N/A')
-        undone = self.__rt_data__.setdefault('undone', {})
-        queued = self.__rt_data__.setdefault('queued', [])
-        for update in itertools.chain(undone.values(), queued):
-            update.message.bot = self.__bot__
-        [self.__updater__.dispatcher.update_queue.put(u) for u in queued]
-        [self.__updater__.dispatcher.update_queue.put(v) for k, v in undone.items()]
+    def __snap_queued_updates__(self):
+        self.__unhandled_updates__.update(self.__updater__.dispatcher.update_queue.queue)
 
-    def __add_undone_update__(self, key: str, update: Update):
-        self.__rt_data__['undone'][key] = update
-        try:
-            self.__save_rt_data__()
-        except:
-            self.__send_traceback__(update)
+    def __restore_updates_into_queue(self):
+        q = self.__updater__.dispatcher.update_queue
+        [q.put(u) for u in itertools.chain(self.__unhandled_updates__, self.__unfinished_updates__)]
 
-    def __del_undone_update__(self, key: str, update: Update):
-        del self.__rt_data__['undone'][key]
-        try:
-            self.__save_rt_data__()
-        except:
-            self.__send_traceback__(update)
+    def __flush_persistence__(self, *, unfinished_updates: T.Iterable[Update] = ()):
+        self.__snap_queued_updates__()
+
+        if isinstance(unfinished_updates, Update):
+            unfinished_updates = [unfinished_updates]
+        self.__unfinished_updates__.update(unfinished_updates)
+
+        self.__persistence__.flush()

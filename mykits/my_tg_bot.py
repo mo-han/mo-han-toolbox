@@ -6,8 +6,8 @@ from telegram.ext import MessageHandler
 from mylib.cli import new_argument_parser
 from mylib.easy.logging import ez_get_logger
 from mylib.easy.text import decode_fallback_locale
-from mylib.ex.tricks import monitor_sub_process_tty_frozen, deco_factory_retry, ProcessTTYFrozen
-from mylib.ex.fstk import read_json_file, write_json_file, read_sqlite_dict_file
+from mylib.ex.fstk import read_json_file, write_json_file
+from mylib.ex.tricks import monitor_sub_process_tty_frozen, ProcessTTYFrozen
 from mylib.tg_bot import *
 
 mt = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(os.path.getmtime(os.path.realpath(__file__))))
@@ -37,24 +37,23 @@ bldl_regex_pattern = re.compile(r'(/|^)BV[\da-zA-Z]{10}|(/|^)av\d+\W|(/|^)ep\d+|
 
 
 class MyAssistantBot(SimpleBot):
-    def __init__(self, conf_file: str, **kwargs):
-        self._conf_file = conf_file
-        config = read_json_file(conf_file)
-        data_file = os.path.splitext(conf_file)[0] + '.db'
-        self._data_file = data_file
-        data = read_sqlite_dict_file(data_file, with_dill=True)
-        super().__init__(token=config['token'], whitelist=config.get('user_whitelist'), runtime_data=data, **kwargs)
+    def __init__(self, config_file: str, **kwargs):
+        self._config_file = config_file
+        config = read_json_file(config_file)
+        persistence_file = os.path.splitext(config_file)[0] + '.dat'
+        super().__init__(token=config['token'], whitelist=config.get('user_whitelist'),
+                         persistence_pickle_filename=persistence_file, **kwargs)
 
-    def __get_conf__(self):
-        return read_json_file(self._conf_file)
+    def __get_config__(self):
+        return read_json_file(self._config_file)
 
-    def __set_conf__(self, **kwargs):
-        conf = self.__get_conf__()
+    def __set_config__(self, **kwargs):
+        conf = self.__get_config__()
         conf.update(kwargs)
-        write_json_file(self._conf_file, conf, indent=4)
+        write_json_file(self._config_file, conf, indent=4)
 
     def __str_contain_abandon_errors__(self, s):
-        abandon_errors = self.__get_conf__().get('abandon_errors') or []
+        abandon_errors = self.__get_config__().get('abandon_errors') or []
         return any(map(lambda x: x in s, abandon_errors))
 
     @deco_factory_bot_handler_method(CommandHandler, on_menu=True, command='freevmessuuid')
@@ -72,8 +71,7 @@ class MyAssistantBot(SimpleBot):
             print(echo)
             self.__send_code_block__(echo, update)
             return
-        undone_key = self._ytdl.__name__
-        self.__add_undone_update__(undone_key, update)
+        self.__flush_persistence__(unfinished_updates=update)
         args_l = [line2args(line) for line in update.message.text.splitlines()]
         for args in args_l:
             args = [re.sub(r'\[(ph[\da-f]{13})]', r'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in
@@ -91,21 +89,20 @@ class MyAssistantBot(SimpleBot):
                         self.__send_code_block__(f'- {args_s}\n{echo}', update)
                         continue
                     self.__send_code_block__(f'! {args_s}\n{echo}', update)
-                    self.__requeue_failed_update__(update)
+                    self.__requeue_update__(update)
                 else:
                     self.__send_code_block__(f'* {args_s}\n{echo}', update)
             except Exception as e:
                 print('ERROR')
                 self.__send_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
                 self.__send_traceback__(update)
-                self.__requeue_failed_update__(update)
-        self.__del_undone_update__(undone_key, update)
+                self.__requeue_update__(update)
+        self.__unfinished_updates__.remove(update)
 
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(bldl_regex_pattern))
     def _bldl(self, update, *args):
         print(self._bldl.__name__)
-        undone_key = self._bldl.__name__
-        self.__add_undone_update__(undone_key, update)
+        self.__flush_persistence__(unfinished_updates=update)
         args_l = [line2args(line) for line in update.message.text.splitlines()]
         for args in args_l:
             args_s = ' '.join([shlex.quote(a) for a in args])
@@ -120,7 +117,7 @@ class MyAssistantBot(SimpleBot):
                         self.__send_code_block__(f'- {args_s}\n{echo}', update)
                         continue
                     print(f' EXIT CODE: {p.returncode}')
-                    self.__requeue_failed_update__(update)
+                    self.__requeue_update__(update)
                     self.__send_code_block__(f'- {args_s}\n{echo}', update)
                 else:
                     echo = ''.join([s for s in [decode_fallback_locale(b) for b in out.readlines()] if '─┤' not in s])
@@ -129,8 +126,8 @@ class MyAssistantBot(SimpleBot):
             #     raise
             except Exception as e:
                 self.__send_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
-                self.__requeue_failed_update__(update)
-        self.__del_undone_update__(undone_key, update)
+                self.__requeue_update__(update)
+        self.__unfinished_updates__.remove(update)
 
     @deco_factory_bot_handler_method(CommandHandler)
     def _secret(self, update: Update, *args):
@@ -157,31 +154,26 @@ class MyAssistantBot(SimpleBot):
             self.__send_code_block__(usage_s, u)
             return
         arg0, arg1 = args[0], ' '.join(args[1:])
-        errors = self.__get_conf__().get('abandon_errors', [])
+        errors = self.__get_config__().get('abandon_errors', [])
         if arg0 == ':':
             self.__send_code_block__(pformat(errors), u)
         elif arg0 == '+':
             errors = sorted(set(errors) | {arg1})
-            self.__set_conf__(abandon_errors=errors)
+            self.__set_config__(abandon_errors=errors)
             self.__send_code_block__(pformat(errors), u)
         elif arg0 == '-':
             errors = sorted(set(errors) - {arg1})
-            self.__set_conf__(abandon_errors=errors)
+            self.__set_config__(abandon_errors=errors)
             self.__send_code_block__(pformat(errors), u)
         else:
             self.__send_code_block__(pformat(errors), u)
 
-    def __save_rt_data__(self, data_file_path=None):
-        data_file_path = data_file_path or self._data_file
-        self.__rt_data__['queued'] = list(self.__updater__.dispatcher.update_queue.queue)
-        super().__save_rt_data__(data_file_path)
-
     def __predicate_update__(self, u: Update, c: CallbackContext):
-        anti_updates = set(self.__get_conf__().get('anti_updates', []))
+        anti_updates = set(self.__get_config__().get('anti_updates', []))
         for x in anti_updates:
             if x in u.message.text:
                 anti_updates.remove(x)
-                self.__set_conf__(anti_updates=list(anti_updates))
+                self.__set_config__(anti_updates=list(anti_updates))
                 return False
         else:
             return True
