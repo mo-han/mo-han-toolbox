@@ -270,19 +270,16 @@ in {t.duration:.3f}s
                 calls.add(b)
             self.__dump_pickle__()
 
-    @staticmethod
-    def __new_internal_call_tuple__(*args, **kwargs) -> tuple:
-        return args, kwargs
-
     def __add_internal_call__(self, target, *args, **kwargs):
         if not isinstance(target, str) and hasattr(target, '__name__'):
             target = target.__name__
-        t = self.__new_internal_call_tuple__(target, *args, **kwargs)
-        self.__the_saved_calls__().add(dill.dumps(t))
-        self.__dump_pickle__()
+        s = f'{target}({", ".join(map(repr, args))}, {", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])})'
+        if not self.__successful_internal_call__(target, *args, **kwargs):
+            self.__the_saved_calls__().add(dill.dumps(((target, *args), kwargs)))
+            self.__dump_pickle__()
+            return s
 
-    def __successful_internal_call__(self, *args, **kwargs) -> bool:
-        target, *args = args
+    def __successful_internal_call__(self, target, *args, **kwargs) -> bool:
         if isinstance(target, str):
             target = getattr(self, target)
         r = target(*args, **kwargs)

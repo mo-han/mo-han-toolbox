@@ -74,9 +74,9 @@ class MyAssistantBot(EasyBot):
             chat_id = update.message.chat_id
             args_ll = [line2args(line) for line in update.message.text.splitlines()]
             for args_l in args_ll:
-                call_tuple = (self._ytdl_succeed, chat_id, *args_l)
-                if not self.__successful_internal_call__(*call_tuple):
-                    self.__add_internal_call__(*call_tuple)
+                s = self.__add_internal_call__(self._ytdl_succeed, chat_id, *args_l)
+                if s:
+                    self.__send_code_block__(chat_id, f'+ {s}')
 
     def _ytdl_succeed(self, chat_id, *args):
         print('ytdl', args)
@@ -111,9 +111,9 @@ class MyAssistantBot(EasyBot):
             chat_id = update.message.chat_id
             args_ll = [line2args(line) for line in update.message.text.splitlines()]
             for args_l in args_ll:
-                call_tuple = (self._bldl_succeed, chat_id, *args_l)
-                if not self.__successful_internal_call__(*call_tuple):
-                    self.__add_internal_call__(*call_tuple)
+                s = self.__add_internal_call__(self._bldl_succeed, chat_id, *args_l)
+                if s:
+                    self.__send_code_block__(chat_id, f'+ {s}')
 
     def _bldl_succeed(self, chat_id, *args):
         print('bldl', args)
