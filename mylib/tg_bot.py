@@ -250,13 +250,13 @@ qsize={update_queue.qsize()}
             self.__persistence__.flush()
             if path_is_file(self.__persistence_filename__):
                 shutil.copy(self.__persistence_filename__, self.__persistence_backup_filename__)
-            print(f'''
+        print(f'''
 save:
 {len(self.__saved_calls__)} calls
 {len(self.__saved_updates__)} updates
 in {t.duration:.3f}s
 '''.strip())
-            self.__handle_saved_calls__()
+        self.__handle_saved_calls__()
 
     def __load_persistence__(self):
         if path_is_file(self.__persistence_backup_filename__):
@@ -304,7 +304,13 @@ in {t.duration:.3f}s
         self.__saved_updates__.remove(update)
 
     @contextlib.contextmanager
-    def __ctx_update__(self, update: Update):
+    def __ctx_save__(self):
         self.__dump_persistence__()
         yield
-        self.__dump_persistence__()
+        if self.__saved_calls__:
+            self.__dump_persistence__()
+            if not self.__queue_size__():
+                self.__handle_saved_calls__()
+
+    def __queue_size__(self):
+        return self.__updater__.dispatcher.update_queue.qsize()
