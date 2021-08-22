@@ -256,7 +256,6 @@ save:
 {len(self.__saved_updates__)} updates
 in {t.duration:.3f}s
 '''.strip())
-        self.__handle_saved_calls__()
 
     def __load_persistence__(self):
         if path_is_file(self.__persistence_backup_filename__):
@@ -270,11 +269,12 @@ in {t.duration:.3f}s
         return persistence
 
     def __handle_saved_calls__(self):
-        calls = self.__saved_calls__
-        while calls:
-            args, kwargs = dill.loads(calls.pop())
+        s = self.__saved_calls__
+        while s:
+            b = s.pop()
+            args, kwargs = dill.loads(b)
             if not self.__successful_internal_call__(*args, **kwargs):
-                calls.add((args, kwargs))
+                s.add(b)
             self.__dump_persistence__()
 
     @staticmethod
