@@ -76,6 +76,7 @@ class MyAssistantBot(EasyBot):
             for args_l in args_ll:
                 s = self.__add_internal_call__(self._ytdl_succeed, chat_id, *args_l)
                 if s:
+                    print(s)
                     self.__send_code_block__(chat_id, f'+ {s}')
 
     def _ytdl_succeed(self, chat_id, *args):
@@ -94,7 +95,7 @@ class MyAssistantBot(EasyBot):
                 if self.__str_contain_abandon_errors__(echo):
                     self.__send_code_block__(chat_id, f'- {args_s}\n{echo}')
                     return BotInternalCallResult(ok=True)
-                self.__send_code_block__(chat_id, f'! {args_s}\n{echo}')
+                self.__send_code_block__(chat_id, f'! {args_s}\n{p.returncode}\n{echo}')
                 return BotInternalCallResult(ok=False)
             else:
                 self.__send_code_block__(chat_id, f'* {args_s}\n{echo}')
@@ -113,6 +114,7 @@ class MyAssistantBot(EasyBot):
             for args_l in args_ll:
                 s = self.__add_internal_call__(self._bldl_succeed, chat_id, *args_l)
                 if s:
+                    print(s)
                     self.__send_code_block__(chat_id, f'+ {s}')
 
     def _bldl_succeed(self, chat_id, *args):
