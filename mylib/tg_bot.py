@@ -245,11 +245,12 @@ qsize={update_queue.qsize()}
 
     def __restore_updates_into_queue(self):
         q = self.__updater__.dispatcher.update_queue
-        for u in itertools.chain(self.__unhandled_updates__, self.__unfinished_updates__):
-            # u: Update
-            # msg = u.message
-            # msg.bot = msg.from_user.bot = msg.chat.bot = self.__bot__
-            q.put(u)
+        for s in (self.__unhandled_updates__, self.__unfinished_updates__):
+            while s:
+                u: Update = s.pop()
+                # msg = u.message
+                # msg.bot = msg.from_user.bot = msg.chat.bot = self.__bot__
+                q.put(u)
 
     def __dump_persistence__(self):
         timer = Timer()
@@ -283,13 +284,19 @@ in {timer.duration:.3f}s
     def __handle_saved_calls__(self):
         calls = self.__saved_calls__
         while calls:
-            args, kwargs = calls.pop()
+            args, kwargs = dill.loads(calls.pop())
             if not self.__successful_internal_call__(*args, **kwargs):
                 calls.add((args, kwargs))
 
     @staticmethod
     def __new_internal_call_tuple__(*args, **kwargs) -> tuple:
         return args, kwargs
+
+    def __add_internal_call(self, target, *args, **kwargs):
+        if not isinstance(target, str) and hasattr(target, '__name__'):
+            target = target.__name__
+        t = self.__new_internal_call_tuple__(target, *args, **kwargs)
+        self.__saved_calls__.add(dill.dumps(t))
 
     def __successful_internal_call__(self, *args, **kwargs) -> bool:
         target, *args = args
