@@ -88,6 +88,7 @@ class EasyBot:
         self.__updater__ = Updater(token, use_context=True, persistence=self.__pickle__,
                                    request_kwargs={'read_timeout': timeout, 'connect_timeout': timeout},
                                    **kwargs)
+        self.__pickle__.set_bot(self.__updater__.bot)
         self.__get_me__()
         print(self.__about_this_bot__())
         self.__restore_updates_into_queue__()
@@ -258,7 +259,6 @@ in {t.duration:.3f}s
         # if path_is_file(self.__pickle_bak_filepath__):
         #     shutil.copy(self.__pickle_bak_filepath__, self.__pickle_filepath__)
         p = PicklePersistence(self.__pickle_filepath__)
-        p.set_bot(self.__bot__)
         return p
 
     def __handle_saved_calls__(self):
