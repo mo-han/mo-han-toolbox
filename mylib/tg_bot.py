@@ -236,9 +236,6 @@ qsize={update_queue.qsize()}
         print(s)
         self.__send_code_block__(update, s)
 
-    def __capture_queued_updates__(self):
-        self.__saved_updates__.update(self.__updater__.dispatcher.update_queue.queue)
-
     def __restore_updates_into_queue__(self):
         q = self.__updater__.dispatcher.update_queue
         while self.__saved_updates__:
@@ -249,7 +246,7 @@ qsize={update_queue.qsize()}
 
     def __dump_persistence__(self):
         with Timer() as t:
-            self.__capture_queued_updates__()
+            self.__saved_updates__ = set(self.__updater__.dispatcher.update_queue.queue)
             self.__persistence__.flush()
             if path_is_file(self.__persistence_filename__):
                 shutil.copy(self.__persistence_filename__, self.__persistence_backup_filename__)
