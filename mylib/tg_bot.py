@@ -82,7 +82,7 @@ class EasyBot:
         self._debug_mode = debug_mode
 
         self.__pickle_filepath__ = dat_fp
-        # self.__pickle_bak_filepath__ = dat_fp + '.bak'
+        self.__pickle_copy_filepath__ = dat_fp + '.copy'
         self.__pickle__ = self.__load_pickle__()
         self.__bot_data__: dict = self.__pickle__.get_bot_data()
         self.__updater__ = Updater(token, use_context=True, persistence=self.__pickle__,
@@ -246,8 +246,8 @@ qsize={update_queue.qsize()}
             self.__the_saved_updates__(self.__updater__.dispatcher.update_queue.queue)
             self.__pickle__.update_bot_data(self.__bot_data__)
             self.__pickle__.flush()
-            # if path_is_file(self.__pickle_filepath__):
-            #     shutil.copy(self.__pickle_filepath__, self.__pickle_bak_filepath__)
+            if path_is_file(self.__pickle_filepath__):
+                shutil.copy(self.__pickle_filepath__, self.__pickle_copy_filepath__)
         print(f'''
 save:
 {len(self.__the_saved_calls__())} calls
@@ -256,8 +256,8 @@ in {t.duration:.3f}s
 '''.strip())
 
     def __load_pickle__(self):
-        # if path_is_file(self.__pickle_bak_filepath__):
-        #     shutil.copy(self.__pickle_bak_filepath__, self.__pickle_filepath__)
+        if path_is_file(self.__pickle_copy_filepath__):
+            shutil.copy(self.__pickle_copy_filepath__, self.__pickle_filepath__)
         p = PicklePersistence(self.__pickle_filepath__)
         return p
 
