@@ -301,6 +301,8 @@ in {t.duration:.3f}s
             self.__dump_pickle__()
             if not self.__queue_size__():
                 self.__handle_saved_calls__()
+        elif self.__the_saved_updates__():
+            self.__dump_pickle__()
 
     def __queue_size__(self):
         return self.__updater__.dispatcher.update_queue.qsize()
