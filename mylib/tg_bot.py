@@ -251,7 +251,8 @@ qsize={update_queue.qsize()}
         self.__persistence__.flush()
         pickle_file = self.__persistence__.filename
         bak_file = pickle_file + '.bak'
-        shutil.copy(pickle_file, bak_file)
+        if path_is_file(pickle_file):
+            shutil.copy(pickle_file, bak_file)
         timer.stop()
         print(
             f'save {len(self.__unhandled_updates__)} unhandled and {len(self.__unfinished_updates__)} unfinished '
