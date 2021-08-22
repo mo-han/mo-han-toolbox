@@ -96,11 +96,11 @@ class EasyBot:
         self.__updater__ = Updater(token, use_context=True, persistence=self.__persistence__,
                                    request_kwargs={'read_timeout': timeout, 'connect_timeout': timeout},
                                    **kwargs)
-        self.__restore_updates_into_queue()
-        self.__handle_saved_calls__()
-
         self.__get_me__()
         print(self.__about_this_bot__())
+        self.__restore_updates_into_queue__()
+        self.__handle_saved_calls__()
+
         self.__register_whitelist__(whitelist)
         self.__register_handlers__()
         if auto_run:
@@ -243,7 +243,7 @@ qsize={update_queue.qsize()}
     def __snap_queued_updates__(self):
         self.__unhandled_updates__.update(self.__updater__.dispatcher.update_queue.queue)
 
-    def __restore_updates_into_queue(self):
+    def __restore_updates_into_queue__(self):
         q = self.__updater__.dispatcher.update_queue
         for s in (self.__unhandled_updates__, self.__unfinished_updates__):
             while s:
@@ -272,7 +272,6 @@ in {timer.duration:.3f}s
     def __load_persistence__(self):
         if path_is_file(self.__persistence_backup_filename__):
             shutil.copy(self.__persistence_backup_filename__, self.__persistence_filename__)
-
         persistence = PicklePersistence(self.__persistence_filename__)
         persistence.get_bot_data()
         persistence.get_chat_data()
@@ -287,16 +286,18 @@ in {timer.duration:.3f}s
             args, kwargs = dill.loads(calls.pop())
             if not self.__successful_internal_call__(*args, **kwargs):
                 calls.add((args, kwargs))
+            self.__dump_persistence__()
 
     @staticmethod
     def __new_internal_call_tuple__(*args, **kwargs) -> tuple:
         return args, kwargs
 
-    def __add_internal_call(self, target, *args, **kwargs):
+    def __add_internal_call__(self, target, *args, **kwargs):
         if not isinstance(target, str) and hasattr(target, '__name__'):
             target = target.__name__
         t = self.__new_internal_call_tuple__(target, *args, **kwargs)
         self.__saved_calls__.add(dill.dumps(t))
+        self.__dump_persistence__()
 
     def __successful_internal_call__(self, *args, **kwargs) -> bool:
         target, *args = args
