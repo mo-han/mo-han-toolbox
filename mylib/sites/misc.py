@@ -14,4 +14,4 @@ def free_ss_site_vmess_uuid():
     for e in lxml_html.fromstring(r.text).cssselect('script'):
         s = e.text
         if s and 'www.kernels.bid' in s:
-            return easy.re.findall(easy.REGEX_GUID, s)[0]
+            return easy.re.findall(easy.REGEX_GUID, s)

@@ -60,8 +60,8 @@ class MyAssistantBot(EasyBot):
     def free_ss_site_vmess_uuid(self, update: Update, *args):
         import mylib.sites.misc
         self.__typing__(update)
-        uuid = mylib.sites.misc.free_ss_site_vmess_uuid()
-        self.__send_text__(update, uuid)
+        for uuid in mylib.sites.misc.free_ss_site_vmess_uuid():
+            self.__send_text__(update, uuid)
 
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(ytdl_regex_pattern))
     def _ytdl(self, update: Update, *args):
