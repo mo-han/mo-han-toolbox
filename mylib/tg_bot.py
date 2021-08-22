@@ -256,6 +256,7 @@ save:
 {len(self.__saved_updates__)} updates
 in {t.duration:.3f}s
 '''.strip())
+            self.__handle_saved_calls__()
 
     def __load_persistence__(self):
         if path_is_file(self.__persistence_backup_filename__):
