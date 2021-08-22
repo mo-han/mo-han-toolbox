@@ -42,7 +42,7 @@ class MyAssistantBot(EasyBot):
         config = read_json_file(config_file)
         persistence_file = os.path.splitext(config_file)[0] + '.dat'
         super().__init__(token=config['token'], whitelist=config.get('user_whitelist'),
-                         persistence_filename=persistence_file, **kwargs)
+                         dat_fp=persistence_file, **kwargs)
 
     def __get_config__(self):
         return read_json_file(self._config_file)

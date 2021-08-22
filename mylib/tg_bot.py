@@ -2,7 +2,6 @@
 """telegram bot utilities"""
 import shlex
 import traceback
-from concurrent.futures import ThreadPoolExecutor
 from functools import reduce
 from inspect import getmembers, ismethod
 from typing import Callable
@@ -20,6 +19,9 @@ from .easy import python_module_from_source_code
 telegram.ext.picklepersistence.pickle.dump = dill.dump
 telegram.ext.picklepersistence.pickle.load = dill.load
 PicklePersistence = telegram.ext.picklepersistence.PicklePersistence
+
+an = AttrName()
+an.__string_saved_updates__ = an.__string_saved_calls__ = ''
 
 
 class BotPlaceholder(metaclass=SingletonMetaClass):
@@ -70,27 +72,20 @@ class BotInternalCallResult(EzAttrData):
 
 
 class EasyBot:
-    __task_queue__: queue.Queue
-    __task_poll__: ThreadPoolExecutor
-    __string_saved_updates__ = '__string_saved_updates__'
-    __string_saved_calls__ = '__string_saved_calls__'
-
     def __init__(self, token, *,
                  timeout=None, whitelist=None, filters=None,
-                 persistence_filename='telegram_bot.dat',
+                 dat_fp='telegram_bot.dat',
                  auto_run=True, debug_mode=False,
                  **kwargs):
         self.__timeout__ = timeout
         self.__filters__ = filters
         self._debug_mode = debug_mode
 
-        self.__persistence_filename__ = persistence_filename
-        self.__persistence_backup_filename__ = persistence_filename + '.bak'
-        self.__persistence__ = self.__load_persistence__()
-        bot_data: dict = self.__persistence__.bot_data
-        self.__saved_updates__: set = bot_data.setdefault(self.__string_saved_updates__, set())
-        self.__saved_calls__: T.Set[T.Tuple[tuple, dict]] = bot_data.setdefault(self.__string_saved_calls__, set())
-        self.__updater__ = Updater(token, use_context=True, persistence=self.__persistence__,
+        self.__pickle_filepath__ = dat_fp
+        # self.__pickle_bak_filepath__ = dat_fp + '.bak'
+        self.__pickle__ = self.__load_pickle__()
+        self.__bot_data__: dict = self.__pickle__.get_bot_data()
+        self.__updater__ = Updater(token, use_context=True, persistence=self.__pickle__,
                                    request_kwargs={'read_timeout': timeout, 'connect_timeout': timeout},
                                    **kwargs)
         self.__get_me__()
@@ -201,8 +196,8 @@ on device:
 {ostk.USERNAME} @ {ostk.HOSTNAME} ({ostk.OSNAME})
 
 load:
-{len(self.__saved_calls__)} calls
-{len(self.__saved_updates__)} updates
+{len(self.__the_saved_calls__())} calls
+{len(self.__the_saved_updates__())} updates
 '''.strip()
 
     @deco_factory_bot_handler_method(CommandHandler, on_menu=True)
@@ -238,44 +233,41 @@ qsize={update_queue.qsize()}
 
     def __restore_updates_into_queue__(self):
         q = self.__updater__.dispatcher.update_queue
-        while self.__saved_updates__:
-            u: Update = self.__saved_updates__.pop()
+        updates = self.__the_saved_updates__()
+        while updates:
+            u: Update = updates.pop()
             # msg = u.message
             # msg.bot = msg.from_user.bot = msg.chat.bot = self.__bot__
             q.put(u)
 
-    def __dump_persistence__(self):
+    def __dump_pickle__(self):
         with Timer() as t:
-            self.__saved_updates__ = set(self.__updater__.dispatcher.update_queue.queue)
-            self.__persistence__.flush()
-            if path_is_file(self.__persistence_filename__):
-                shutil.copy(self.__persistence_filename__, self.__persistence_backup_filename__)
+            self.__the_saved_updates__(self.__updater__.dispatcher.update_queue.queue)
+            self.__pickle__.update_bot_data(self.__bot_data__)
+            self.__pickle__.flush()
+            # if path_is_file(self.__pickle_filepath__):
+            #     shutil.copy(self.__pickle_filepath__, self.__pickle_bak_filepath__)
         print(f'''
 save:
-{len(self.__saved_calls__)} calls
-{len(self.__saved_updates__)} updates
+{len(self.__the_saved_calls__())} calls
+{len(self.__the_saved_updates__())} updates
 in {t.duration:.3f}s
 '''.strip())
 
-    def __load_persistence__(self):
-        if path_is_file(self.__persistence_backup_filename__):
-            shutil.copy(self.__persistence_backup_filename__, self.__persistence_filename__)
-        persistence = PicklePersistence(self.__persistence_filename__)
-        persistence.get_bot_data()
-        persistence.get_chat_data()
-        persistence.get_user_data()
-        # persistence.get_conversations(...)
-        persistence.get_callback_data()
-        return persistence
+    def __load_pickle__(self):
+        # if path_is_file(self.__pickle_bak_filepath__):
+        #     shutil.copy(self.__pickle_bak_filepath__, self.__pickle_filepath__)
+        p = PicklePersistence(self.__pickle_filepath__)
+        p.set_bot(self.__bot__)
+        return p
 
     def __handle_saved_calls__(self):
-        s = self.__saved_calls__
-        while s:
-            b = s.pop()
+        calls = self.__the_saved_calls__()
+        for b in calls:
             args, kwargs = dill.loads(b)
-            if not self.__successful_internal_call__(*args, **kwargs):
-                s.add(b)
-            self.__dump_persistence__()
+            if self.__successful_internal_call__(*args, **kwargs):
+                calls.remove(b)
+            self.__dump_pickle__()
 
     @staticmethod
     def __new_internal_call_tuple__(*args, **kwargs) -> tuple:
@@ -285,8 +277,8 @@ in {t.duration:.3f}s
         if not isinstance(target, str) and hasattr(target, '__name__'):
             target = target.__name__
         t = self.__new_internal_call_tuple__(target, *args, **kwargs)
-        self.__saved_calls__.add(dill.dumps(t))
-        self.__dump_persistence__()
+        self.__the_saved_calls__().add(dill.dumps(t))
+        self.__dump_pickle__()
 
     def __successful_internal_call__(self, *args, **kwargs) -> bool:
         target, *args = args
@@ -301,16 +293,31 @@ in {t.duration:.3f}s
             return False
 
     def __remove_finished_update__(self, update: Update):
-        self.__saved_updates__.remove(update)
+        self.__the_saved_updates__().remove(update)
 
     @contextlib.contextmanager
     def __ctx_save__(self):
-        self.__dump_persistence__()
+        self.__dump_pickle__()
         yield
-        if self.__saved_calls__:
-            self.__dump_persistence__()
+        if self.__the_saved_calls__():
+            self.__dump_pickle__()
             if not self.__queue_size__():
                 self.__handle_saved_calls__()
 
     def __queue_size__(self):
         return self.__updater__.dispatcher.update_queue.qsize()
+
+    def __the_saved_calls__(self, add=None, update=None, remove=None):
+        r = self.__bot_data__.setdefault(an.__string_saved_calls__, set())
+        if add:
+            r.add(add)
+        if update:
+            r.update(update)
+        if remove:
+            r.remove(remove)
+        return r
+
+    def __the_saved_updates__(self, updates=None):
+        if updates:
+            self.__bot_data__[an.__string_saved_updates__] = set(updates)
+        return self.__bot_data__.setdefault(an.__string_saved_updates__, set())
