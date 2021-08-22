@@ -263,10 +263,11 @@ in {t.duration:.3f}s
 
     def __handle_saved_calls__(self):
         calls = self.__the_saved_calls__()
-        for b in calls:
+        while calls:  # don't remove set elements in for-loop, would raise RuntimeError
+            b = calls.pop()
             args, kwargs = dill.loads(b)
-            if self.__successful_internal_call__(*args, **kwargs):
-                calls.remove(b)
+            if not self.__successful_internal_call__(*args, **kwargs):
+                calls.add(b)
             self.__dump_pickle__()
 
     @staticmethod
