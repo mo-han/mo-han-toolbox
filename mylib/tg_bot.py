@@ -88,8 +88,8 @@ class SimpleBot(ABC):
         self.__persistence__ = PicklePersistence(persistence_pickle_filename)
         self.__persistence__.get_bot_data()
         bot_data = self.__persistence__.bot_data
-        self.__unhandled_updates__ = bot_data.setdefault(self.__string_updates_unhandled__, set())
-        self.__unfinished_updates__ = bot_data.setdefault(self.__string_updates_unfinished__, set())
+        self.__unhandled_updates__: set = bot_data.setdefault(self.__string_updates_unhandled__, set())
+        self.__unfinished_updates__: set = bot_data.setdefault(self.__string_updates_unfinished__, set())
         self.__updater__ = Updater(token, use_context=True, persistence=self.__persistence__,
                                    request_kwargs={'read_timeout': timeout, 'connect_timeout': timeout},
                                    **kwargs)
@@ -240,13 +240,9 @@ qsize={update_queue.qsize()}
         q = self.__updater__.dispatcher.update_queue
         [q.put(u) for u in itertools.chain(self.__unhandled_updates__, self.__unfinished_updates__)]
 
-    def __flush_persistence__(self, *, unfinished_updates: T.Iterable[Update] = ()):
+    def __flush_persistence__(self):
         timer = Timer()
         self.__snap_queued_updates__()
-
-        if isinstance(unfinished_updates, Update):
-            unfinished_updates = [unfinished_updates]
-        self.__unfinished_updates__.update(unfinished_updates)
 
         self.__persistence__.flush()
         pickle_file = self.__persistence__.filename

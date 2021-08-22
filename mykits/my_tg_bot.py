@@ -72,7 +72,8 @@ class MyAssistantBot(SimpleBot):
             print(echo)
             self.__send_code_block__(echo, update)
             return
-        self.__flush_persistence__(unfinished_updates=update)
+        self.__unfinished_updates__.add(update)
+        self.__flush_persistence__()
         args_l = [line2args(line) for line in update.message.text.splitlines()]
         for args in args_l:
             args = [re.sub(r'\[(ph[\da-f]{13})]', r'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in
@@ -99,12 +100,14 @@ class MyAssistantBot(SimpleBot):
                 self.__send_traceback__(update)
                 self.__requeue_update__(update)
         self.__unfinished_updates__.remove(update)
+        self.__flush_persistence__()
 
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(bldl_regex_pattern))
     def _bldl(self, update, *args):
         print(self._bldl.__name__)
         print(update.message.text)
-        self.__flush_persistence__(unfinished_updates=update)
+        self.__unfinished_updates__.add(update)
+        self.__flush_persistence__()
         args_l = [line2args(line) for line in update.message.text.splitlines()]
         for args in args_l:
             args_s = ' '.join([shlex.quote(a) for a in args])
@@ -130,6 +133,7 @@ class MyAssistantBot(SimpleBot):
                 self.__send_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
                 self.__requeue_update__(update)
         self.__unfinished_updates__.remove(update)
+        self.__flush_persistence__()
 
     @deco_factory_bot_handler_method(CommandHandler)
     def _secret(self, update: Update, *args):
