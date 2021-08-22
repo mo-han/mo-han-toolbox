@@ -8,15 +8,19 @@ from functools import reduce
 from inspect import getmembers, ismethod
 from typing import Callable
 
-from si_prefix import si_format
-from telegram import ChatAction, Bot, Update, ParseMode, constants, Message, Chat
-from telegram.ext import Updater, Filters, CallbackContext, PicklePersistence
+import dill
+import telegram.ext.picklepersistence
+from telegram import ChatAction, Bot, Update, ParseMode, constants, Message
+from telegram.ext import Updater, Filters, CallbackContext
 from telegram.ext.filters import MergedFilter
 
 from mylib.easy import ostk, text
-from mylib.ex import fstk, tricks
 from .easy import *
 from .easy import python_module_from_source_code
+
+telegram.ext.picklepersistence.pickle.dump = dill.dump
+telegram.ext.picklepersistence.pickle.load = dill.load
+PicklePersistence = telegram.ext.picklepersistence.PicklePersistence
 
 
 def modify_telegram_ext_commandhandler(s: str) -> str:
@@ -245,4 +249,4 @@ qsize={update_queue.qsize()}
         timer.stop()
         print(
             f'save {len(self.__unhandled_updates__)} unhandled and {len(self.__unfinished_updates__)} unfinished '
-            f'updates in {timer.duration:.1f}s')
+            f'updates in {timer.duration:.3f}s')
