@@ -178,7 +178,7 @@ class MyAssistantBot(EasyBot):
         else:
             self.__send_code_block__(u, pformat(errors))
 
-    def __predicate_update__(self, u: Update, c: CallbackContext=None):
+    def __predicate_update__(self, u: Update, c: CallbackContext = None):
         anti_updates = set(self.__get_config__().get('anti_updates', []))
         for x in anti_updates:
             if x in u.message.text:
