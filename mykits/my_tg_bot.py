@@ -66,6 +66,7 @@ class MyAssistantBot(SimpleBot):
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(ytdl_regex_pattern))
     def _ytdl(self, update: Update, *args):
         print(self._ytdl.__name__)
+        print(update.message.text)
         if not self.__predicate_update__(update, *args):
             echo = f'# {update.message.text}'
             print(echo)
@@ -102,6 +103,7 @@ class MyAssistantBot(SimpleBot):
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(bldl_regex_pattern))
     def _bldl(self, update, *args):
         print(self._bldl.__name__)
+        print(update.message.text)
         self.__flush_persistence__(unfinished_updates=update)
         args_l = [line2args(line) for line in update.message.text.splitlines()]
         for args in args_l:
