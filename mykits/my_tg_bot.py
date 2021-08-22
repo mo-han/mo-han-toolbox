@@ -65,18 +65,18 @@ class MyAssistantBot(EasyBot):
 
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(ytdl_regex_pattern))
     def _ytdl(self, update: Update, *args):
-        self.__dump_persistence__()
-        if not self.__predicate_update__(update, *args):
-            echo = f'# {update.message.text}'
-            print(echo)
-            self.__send_code_block__(update, echo)
-            return
-        chat_id = update.message.chat_id
-        args_l = [line2args(line) for line in update.message.text.splitlines()]
-        for args in args_l:
-            call_tuple = (self._ytdl_succeed, chat_id, *args)
-            if not self.__successful_internal_call__(*call_tuple):
-                self.__add_internal_call__(*call_tuple)
+        with self.__ctx_update__(update):
+            if not self.__predicate_update__(update):
+                echo = f'# {update.message.text}'
+                print(echo)
+                self.__send_code_block__(update, echo)
+                return
+            chat_id = update.message.chat_id
+            args_ll = [line2args(line) for line in update.message.text.splitlines()]
+            for args_l in args_ll:
+                call_tuple = (self._ytdl_succeed, chat_id, *args_l)
+                if not self.__successful_internal_call__(*call_tuple):
+                    self.__add_internal_call__(*call_tuple)
 
     def _ytdl_succeed(self, chat_id, *args):
         print('ytdl', args)
@@ -107,13 +107,13 @@ class MyAssistantBot(EasyBot):
 
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(bldl_regex_pattern))
     def _bldl(self, update, *args):
-        self.__dump_persistence__()
-        chat_id = update.message.chat_id
-        args_l = [line2args(line) for line in update.message.text.splitlines()]
-        for args in args_l:
-            call_tuple = (self._bldl_succeed, chat_id, *args)
-            if not self.__successful_internal_call__(*call_tuple):
-                self.__add_internal_call__(*call_tuple)
+        with self.__ctx_update__(update):
+            chat_id = update.message.chat_id
+            args_ll = [line2args(line) for line in update.message.text.splitlines()]
+            for args_l in args_ll:
+                call_tuple = (self._bldl_succeed, chat_id, *args_l)
+                if not self.__successful_internal_call__(*call_tuple):
+                    self.__add_internal_call__(*call_tuple)
 
     def _bldl_succeed(self, chat_id, *args):
         print('bldl', args)

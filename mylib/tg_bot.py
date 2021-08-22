@@ -240,7 +240,7 @@ qsize={update_queue.qsize()}
         print(s)
         self.__send_code_block__(update, s)
 
-    def __snap_queued_updates__(self):
+    def __capture_queued_updates__(self):
         self.__unhandled_updates__.update(self.__updater__.dispatcher.update_queue.queue)
 
     def __restore_updates_into_queue__(self):
@@ -254,7 +254,7 @@ qsize={update_queue.qsize()}
 
     def __dump_persistence__(self):
         timer = Timer()
-        self.__snap_queued_updates__()
+        self.__capture_queued_updates__()
 
         self.__persistence__.flush()
         if path_is_file(self.__persistence_filename__):
@@ -310,3 +310,13 @@ in {timer.duration:.3f}s
             return True
         else:
             return False
+
+    def __remove_finished_update__(self, update: Update):
+        self.__unfinished_updates__.remove(update)
+
+    @contextlib.contextmanager
+    def __ctx_update__(self, update: Update):
+        self.__unfinished_updates__.add(update)
+        self.__dump_persistence__()
+        yield
+        self.__dump_persistence__()
