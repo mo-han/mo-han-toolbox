@@ -855,3 +855,22 @@ class EzArguments:
 def ez_snake_case_to_camel_case(s: str):
     first, *others = s.split('_')
     return ''.join([first.lower(), *map(str.title, others)])
+
+
+class EzAttrData:
+    def __init__(self, **kwargs):
+        self.set(**kwargs)
+
+    def set(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+        return self
+
+    def get(self, **kwargs):
+        r = {}
+        for k, v in kwargs.items():
+            if hasattr(self, k):
+                r[k] = getattr(self, k)
+            else:
+                r[k] = v
+        return r

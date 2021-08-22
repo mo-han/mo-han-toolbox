@@ -18,9 +18,13 @@ from mylib.easy import ostk, text
 from .easy import *
 from .easy import python_module_from_source_code
 
-telegram.ext.picklepersistence.pickle.dump = dill.dump
-telegram.ext.picklepersistence.pickle.load = dill.load
+# telegram.ext.picklepersistence.pickle.dump = dill.dump
+# telegram.ext.picklepersistence.pickle.load = dill.load
 PicklePersistence = telegram.ext.picklepersistence.PicklePersistence
+
+
+class BotPlaceholder(metaclass=SingletonMetaClass):
+    pass
 
 
 def modify_telegram_ext_commandhandler(s: str) -> str:
@@ -62,38 +66,38 @@ def merge_filters_or(*filters):
     return reduce(lambda x, y: MergedFilter(x, or_filter=y), filters)
 
 
-class SimpleBotTask:
-    data: dict
-    done = False
+class BotInternalCallResult(EzAttrData):
+    ok: bool
 
 
-class SimpleBot(ABC):
+class EasyBot:
     __task_queue__: queue.Queue
     __task_poll__: ThreadPoolExecutor
     __string_updates_unhandled__ = 'updates unhandled'
     __string_updates_unfinished__ = 'updates unfinished'
+    __string_calls_saved__ = 'calls saved'
 
     def __init__(self, token, *,
                  timeout=None, whitelist=None, filters=None,
-                 persistence_pickle_filename='telegram_bot.dat',
+                 persistence_filename='telegram_bot.dat',
                  auto_run=True, debug_mode=False,
                  **kwargs):
         self.__timeout__ = timeout
         self.__filters__ = filters
         self._debug_mode = debug_mode
 
-        bak_file = persistence_pickle_filename + '.bak'
-        if path_is_file(bak_file):
-            shutil.copy(bak_file, persistence_pickle_filename)
-        self.__persistence__ = PicklePersistence(persistence_pickle_filename)
-        self.__persistence__.get_bot_data()
-        bot_data = self.__persistence__.bot_data
+        self.__persistence_filename__ = persistence_filename
+        self.__persistence_backup_filename__ = persistence_filename + '.bak'
+        self.__persistence__ = self.__load_persistence__()
+        bot_data: dict = self.__persistence__.bot_data
         self.__unhandled_updates__: set = bot_data.setdefault(self.__string_updates_unhandled__, set())
         self.__unfinished_updates__: set = bot_data.setdefault(self.__string_updates_unfinished__, set())
+        self.__saved_calls__: T.Set[T.Tuple[tuple, dict]] = bot_data.setdefault(self.__string_calls_saved__, set())
         self.__updater__ = Updater(token, use_context=True, persistence=self.__persistence__,
                                    request_kwargs={'read_timeout': timeout, 'connect_timeout': timeout},
                                    **kwargs)
         self.__restore_updates_into_queue()
+        self.__handle_saved_calls__()
 
         self.__get_me__()
         print(self.__about_this_bot__())
@@ -144,7 +148,7 @@ class SimpleBot(ABC):
     def __typing__(self, update: Update):
         self.__bot__.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING)
 
-    def __send_text__(self, any_text: str, dst, **kwargs):
+    def __send_text__(self, dst, any_text: str, **kwargs):
         if isinstance(dst, Update):
             def _send(sth):
                 dst.message.reply_text(sth, **kwargs)
@@ -159,21 +163,21 @@ class SimpleBot(ABC):
         else:
             _send(any_text)
 
-    def __send_markdown__(self, md_text: str, dst, **kwargs):
-        self.__send_text__(md_text, dst, parse_mode=ParseMode.MARKDOWN, **kwargs)
+    def __send_markdown__(self, dst, md_text: str, **kwargs):
+        self.__send_text__(dst, md_text, parse_mode=ParseMode.MARKDOWN, **kwargs)
 
     __send_md__ = __send_markdown__
 
-    def __send_code_block__(self, code_text, dst):
+    def __send_code_block__(self, dst, code_text):
         for ct in text.split_by_new_line_with_max_length(code_text, constants.MAX_MESSAGE_LENGTH - 7):
-            self.__send_markdown__(f'```\n{ct}```', dst)
+            self.__send_markdown__(dst, f'```\n{ct}```')
 
     def __send_traceback__(self, dst):
         if not self._debug_mode:
             return
         tb = traceback.format_exc()
         print(tb)
-        self.__send_code_block__(f'{tb}', dst)
+        self.__send_code_block__(dst, f'{tb}')
 
     def __task_loop__(self):
         ...
@@ -199,7 +203,10 @@ bot:
 on device:
 {ostk.USERNAME} @ {ostk.HOSTNAME} ({ostk.OSNAME})
 
-load {len(self.__unhandled_updates__)} unhandled and {len(self.__unfinished_updates__)} unfinished updates
+load:
+{len(self.__saved_calls__)} calls
+{len(self.__unhandled_updates__)} unhandled updates
+{len(self.__unfinished_updates__)} unfinished updates
 '''.strip()
 
     @deco_factory_bot_handler_method(CommandHandler, on_menu=True)
@@ -221,7 +228,7 @@ load {len(self.__unhandled_updates__)} unhandled and {len(self.__unfinished_upda
             doc = (v.__doc__ or '...').split('\n', maxsplit=1)[0].strip()
             lines.append(f'{n} - {doc}')
         menu_str = '\n'.join(lines)
-        self.__send_markdown__(f'```\n{menu_str}```', update)
+        self.__send_markdown__(update, f'```\n{menu_str}```')
 
     def __requeue_update__(self, update: Update):
         update_queue = self.__updater__.dispatcher.update_queue
@@ -231,25 +238,67 @@ load {len(self.__unhandled_updates__)} unhandled and {len(self.__unfinished_upda
 qsize={update_queue.qsize()}
 '''.strip()
         print(s)
-        self.__send_code_block__(s, update)
+        self.__send_code_block__(update, s)
 
     def __snap_queued_updates__(self):
         self.__unhandled_updates__.update(self.__updater__.dispatcher.update_queue.queue)
 
     def __restore_updates_into_queue(self):
         q = self.__updater__.dispatcher.update_queue
-        [q.put(u) for u in itertools.chain(self.__unhandled_updates__, self.__unfinished_updates__)]
+        for u in itertools.chain(self.__unhandled_updates__, self.__unfinished_updates__):
+            # u: Update
+            # msg = u.message
+            # msg.bot = msg.from_user.bot = msg.chat.bot = self.__bot__
+            q.put(u)
 
-    def __flush_persistence__(self):
+    def __dump_persistence__(self):
         timer = Timer()
         self.__snap_queued_updates__()
 
         self.__persistence__.flush()
-        pickle_file = self.__persistence__.filename
-        bak_file = pickle_file + '.bak'
-        if path_is_file(pickle_file):
-            shutil.copy(pickle_file, bak_file)
+        if path_is_file(self.__persistence_filename__):
+            shutil.copy(self.__persistence_filename__, self.__persistence_backup_filename__)
+
         timer.stop()
-        print(
-            f'save {len(self.__unhandled_updates__)} unhandled and {len(self.__unfinished_updates__)} unfinished '
-            f'updates in {timer.duration:.3f}s')
+        print(f'''
+save:
+{len(self.__saved_calls__)} calls
+{len(self.__unhandled_updates__)} unhandled updates
+{len(self.__unfinished_updates__)} unfinished updates
+in {timer.duration:.3f}s
+'''.strip())
+
+    def __load_persistence__(self):
+        if path_is_file(self.__persistence_backup_filename__):
+            shutil.copy(self.__persistence_backup_filename__, self.__persistence_filename__)
+
+        persistence = PicklePersistence(self.__persistence_filename__)
+        persistence.get_bot_data()
+        persistence.get_chat_data()
+        persistence.get_user_data()
+        # persistence.get_conversations(...)
+        persistence.get_callback_data()
+        return persistence
+
+    def __handle_saved_calls__(self):
+        calls = self.__saved_calls__
+        while calls:
+            args, kwargs = calls.pop()
+            if not self.__successful_internal_call__(*args, **kwargs):
+                calls.add((args, kwargs))
+
+    @staticmethod
+    def __new_internal_call_tuple__(*args, **kwargs) -> tuple:
+        return args, kwargs
+
+    def __successful_internal_call__(self, *args, **kwargs) -> bool:
+        target, *args = args
+        if isinstance(target, str):
+            target = getattr(self, target)
+        r = target(*args, **kwargs)
+        if not isinstance(r, BotInternalCallResult):
+            raise TypeError(f'target result is not a {BotInternalCallResult.__name__} object')
+        if r.ok:
+            return True
+        else:
+            return False

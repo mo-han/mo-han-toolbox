@@ -36,13 +36,13 @@ ytdl_regex_pattern = re.compile(r'youtube|youtu\.be|iwara|pornhub|\[ph[\da-f]{13
 bldl_regex_pattern = re.compile(r'(/|^)BV[\da-zA-Z]{10}|(/|^)av\d+\W|(/|^)ep\d+|(/|^)ss\d+')
 
 
-class MyAssistantBot(SimpleBot):
+class MyAssistantBot(EasyBot):
     def __init__(self, config_file: str, **kwargs):
         self._config_file = config_file
         config = read_json_file(config_file)
         persistence_file = os.path.splitext(config_file)[0] + '.dat'
         super().__init__(token=config['token'], whitelist=config.get('user_whitelist'),
-                         persistence_pickle_filename=persistence_file, **kwargs)
+                         persistence_filename=persistence_file, **kwargs)
 
     def __get_config__(self):
         return read_json_file(self._config_file)
@@ -61,95 +61,96 @@ class MyAssistantBot(SimpleBot):
         import mylib.sites.misc
         self.__typing__(update)
         uuid = mylib.sites.misc.free_ss_site_vmess_uuid()
-        self.__send_text__(uuid, update)
+        self.__send_text__(update, uuid)
 
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(ytdl_regex_pattern))
     def _ytdl(self, update: Update, *args):
-        print(self._ytdl.__name__)
-        print(update.message.text)
         if not self.__predicate_update__(update, *args):
             echo = f'# {update.message.text}'
             print(echo)
-            self.__send_code_block__(echo, update)
+            self.__send_code_block__(update, echo)
             return
-        self.__unfinished_updates__.add(update)
-        self.__flush_persistence__()
+        chat_id = update.message.chat_id
         args_l = [line2args(line) for line in update.message.text.splitlines()]
         for args in args_l:
-            args = [re.sub(r'\[(ph[\da-f]{13})]', r'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in
-                    args]
-            args_s = ' '.join([shlex.quote(a) for a in args])
-            try:
-                self.__send_code_block__(f'+ {args_s}', update)
-                p, out, err = ytdl_retry_frozen(*args)
-                echo = ''.join(
-                    [re.sub(r'.*\[download]', '[download]', decode_fallback_locale(b).rsplit('\r', maxsplit=1)[-1]) for
-                     b in
-                     out.readlines()[-10:]])
-                if p.returncode:
-                    if self.__str_contain_abandon_errors__(echo):
-                        self.__send_code_block__(f'- {args_s}\n{echo}', update)
-                        continue
-                    self.__send_code_block__(f'! {args_s}\n{echo}', update)
-                    self.__requeue_update__(update)
-                else:
-                    self.__send_code_block__(f'* {args_s}\n{echo}', update)
-            except Exception as e:
-                print('ERROR')
-                self.__send_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
-                self.__send_traceback__(update)
-                self.__requeue_update__(update)
-        self.__unfinished_updates__.remove(update)
-        self.__flush_persistence__()
+            if not self._ytdl_succeed(chat_id, *args):
+                self.__saved_calls__.add(self.__new_internal_call_tuple__(self._ytdl_succeed.__name__, chat_id, *args))
+
+    def _ytdl_succeed(self, chat_id, *args):
+        print('ytdl', args)
+        args = [re.sub(r'\[(ph[\da-f]{13})]', r'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in args]
+        print('ytdl', args)
+        args_s = ' '.join([shlex.quote(a) for a in args])
+        try:
+            self.__send_code_block__(chat_id, f'+ {args_s}')
+            p, out, err = ytdl_retry_frozen(*args)
+            echo = ''.join(
+                [re.sub(r'.*\[download\]', '[download]', decode_fallback_locale(b).rsplit('\r', maxsplit=1)[-1]) for
+                 b in
+                 out.readlines()[-10:]])
+            if p.returncode:
+                if self.__str_contain_abandon_errors__(echo):
+                    self.__send_code_block__(chat_id, f'- {args_s}\n{echo}')
+                    return True
+                self.__send_code_block__(chat_id, f'! {args_s}\n{echo}')
+                return False
+            else:
+                self.__send_code_block__(chat_id, f'* {args_s}\n{echo}')
+            return True
+        except Exception as e:
+            print('ERROR')
+            self.__send_code_block__(chat_id, f'! {args_s}\n{str(e)}\n{repr(e)}')
+            self.__send_traceback__(chat_id)
+            return False
 
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(bldl_regex_pattern))
     def _bldl(self, update, *args):
-        print(self._bldl.__name__)
-        print(update.message.text)
-        self.__unfinished_updates__.add(update)
-        self.__flush_persistence__()
+        chat_id = update.message.chat_id
         args_l = [line2args(line) for line in update.message.text.splitlines()]
         for args in args_l:
-            args_s = ' '.join([shlex.quote(a) for a in args])
-            try:
-                self.__send_code_block__(f'+ {args_s}', update)
-                p, out, err = bldl_retry_frozen(*args)
-                if p.returncode:
-                    echo = ''.join(
-                        [decode_fallback_locale(b).rsplit('\r', maxsplit=1)[-1] for b in out.readlines()[-5:]])
-                    if self.__str_contain_abandon_errors__(echo):
-                        print(f' EXIT CODE: {p.returncode}')
-                        self.__send_code_block__(f'- {args_s}\n{echo}', update)
-                        continue
+            if not self._bldl_succeed(chat_id, *args):
+                ACall
+                self.__saved_calls__.add(self.__new_internal_call_tuple__(self._bldl_succeed.__name__, chat_id, *args))
+
+    def _bldl_succeed(self, chat_id, *args):
+        print('bldl', args)
+        args_s = ' '.join([shlex.quote(a) for a in args])
+        try:
+            self.__send_code_block__(chat_id, f'+ {args_s}')
+            p, out, err = bldl_retry_frozen(*args)
+            if p.returncode:
+                echo = ''.join(
+                    [decode_fallback_locale(b).rsplit('\r', maxsplit=1)[-1] for b in out.readlines()[-5:]])
+                if self.__str_contain_abandon_errors__(echo):
                     print(f' EXIT CODE: {p.returncode}')
-                    self.__requeue_update__(update)
-                    self.__send_code_block__(f'- {args_s}\n{echo}', update)
-                else:
-                    echo = ''.join([s for s in [decode_fallback_locale(b) for b in out.readlines()] if '─┤' not in s])
-                    self.__send_code_block__(f'* {args_s}\n{echo}', update)
-            # except TypeError:
-            #     raise
-            except Exception as e:
-                self.__send_code_block__(f'! {args_s}\n{str(e)}\n{repr(e)}', update)
-                self.__requeue_update__(update)
-        self.__unfinished_updates__.remove(update)
-        self.__flush_persistence__()
+                    self.__send_code_block__(chat_id, f'- {args_s}\n{echo}')
+                    return True
+                print(f' EXIT CODE: {p.returncode}')
+                self.__send_code_block__(chat_id, f'! {args_s}\n{echo}')
+                return False
+            else:
+                echo = ''.join([s for s in [decode_fallback_locale(b) for b in out.readlines()] if '─┤' not in s])
+                self.__send_code_block__(chat_id, f'* {args_s}\n{echo}')
+            return True
+        except Exception as e:
+            self.__send_code_block__(chat_id, f'! {args_s}\n{str(e)}\n{repr(e)}')
+            return False
 
     @deco_factory_bot_handler_method(CommandHandler)
     def _secret(self, update: Update, *args):
         self.__typing__(update)
         for name in ('effective_message', 'effective_user'):
-            self.__send_code_block__(f'{name}\n{pformat(getattr(update, name).to_dict())}', update)
-        self.__send_code_block__(f'bot.get_me()\n{pformat(self.__bot__.get_me().to_dict())}', update)
+            self.__send_code_block__(update, f'{name}\n{pformat(getattr(update, name).to_dict())}')
+        self.__send_code_block__(update, f'bot.get_me()\n{pformat(self.__bot__.get_me().to_dict())}')
 
     @deco_factory_bot_handler_method(CommandHandler, on_menu=True, pass_args=True)
     def sleep(self, u: Update, c: CallbackContext):
         """sleep some time (unit: sec)"""
         args = c.args or [0]
         t = float(args[0])
-        self.__send_text__(f'sleep {t} seconds', u)
+        self.__send_text__(u, f'sleep {t} seconds')
         time.sleep(t)
-        self.__send_text__('awake...', u)
+        self.__send_text__(u, 'awake...')
 
     @deco_factory_bot_handler_method(CommandHandler, on_menu=True, pass_args=True)
     def errors(self, u: Update, c: CallbackContext):
@@ -157,22 +158,22 @@ class MyAssistantBot(SimpleBot):
         args = c.args
         if not args:
             usage_s = '/errors {+,-,:} [T]'
-            self.__send_code_block__(usage_s, u)
+            self.__send_code_block__(u, usage_s)
             return
         arg0, arg1 = args[0], ' '.join(args[1:])
         errors = self.__get_config__().get('abandon_errors', [])
         if arg0 == ':':
-            self.__send_code_block__(pformat(errors), u)
+            self.__send_code_block__(u, pformat(errors))
         elif arg0 == '+':
             errors = sorted(set(errors) | {arg1})
             self.__set_config__(abandon_errors=errors)
-            self.__send_code_block__(pformat(errors), u)
+            self.__send_code_block__(u, pformat(errors))
         elif arg0 == '-':
             errors = sorted(set(errors) - {arg1})
             self.__set_config__(abandon_errors=errors)
-            self.__send_code_block__(pformat(errors), u)
+            self.__send_code_block__(u, pformat(errors))
         else:
-            self.__send_code_block__(pformat(errors), u)
+            self.__send_code_block__(u, pformat(errors))
 
     def __predicate_update__(self, u: Update, c: CallbackContext):
         anti_updates = set(self.__get_config__().get('anti_updates', []))
