@@ -79,7 +79,8 @@ class SimpleBot(ABC):
         self._debug_mode = debug_mode
 
         self.__persistence__ = PicklePersistence(persistence_pickle_filename)
-        bot_data = self.__persistence__.get_bot_data()
+        self.__persistence__.get_bot_data()
+        bot_data = self.__persistence__.bot_data
         self.__unhandled_updates__ = bot_data.setdefault(self.__string_updates_unhandled__, set())
         self.__unfinished_updates__ = bot_data.setdefault(self.__string_updates_unfinished__, set())
         self.__updater__ = Updater(token, use_context=True, persistence=self.__persistence__,
@@ -191,7 +192,7 @@ bot:
 on device:
 {ostk.USERNAME} @ {ostk.HOSTNAME} ({ostk.OSNAME})
 
-{len(self.__unhandled_updates__)} unhandled and {len(self.__unfinished_updates__)} unfinished updates
+load {len(self.__unhandled_updates__)} unhandled and {len(self.__unfinished_updates__)} unfinished updates
 '''.strip()
 
     @deco_factory_bot_handler_method(CommandHandler, on_menu=True)
@@ -233,6 +234,7 @@ qsize={update_queue.qsize()}
         [q.put(u) for u in itertools.chain(self.__unhandled_updates__, self.__unfinished_updates__)]
 
     def __flush_persistence__(self, *, unfinished_updates: T.Iterable[Update] = ()):
+        timer = Timer()
         self.__snap_queued_updates__()
 
         if isinstance(unfinished_updates, Update):
@@ -240,3 +242,7 @@ qsize={update_queue.qsize()}
         self.__unfinished_updates__.update(unfinished_updates)
 
         self.__persistence__.flush()
+        timer.stop()
+        print(
+            f'save {len(self.__unhandled_updates__)} unhandled and {len(self.__unfinished_updates__)} unfinished '
+            f'updates in {timer.duration:.1f}s')
