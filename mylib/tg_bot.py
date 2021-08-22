@@ -82,6 +82,9 @@ class SimpleBot(ABC):
         self.__filters__ = filters
         self._debug_mode = debug_mode
 
+        bak_file = persistence_pickle_filename + '.bak'
+        if path_is_file(bak_file):
+            shutil.copy(bak_file, persistence_pickle_filename)
         self.__persistence__ = PicklePersistence(persistence_pickle_filename)
         self.__persistence__.get_bot_data()
         bot_data = self.__persistence__.bot_data
@@ -246,6 +249,9 @@ qsize={update_queue.qsize()}
         self.__unfinished_updates__.update(unfinished_updates)
 
         self.__persistence__.flush()
+        pickle_file = self.__persistence__.filename
+        bak_file = pickle_file + '.bak'
+        shutil.copy(pickle_file, bak_file)
         timer.stop()
         print(
             f'save {len(self.__unhandled_updates__)} unhandled and {len(self.__unfinished_updates__)} unfinished '
