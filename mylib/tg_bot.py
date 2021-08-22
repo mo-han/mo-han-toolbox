@@ -2,7 +2,6 @@
 """telegram bot utilities"""
 import shlex
 import traceback
-from abc import ABC
 from concurrent.futures import ThreadPoolExecutor
 from functools import reduce
 from inspect import getmembers, ismethod
@@ -18,8 +17,8 @@ from mylib.easy import ostk, text
 from .easy import *
 from .easy import python_module_from_source_code
 
-# telegram.ext.picklepersistence.pickle.dump = dill.dump
-# telegram.ext.picklepersistence.pickle.load = dill.load
+telegram.ext.picklepersistence.pickle.dump = dill.dump
+telegram.ext.picklepersistence.pickle.load = dill.load
 PicklePersistence = telegram.ext.picklepersistence.PicklePersistence
 
 
@@ -73,9 +72,8 @@ class BotInternalCallResult(EzAttrData):
 class EasyBot:
     __task_queue__: queue.Queue
     __task_poll__: ThreadPoolExecutor
-    __string_updates_unhandled__ = 'updates unhandled'
-    __string_updates_unfinished__ = 'updates unfinished'
-    __string_calls_saved__ = 'calls saved'
+    __string_saved_updates__ = '__string_saved_updates__'
+    __string_saved_calls__ = '__string_saved_calls__'
 
     def __init__(self, token, *,
                  timeout=None, whitelist=None, filters=None,
@@ -90,9 +88,8 @@ class EasyBot:
         self.__persistence_backup_filename__ = persistence_filename + '.bak'
         self.__persistence__ = self.__load_persistence__()
         bot_data: dict = self.__persistence__.bot_data
-        self.__unhandled_updates__: set = bot_data.setdefault(self.__string_updates_unhandled__, set())
-        self.__unfinished_updates__: set = bot_data.setdefault(self.__string_updates_unfinished__, set())
-        self.__saved_calls__: T.Set[T.Tuple[tuple, dict]] = bot_data.setdefault(self.__string_calls_saved__, set())
+        self.__saved_updates__: set = bot_data.setdefault(self.__string_saved_updates__, set())
+        self.__saved_calls__: T.Set[T.Tuple[tuple, dict]] = bot_data.setdefault(self.__string_saved_calls__, set())
         self.__updater__ = Updater(token, use_context=True, persistence=self.__persistence__,
                                    request_kwargs={'read_timeout': timeout, 'connect_timeout': timeout},
                                    **kwargs)
@@ -205,8 +202,7 @@ on device:
 
 load:
 {len(self.__saved_calls__)} calls
-{len(self.__unhandled_updates__)} unhandled updates
-{len(self.__unfinished_updates__)} unfinished updates
+{len(self.__saved_updates__)} updates
 '''.strip()
 
     @deco_factory_bot_handler_method(CommandHandler, on_menu=True)
@@ -241,32 +237,27 @@ qsize={update_queue.qsize()}
         self.__send_code_block__(update, s)
 
     def __capture_queued_updates__(self):
-        self.__unhandled_updates__.update(self.__updater__.dispatcher.update_queue.queue)
+        self.__saved_updates__.update(self.__updater__.dispatcher.update_queue.queue)
 
     def __restore_updates_into_queue__(self):
         q = self.__updater__.dispatcher.update_queue
-        for s in (self.__unhandled_updates__, self.__unfinished_updates__):
-            while s:
-                u: Update = s.pop()
-                # msg = u.message
-                # msg.bot = msg.from_user.bot = msg.chat.bot = self.__bot__
-                q.put(u)
+        while self.__saved_updates__:
+            u: Update = self.__saved_updates__.pop()
+            # msg = u.message
+            # msg.bot = msg.from_user.bot = msg.chat.bot = self.__bot__
+            q.put(u)
 
     def __dump_persistence__(self):
-        timer = Timer()
-        self.__capture_queued_updates__()
-
-        self.__persistence__.flush()
-        if path_is_file(self.__persistence_filename__):
-            shutil.copy(self.__persistence_filename__, self.__persistence_backup_filename__)
-
-        timer.stop()
-        print(f'''
+        with Timer() as t:
+            self.__capture_queued_updates__()
+            self.__persistence__.flush()
+            if path_is_file(self.__persistence_filename__):
+                shutil.copy(self.__persistence_filename__, self.__persistence_backup_filename__)
+            print(f'''
 save:
 {len(self.__saved_calls__)} calls
-{len(self.__unhandled_updates__)} unhandled updates
-{len(self.__unfinished_updates__)} unfinished updates
-in {timer.duration:.3f}s
+{len(self.__saved_updates__)} updates
+in {t.duration:.3f}s
 '''.strip())
 
     def __load_persistence__(self):
@@ -312,11 +303,10 @@ in {timer.duration:.3f}s
             return False
 
     def __remove_finished_update__(self, update: Update):
-        self.__unfinished_updates__.remove(update)
+        self.__saved_updates__.remove(update)
 
     @contextlib.contextmanager
     def __ctx_update__(self, update: Update):
-        self.__unfinished_updates__.add(update)
         self.__dump_persistence__()
         yield
         self.__dump_persistence__()
