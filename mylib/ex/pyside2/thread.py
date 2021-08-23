@@ -27,11 +27,19 @@ class EzQtThreadWorker(QObject, QRunnable):
     signal_result = Signal(object)
     signal_i_result = Signal(object)
     signal_error = Signal(EzQtThreadWorkerError)
+    singal_interrupted = Signal()
 
     def __init__(self, callee, *args, **kwargs):
         super(EzQtThreadWorker, self).__init__()
         QRunnable.__init__(self)
         self.call_tuple = callee, args, kwargs
+        self.flag_running = True
+
+    def unset_flag_running(self):
+        self.flag_running = False
+
+    def emit_signal_interrupted(self):
+        self.singal_interrupted.emit()
 
     def set_auto_delete(self, value=True):
         self.setAutoDelete(value)
@@ -41,10 +49,11 @@ class EzQtThreadWorker(QObject, QRunnable):
         self.setParent(parent)
         return self
 
-    def connect_signals(self, started=None, finished=None, result=None, i_result=None, error=None):
+    def connect_signals(self, started=None, finished=None, result=None, i_result=None, error=None,
+                        interrupted=None):
         ez_qt_signal_map({
             self.signal_started: started, self.signal_finished: finished, self.signal_result: result,
-            self.signal_i_result: i_result, self.signal_error: error
+            self.signal_i_result: i_result, self.signal_error: error, self.singal_interrupted: interrupted
         })
         return self
 
@@ -62,8 +71,6 @@ class EzQtThreadWorker(QObject, QRunnable):
                 while True:
                     ir = next(r)
                     self.signal_i_result.emit(ir)
-                # for i in r:
-                #     self.signal_i_result.emit(i)
             else:
                 self.signal_result.emit(r)
         except StopIteration as e:

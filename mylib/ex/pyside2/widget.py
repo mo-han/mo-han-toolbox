@@ -145,8 +145,6 @@ class EzQtDelegateWidgetMixin:
 
 
 class EzQtLogViewer(QPlainTextEdit, EzQtObjectMixin, logging.EzLoggingMixin):
-    # html_fmt = '<font color="{color}"><pre>中文测试{{}}</pre></font>'
-    html_fmt = '<pre style="font-family:consolas; color:{color}">{{}}</pre>'
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -155,14 +153,12 @@ class EzQtLogViewer(QPlainTextEdit, EzQtObjectMixin, logging.EzLoggingMixin):
         self.thread_pool.setMaxThreadCount(1)
         self.queue = easy.queue.Queue()
         self.handler = logging.QueueHandler(self.queue)
-        self.flag_stop = False
         self.log_fmt = self.get_log_msg_fmt()
-
-    def stop(self):
-        self.flag_stop = True
+        self.worker = EzQtThreadWorker(self.iter_msg).connect_signals(i_result=self.appendHtml).set_auto_delete()
 
     def get_log_msg_fmt(self):
-        return {k: self.html_fmt.format(**v) for k, v in {
+        html_template = '<pre style="font-family:consolas; color:{color}">{{}}</pre>'
+        return {k: html_template.format(**v) for k, v in {
             logging.DEBUG: dict(color=EzColors.limegreen),
             logging.INFO: dict(color=EzColors.blue),
             logging.WARNING: dict(color=EzColors.darkorange),
@@ -178,8 +174,9 @@ class EzQtLogViewer(QPlainTextEdit, EzQtObjectMixin, logging.EzLoggingMixin):
     def iter_msg(self):
         self.__logger__.debug('start')
         while True:
-            if self.flag_stop:
+            if not self.worker.flag_running:
                 self.__logger__.debug('stop')
+                self.worker.emit_signal_interrupted()
                 break
             try:
                 record: logging.LogRecord = self.queue.get(timeout=1)
@@ -189,7 +186,8 @@ class EzQtLogViewer(QPlainTextEdit, EzQtObjectMixin, logging.EzLoggingMixin):
             yield msg
 
     def start(self):
-        self.flag_stop = False
-        EzQtThreadWorker(self.iter_msg).connect_signals(
-            i_result=self.appendHtml).start_in_pool(self.thread_pool)
+        self.worker.start_in_pool(self.thread_pool)
         return self
+
+    def stop(self):
+        self.worker.unset_flag_running()

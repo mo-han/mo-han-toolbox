@@ -20,10 +20,17 @@ class EzQtLayoutWrapper:
         else:
             raise ValueError('get no widget from this object')
 
-    def add_widgets(self, *widgets):
+    def add(self, *widgets):
         layout = self.layout
         for x in widgets:
-            if isinstance(x, T.Iterable):
+            if isinstance(x, dict):
+                for k, v in x.items():
+                    m = getattr(layout, f'add{k.title()}')
+                    if isinstance(v, T.Iterable):
+                        m(*v)
+                    else:
+                        m(v)
+            elif isinstance(x, T.Iterable):
                 args = list(x)
                 first, *others = args
                 w = self.__get_widget_from__(first)
