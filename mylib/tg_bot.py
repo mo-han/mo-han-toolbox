@@ -295,14 +295,21 @@ in {t.duration:.3f}s
 
     @contextlib.contextmanager
     def __ctx_save__(self):
-        self.__dump_pickle__()
+        if not self.__ctx_save__.dumped:
+            self.__dump_pickle__()
+            self.__ctx_save__.dumped = True
         yield
+        self.__ctx_save__.dumped = False
         if self.__the_saved_calls__():
             self.__dump_pickle__()
             if not self.__queue_size__():
                 self.__handle_saved_calls__()
+            self.__ctx_save__.dumped = True
         elif self.__the_saved_updates__():
             self.__dump_pickle__()
+            self.__ctx_save__.dumped = True
+
+    __ctx_save__.dumped = False
 
     def __queue_size__(self):
         return self.__updater__.dispatcher.update_queue.qsize()
