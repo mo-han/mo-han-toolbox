@@ -99,6 +99,8 @@ class EasyBot:
         if auto_run:
             self.__run__(poll_timeout=timeout)
 
+        self.__enable_dump_pickle__ = True
+
     @property
     def __bot__(self) -> Bot:
         return self.__updater__.bot
@@ -242,6 +244,9 @@ qsize={update_queue.qsize()}
             q.put(u)
 
     def __dump_pickle__(self):
+        if not self.__enable_dump_pickle__:
+            print('no need to dump pickle')
+            return
         with Timer() as t:
             self.__the_saved_updates__(self.__updater__.dispatcher.update_queue.queue)
             self.__pickle__.update_bot_data(self.__bot_data__)
@@ -295,21 +300,18 @@ in {t.duration:.3f}s
 
     @contextlib.contextmanager
     def __ctx_save__(self):
-        if not (hasattr(self.__ctx_save__, 'dumped') and self.__ctx_save__.dumped):
-            self.__dump_pickle__()
-            self.__ctx_save__.dumped = True
+        self.__dump_pickle__()
+        self.__enable_dump_pickle__ = False
         yield
-        self.__ctx_save__.dumped = False
+        self.__enable_dump_pickle__ = True
         if self.__the_saved_calls__():
             self.__dump_pickle__()
             if not self.__queue_size__():
                 self.__handle_saved_calls__()
-            self.__ctx_save__.dumped = True
+            self.__enable_dump_pickle__ = False
         elif self.__the_saved_updates__():
             self.__dump_pickle__()
-            self.__ctx_save__.dumped = True
-
-    __ctx_save__.dumped = False
+            self.__enable_dump_pickle__ = False
 
     def __queue_size__(self):
         return self.__updater__.dispatcher.update_queue.qsize()
