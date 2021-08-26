@@ -295,7 +295,7 @@ in {t.duration:.3f}s
 
     @contextlib.contextmanager
     def __ctx_save__(self):
-        if not self.__ctx_save__.dumped:
+        if not (hasattr(self.__ctx_save__, 'dumped') and self.__ctx_save__.dumped):
             self.__dump_pickle__()
             self.__ctx_save__.dumped = True
         yield
