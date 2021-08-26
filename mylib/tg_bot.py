@@ -244,9 +244,6 @@ qsize={update_queue.qsize()}
             q.put(u)
 
     def __dump_pickle__(self):
-        if not self.__enable_dump_pickle__:
-            print('no need to dump pickle')
-            return
         with Timer() as t:
             self.__the_saved_updates__(self.__updater__.dispatcher.update_queue.queue)
             self.__pickle__.update_bot_data(self.__bot_data__)
@@ -301,19 +298,15 @@ in {t.duration:.3f}s
     @contextlib.contextmanager
     def __ctx_save__(self):
         self.__dump_pickle__()
-        self.__enable_dump_pickle__ = False
         yield
-        self.__enable_dump_pickle__ = True
         if self.__the_saved_calls__():
             self.__dump_pickle__()
-            if not self.__queue_size__():
+            if not self.__update_queue_size__():
                 self.__handle_saved_calls__()
-            self.__enable_dump_pickle__ = False
-        elif self.__the_saved_updates__():
+        elif self.__update_queue_size__():
             self.__dump_pickle__()
-            self.__enable_dump_pickle__ = False
 
-    def __queue_size__(self):
+    def __update_queue_size__(self):
         return self.__updater__.dispatcher.update_queue.qsize()
 
     def __the_saved_calls__(self, add=None, update=None, remove=None):
