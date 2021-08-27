@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
 from typing import *
-from typing import IO, BinaryIO, TextIO
-
-
-def __ref_sth():
-    return IO, BinaryIO, TextIO
-
 
 Decorator = Callable[[Callable], Callable]
 
