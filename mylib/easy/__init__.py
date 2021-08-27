@@ -9,16 +9,15 @@ import locale as locale
 import urllib as urllib
 import urllib.parse
 
-from . import io, thread_factory
+from . import io
 from . import shutil
 from . import typing
-from .__extra__ import *
 from .__common__ import *
+from .__extra__ import *
 
 T = typing
 REGEX_HEX_CHAR = '[0-9a-fA-F]'
 REGEX_GUID = '-'.join([f'{REGEX_HEX_CHAR}{{{__i}}}' for __i in (8, 4, 4, 4, 12)])
-
 
 
 def __refer_sth():
@@ -479,7 +478,7 @@ class ByteStreamBufferedReaderScraperPreAlpha:
         self.close_pipe()
 
     def start_scape(self):
-        thread_factory(daemon=True)(self.scrape).start()
+        ez_thread_factory(daemon=True)(self.scrape).start()
         return self
 
     def scrape(self):
@@ -536,8 +535,8 @@ class SubProcessBytePipeTranscriberPreAlpha:
                                                          scrape_to_bytearray=to_bytearray, scrape_to_pipe=to_pipe)
         self._all_pipe_scrapers_inactive_barrier = threading.Barrier(3)
         self._all_pipe_scrapers_inactive_event = threading.Event()
-        thread_factory(daemon=True)(self._wait_pipe_scraper_inactive, self.o).start()
-        thread_factory(daemon=True)(self._wait_pipe_scraper_inactive, self.e).start()
+        ez_thread_factory(daemon=True)(self._wait_pipe_scraper_inactive, self.o).start()
+        ez_thread_factory(daemon=True)(self._wait_pipe_scraper_inactive, self.e).start()
 
     @property
     def is_complete(self):

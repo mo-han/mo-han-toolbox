@@ -6,7 +6,7 @@ from time import time
 from zipfile import ZipFile, BadZipFile
 import shutil
 from mylib.ex.ostk import clipboard as cb
-from mylib.easy import thread_factory
+from mylib.easy import ez_thread_factory
 from mylib.__deprecated__ import list_files
 from queue import Queue
 
@@ -39,7 +39,7 @@ def progress():
             t0 = t1
 
 
-t = thread_factory(daemon=True)(progress)
+t = ez_thread_factory(daemon=True)(progress)
 t.run()
 files_l = list_files(src or cb, recursive=recursive, progress_queue=q)
 x, y, z = 0, 0, 0

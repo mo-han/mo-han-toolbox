@@ -40,7 +40,7 @@ path_ctime = os.path.getctime
 path_mtime = os.path.getmtime
 
 
-def thread_factory(group=None, name=None, daemon=None):
+def ez_thread_factory(group=None, name=None, daemon=None):
     def new_thread(target: T.Callable, *args, **kwargs):
         return threading.Thread(group=group, target=target, name=name, args=args, kwargs=kwargs, daemon=daemon)
 

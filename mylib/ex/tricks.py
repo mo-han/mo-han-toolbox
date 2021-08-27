@@ -14,7 +14,7 @@ import sys
 import time
 from time import sleep
 
-from mylib.easy import io, T, logging, VoidDuck, deco_factory_copy_signature, ExceptionWithKwargs, thread_factory
+from mylib.easy import io, T, logging, VoidDuck, deco_factory_copy_signature, ExceptionWithKwargs, ez_thread_factory
 
 
 class AttributeInflection:
@@ -675,7 +675,7 @@ class NonBlockingCaller:
         self._running = True
         self._result_queue = queue.Queue(maxsize=1)
         self._exception_queue = queue.Queue(maxsize=1)
-        self._thread = thread_factory(daemon=True)(self.thread)
+        self._thread = ez_thread_factory(daemon=True)(self.thread)
         self._thread.start()
         return True
 

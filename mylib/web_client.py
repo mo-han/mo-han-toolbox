@@ -19,7 +19,7 @@ from mylib.ex.http_headers import CURLCookieJar
 from .easy.logging import ez_get_logger, LOG_FMT_MESSAGE_ONLY
 from .easy.io import SubscriptableFileIO
 from .ex.tricks import singleton, iter_factory_retry
-from .easy import thread_factory
+from .easy import ez_thread_factory
 
 MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE = '# Netscape HTTP Cookie File'
 USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'
@@ -317,8 +317,8 @@ class DownloadPool(ThreadPoolExecutor):
         self.emergency_queue = Queue()
         self.show_status_interval = 2
         self.show_status_enable = show_status
-        thread_factory(daemon=True)(self.calc_speed).start()
-        thread_factory(daemon=True)(self.show_status).start()
+        ez_thread_factory(daemon=True)(self.calc_speed).start()
+        ez_thread_factory(daemon=True)(self.show_status).start()
         super().__init__(max_workers=threads_n)
 
     def queue_pipeline(self):
@@ -475,7 +475,7 @@ class DownloadPool(ThreadPoolExecutor):
         self.queue.put(None)
 
     def start_queue_loop(self):
-        thread_factory()(self.queue_pipeline).start()
+        ez_thread_factory()(self.queue_pipeline).start()
 
 
 def parse_https_url(url: str, allow_fragments=True) -> ParseResult:

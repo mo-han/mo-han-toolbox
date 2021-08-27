@@ -69,7 +69,7 @@ class ACall:
             self.delta_t = counter() - t0
 
     def get_result_timeout(self, *args, **kwargs):
-        thread = thread_factory(daemon=True)(self.get_result_blocking, *args, **kwargs)
+        thread = ez_thread_factory(daemon=True)(self.get_result_blocking, *args, **kwargs)
         thread.start()
         thread.join(self.timeout)  # join will terminate the thread (or not?)
         if self.ok:
