@@ -114,7 +114,7 @@ class FFmpegArgsList(list):
         if isinstance(arg, str):
             if arg:
                 self.append(arg)
-        elif isinstance(arg, typing.Iterable):
+        elif isinstance(arg, typing_.Iterable):
             for a in arg:
                 self.add_arg(a)
         else:
@@ -127,7 +127,7 @@ class FFmpegArgsList(list):
                 if value:
                     self.append(key)
                     self.append(value)
-            elif isinstance(value, typing.Iterable):
+            elif isinstance(value, typing_.Iterable):
                 for v in value:
                     self.add_kwarg(key, v)
             elif value is True:
@@ -240,9 +240,9 @@ class FFmpegRunnerAlpha:
             return p.stdout or b''
 
     @decorator_choose_map_preset
-    def concat(self, input_paths: typing.Iterable[str], output_path: str,
-               output_args: typing.Iterable[str] = (), *,
-               concat_demuxer: bool = False, extra_inputs: typing.Iterable = (),
+    def concat(self, input_paths: typing_.Iterable[str], output_path: str,
+               output_args: typing_.Iterable[str] = (), *,
+               concat_demuxer: bool = False, extra_inputs: typing_.Iterable = (),
                start: float or int or str = 0, end: float or int or str = 0,
                copy_all: bool = True, map_preset: str = None, metadata_file: str = None,
                **output_kwargs):
@@ -288,7 +288,7 @@ class FFmpegRunnerAlpha:
 
     @decorator_choose_map_preset
     def segment(self, input_path: str, output_path: str = None,
-                output_args: typing.Iterable[str] = (), *,
+                output_args: typing_.Iterable[str] = (), *,
                 copy: bool = True, reset_time: bool = True,
                 map_preset: str = None, **output_kwargs):
         self.reset_args()
@@ -311,9 +311,9 @@ class FFmpegRunnerAlpha:
         return self.proc_run()
 
     @decorator_choose_map_preset
-    def convert(self, input_paths: typing.Iterable[str], output_path: str,
-                output_args: typing.Iterable[str] = (), *,
-                input_args: typing.Iterable[str] = (),
+    def convert(self, input_paths: typing_.Iterable[str], output_path: str,
+                output_args: typing_.Iterable[str] = (), *,
+                input_args: typing_.Iterable[str] = (),
                 start: float or int or str = 0, end: float or int or str = 0,
                 copy_all: bool = False, map_preset: str = None, metadata_file: str = None,
                 dry_run=False,
@@ -392,7 +392,7 @@ def get_filter_list(filters):
         return []
     elif isinstance(filters, str):
         return [filters]
-    elif isinstance(filters, typing.Iterable):
+    elif isinstance(filters, typing_.Iterable):
         return list(filters)
     else:
         return []
@@ -842,7 +842,7 @@ class FFmpegSegmentsContainer:
                video_args: FFmpegArgsList = None,
                other_args: FFmpegArgsList = None,
                more_args: FFmpegArgsList = None,
-               non_visual_map: typing.Iterable[str] = (),
+               non_visual_map: typing_.Iterable[str] = (),
                filename: str = None,
                **kwargs):
         video_args = video_args or FFmpegArgsList()
@@ -910,7 +910,7 @@ class FFmpegSegmentsContainer:
         conf[S_ORIGINAL]['more_args'] = more_args
         self.config(**conf[S_ORIGINAL])
 
-    def config_non_visual_map(self, non_visual_map: typing.Iterable[str]):
+    def config_non_visual_map(self, non_visual_map: typing_.Iterable[str]):
         conf = self.read_output_json()
         conf[S_ORIGINAL]['non_visual_map'] = non_visual_map
         self.config(**conf[S_ORIGINAL])

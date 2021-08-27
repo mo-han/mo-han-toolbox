@@ -215,7 +215,7 @@ def merge_m4s(m4s_list: list, output_path: str):
 VIDEO_FILE_EXTENSIONS = ['.mp4', '.m4v', '.mkv', '.flv', '.webm']
 
 
-def list_files(src: str or typing.Iterable or Clipboard, recursive=False, progress_queue: Queue = None) -> typing.List[str]:
+def list_files(src: str or typing_.Iterable or Clipboard, recursive=False, progress_queue: Queue = None) -> typing_.List[str]:
     common_kwargs = dict(recursive=recursive, progress_queue=progress_queue)
     # if src is None:
     #     return list_files(clipboard.list_paths(exist_only=True), recursive=recursive)
@@ -228,7 +228,7 @@ def list_files(src: str or typing.Iterable or Clipboard, recursive=False, progre
             return list(fstk.find_iter('f', src, recursive=True))
         else:
             return [fp for fp in glob(src, recursive=recursive) if os.path.isfile(fp)]
-    elif isinstance(src, typing.Iterable):
+    elif isinstance(src, typing_.Iterable):
         r = []
         for s in src:
             r.extend(list_files(s, **common_kwargs))
@@ -239,7 +239,7 @@ def list_files(src: str or typing.Iterable or Clipboard, recursive=False, progre
         raise TypeError('invalid source', src)
 
 
-def list_dirs(src: str or typing.Iterable or Clipboard, recursive=False, progress_queue: Queue = None) -> list:
+def list_dirs(src: str or typing_.Iterable or Clipboard, recursive=False, progress_queue: Queue = None) -> list:
     common_kwargs = dict(recursive=recursive, progress_queue=progress_queue)
     if isinstance(src, str):
         if os.path.isdir(src):
@@ -250,7 +250,7 @@ def list_dirs(src: str or typing.Iterable or Clipboard, recursive=False, progres
             return dirs
         else:
             return [p for p in glob(src, recursive=recursive) if os.path.isdir(p)]
-    elif isinstance(src, typing.Iterable):
+    elif isinstance(src, typing_.Iterable):
         dirs = []
         for s in src:
             dirs.extend(list_dirs(s, **common_kwargs))

@@ -2,9 +2,9 @@
 import re
 from argparse import *
 
-from . import typing, SingletonMetaClass, AttrName
+from . import typing_, SingletonMetaClass, AttrName
 
-T = typing
+T = typing_
 
 
 class CompactHelpFormatterWithDefaults(ArgumentDefaultsHelpFormatter):

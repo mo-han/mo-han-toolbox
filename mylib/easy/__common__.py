@@ -9,7 +9,8 @@ import subprocess as subprocess
 import sys as sys
 import threading as threading
 import time as time
-from . import typing as typing
+
+from . import typing_ as typing
 
 T = typing
 sleep = time.sleep
