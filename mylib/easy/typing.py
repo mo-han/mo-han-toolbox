@@ -2,6 +2,11 @@
 from typing import *
 from typing import IO, BinaryIO, TextIO
 
+
+def __ref():
+    return IO, BinaryIO, TextIO
+
+
 Decorator = Callable[[Callable], Callable]
 
 
