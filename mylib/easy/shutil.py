@@ -2,7 +2,7 @@
 import shutil as patched_shutil
 from shutil import *
 
-from .__often_used_imports__ import *
+from .__common__ import *
 
 global_config = {'copy.buffer.size': 16 * 1024 * 1024}
 

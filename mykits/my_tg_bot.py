@@ -74,10 +74,7 @@ class MyAssistantBot(EasyBot):
             chat_id = update.message.chat_id
             args_ll = [line2args(line) for line in update.message.text.splitlines()]
             for args_l in args_ll:
-                s = self.__add_internal_call__(self._ytdl_succeed, chat_id, *args_l)
-                if s:
-                    print(s)
-                    self.__send_code_block__(chat_id, f'+ {s}')
+                self.__do_internal_call_reply_failure__(chat_id, self._ytdl_succeed, *args_l)
 
     def _ytdl_succeed(self, chat_id, *args):
         print('ytdl', args)
@@ -94,17 +91,17 @@ class MyAssistantBot(EasyBot):
             if p.returncode:
                 if self.__str_contain_abandon_errors__(echo):
                     self.__send_code_block__(chat_id, f'- {args_s}\n{echo}')
-                    return BotInternalCallResult(ok=True)
+                    return EasyBotInternalCallResult(ok=True)
                 self.__send_code_block__(chat_id, f'! {args_s}\n{p.returncode}\n{echo}')
-                return BotInternalCallResult(ok=False)
+                return EasyBotInternalCallResult(ok=False)
             else:
                 self.__send_code_block__(chat_id, f'* {args_s}\n{echo}')
-            return BotInternalCallResult(ok=True)
+            return EasyBotInternalCallResult(ok=True)
         except Exception as e:
             print('ERROR')
             self.__send_code_block__(chat_id, f'! {args_s}\n{str(e)}\n{repr(e)}')
             self.__send_traceback__(chat_id)
-            return BotInternalCallResult(ok=False)
+            return EasyBotInternalCallResult(ok=False)
 
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(bldl_regex_pattern))
     def _bldl(self, update, *args):
@@ -112,10 +109,7 @@ class MyAssistantBot(EasyBot):
             chat_id = update.message.chat_id
             args_ll = [line2args(line) for line in update.message.text.splitlines()]
             for args_l in args_ll:
-                s = self.__add_internal_call__(self._bldl_succeed, chat_id, *args_l)
-                if s:
-                    print(s)
-                    self.__send_code_block__(chat_id, f'+ {s}')
+                self.__do_internal_call_reply_failure__(chat_id, self._bldl_succeed, *args_l)
 
     def _bldl_succeed(self, chat_id, *args):
         print('bldl', args)
@@ -129,17 +123,17 @@ class MyAssistantBot(EasyBot):
                 if self.__str_contain_abandon_errors__(echo):
                     print(f' EXIT CODE: {p.returncode}')
                     self.__send_code_block__(chat_id, f'- {args_s}\n{echo}')
-                    return BotInternalCallResult(ok=True)
+                    return EasyBotInternalCallResult(ok=True)
                 print(f' EXIT CODE: {p.returncode}')
                 self.__send_code_block__(chat_id, f'! {args_s}\n{echo}')
-                return BotInternalCallResult(ok=False)
+                return EasyBotInternalCallResult(ok=False)
             else:
                 echo = ''.join([s for s in [decode_fallback_locale(b) for b in out.readlines()] if '─┤' not in s])
                 self.__send_code_block__(chat_id, f'* {args_s}\n{echo}')
-            return BotInternalCallResult(ok=True)
+            return EasyBotInternalCallResult(ok=True)
         except Exception as e:
             self.__send_code_block__(chat_id, f'! {args_s}\n{str(e)}\n{repr(e)}')
-            return BotInternalCallResult(ok=False)
+            return EasyBotInternalCallResult(ok=False)
 
     @deco_factory_bot_handler_method(CommandHandler)
     def _secret(self, update: Update, *args):

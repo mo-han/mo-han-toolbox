@@ -1,44 +1,24 @@
 #!/usr/bin/env python3
-"""THIS MODULE MUST ONLY DEPEND ON STANDARD LIBRARIES OR BUILT-IN"""
 import contextlib as contextlib
 import ctypes as ctypes
 import functools as functools
 import importlib as importlib
 import importlib.util
 import inspect as inspect
-import itertools as itertools
 import locale as locale
 import urllib as urllib
 import urllib.parse
 
-from . import io
+from . import io, thread_factory
 from . import shutil
 from . import typing
-from .__often_used_imports__ import *
+from .__extra__ import *
+from .__common__ import *
 
 T = typing
 REGEX_HEX_CHAR = '[0-9a-fA-F]'
 REGEX_GUID = '-'.join([f'{REGEX_HEX_CHAR}{{{__i}}}' for __i in (8, 4, 4, 4, 12)])
 
-path_is_file = os.path.isfile
-path_is_dir = os.path.isdir
-path_exist = os.path.exists
-path_dirname = os.path.dirname
-path_basename = os.path.basename
-path_common = os.path.commonpath
-path_common_prefix = os.path.commonprefix
-path_join = os.path.join
-path_user_tilde = os.path.expanduser
-path_env_var = os.path.expandvars
-path_split = os.path.split
-path_split_ext = os.path.splitext
-path_absolute = os.path.abspath
-path_real = os.path.realpath
-path_relative = os.path.relpath
-path_normalize = os.path.normpath
-path_get_size = os.path.getsize
-path_ctime = os.path.getctime
-path_mtime = os.path.getmtime
 
 
 def __refer_sth():
@@ -184,94 +164,6 @@ def python_module_from_filepath(module_name, filepath):
     return module
 
 
-class ACall:
-    target: T.Callable
-    args: tuple
-    kwargs: dict
-    delta_t: T.Optional[float]
-    ok: bool
-    result: T.Any
-    exception: T.Optional[Exception]
-    ignore_exceptions: T.Union[Exception, T.Tuple[Exception]]
-    exception_handler: T.Callable[[Exception], T.Any]
-    timeout: T.Optional[float]
-
-    def __init__(self, callee, *args, **kwargs):
-        self.set_call(callee, *args, **kwargs).set_exceptions().set_timeout().clear()
-
-    def clear(self):
-        self.delta_t = None
-        self.ok = False
-        self.result = None
-        self.exception = None
-        return self
-
-    def set_call(self, target, *args, **kwargs):
-        self.target = target
-        self.args = args
-        self.kwargs = kwargs
-        return self
-
-    def set_exceptions(self, ignore_exceptions: T.Union[Exception, T.Tuple[Exception]] = (), exception_handler=None):
-        self.ignore_exceptions = ignore_exceptions
-        self.exception_handler = exception_handler
-        return self
-
-    def set_timeout(self, timeout=None):
-        # if timeout and timeout < 0:
-        #     raise ValueError('timeout < 0')
-        self.timeout = timeout
-        return self
-
-    def get_result_blocking(self, *args, **kwargs):
-        counter = time.perf_counter
-        self.clear()
-        t0 = counter()
-        try:
-            self.result = self.target(*(args or self.args), **(kwargs or self.kwargs))
-            self.ok = True
-            return self.result
-        except self.ignore_exceptions:
-            pass
-        except Exception as e:
-            if not self.exception_handler:
-                self.exception = e
-                raise e
-            else:
-                return self.exception_handler(e)
-        finally:
-            self.delta_t = counter() - t0
-
-    def get_result_timeout(self, *args, **kwargs):
-        thread = thread_factory(daemon=True)(self.get_result_blocking, *args, **kwargs)
-        thread.start()
-        thread.join(self.timeout)  # join will terminate the thread (or not?)
-        if self.ok:
-            return self.result
-        if self.exception:
-            raise self.exception
-        raise TimeoutError()
-
-    def get_result(self, *args, **kwargs):
-        if self.timeout is None:
-            return self.get_result_blocking(*args, **kwargs)
-        return self.get_result_timeout(*args, **kwargs)
-
-
-class ALotCall:
-    def __init__(self, *calls: T.Union[ACall, T.Iterable[ACall]]):
-        self.all_calls_iter = itertools.chain(*[[i] if isinstance(i, ACall) else i for i in calls])
-
-    def any(self, *args, **kwargs):
-        return any((call.get_result(*args, **kwargs) for call in self.all_calls_iter))
-
-    def any_result(self, *args, **kwargs):
-        for call in self.all_calls_iter:
-            r = call.get_result(*args, **kwargs)
-            if r:
-                return r
-
-
 def round_to(x, precision):
     n = len(str(precision).split('.')[-1])
     return round(round(x / precision) * precision, n)
@@ -279,13 +171,6 @@ def round_to(x, precision):
 
 def os_exit_force(*args, **kwargs):
     os._exit(*args, **kwargs)
-
-
-def thread_factory(group=None, name=None, daemon=None):
-    def new_thread(target: T.Callable, *args, **kwargs):
-        return threading.Thread(group=group, target=target, name=name, args=args, kwargs=kwargs, daemon=daemon)
-
-    return new_thread
 
 
 class ExceptionWithKwargs(Exception):

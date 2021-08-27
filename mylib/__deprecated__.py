@@ -1,22 +1,16 @@
 #!/usr/bin/env python3
 # encoding=utf8
 import fnmatch
-import functools
-import os
-import re
 import shutil
 import shutil as patched_shutil
-import threading
 from glob import glob
 from queue import Queue
 from shutil import Error
-from time import sleep
 from typing import Callable, Generator
 
-from mylib.easy import T
+from mylib.easy import *
 from mylib.easy.shutil import DirectoryToFileError, NeitherFileNorDirectoryError, FileToDirectoryError
 from mylib.ex import fstk
-from mylib.easy import *
 from mylib.ex.ostk import Clipboard
 
 

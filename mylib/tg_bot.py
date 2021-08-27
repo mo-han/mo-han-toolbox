@@ -67,7 +67,7 @@ def merge_filters_or(*filters):
     return reduce(lambda x, y: MergedFilter(x, or_filter=y), filters)
 
 
-class BotInternalCallResult(EzAttrData):
+class EasyBotInternalCallResult(EzAttrData):
     ok: bool
 
 
@@ -143,36 +143,36 @@ class EasyBot:
     def __typing__(self, update: Update):
         self.__bot__.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING)
 
-    def __send_text__(self, dst, any_text: str, **kwargs):
-        if isinstance(dst, Update):
+    def __send_text__(self, send_to, any_text: str, **kwargs):
+        if isinstance(send_to, Update):
             def _send(sth):
-                dst.message.reply_text(sth, **kwargs)
-        elif isinstance(dst, (int, str)):
+                send_to.message.reply_text(sth, **kwargs)
+        elif isinstance(send_to, (int, str)):
             def _send(sth):
-                self.__bot__.send_message(dst, sth, **kwargs)
+                self.__bot__.send_message(send_to, sth, **kwargs)
         else:
-            raise TypeError(dst, (Update, int, str))
+            raise TypeError(send_to, (Update, int, str))
         if len(any_text) > constants.MAX_MESSAGE_LENGTH:
             for s in text.split_by_new_line_with_max_length(any_text, constants.MAX_MESSAGE_LENGTH):
                 _send(s)
         else:
             _send(any_text)
 
-    def __send_markdown__(self, dst, md_text: str, **kwargs):
-        self.__send_text__(dst, md_text, parse_mode=ParseMode.MARKDOWN, **kwargs)
+    def __send_markdown__(self, send_to, md_text: str, **kwargs):
+        self.__send_text__(send_to, md_text, parse_mode=ParseMode.MARKDOWN, **kwargs)
 
     __send_md__ = __send_markdown__
 
-    def __send_code_block__(self, dst, code_text):
+    def __send_code_block__(self, send_to, code_text):
         for ct in text.split_by_new_line_with_max_length(code_text, constants.MAX_MESSAGE_LENGTH - 7):
-            self.__send_markdown__(dst, f'```\n{ct}```')
+            self.__send_markdown__(send_to, f'```\n{ct}```')
 
-    def __send_traceback__(self, dst):
+    def __send_traceback__(self, send_to):
         if not self._debug_mode:
             return
         tb = traceback.format_exc()
         print(tb)
-        self.__send_code_block__(dst, f'{tb}')
+        self.__send_code_block__(send_to, f'{tb}')
 
     def __task_loop__(self):
         ...
@@ -268,29 +268,25 @@ in {t.duration:.3f}s
         while calls:  # don't remove set elements in for-loop, would raise RuntimeError
             b = calls.pop()
             args, kwargs = dill.loads(b)
-            if not self.__successful_internal_call__(*args, **kwargs):
+            if not self.__check_internal_call__(*args, **kwargs):
                 calls.add(b)
             self.__dump_pickle__()
 
-    def __add_internal_call__(self, target, *args, **kwargs):
+    def __do_internal_call_reply_failure__(self, reply_to, target, *args, **kwargs):
         if not isinstance(target, str) and hasattr(target, '__name__'):
             target = target.__name__
-        s = f'{target}({", ".join(map(repr, args))}, {", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])})'
-        if not self.__successful_internal_call__(target, *args, **kwargs):
+        if not self.__check_internal_call__(target, *args, **kwargs):
             self.__the_saved_calls__().add(dill.dumps(((target, *args), kwargs)))
             self.__dump_pickle__()
-            return s
+            self.__send_code_block__(reply_to, f'+ target({ez_args_kwargs_str(args, kwargs)})')
 
-    def __successful_internal_call__(self, target, *args, **kwargs) -> bool:
+    def __check_internal_call__(self, target, *args, **kwargs) -> bool:
         if isinstance(target, str):
             target = getattr(self, target)
         r = target(*args, **kwargs)
-        if not isinstance(r, BotInternalCallResult):
-            raise TypeError(f'target result is not a {BotInternalCallResult.__name__} object')
-        if r.ok:
-            return True
-        else:
-            return False
+        if not isinstance(r, EasyBotInternalCallResult):
+            raise TypeError(f'target return invalid', EasyBotInternalCallResult.__name__)
+        return r.ok
 
     def __remove_finished_update__(self, update: Update):
         self.__the_saved_updates__().remove(update)
