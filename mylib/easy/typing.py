@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from typing import *
+from typing import IO, BinaryIO, TextIO
 
 Decorator = Callable[[Callable], Callable]
 
