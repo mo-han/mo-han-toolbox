@@ -153,23 +153,26 @@ class EasyBot:
         self.__username__ = me.username
         return me
 
-    def __typing__(self, update: Update):
-        self.__bot__.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING)
+    def __send_typing__(self, update: Update):
+        with self.__ctx_dump_pickle__():
+            self.__bot__.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING)
 
     def __send_text__(self, send_to, any_text: str, **kwargs):
-        if isinstance(send_to, Update):
-            def _send(sth):
-                send_to.message.reply_text(sth, **kwargs)
-        elif isinstance(send_to, (int, str)):
-            def _send(sth):
-                self.__bot__.send_message(send_to, sth, **kwargs)
-        else:
-            raise TypeError(send_to, (Update, int, str))
-        if len(any_text) > constants.MAX_MESSAGE_LENGTH:
-            for s in text.split_by_new_line_with_max_length(any_text, constants.MAX_MESSAGE_LENGTH):
-                _send(s)
-        else:
-            _send(any_text)
+        with self.__ctx_dump_pickle__():
+            if isinstance(send_to, Update):
+                def _send(sth):
+                    send_to.message.reply_text(sth, **kwargs)
+            elif isinstance(send_to, (int, str)):
+                def _send(sth):
+                    self.__bot__.send_message(send_to, sth, **kwargs)
+            else:
+                raise TypeError(send_to, (Update, int, str))
+
+            if len(any_text) > constants.MAX_MESSAGE_LENGTH:
+                for s in text.split_by_new_line_with_max_length(any_text, constants.MAX_MESSAGE_LENGTH):
+                    _send(s)
+            else:
+                _send(any_text)
 
     def __send_markdown__(self, send_to, md_text: str, **kwargs):
         self.__send_text__(send_to, md_text, parse_mode=ParseMode.MARKDOWN, **kwargs)
@@ -219,7 +222,7 @@ load:
     @deco_factory_bot_handler_method(CommandHandler, on_menu=True)
     def start(self, update: Update, context: CallbackContext):
         """let's roll out"""
-        self.__typing__(update)
+        self.__send_typing__(update)
         self.__get_me__()
         update.message.reply_text(self.__about_this_bot__())
         update.message.reply_text(self.__get_menu_str__())
@@ -227,7 +230,7 @@ load:
     @deco_factory_bot_handler_method(CommandHandler, on_menu=True)
     def menu(self, update: Update, context: CallbackContext):
         """list commands"""
-        self.__typing__(update)
+        self.__send_typing__(update)
         lines = []
         for n, v in self.__commands_list__:
             if n.startswith('_'):
@@ -270,6 +273,13 @@ save:
 in {t.duration:.3f}s
 '''.strip())
 
+    @contextlib.contextmanager
+    def __ctx_dump_pickle__(self):
+        try:
+            yield
+        finally:
+            self.__dump_pickle__()
+
     def __load_pickle__(self):
         if path_is_file(self.__pickle_copy_filepath__):
             shutil.copy(self.__pickle_copy_filepath__, self.__pickle_filepath__)
@@ -287,8 +297,8 @@ in {t.duration:.3f}s
     def __do_internal_call_reply_failure__(self, call_data: EasyBotInternalCallData):
         target = call_data.target
         chat_to = call_data.chat_to
-        print(f'+ {call_data.to_str()}')
-        self.__send_code_block__(chat_to, f'+ {call_data.to_str(include_chat_to=True)}')
+        print(f'+ {call_data.to_str(include_chat_to=True)}')
+        self.__send_code_block__(chat_to, f'+ {call_data.to_str()}')
         if not self.__check_internal_call__(call_data):
             self.__the_saved_calls__().add(call_data)
             self.__dump_pickle__()
@@ -318,6 +328,7 @@ in {t.duration:.3f}s
                 self.__handle_saved_calls__()
         if this_update:
             self.__the_saved_updates__(remove_updates=[this_update])
+        self.__dump_pickle__()
 
     def __update_queue_size__(self):
         return self.__updater__.dispatcher.update_queue.qsize()

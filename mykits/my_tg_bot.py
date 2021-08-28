@@ -59,7 +59,7 @@ class MyAssistantBot(EasyBot):
     @deco_factory_bot_handler_method(CommandHandler, on_menu=True, command='freevmessuuid')
     def free_ss_site_vmess_uuid(self, update: Update, *args):
         import mylib.sites.misc
-        self.__typing__(update)
+        self.__send_typing__(update)
         for uuid in mylib.sites.misc.free_ss_site_vmess_uuid():
             self.__send_text__(update, uuid)
 
@@ -144,7 +144,7 @@ class MyAssistantBot(EasyBot):
 
     @deco_factory_bot_handler_method(CommandHandler)
     def _secret(self, update: Update, *args):
-        self.__typing__(update)
+        self.__send_typing__(update)
         for name in ('effective_message', 'effective_user'):
             self.__send_code_block__(update, f'{name}\n{pformat(getattr(update, name).to_dict())}')
         self.__send_code_block__(update, f'bot.get_me()\n{pformat(self.__bot__.get_me().to_dict())}')
