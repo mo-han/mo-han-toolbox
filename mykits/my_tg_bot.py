@@ -75,7 +75,7 @@ class MyAssistantBot(EasyBot):
             args_ll = [line2args(line) for line in update.message.text.splitlines()]
             for args_l in args_ll:
                 call_data = EasyBotInternalCallData()
-                call_data.target = self._bldl_internal.__name__
+                call_data.target = self._ytdl_internal.__name__
                 call_data.args = args_l
                 call_data.chat_to = chat_id
                 self.__do_internal_call_reply_failure__(call_data)
