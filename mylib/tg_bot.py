@@ -275,10 +275,13 @@ in {t.duration:.3f}s
     def __do_internal_call_reply_failure__(self, reply_to, target, *args, **kwargs):
         if not isinstance(target, str) and hasattr(target, '__name__'):
             target = target.__name__
+        call_str = f'{target}({ez_args_kwargs_str(args, kwargs)})'
+        print(call_str, 'reply to:', reply_to)
+        self.__send_code_block__(reply_to, f'+ {call_str}')
         if not self.__check_internal_call__(target, *args, **kwargs):
             self.__the_saved_calls__().add(dill.dumps(((target, *args), kwargs)))
             self.__dump_pickle__()
-            self.__send_code_block__(reply_to, f'+ target({ez_args_kwargs_str(args, kwargs)})')
+            self.__send_code_block__(reply_to, f'<<< {target}({ez_args_kwargs_str(args, kwargs)})')
 
     def __check_internal_call__(self, target, *args, **kwargs) -> bool:
         if isinstance(target, str):

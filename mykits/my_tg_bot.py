@@ -77,12 +77,9 @@ class MyAssistantBot(EasyBot):
                 self.__do_internal_call_reply_failure__(chat_id, self._ytdl_succeed, *args_l)
 
     def _ytdl_succeed(self, chat_id, *args):
-        print('ytdl', args)
         args = [re.sub(r'\[(ph[\da-f]{13})]', r'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in args]
-        print('ytdl', args)
         args_s = ' '.join([shlex.quote(a) for a in args])
         try:
-            self.__send_code_block__(chat_id, f'+ {args_s}')
             p, out, err = ytdl_retry_frozen(*args)
             echo = ''.join(
                 [re.sub(r'.*\[download\]', '[download]', decode_fallback_locale(b).rsplit('\r', maxsplit=1)[-1]) for
@@ -112,10 +109,8 @@ class MyAssistantBot(EasyBot):
                 self.__do_internal_call_reply_failure__(chat_id, self._bldl_succeed, *args_l)
 
     def _bldl_succeed(self, chat_id, *args):
-        print('bldl', args)
         args_s = ' '.join([shlex.quote(a) for a in args])
         try:
-            self.__send_code_block__(chat_id, f'+ {args_s}')
             p, out, err = bldl_retry_frozen(*args)
             if p.returncode:
                 echo = ''.join(
