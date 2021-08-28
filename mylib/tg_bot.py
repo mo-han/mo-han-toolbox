@@ -290,19 +290,21 @@ in {t.duration:.3f}s
         calls = self.__the_saved_calls__()
         while calls:  # don't remove set elements in for-loop, would raise RuntimeError
             call_data = calls.pop()
+            chat_to = call_data.chat_to
+            print(f'+ {call_data.to_str(include_chat_to=True)}')
+            self.__send_code_block__(chat_to, f'+ {call_data.to_str()}')
             if not self.__check_internal_call__(call_data):
                 calls.add(call_data)
+                self.__send_code_block__(chat_to, f'^ {call_data.to_str()}')
             self.__dump_pickle__()
 
     def __do_internal_call_reply_failure__(self, call_data: EasyBotInternalCallData):
-        target = call_data.target
         chat_to = call_data.chat_to
         print(f'+ {call_data.to_str(include_chat_to=True)}')
         self.__send_code_block__(chat_to, f'+ {call_data.to_str()}')
         if not self.__check_internal_call__(call_data):
             self.__the_saved_calls__().add(call_data)
             self.__dump_pickle__()
-            self.__send_code_block__(chat_to, f'^ {call_data.to_str()}')
 
     def __check_internal_call__(self, call_data: EasyBotInternalCallData) -> bool:
         target = call_data.target
