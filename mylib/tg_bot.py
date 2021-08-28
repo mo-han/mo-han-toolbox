@@ -103,7 +103,6 @@ class EasyBot:
                                    **kwargs)
         self.__pickle__.set_bot(self.__updater__.bot)
         self.__get_me__()
-        print(self.__about_this_bot__())
         self.__restore_updates_into_queue__()
         self.__handle_saved_calls__()
 
@@ -123,9 +122,11 @@ class EasyBot:
             chat_id_filter = Filters.chat(list(filter(lambda x: isinstance(x, int), whitelist)))
             chat_username_filter = Filters.chat(list(filter(lambda x: isinstance(x, str), whitelist)))
             self.__filters__ = merge_filters_and(self.__filters__, chat_id_filter | chat_username_filter)
+            about = self.__about_this_bot__()
+            print(about)
             for u in whitelist:
                 if isinstance(u, int):
-                    self.__bot__.send_message(u, self.__about_this_bot__())
+                    self.__bot__.send_message(u, about)
 
     def __register_handlers__(self):
         self.__commands_list__ = []
