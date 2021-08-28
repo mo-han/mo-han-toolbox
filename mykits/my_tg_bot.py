@@ -66,7 +66,7 @@ class MyAssistantBot(EasyBot):
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(ytdl_regex_pattern))
     def _ytdl(self, update: Update, *args):
         with self.__ctx_save__():
-            if not self.__predicate_update__(update):
+            if not self.__check_update__(update):
                 echo = f'# {update.message.text}'
                 print(echo)
                 self.__send_code_block__(update, echo)
@@ -181,7 +181,7 @@ class MyAssistantBot(EasyBot):
         else:
             self.__send_code_block__(u, pformat(errors))
 
-    def __predicate_update__(self, u: Update, c: CallbackContext = None):
+    def __check_update__(self, u: Update, c: CallbackContext = None):
         anti_updates = set(self.__get_config__().get('anti_updates', []))
         for x in anti_updates:
             if x in u.message.text:

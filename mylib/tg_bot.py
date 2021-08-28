@@ -307,15 +307,17 @@ in {t.duration:.3f}s
         self.__the_saved_updates__().remove(update)
 
     @contextlib.contextmanager
-    def __ctx_save__(self):
+    def __ctx_save__(self, this_update=None):
+        if this_update:
+            self.__the_saved_updates__(add_updates=[this_update])
         self.__dump_pickle__()
         yield
         if self.__the_saved_calls__():
             self.__dump_pickle__()
             if not self.__update_queue_size__():
                 self.__handle_saved_calls__()
-        elif self.__update_queue_size__():
-            self.__dump_pickle__()
+        if this_update:
+            self.__the_saved_updates__(remove_updates=[this_update])
 
     def __update_queue_size__(self):
         return self.__updater__.dispatcher.update_queue.qsize()
@@ -330,7 +332,12 @@ in {t.duration:.3f}s
             r.remove(remove)
         return r
 
-    def __the_saved_updates__(self, updates=None):
+    def __the_saved_updates__(self, updates=None, add_updates=None, remove_updates=None):
         if updates:
             self.__bot_data__[an.__string_saved_updates__] = set(updates)
-        return self.__bot_data__.setdefault(an.__string_saved_updates__, set())
+        updates = self.__bot_data__.setdefault(an.__string_saved_updates__, set())
+        if add_updates:
+            updates.update(add_updates)
+        if remove_updates:
+            updates.difference_update(remove_updates)
+        return updates
