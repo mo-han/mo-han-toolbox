@@ -109,7 +109,7 @@ class MyAssistantBot(EasyBot):
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(bldl_regex_pattern))
     def _bldl(self, update, *args):
         with self.__ctx_save__():
-            chat_id = update.message.chat_to
+            chat_id = update.message.chat_id
             args_ll = [line2args(line) for line in update.message.text.splitlines()]
             for args_l in args_ll:
                 call_data = EasyBotInternalCallData()
