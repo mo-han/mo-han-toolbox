@@ -74,7 +74,7 @@ class MyAssistantBot(EasyBot):
             chat_id = update.message.chat_id
             args_ll = [line2args(line) for line in update.message.text.splitlines()]
             for args_l in args_ll:
-                self.__do_internal_call_reply_failure__(chat_id, self._ytdl_succeed, *args_l)
+                self.__do_internal_call_reply_failure__(chat_id, self._ytdl_succeed, chat_id, *args_l)
 
     def _ytdl_succeed(self, chat_id, *args):
         args = [re.sub(r'\[(ph[\da-f]{13})]', r'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in args]
@@ -106,7 +106,7 @@ class MyAssistantBot(EasyBot):
             chat_id = update.message.chat_id
             args_ll = [line2args(line) for line in update.message.text.splitlines()]
             for args_l in args_ll:
-                self.__do_internal_call_reply_failure__(chat_id, self._bldl_succeed, *args_l)
+                self.__do_internal_call_reply_failure__(chat_id, self._bldl_succeed, chat_id, *args_l)
 
     def _bldl_succeed(self, chat_id, *args):
         args_s = ' '.join([shlex.quote(a) for a in args])
