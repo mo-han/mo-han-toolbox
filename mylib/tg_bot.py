@@ -71,6 +71,19 @@ class EasyBotInternalCallResult(EzAttrData):
     ok: bool
 
 
+class EasyBotInternalCallData(EzAttrData):
+    target: str
+    chat_to: int
+    args: tuple = ()
+    kwargs: dict = {}
+
+    def to_str(self, *, include_chat_to=False):
+        s = f'{self.target}: {ez_args_kwargs_str(self.args, self.kwargs)}'
+        if include_chat_to:
+            s += f' ; chat_to: {self.chat_to}'
+        return s
+
+
 class EasyBot:
     def __init__(self, token, *,
                  timeout=None, whitelist=None, filters=None,
@@ -266,29 +279,28 @@ in {t.duration:.3f}s
     def __handle_saved_calls__(self):
         calls = self.__the_saved_calls__()
         while calls:  # don't remove set elements in for-loop, would raise RuntimeError
-            b = calls.pop()
-            args, kwargs = dill.loads(b)
-            if not self.__check_internal_call__(*args, **kwargs):
-                calls.add(b)
+            call_data = calls.pop()
+            if not self.__check_internal_call__(call_data):
+                calls.add(call_data)
             self.__dump_pickle__()
 
-    def __do_internal_call_reply_failure__(self, reply_to, target, *args, **kwargs):
-        if not isinstance(target, str) and hasattr(target, '__name__'):
-            target = target.__name__
-        call_str = f'{target}({ez_args_kwargs_str(args, kwargs)})'
-        print(call_str, 'reply to:', reply_to)
-        self.__send_code_block__(reply_to, f'+ {call_str}')
-        if not self.__check_internal_call__(target, *args, **kwargs):
-            self.__the_saved_calls__().add(dill.dumps(((target, *args), kwargs)))
+    def __do_internal_call_reply_failure__(self, call_data: EasyBotInternalCallData):
+        target = call_data.target
+        chat_to = call_data.chat_to
+        print(f'+ {call_data.to_str()}')
+        self.__send_code_block__(chat_to, f'+ {call_data.to_str(include_chat_to=True)}')
+        if not self.__check_internal_call__(call_data):
+            self.__the_saved_calls__().add(call_data)
             self.__dump_pickle__()
-            self.__send_code_block__(reply_to, f'<<< {target}({ez_args_kwargs_str(args, kwargs)})')
+            self.__send_code_block__(chat_to, f'^ {call_data.to_str()}')
 
-    def __check_internal_call__(self, target, *args, **kwargs) -> bool:
+    def __check_internal_call__(self, call_data: EasyBotInternalCallData) -> bool:
+        target = call_data.target
         if isinstance(target, str):
             target = getattr(self, target)
-        r = target(*args, **kwargs)
+        r = target(call_data)
         if not isinstance(r, EasyBotInternalCallResult):
-            raise TypeError(f'target return invalid', EasyBotInternalCallResult.__name__)
+            raise TypeError(f'return type of target is not', EasyBotInternalCallResult.__name__)
         return r.ok
 
     def __remove_finished_update__(self, update: Update):
@@ -308,7 +320,7 @@ in {t.duration:.3f}s
     def __update_queue_size__(self):
         return self.__updater__.dispatcher.update_queue.qsize()
 
-    def __the_saved_calls__(self, add=None, update=None, remove=None):
+    def __the_saved_calls__(self, add=None, update=None, remove=None) -> T.Set[EasyBotInternalCallData]:
         r = self.__bot_data__.setdefault(an.__string_saved_calls__, set())
         if add:
             r.add(add)

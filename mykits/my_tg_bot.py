@@ -74,9 +74,15 @@ class MyAssistantBot(EasyBot):
             chat_id = update.message.chat_id
             args_ll = [line2args(line) for line in update.message.text.splitlines()]
             for args_l in args_ll:
-                self.__do_internal_call_reply_failure__(chat_id, self._ytdl_succeed, chat_id, *args_l)
+                call_data = EasyBotInternalCallData()
+                call_data.target = self._bldl_internal.__name__
+                call_data.args = args_l
+                call_data.chat_to = chat_id
+                self.__do_internal_call_reply_failure__(call_data)
 
-    def _ytdl_succeed(self, chat_id, *args):
+    def _ytdl_internal(self, call_data: EasyBotInternalCallData):
+        args = call_data.args
+        chat_to = call_data.chat_to
         args = [re.sub(r'\[(ph[\da-f]{13})]', r'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in args]
         args_s = ' '.join([shlex.quote(a) for a in args])
         try:
@@ -87,28 +93,34 @@ class MyAssistantBot(EasyBot):
                  out.readlines()[-10:]])
             if p.returncode:
                 if self.__str_contain_abandon_errors__(echo):
-                    self.__send_code_block__(chat_id, f'- {args_s}\n{echo}')
+                    self.__send_code_block__(chat_to, f'- {args_s}\n{echo}')
                     return EasyBotInternalCallResult(ok=True)
-                self.__send_code_block__(chat_id, f'! {args_s}\n{p.returncode}\n{echo}')
+                self.__send_code_block__(chat_to, f'! {args_s}\n{p.returncode}\n{echo}')
                 return EasyBotInternalCallResult(ok=False)
             else:
-                self.__send_code_block__(chat_id, f'* {args_s}\n{echo}')
+                self.__send_code_block__(chat_to, f'* {args_s}\n{echo}')
             return EasyBotInternalCallResult(ok=True)
         except Exception as e:
             print('ERROR')
-            self.__send_code_block__(chat_id, f'! {args_s}\n{str(e)}\n{repr(e)}')
-            self.__send_traceback__(chat_id)
+            self.__send_code_block__(chat_to, f'! {args_s}\n{str(e)}\n{repr(e)}')
+            self.__send_traceback__(chat_to)
             return EasyBotInternalCallResult(ok=False)
 
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(bldl_regex_pattern))
     def _bldl(self, update, *args):
         with self.__ctx_save__():
-            chat_id = update.message.chat_id
+            chat_id = update.message.chat_to
             args_ll = [line2args(line) for line in update.message.text.splitlines()]
             for args_l in args_ll:
-                self.__do_internal_call_reply_failure__(chat_id, self._bldl_succeed, chat_id, *args_l)
+                call_data = EasyBotInternalCallData()
+                call_data.target = self._bldl_internal.__name__
+                call_data.args = args_l
+                call_data.chat_to = chat_id
+                self.__do_internal_call_reply_failure__(call_data)
 
-    def _bldl_succeed(self, chat_id, *args):
+    def _bldl_internal(self, call_data: EasyBotInternalCallData):
+        args = call_data.args
+        chat_id = call_data.chat_to
         args_s = ' '.join([shlex.quote(a) for a in args])
         try:
             p, out, err = bldl_retry_frozen(*args)
