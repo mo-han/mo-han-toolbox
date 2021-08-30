@@ -8,8 +8,8 @@ import requests
 from mylib.__deprecated__ import get_re_groups
 from mylib.easy import *
 from mylib.easy import logging
-from mylib.ex.tricks import is_hex
-from mylib.ex import fstk
+from mylib.ext.tricks import is_hex
+from mylib.ext import fstk
 from mylib.web_client import cookies_dict_from_netscape_file, get_html_element_tree
 
 VARIOUS = '(various)'

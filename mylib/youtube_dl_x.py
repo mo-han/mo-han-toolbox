@@ -10,7 +10,7 @@ from youtube_dl.extractor import common as ytdl_common
 from youtube_dl.extractor.common import InfoExtractor
 from youtube_dl.utils import sanitize_filename
 
-from .ex import fstk
+from .ext import fstk
 from mylib.sites.iwara import IwaraIE
 from mylib.sites.pornhub import PornHubIE
 from .web_client import parse_https_url, get_html_element_tree

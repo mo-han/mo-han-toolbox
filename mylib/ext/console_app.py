@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from mylib.easy import *
 from mylib.easy.argparse import *
-from mylib.ex import fstk, text, ostk
+from mylib.ext import fstk, text, ostk
 
 
 def __ref():

@@ -2,7 +2,7 @@
 from mylib.easy import *
 from mylib.easy import argparse
 from mylib.easy import logging
-from mylib.ex import ostk
+from mylib.ext import ostk
 
 apr = argparse.ArgumentParserRigger()
 an = apr.an

@@ -2,11 +2,11 @@ import webbrowser
 from functools import reduce
 
 import mylib.__deprecated__
-from mylib.ex.fstk import *
-from mylib.ex.fstk import read_sqlite_dict_file
-from mylib.ex.ostk import clipboard as cb
-from mylib.ex.text import *
-from mylib.ex.tui import *
+from mylib.ext.fstk import *
+from mylib.ext.fstk import read_sqlite_dict_file
+from mylib.ext.ostk import clipboard as cb
+from mylib.ext.text import *
+from mylib.ext.tui import *
 from mylib.easy import split_path_dir_base_ext
 
 src = r'd:\usr\dl\1'

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from mylib.easy import *
 from tempfile import NamedTemporaryFile
-from mylib.ex.PIL import *
+from mylib.ext.PIL import *
 import json
 from filetype.filetype import guess_mime
 

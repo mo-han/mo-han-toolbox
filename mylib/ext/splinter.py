@@ -2,7 +2,7 @@
 from splinter import *
 
 from mylib.easy import *
-from mylib.ex import http_headers
+from mylib.ext import http_headers
 
 
 def __ref_sth():

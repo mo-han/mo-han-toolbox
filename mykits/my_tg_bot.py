@@ -6,8 +6,8 @@ from telegram.ext import MessageHandler
 from mylib.cli import new_argument_parser
 from mylib.easy.logging import ez_get_logger
 from mylib.easy.text import decode_fallback_locale
-from mylib.ex.fstk import read_json_file, write_json_file
-from mylib.ex.tricks import monitor_sub_process_tty_frozen, ProcessTTYFrozen
+from mylib.ext.fstk import read_json_file, write_json_file
+from mylib.ext.tricks import monitor_sub_process_tty_frozen, ProcessTTYFrozen
 from mylib.tg_bot import *
 
 mt = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(os.path.getmtime(os.path.realpath(__file__))))
@@ -59,14 +59,14 @@ class MyAssistantBot(EasyBot):
     @deco_factory_bot_handler_method(CommandHandler, on_menu=True, command='freevmessuuid')
     def free_ss_site_vmess_uuid(self, update: Update, *args):
         import mylib.sites.misc
-        self.__typing__(update)
+        self.__send_typing__(update)
         for uuid in mylib.sites.misc.free_ss_site_vmess_uuid():
             self.__send_text__(update, uuid)
 
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(ytdl_regex_pattern))
     def _ytdl(self, update: Update, *args):
         with self.__ctx_save__():
-            if not self.__predicate_update__(update):
+            if not self.__check_update__(update):
                 echo = f'# {update.message.text}'
                 print(echo)
                 self.__send_code_block__(update, echo)
@@ -74,15 +74,18 @@ class MyAssistantBot(EasyBot):
             chat_id = update.message.chat_id
             args_ll = [line2args(line) for line in update.message.text.splitlines()]
             for args_l in args_ll:
-                self.__do_internal_call_reply_failure__(chat_id, self._ytdl_succeed, *args_l)
+                call_data = EasyBotInternalCallData()
+                call_data.target = self._ytdl_internal.__name__
+                call_data.args = args_l
+                call_data.chat_to = chat_id
+                self.__do_internal_call_reply_failure__(call_data)
 
-    def _ytdl_succeed(self, chat_id, *args):
-        print('ytdl', args)
+    def _ytdl_internal(self, call_data: EasyBotInternalCallData):
+        args = call_data.args
+        chat_to = call_data.chat_to
         args = [re.sub(r'\[(ph[\da-f]{13})]', r'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in args]
-        print('ytdl', args)
         args_s = ' '.join([shlex.quote(a) for a in args])
         try:
-            self.__send_code_block__(chat_id, f'+ {args_s}')
             p, out, err = ytdl_retry_frozen(*args)
             echo = ''.join(
                 [re.sub(r'.*\[download\]', '[download]', decode_fallback_locale(b).rsplit('\r', maxsplit=1)[-1]) for
@@ -90,17 +93,17 @@ class MyAssistantBot(EasyBot):
                  out.readlines()[-10:]])
             if p.returncode:
                 if self.__str_contain_abandon_errors__(echo):
-                    self.__send_code_block__(chat_id, f'- {args_s}\n{echo}')
+                    self.__send_code_block__(chat_to, f'- {args_s}\n{echo}')
                     return EasyBotInternalCallResult(ok=True)
-                self.__send_code_block__(chat_id, f'! {args_s}\n{p.returncode}\n{echo}')
+                self.__send_code_block__(chat_to, f'! {args_s}\n{p.returncode}\n{echo}')
                 return EasyBotInternalCallResult(ok=False)
             else:
-                self.__send_code_block__(chat_id, f'* {args_s}\n{echo}')
+                self.__send_code_block__(chat_to, f'* {args_s}\n{echo}')
             return EasyBotInternalCallResult(ok=True)
         except Exception as e:
             print('ERROR')
-            self.__send_code_block__(chat_id, f'! {args_s}\n{str(e)}\n{repr(e)}')
-            self.__send_traceback__(chat_id)
+            self.__send_code_block__(chat_to, f'! {args_s}\n{str(e)}\n{repr(e)}')
+            self.__send_traceback__(chat_to)
             return EasyBotInternalCallResult(ok=False)
 
     @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(bldl_regex_pattern))
@@ -109,13 +112,17 @@ class MyAssistantBot(EasyBot):
             chat_id = update.message.chat_id
             args_ll = [line2args(line) for line in update.message.text.splitlines()]
             for args_l in args_ll:
-                self.__do_internal_call_reply_failure__(chat_id, self._bldl_succeed, *args_l)
+                call_data = EasyBotInternalCallData()
+                call_data.target = self._bldl_internal.__name__
+                call_data.args = args_l
+                call_data.chat_to = chat_id
+                self.__do_internal_call_reply_failure__(call_data)
 
-    def _bldl_succeed(self, chat_id, *args):
-        print('bldl', args)
+    def _bldl_internal(self, call_data: EasyBotInternalCallData):
+        args = call_data.args
+        chat_id = call_data.chat_to
         args_s = ' '.join([shlex.quote(a) for a in args])
         try:
-            self.__send_code_block__(chat_id, f'+ {args_s}')
             p, out, err = bldl_retry_frozen(*args)
             if p.returncode:
                 echo = ''.join(
@@ -137,7 +144,7 @@ class MyAssistantBot(EasyBot):
 
     @deco_factory_bot_handler_method(CommandHandler)
     def _secret(self, update: Update, *args):
-        self.__typing__(update)
+        self.__send_typing__(update)
         for name in ('effective_message', 'effective_user'):
             self.__send_code_block__(update, f'{name}\n{pformat(getattr(update, name).to_dict())}')
         self.__send_code_block__(update, f'bot.get_me()\n{pformat(self.__bot__.get_me().to_dict())}')
@@ -174,7 +181,7 @@ class MyAssistantBot(EasyBot):
         else:
             self.__send_code_block__(u, pformat(errors))
 
-    def __predicate_update__(self, u: Update, c: CallbackContext = None):
+    def __check_update__(self, u: Update, c: CallbackContext = None):
         anti_updates = set(self.__get_config__().get('anti_updates', []))
         for x in anti_updates:
             if x in u.message.text:

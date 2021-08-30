@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import difflib
 
-from mylib.ex.console_app import *
+from mylib.ext.console_app import *
 
 apr = ArgumentParserRigger()
 differ = difflib.Differ()

@@ -71,6 +71,19 @@ class EasyBotInternalCallResult(EzAttrData):
     ok: bool
 
 
+class EasyBotInternalCallData(EzAttrData):
+    target: str
+    chat_to: int
+    args: tuple = ()
+    kwargs: dict = {}
+
+    def to_str(self, *, include_chat_to=False):
+        s = f'{self.target}: {ez_args_kwargs_str(self.args, self.kwargs)}'
+        if include_chat_to:
+            s += f' ; chat_to: {self.chat_to}'
+        return s
+
+
 class EasyBot:
     def __init__(self, token, *,
                  timeout=None, whitelist=None, filters=None,
@@ -90,7 +103,6 @@ class EasyBot:
                                    **kwargs)
         self.__pickle__.set_bot(self.__updater__.bot)
         self.__get_me__()
-        print(self.__about_this_bot__())
         self.__restore_updates_into_queue__()
         self.__handle_saved_calls__()
 
@@ -110,9 +122,11 @@ class EasyBot:
             chat_id_filter = Filters.chat(list(filter(lambda x: isinstance(x, int), whitelist)))
             chat_username_filter = Filters.chat(list(filter(lambda x: isinstance(x, str), whitelist)))
             self.__filters__ = merge_filters_and(self.__filters__, chat_id_filter | chat_username_filter)
+            about = self.__about_this_bot__()
+            print(about)
             for u in whitelist:
                 if isinstance(u, int):
-                    self.__bot__.send_message(u, self.__about_this_bot__())
+                    self.__bot__.send_message(u, about)
 
     def __register_handlers__(self):
         self.__commands_list__ = []
@@ -140,23 +154,26 @@ class EasyBot:
         self.__username__ = me.username
         return me
 
-    def __typing__(self, update: Update):
-        self.__bot__.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING)
+    def __send_typing__(self, update: Update):
+        with self.__ctx_dump_pickle__():
+            self.__bot__.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING)
 
     def __send_text__(self, send_to, any_text: str, **kwargs):
-        if isinstance(send_to, Update):
-            def _send(sth):
-                send_to.message.reply_text(sth, **kwargs)
-        elif isinstance(send_to, (int, str)):
-            def _send(sth):
-                self.__bot__.send_message(send_to, sth, **kwargs)
-        else:
-            raise TypeError(send_to, (Update, int, str))
-        if len(any_text) > constants.MAX_MESSAGE_LENGTH:
-            for s in text.split_by_new_line_with_max_length(any_text, constants.MAX_MESSAGE_LENGTH):
-                _send(s)
-        else:
-            _send(any_text)
+        with self.__ctx_dump_pickle__():
+            if isinstance(send_to, Update):
+                def _send(sth):
+                    send_to.message.reply_text(sth, **kwargs)
+            elif isinstance(send_to, (int, str)):
+                def _send(sth):
+                    self.__bot__.send_message(send_to, sth, **kwargs)
+            else:
+                raise TypeError(send_to, (Update, int, str))
+
+            if len(any_text) > constants.MAX_MESSAGE_LENGTH:
+                for s in text.split_by_new_line_with_max_length(any_text, constants.MAX_MESSAGE_LENGTH):
+                    _send(s)
+            else:
+                _send(any_text)
 
     def __send_markdown__(self, send_to, md_text: str, **kwargs):
         self.__send_text__(send_to, md_text, parse_mode=ParseMode.MARKDOWN, **kwargs)
@@ -206,7 +223,7 @@ load:
     @deco_factory_bot_handler_method(CommandHandler, on_menu=True)
     def start(self, update: Update, context: CallbackContext):
         """let's roll out"""
-        self.__typing__(update)
+        self.__send_typing__(update)
         self.__get_me__()
         update.message.reply_text(self.__about_this_bot__())
         update.message.reply_text(self.__get_menu_str__())
@@ -214,7 +231,7 @@ load:
     @deco_factory_bot_handler_method(CommandHandler, on_menu=True)
     def menu(self, update: Update, context: CallbackContext):
         """list commands"""
-        self.__typing__(update)
+        self.__send_typing__(update)
         lines = []
         for n, v in self.__commands_list__:
             if n.startswith('_'):
@@ -257,6 +274,13 @@ save:
 in {t.duration:.3f}s
 '''.strip())
 
+    @contextlib.contextmanager
+    def __ctx_dump_pickle__(self):
+        try:
+            yield
+        finally:
+            self.__dump_pickle__()
+
     def __load_pickle__(self):
         if path_is_file(self.__pickle_copy_filepath__):
             shutil.copy(self.__pickle_copy_filepath__, self.__pickle_filepath__)
@@ -266,46 +290,53 @@ in {t.duration:.3f}s
     def __handle_saved_calls__(self):
         calls = self.__the_saved_calls__()
         while calls:  # don't remove set elements in for-loop, would raise RuntimeError
-            b = calls.pop()
-            args, kwargs = dill.loads(b)
-            if not self.__check_internal_call__(*args, **kwargs):
-                calls.add(b)
+            call_data = calls.pop()
+            chat_to = call_data.chat_to
+            print(f'+ {call_data.to_str(include_chat_to=True)}')
+            self.__send_code_block__(chat_to, f'+ {call_data.to_str()}')
+            if not self.__check_internal_call__(call_data):
+                calls.add(call_data)
+                self.__send_code_block__(chat_to, f'^ {call_data.to_str()}')
             self.__dump_pickle__()
 
-    def __do_internal_call_reply_failure__(self, reply_to, target, *args, **kwargs):
-        if not isinstance(target, str) and hasattr(target, '__name__'):
-            target = target.__name__
-        if not self.__check_internal_call__(target, *args, **kwargs):
-            self.__the_saved_calls__().add(dill.dumps(((target, *args), kwargs)))
+    def __do_internal_call_reply_failure__(self, call_data: EasyBotInternalCallData):
+        chat_to = call_data.chat_to
+        print(f'+ {call_data.to_str(include_chat_to=True)}')
+        self.__send_code_block__(chat_to, f'+ {call_data.to_str()}')
+        if not self.__check_internal_call__(call_data):
+            self.__the_saved_calls__().add(call_data)
             self.__dump_pickle__()
-            self.__send_code_block__(reply_to, f'+ target({ez_args_kwargs_str(args, kwargs)})')
 
-    def __check_internal_call__(self, target, *args, **kwargs) -> bool:
+    def __check_internal_call__(self, call_data: EasyBotInternalCallData) -> bool:
+        target = call_data.target
         if isinstance(target, str):
             target = getattr(self, target)
-        r = target(*args, **kwargs)
+        r = target(call_data)
         if not isinstance(r, EasyBotInternalCallResult):
-            raise TypeError(f'target return invalid', EasyBotInternalCallResult.__name__)
+            raise TypeError(f'return type of target is not', EasyBotInternalCallResult.__name__)
         return r.ok
 
     def __remove_finished_update__(self, update: Update):
         self.__the_saved_updates__().remove(update)
 
     @contextlib.contextmanager
-    def __ctx_save__(self):
+    def __ctx_save__(self, this_update=None):
+        if this_update:
+            self.__the_saved_updates__(add_updates=[this_update])
         self.__dump_pickle__()
         yield
         if self.__the_saved_calls__():
             self.__dump_pickle__()
             if not self.__update_queue_size__():
                 self.__handle_saved_calls__()
-        elif self.__update_queue_size__():
-            self.__dump_pickle__()
+        if this_update:
+            self.__the_saved_updates__(remove_updates=[this_update])
+        self.__dump_pickle__()
 
     def __update_queue_size__(self):
         return self.__updater__.dispatcher.update_queue.qsize()
 
-    def __the_saved_calls__(self, add=None, update=None, remove=None):
+    def __the_saved_calls__(self, add=None, update=None, remove=None) -> T.Set[EasyBotInternalCallData]:
         r = self.__bot_data__.setdefault(an.__string_saved_calls__, set())
         if add:
             r.add(add)
@@ -315,7 +346,12 @@ in {t.duration:.3f}s
             r.remove(remove)
         return r
 
-    def __the_saved_updates__(self, updates=None):
+    def __the_saved_updates__(self, updates=None, add_updates=None, remove_updates=None):
         if updates:
             self.__bot_data__[an.__string_saved_updates__] = set(updates)
-        return self.__bot_data__.setdefault(an.__string_saved_updates__, set())
+        updates = self.__bot_data__.setdefault(an.__string_saved_updates__, set())
+        if add_updates:
+            updates.update(add_updates)
+        if remove_updates:
+            updates.difference_update(remove_updates)
+        return updates

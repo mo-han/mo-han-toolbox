@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from mylib.ex.html import *
+from mylib.ext.html import *
 
 
 def get_cloudflare_ipaddr_hostmonit(key="o1zrmHAF"):

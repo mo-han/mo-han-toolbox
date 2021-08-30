@@ -2,7 +2,7 @@
 from PySide2.QtCore import QItemSelectionModel, QAbstractItemModel
 from PySide2.QtWidgets import QAbstractItemView, QScroller
 
-from mylib.ex.pyside2.signal import ez_qt_signal_connect
+from mylib.ext.pyside2.signal import ez_qt_signal_connect
 
 
 def ez_qt_view_left_mouse_gesture_scrolling(obj):

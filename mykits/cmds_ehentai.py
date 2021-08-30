@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from mylib.ex.console_app import *
+from mylib.ext.console_app import *
 from mylib.sites import ehentai
 
 apr = ArgumentParserRigger()
@@ -22,7 +22,7 @@ def main():
 @apr.map(an.cookies, 'from', 'to', an.proxy, an.verbose)
 def migrate_favorites(cookies, from_favorite, to_favorite, proxy, verbose):
     """move all favorites in one slot to another"""
-    from mylib.ex.splinter import Browser, http_headers, BrowserWrapper, make_proxy_settings
+    from mylib.ext.splinter import Browser, http_headers, BrowserWrapper, make_proxy_settings
 
     if from_favorite == to_favorite:
         raise ValueError('from same as to')
@@ -105,7 +105,7 @@ def hath_sort(src: PathSourceType, *, verbose=False, dry_run=False):
 @apr.map(an.address)
 def remote_control(remote_address: str):
     """remote control ehviewer app via adb"""
-    from mylib.ex.pure_python_adb import ADBClient
+    from mylib.ext.pure_python_adb import ADBClient
     from pynput.keyboard import Listener, KeyCode, Key
 
     client = ADBClient()

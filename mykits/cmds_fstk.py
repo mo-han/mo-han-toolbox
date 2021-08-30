@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import fnmatch
 
-from mylib.ex import fstk
-from mylib.ex.console_app import *
+from mylib.ext import fstk
+from mylib.ext.console_app import *
 from mylib.easy import logging
 
 _logger = logging.ez_get_logger(__name__)
