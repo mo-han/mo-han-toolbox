@@ -11,7 +11,7 @@ from humanize import naturaldelta, naturalsize
 from send2trash import send2trash
 
 from mylib.easy import logging
-from mylib.ex.console_app import *
+from mylib.ext.console_app import *
 from mylib.wrapper import cwebp
 
 PIXELS_BASELINE = 1280 * 1920

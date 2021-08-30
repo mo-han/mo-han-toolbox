@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import codecs
 
-from mylib.ex.console_app import *
+from mylib.ext.console_app import *
 
 apr = ArgumentParserRigger()
 

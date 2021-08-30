@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import datetime
 
-from mylib.ex import http_headers
+from mylib.ext import http_headers
 from mylib.easy import *
 
 BILIBILI_HOME_PAGE_URL = 'https://www.bilibili.com'

@@ -5,7 +5,7 @@ import os
 from time import time
 from zipfile import ZipFile, BadZipFile
 import shutil
-from mylib.ex.ostk import clipboard as cb
+from mylib.ext.ostk import clipboard as cb
 from mylib.easy import ez_thread_factory
 from mylib.__deprecated__ import list_files
 from queue import Queue

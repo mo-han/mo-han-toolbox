@@ -6,7 +6,7 @@ import youtube_dl.extractor.iwara as ytdl_iwara
 
 from mylib import easy
 from mylib.easy import text
-from mylib.ex import html
+from mylib.ext import html
 from mylib.web_client import get_html_element_tree
 
 HE = html.lxml_html.HtmlElement

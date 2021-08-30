@@ -3,11 +3,11 @@
 
 from send2trash import send2trash
 
-import mylib.ex.fstk
-import mylib.ex.ostk
+import mylib.ext.fstk
+import mylib.ext.ostk
 import mylib.easy
-from mylib.ex import fstk, tui
-from mylib.ex.ostk import clipboard
+from mylib.ext import fstk, tui
+from mylib.ext.ostk import clipboard
 from mylib.easy import *
 from mylib.easy import fstk as fstk
 from mylib.easy.text import ellipt_middle
@@ -17,7 +17,7 @@ tui_lp = tui.LinePrinter()
 
 def list_several_cloudflare_ipaddr(file, hostname, as_list, isp):
     from mylib.sites.misc import get_cloudflare_ipaddr_hostmonit
-    from mylib.ex.fstk import write_json_file
+    from mylib.ext.fstk import write_json_file
     from pprint import pformat
     data = get_cloudflare_ipaddr_hostmonit()
     info: dict = data['info']
@@ -42,9 +42,9 @@ def list_several_cloudflare_ipaddr(file, hostname, as_list, isp):
 
 
 def move_into_dir(src, dst, pattern, alias, dry_run, sub_dir):
-    from mylib.ex.ostk import fs_move_cli
+    from mylib.ext.ostk import fs_move_cli
     from mylib.easy.text import find_words
-    from mylib.ex.tui import prompt_choose_number, prompt_confirm
+    from mylib.ext.tui import prompt_choose_number, prompt_confirm
     conf_file = fstk.make_path('~', '.config', 'fs.put_in_dir.json', user_home=True)
     conf = fstk.read_json_file(conf_file) or {'dst_map': {}}
     dst_map = conf['dst_map']
@@ -90,7 +90,7 @@ def move_into_dir(src, dst, pattern, alias, dry_run, sub_dir):
         exit(1)
     os.makedirs(dst, exist_ok=True)
     db_path = fstk.make_path(dst, '__folder_name_words__.db')
-    db = mylib.ex.fstk.read_sqlite_dict_file(db_path)
+    db = mylib.ext.fstk.read_sqlite_dict_file(db_path)
     db = {k: v for k, v in db.items() if k in sub_dirs_l}
     sub_dirs_d = {sd_bn: set(find_words(sd_bn.lower())) for sd_bn in sub_dirs_l if sd_bn not in db}
     # sd_bn: sub-dir basename
@@ -139,7 +139,7 @@ def move_into_dir(src, dst, pattern, alias, dry_run, sub_dir):
             if not dry_run:
                 fs_move_cli(s, d)
             print(f'{s} -> {d}')
-    mylib.ex.fstk.write_sqlite_dict_file(db_path, sub_dirs_d, update_only=True)
+    mylib.ext.fstk.write_sqlite_dict_file(db_path, sub_dirs_d, update_only=True)
 
 
 def flat_dir(src, prefix, dry_run):

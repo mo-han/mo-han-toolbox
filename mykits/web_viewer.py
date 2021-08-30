@@ -1,6 +1,6 @@
 import webview.window
 
-from mylib.ex.console_app import *
+from mylib.ext.console_app import *
 
 screen_width, screen_height = ostk.get_screen_size_via_tkinter()
 

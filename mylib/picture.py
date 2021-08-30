@@ -11,9 +11,9 @@ from disjoint_set import DisjointSet
 from imagehash import average_hash, dhash, phash, whash, hex_to_hash
 
 from mylib.easy import *
-from mylib.ex import fstk
-from mylib.ex.ostk import check_file_ext
-from mylib.ex.tricks import percentage
+from mylib.ext import fstk
+from mylib.ext.ostk import check_file_ext
+from mylib.ext.tricks import percentage
 
 AHASH = 'ahash'
 DHASH = 'dhash'

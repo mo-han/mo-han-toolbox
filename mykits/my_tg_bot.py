@@ -6,8 +6,8 @@ from telegram.ext import MessageHandler
 from mylib.cli import new_argument_parser
 from mylib.easy.logging import ez_get_logger
 from mylib.easy.text import decode_fallback_locale
-from mylib.ex.fstk import read_json_file, write_json_file
-from mylib.ex.tricks import monitor_sub_process_tty_frozen, ProcessTTYFrozen
+from mylib.ext.fstk import read_json_file, write_json_file
+from mylib.ext.tricks import monitor_sub_process_tty_frozen, ProcessTTYFrozen
 from mylib.tg_bot import *
 
 mt = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(os.path.getmtime(os.path.realpath(__file__))))

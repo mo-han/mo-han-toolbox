@@ -10,8 +10,8 @@ from typing import Callable, Generator
 
 from mylib.easy import *
 from mylib.easy.shutil import DirectoryToFileError, NeitherFileNorDirectoryError, FileToDirectoryError
-from mylib.ex import fstk
-from mylib.ex.ostk import Clipboard
+from mylib.ext import fstk
+from mylib.ext.ostk import Clipboard
 
 
 def fs_find_iter(pattern: str or Callable = None, root: str = '.',

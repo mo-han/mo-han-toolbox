@@ -18,12 +18,12 @@ from mylib import web_client
 from mylib.__deprecated__ import concat_videos, merge_m4s
 from mylib._misc import safe_print, safe_basename
 from mylib.easy import python_module_from_source_code
-from mylib.ex import fstk
-from mylib.ex import http_headers
-from mylib.ex.ostk import ensure_sigint_signal
-from mylib.ex.text import regex_find, ellipt_end, ellipt_middle
-from mylib.ex.tricks import str2range, seq_call_return
-from mylib.ex.tui import LinePrinter
+from mylib.ext import fstk
+from mylib.ext import http_headers
+from mylib.ext.ostk import ensure_sigint_signal
+from mylib.ext.text import regex_find, ellipt_end, ellipt_middle
+from mylib.ext.tricks import str2range, seq_call_return
+from mylib.ext.tui import LinePrinter
 from mylib.sites.bilibili import api
 
 API_HEADERS_HANDLER: http_headers.HTTPHeadersBuilder = http_headers.HTTPHeadersBuilder().user_agent(

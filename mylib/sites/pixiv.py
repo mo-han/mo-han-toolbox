@@ -2,10 +2,10 @@
 # encoding=utf8
 
 import requests
-from mylib.ex.fstk import write_json_file, sanitize_xu
+from mylib.ext.fstk import write_json_file, sanitize_xu
 from mylib.easy import *
 from mylib.easy.logging import ez_get_logger
-from mylib.ex.tricks import AttributeInflection, Attreebute, width_of_int
+from mylib.ext.tricks import AttributeInflection, Attreebute, width_of_int
 from mylib.web_client import HTTPResponseInspection, parse_https_url, make_requests_kwargs, DownloadPool
 
 FANBOX_DOMAIN = 'fanbox.cc'

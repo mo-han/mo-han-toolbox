@@ -13,12 +13,12 @@ import lxml.html
 import requests.utils
 
 from mylib.easy.typing import JSONType
-from mylib.ex import fstk, ostk
+from mylib.ext import fstk, ostk
 from .easy import *
-from mylib.ex.http_headers import CURLCookieJar
+from mylib.ext.http_headers import CURLCookieJar
 from .easy.logging import ez_get_logger, LOG_FMT_MESSAGE_ONLY
 from .easy.io import SubscriptableFileIO
-from .ex.tricks import singleton, iter_factory_retry
+from .ext.tricks import singleton, iter_factory_retry
 from .easy import ez_thread_factory
 
 MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE = '# Netscape HTTP Cookie File'
@@ -36,7 +36,7 @@ def get_html_element_tree(url, **requests_kwargs) -> HTMLElementTree:
 
 
 def convert_cookies_json_to_netscape(json_data_or_filepath: JSONType or str, disable_filepath: bool = False) -> str:
-    from mylib.ex.fstk import read_json_file
+    from mylib.ext.fstk import read_json_file
     if not disable_filepath and os.path.isfile(json_data_or_filepath):
         json_data = read_json_file(json_data_or_filepath)
     else:
@@ -89,7 +89,7 @@ def ensure_json_cookies(json_data) -> list:
 
 
 def cookies_dict_from_json(json_data_or_filepath: JSONType or str, disable_filepath: bool = False) -> dict:
-    from mylib.ex.fstk import read_json_file
+    from mylib.ext.fstk import read_json_file
     if not disable_filepath and os.path.isfile(json_data_or_filepath):
         json_data = read_json_file(json_data_or_filepath)
     else:

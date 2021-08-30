@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from mylib.ex.console_app import *
-from mylib.ex import http_headers
+from mylib.ext.console_app import *
+from mylib.ext import http_headers
 
 WORK_DIR = '__BBDown__'
 

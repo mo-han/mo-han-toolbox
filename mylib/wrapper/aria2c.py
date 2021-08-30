@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from mylib.ex import http_headers
+from mylib.ext import http_headers
 from mylib.easy import *
 from mylib.easy import logging
 

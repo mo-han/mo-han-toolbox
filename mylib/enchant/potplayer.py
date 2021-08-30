@@ -6,7 +6,7 @@ import keyboard
 import mouse
 
 from mylib.easy import *
-from mylib.ex import ostk, fstk
+from mylib.ext import ostk, fstk
 from mylib.gui_old import rename_dialog
 from mylib.uia import module_pywinauto
 

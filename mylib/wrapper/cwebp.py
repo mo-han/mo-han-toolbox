@@ -3,7 +3,7 @@ import enum
 import math
 from functools import partial
 
-from mylib.ex.PIL import open_bytes_as_image, save_image_to_bytes, enable_load_truncated_image, Image
+from mylib.ext.PIL import open_bytes_as_image, save_image_to_bytes, enable_load_truncated_image, Image
 from mylib.easy import *
 from mylib.easy import logging
 

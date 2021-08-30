@@ -6,7 +6,7 @@ from PySide2.QtGui import QStandardItemModel
 from PySide2.QtWidgets import QApplication
 
 from mylib.easy import FirstCountLastStop, T
-from mylib.ex.pyside2.signal import ez_qt_signal_connect
+from mylib.ext.pyside2.signal import ez_qt_signal_connect
 
 
 class EzQtInternalItemsListModelExample(QAbstractListModel):

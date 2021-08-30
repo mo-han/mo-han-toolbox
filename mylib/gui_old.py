@@ -5,12 +5,12 @@ import re
 import shutil
 from collections import defaultdict
 
-from .ex.tricks import deco_factory_retry, singleton, remove_from_list
+from .ext.tricks import deco_factory_retry, singleton, remove_from_list
 from .easy import dedup_list
 from mylib.easy.ostk import ensure_sigint_signal
 from .__deprecated__ import real_join_path
-from mylib.ex.fstk import read_json_file, write_json_file
-from mylib.ex.text import encode_default_locale
+from mylib.ext.fstk import read_json_file, write_json_file
+from mylib.ext.text import encode_default_locale
 
 
 @singleton

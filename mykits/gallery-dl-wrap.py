@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import webbrowser
 
-from mylib.ex.console_app import *
+from mylib.ext.console_app import *
 
 # if os.name != 'nt':
 #     raise NotImplementedError('launch new console window')
