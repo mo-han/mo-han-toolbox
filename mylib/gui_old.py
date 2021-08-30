@@ -72,8 +72,11 @@ def rename_dialog(src: str):
     tmp_rl = conf[replace] or ['']
     old_root, old_base = os.path.split(src)
     old_fn, old_ext = os.path.splitext(old_base)
-    info_file_base = [f for f in os.listdir(old_root) if
-                      f.endswith('.info') and (f.startswith(old_fn) or old_fn.startswith(f.rstrip('.info')))]
+    for suffix in ('.info', '.description'):
+        info_file_base = [f for f in os.listdir(old_root) if
+                          f.endswith(suffix) and (f.startswith(old_fn) or old_fn.startswith(f.rstrip(suffix)))]
+        if info_file_base:
+            break
     has_info = True if info_file_base else False
 
     @deco_factory_retry(Exception, 0, enable_default=True, default=None)
