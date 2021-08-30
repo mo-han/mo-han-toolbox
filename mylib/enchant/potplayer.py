@@ -22,7 +22,7 @@ class PotPlayerKit:
         # import warnings
         # warnings.simplefilter('ignore', category=UserWarning)
         self.gasp_time = gasp_time
-        self._window = App().connect(handle=self.list[0].handle).window()
+        self._window = App().connect(handle=self.list[0].handle).window(found_index=0)
         self._cache = {'fileinfo': {}}
 
     def select(self, element: HwndElementInfo):
@@ -50,8 +50,8 @@ class PotPlayerKit:
             try:
                 self.current.set_focus()
                 break
-            except pywinauto.findwindows.ElementAmbiguousError:
-                print('! ambiguous potplayer window , check it')
+            except pywinauto.findwindows.ElementAmbiguousError as e:
+                print('!', e)
                 self.gasp(1)
         mouse.move(*old_coord)
         self.gasp()
