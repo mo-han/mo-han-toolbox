@@ -163,3 +163,9 @@ class EzColor:
             return name
         else:
             return super().__getattribute__(name)[self._index]
+
+
+def test_this():
+    print(EzColor().LimeGreen)
+    print(EzColor(use_hex=True).LimeGreen)
+    print(EzColor(use_rgb=True).LimeGreen)
