@@ -7,7 +7,6 @@ import queue as queue
 import re as re
 import subprocess as subprocess
 import sys as sys
-import threading as threading
 import time as time
 
 from . import typing as typing
@@ -36,13 +35,6 @@ path_absolute = os.path.abspath
 path_real = os.path.realpath
 path_relative = os.path.relpath
 path_normalize = os.path.normpath
-path_get_size = os.path.getsize
+path_size = os.path.getsize
 path_ctime = os.path.getctime
 path_mtime = os.path.getmtime
-
-
-def ez_thread_factory(group=None, name=None, daemon=None):
-    def new_thread(target: T.Callable, *args, **kwargs):
-        return threading.Thread(group=group, target=target, name=name, args=args, kwargs=kwargs, daemon=daemon)
-
-    return new_thread

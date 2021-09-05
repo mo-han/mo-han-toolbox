@@ -191,14 +191,14 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
                 continue
 
         try:
-            old_size = path_get_size(fp)
+            old_size = path_size(fp)
             auto_cvt(unzip_dir, recursive=True, clean=True, cbz=False, workers=workers, verbose=verbose)
             fstk.touch(path_join(unzip_dir, flag_filename_of_webp_converted))
             new_zip = shutil.make_archive(unzip_dir, 'zip', unzip_dir, verbose=verbose)
             if ext_name:
                 new_zip = fstk.rename_file_ext(new_zip, ext_name)
                 fp = fstk.rename_file_ext(fp, ext_name)
-            new_size = path_get_size(new_zip)
+            new_size = path_size(new_zip)
             fstk.move_as(new_zip, fp)
             lgr.info(fp)
             lgr.info(f'{new_size / old_size:.1%} ({naturalsize(new_size, True)} / {naturalsize(old_size, True)})')

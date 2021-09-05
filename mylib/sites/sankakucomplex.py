@@ -4,7 +4,7 @@ import hashlib
 
 
 def file_is_bad(file):
-    size = path_get_size(file)
+    size = path_size(file)
     if not size:
         return True
     if size in (14802, 8508) and hashlib.md5(open(file, 'rb').read()).hexdigest() in (
