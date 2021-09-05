@@ -216,7 +216,7 @@ on device:
 {ostk.USERNAME} @ {ostk.HOSTNAME} ({ostk.OSNAME})
 
 load:
-{len(self.__the_saved_tasks__())} calls
+{len(self.__the_saved_tasks__())} tasks
 {len(self.__the_saved_updates__())} updates
 '''.strip()
 
@@ -271,7 +271,7 @@ qsize={update_queue.qsize()}
             self.__dump_pickle_lock.release()
         print(f'''
 save:
-{len(self.__the_saved_tasks__())} calls
+{len(self.__the_saved_tasks__())} tasks
 {len(self.__the_saved_updates__())} updates
 in {t.duration:.3f}s
 '''.strip())
