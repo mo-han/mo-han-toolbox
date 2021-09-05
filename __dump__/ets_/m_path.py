@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 # encoding=utf8
-import pathlib
 
 from .i1_traits import *
-from mylib.shards.path_check import is_path_valid
+from mylib.easy.extra.path_checker import is_path_valid
 
 
 class PathSynthesizer:
