@@ -368,9 +368,9 @@ in {t.duration:.3f}s
 
     def __save_tasks__(self, tasks: T.Iterable[EasyBotTaskData], chat_to=None):
         self.__the_saved_tasks__(add=tasks)
-        print('\n'.join([f'^ {task.m_str()}' for task in tasks]))
+        print('\n'.join([f'& {task.m_str()}' for task in tasks]))
         if chat_to:
-            msg = '\n'.join([f'^ {task.m_str(include_chat_to=True)}' for task in tasks])
+            msg = '\n'.join([f'& {task.m_str(include_chat_to=True)}' for task in tasks])
             try:
                 self.__send_code_block__(chat_to, msg)
             except Exception as e:
