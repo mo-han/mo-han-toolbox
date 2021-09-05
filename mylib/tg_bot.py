@@ -73,16 +73,34 @@ class EasyBotTaskResult(EzAttrData):
 
 
 class EasyBotTaskData(EzAttrData):
-    target: str
-    chat_to: int
+    target: str = None
+    chat_to: int = None
     args: tuple = ()
     kwargs: dict = {}
 
     def m_str(self, *, include_chat_to=False):
         s = f'{self.target}: {ez_args_kwargs_str(self.args, self.kwargs)}'
-        if include_chat_to and hasattr(self, 'chat_to'):
+        if include_chat_to and self.chat_to:
             s += f' ; chat_to: {self.chat_to}'
         return s
+
+    def __hash__(self):
+        return hash((self.target, self.chat_to, self.args, dill.dumps(self.kwargs)))
+
+    def __eq__(self, other):
+        if isinstance(other, EasyBotTaskData):
+            names = ('target', 'args', 'kwargs', 'chat_to')
+            for n in names:
+                if getattr(self, n) != getattr(other, n):
+                    return False
+            return True
+        else:
+            return False
+
+
+x = EasyBotTaskData()
+y = EasyBotTaskData(target='hi')
+z = EasyBotTaskData(kwargs=dict(a=1, b=2))
 
 
 class EasyBot(logging.EzLoggingMixin):
@@ -280,11 +298,11 @@ in {t.duration:.3f}s
         p = PicklePersistence(self.__pickle_filepath__)
         return p
 
-    def __check_run_task__(self, call_data: EasyBotTaskData) -> bool:
-        target = call_data.target
+    def __check_run_task__(self, task: EasyBotTaskData) -> bool:
+        target = task.target
         if isinstance(target, str):
             target = getattr(self, target)
-        r = target(call_data)
+        r = target(task)
         if not isinstance(r, EasyBotTaskResult):
             raise TypeError(f'return type of target is not', EasyBotTaskResult.__name__)
         return r.ok
