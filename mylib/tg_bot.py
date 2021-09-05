@@ -85,7 +85,7 @@ class EasyBotTaskData(EzAttrData):
         return s
 
     def __hash__(self):
-        return hash((self.target, self.chat_to, self.args, dill.dumps(self.kwargs)))
+        return hash((self.target, self.chat_to, tuple(self.args), dill.dumps(self.kwargs)))
 
     def __eq__(self, other):
         if isinstance(other, EasyBotTaskData):
