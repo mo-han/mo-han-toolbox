@@ -15,13 +15,14 @@ from telegram.ext.filters import MergedFilter
 from mylib.easy import ostk, text
 from .easy import *
 from .easy import python_module_from_source_code
+from mylib.easy import logging
 
 telegram.ext.picklepersistence.pickle.dump = dill.dump
 telegram.ext.picklepersistence.pickle.load = dill.load
 PicklePersistence = telegram.ext.picklepersistence.PicklePersistence
 
 an = AttrName()
-an.__string_saved_updates__ = an.__string_saved_calls__ = ''
+an.__string_saved_updates__ = an.__string_saved_tasks__ = ''
 
 
 class BotPlaceholder(metaclass=SingletonMetaClass):
@@ -67,11 +68,11 @@ def merge_filters_or(*filters):
     return reduce(lambda x, y: MergedFilter(x, or_filter=y), filters)
 
 
-class EasyBotInternalCallResult(EzAttrData):
+class EasyBotTaskResult(EzAttrData):
     ok: bool
 
 
-class EasyBotInternalCallData(EzAttrData):
+class EasyBotTaskData(EzAttrData):
     target: str
     chat_to: int
     args: tuple = ()
@@ -84,7 +85,7 @@ class EasyBotInternalCallData(EzAttrData):
         return s
 
 
-class EasyBot:
+class EasyBot(logging.EzLoggingMixin):
     def __init__(self, token, *,
                  timeout=None, whitelist=None, filters=None,
                  dat_fp='telegram_bot.dat',
@@ -104,14 +105,16 @@ class EasyBot:
         self.__pickle__.set_bot(self.__updater__.bot)
         self.__get_me__()
         self.__restore_updates_into_queue__()
-        self.__handle_saved_calls__()
 
         self.__register_whitelist__(whitelist)
         self.__register_handlers__()
+        self.__start_task_loop__()
         if auto_run:
             self.__run__(poll_timeout=timeout)
 
         self.__enable_dump_pickle__ = True
+
+        self.__dump_pickle_lock = threading.Lock()
 
     @property
     def __bot__(self) -> Bot:
@@ -191,9 +194,6 @@ class EasyBot:
         print(tb)
         self.__send_code_block__(send_to, f'{tb}')
 
-    def __task_loop__(self):
-        ...
-
     def __run__(self, poll_timeout=None):
         poll_param = {}
         if poll_timeout is not None:
@@ -216,7 +216,7 @@ on device:
 {ostk.USERNAME} @ {ostk.HOSTNAME} ({ostk.OSNAME})
 
 load:
-{len(self.__the_saved_calls__())} calls
+{len(self.__the_saved_tasks__())} calls
 {len(self.__the_saved_updates__())} updates
 '''.strip()
 
@@ -263,13 +263,15 @@ qsize={update_queue.qsize()}
     def __dump_pickle__(self):
         with Timer() as t:
             self.__the_saved_updates__(self.__updater__.dispatcher.update_queue.queue)
+            self.__dump_pickle_lock.acquire()
             self.__pickle__.update_bot_data(self.__bot_data__)
             self.__pickle__.flush()
             if path_is_file(self.__pickle_filepath__):
                 shutil.copy(self.__pickle_filepath__, self.__pickle_copy_filepath__)
+            self.__dump_pickle_lock.release()
         print(f'''
 save:
-{len(self.__the_saved_calls__())} calls
+{len(self.__the_saved_tasks__())} calls
 {len(self.__the_saved_updates__())} updates
 in {t.duration:.3f}s
 '''.strip())
@@ -287,33 +289,21 @@ in {t.duration:.3f}s
         p = PicklePersistence(self.__pickle_filepath__)
         return p
 
-    def __handle_saved_calls__(self):
-        calls = self.__the_saved_calls__()
-        while calls:  # don't remove set elements in for-loop, would raise RuntimeError
-            call_data = calls.pop()
-            chat_to = call_data.chat_to
-            print(f'+ {call_data.to_str(include_chat_to=True)}')
-            self.__send_code_block__(chat_to, f'+ {call_data.to_str()}')
-            if not self.__check_internal_call__(call_data):
-                calls.add(call_data)
-                self.__send_code_block__(chat_to, f'^ {call_data.to_str()}')
+    def __run_task__(self, task_data: EasyBotTaskData):
+        chat_to = task_data.chat_to
+        print(f'+ {task_data.to_str(include_chat_to=True)}')
+        self.__send_code_block__(chat_to, f'+ {task_data.to_str()}')
+        if not self.__check_run_task__(task_data):
+            self.__the_saved_tasks__().add(task_data)
             self.__dump_pickle__()
 
-    def __do_internal_call_reply_failure__(self, call_data: EasyBotInternalCallData):
-        chat_to = call_data.chat_to
-        print(f'+ {call_data.to_str(include_chat_to=True)}')
-        self.__send_code_block__(chat_to, f'+ {call_data.to_str()}')
-        if not self.__check_internal_call__(call_data):
-            self.__the_saved_calls__().add(call_data)
-            self.__dump_pickle__()
-
-    def __check_internal_call__(self, call_data: EasyBotInternalCallData) -> bool:
+    def __check_run_task__(self, call_data: EasyBotTaskData) -> bool:
         target = call_data.target
         if isinstance(target, str):
             target = getattr(self, target)
         r = target(call_data)
-        if not isinstance(r, EasyBotInternalCallResult):
-            raise TypeError(f'return type of target is not', EasyBotInternalCallResult.__name__)
+        if not isinstance(r, EasyBotTaskResult):
+            raise TypeError(f'return type of target is not', EasyBotTaskResult.__name__)
         return r.ok
 
     def __remove_finished_update__(self, update: Update):
@@ -325,10 +315,6 @@ in {t.duration:.3f}s
             self.__the_saved_updates__(add_updates=[this_update])
         self.__dump_pickle__()
         yield
-        if self.__the_saved_calls__():
-            self.__dump_pickle__()
-            if not self.__update_queue_size__():
-                self.__handle_saved_calls__()
         if this_update:
             self.__the_saved_updates__(remove_updates=[this_update])
         self.__dump_pickle__()
@@ -336,15 +322,15 @@ in {t.duration:.3f}s
     def __update_queue_size__(self):
         return self.__updater__.dispatcher.update_queue.qsize()
 
-    def __the_saved_calls__(self, add=None, update=None, remove=None) -> T.Set[EasyBotInternalCallData]:
-        r = self.__bot_data__.setdefault(an.__string_saved_calls__, set())
+    def __the_saved_tasks__(self, add=None, update=None, remove=None) -> T.Set[EasyBotTaskData]:
+        tasks = self.__bot_data__.setdefault(an.__string_saved_tasks__, set())
         if add:
-            r.add(add)
+            tasks.add(add)
         if update:
-            r.update(update)
+            tasks.update(update)
         if remove:
-            r.remove(remove)
-        return r
+            tasks.remove(remove)
+        return tasks
 
     def __the_saved_updates__(self, updates=None, add_updates=None, remove_updates=None):
         if updates:
@@ -355,3 +341,28 @@ in {t.duration:.3f}s
         if remove_updates:
             updates.difference_update(remove_updates)
         return updates
+
+    def __task_loop__(self):
+        tasks = self.__the_saved_tasks__()
+        while True:
+            try:
+                if not tasks:
+                    sleep(1)
+                    continue
+                task = tasks.pop()
+                chat_to = task.chat_to
+                print(f'+ {task.to_str(include_chat_to=True)}')
+                self.__send_code_block__(chat_to, f'+ {task.to_str()}')
+                if not self.__check_run_task__(task):
+                    tasks.add(task)
+                    print(f'& {task.to_str(include_chat_to=True)}')
+                    self.__send_code_block__(chat_to, f'& {task.to_str()}')
+                self.__dump_pickle__()
+            except Exception as e:
+                if isinstance(e, KeyboardInterrupt):
+                    raise e
+                msg = traceback.format_exc()
+                self.__logger__.error(msg)
+
+    def __start_task_loop__(self):
+        ez_thread_factory(daemon=True)(self.__task_loop__).start()
