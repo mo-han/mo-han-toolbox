@@ -98,11 +98,6 @@ class EasyBotTaskData(EzAttrData):
             return False
 
 
-x = EasyBotTaskData()
-y = EasyBotTaskData(target='hi')
-z = EasyBotTaskData(kwargs=dict(a=1, b=2))
-
-
 class EasyBot(logging.EzLoggingMixin):
     def __init__(self, token, *,
                  timeout=None, whitelist=None, filters=None,
@@ -352,11 +347,11 @@ in {t.duration:.3f}s
                     continue
                 task = tasks.pop()
                 chat_to = task.chat_to
-                print(f'+ {task.m_str(include_chat_to=True)}')
+                print(f'+ {task.m_str()}')
                 self.__send_code_block__(chat_to, f'+ {task.m_str()}')
                 if not self.__check_run_task__(task):
                     tasks.add(task)
-                    print(f'& {task.m_str(include_chat_to=True)}')
+                    print(f'& {task.m_str()}')
                     self.__send_code_block__(chat_to, f'& {task.m_str()}')
                 self.__dump_pickle__()
             except Exception as e:
@@ -371,7 +366,7 @@ in {t.duration:.3f}s
         self.__the_saved_tasks__(add=tasks)
         print('\n'.join([f'& {task.m_str()}' for task in tasks]))
         if chat_to:
-            msg = '\n'.join([f'& {task.m_str(include_chat_to=True)}' for task in tasks])
+            msg = '\n'.join([f'& {task.m_str()}' for task in tasks])
             try:
                 self.__send_code_block__(chat_to, msg)
             except Exception as e:
