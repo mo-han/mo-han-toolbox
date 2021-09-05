@@ -75,7 +75,7 @@ class MyAssistantBot(EasyBot):
             args_ll = [line2args(line) for line in update.message.text.splitlines()]
             tasks = [EasyBotTaskData(target=self._ytdl_internal.__name__, args=args_l, chat_to=chat_id)
                      for args_l in args_ll]
-            self.__save_tasks__(tasks)
+            self.__save_tasks__(tasks, chat_id)
 
     def _ytdl_internal(self, call_data: EasyBotTaskData):
         args = call_data.args
@@ -110,7 +110,7 @@ class MyAssistantBot(EasyBot):
             args_ll = [line2args(line) for line in update.message.text.splitlines()]
             tasks = [EasyBotTaskData(target=self._bldl_internal.__name__, args=args_l, chat_to=chat_id)
                      for args_l in args_ll]
-            self.__save_tasks__(tasks)
+            self.__save_tasks__(tasks, chat_id)
 
     def _bldl_internal(self, call_data: EasyBotTaskData):
         args = call_data.args
