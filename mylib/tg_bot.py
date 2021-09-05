@@ -12,10 +12,10 @@ from telegram import ChatAction, Bot, Update, ParseMode, constants, Message
 from telegram.ext import Updater, Filters, CallbackContext
 from telegram.ext.filters import MergedFilter
 
+from mylib.easy import logging
 from mylib.easy import ostk, text
 from .easy import *
 from .easy import python_module_from_source_code
-from mylib.easy import logging
 
 telegram.ext.picklepersistence.pickle.dump = dill.dump
 telegram.ext.picklepersistence.pickle.load = dill.load
@@ -78,9 +78,9 @@ class EasyBotTaskData(EzAttrData):
     args: tuple = ()
     kwargs: dict = {}
 
-    def to_str(self, *, include_chat_to=False):
+    def m_str(self, *, include_chat_to=False):
         s = f'{self.target}: {ez_args_kwargs_str(self.args, self.kwargs)}'
-        if include_chat_to:
+        if include_chat_to and hasattr(self, 'chat_to'):
             s += f' ; chat_to: {self.chat_to}'
         return s
 
@@ -291,8 +291,8 @@ in {t.duration:.3f}s
 
     def __run_task__(self, task_data: EasyBotTaskData):
         chat_to = task_data.chat_to
-        print(f'+ {task_data.to_str(include_chat_to=True)}')
-        self.__send_code_block__(chat_to, f'+ {task_data.to_str()}')
+        print(f'+ {task_data.m_str(include_chat_to=True)}')
+        self.__send_code_block__(chat_to, f'+ {task_data.m_str()}')
         if not self.__check_run_task__(task_data):
             self.__the_saved_tasks__().add(task_data)
             self.__dump_pickle__()
@@ -322,14 +322,14 @@ in {t.duration:.3f}s
     def __update_queue_size__(self):
         return self.__updater__.dispatcher.update_queue.qsize()
 
-    def __the_saved_tasks__(self, add=None, update=None, remove=None) -> T.Set[EasyBotTaskData]:
+    def __the_saved_tasks__(self, add1=None, add=None, remove1=None) -> T.Set[EasyBotTaskData]:
         tasks = self.__bot_data__.setdefault(an.__string_saved_tasks__, set())
+        if add1:
+            tasks.add(add1)
         if add:
-            tasks.add(add)
-        if update:
-            tasks.update(update)
-        if remove:
-            tasks.remove(remove)
+            tasks.update(add)
+        if remove1:
+            tasks.remove(remove1)
         return tasks
 
     def __the_saved_updates__(self, updates=None, add_updates=None, remove_updates=None):
@@ -351,18 +351,29 @@ in {t.duration:.3f}s
                     continue
                 task = tasks.pop()
                 chat_to = task.chat_to
-                print(f'+ {task.to_str(include_chat_to=True)}')
-                self.__send_code_block__(chat_to, f'+ {task.to_str()}')
+                print(f'+ {task.m_str(include_chat_to=True)}')
+                self.__send_code_block__(chat_to, f'+ {task.m_str()}')
                 if not self.__check_run_task__(task):
                     tasks.add(task)
-                    print(f'& {task.to_str(include_chat_to=True)}')
-                    self.__send_code_block__(chat_to, f'& {task.to_str()}')
+                    print(f'& {task.m_str(include_chat_to=True)}')
+                    self.__send_code_block__(chat_to, f'& {task.m_str()}')
                 self.__dump_pickle__()
             except Exception as e:
                 if isinstance(e, KeyboardInterrupt):
                     raise e
-                msg = traceback.format_exc()
-                self.__logger__.error(msg)
+                self.__logger__.error(traceback.format_exc())
 
     def __start_task_loop__(self):
         ez_thread_factory(daemon=True)(self.__task_loop__).start()
+
+    def __save_tasks__(self, tasks: T.Iterable[EasyBotTaskData], chat_to=None):
+        self.__the_saved_tasks__(add=tasks)
+        print('\n'.join([f'^ {task.m_str()}' for task in tasks]))
+        if chat_to:
+            msg = '\n'.join([f'^ {task.m_str(include_chat_to=True)}' for task in tasks])
+            try:
+                self.__send_code_block__(chat_to, msg)
+            except Exception as e:
+                if isinstance(e, KeyboardInterrupt):
+                    raise e
+                self.__logger__.error(traceback.format_exc())
