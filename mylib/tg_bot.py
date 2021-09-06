@@ -12,6 +12,7 @@ from telegram import ChatAction, Bot, Update, ParseMode, constants, Message
 from telegram.ext import Updater, Filters, CallbackContext
 from telegram.ext.filters import MergedFilter
 
+from mylib.easy import logging
 from mylib.easy import ostk, text
 from .easy import *
 from .easy import python_module_from_source_code
@@ -21,7 +22,7 @@ telegram.ext.picklepersistence.pickle.load = dill.load
 PicklePersistence = telegram.ext.picklepersistence.PicklePersistence
 
 an = AttrName()
-an.__string_saved_updates__ = an.__string_saved_calls__ = ''
+an.__string_saved_updates__ = an.__string_saved_tasks__ = ''
 
 
 class BotPlaceholder(metaclass=SingletonMetaClass):
@@ -67,24 +68,37 @@ def merge_filters_or(*filters):
     return reduce(lambda x, y: MergedFilter(x, or_filter=y), filters)
 
 
-class EasyBotInternalCallResult(EzAttrData):
+class EasyBotTaskResult(EzAttrData):
     ok: bool
 
 
-class EasyBotInternalCallData(EzAttrData):
-    target: str
-    chat_to: int
+class EasyBotTaskData(EzAttrData):
+    target: str = None
+    chat_to: int = None
     args: tuple = ()
     kwargs: dict = {}
 
-    def to_str(self, *, include_chat_to=False):
+    def m_str(self, *, include_chat_to=False):
         s = f'{self.target}: {ez_args_kwargs_str(self.args, self.kwargs)}'
-        if include_chat_to:
+        if include_chat_to and self.chat_to:
             s += f' ; chat_to: {self.chat_to}'
         return s
 
+    def __hash__(self):
+        return hash((self.target, self.chat_to, tuple(self.args), dill.dumps(self.kwargs)))
 
-class EasyBot:
+    def __eq__(self, other):
+        if isinstance(other, EasyBotTaskData):
+            names = ('target', 'args', 'kwargs', 'chat_to')
+            for n in names:
+                if getattr(self, n) != getattr(other, n):
+                    return False
+            return True
+        else:
+            return False
+
+
+class EasyBot(logging.EzLoggingMixin):
     def __init__(self, token, *,
                  timeout=None, whitelist=None, filters=None,
                  dat_fp='telegram_bot.dat',
@@ -104,14 +118,16 @@ class EasyBot:
         self.__pickle__.set_bot(self.__updater__.bot)
         self.__get_me__()
         self.__restore_updates_into_queue__()
-        self.__handle_saved_calls__()
 
         self.__register_whitelist__(whitelist)
         self.__register_handlers__()
+        self.__start_task_loop__()
         if auto_run:
             self.__run__(poll_timeout=timeout)
 
         self.__enable_dump_pickle__ = True
+
+        self.__dump_pickle_lock = threading.Lock()
 
     @property
     def __bot__(self) -> Bot:
@@ -155,25 +171,23 @@ class EasyBot:
         return me
 
     def __send_typing__(self, update: Update):
-        with self.__ctx_dump_pickle__():
-            self.__bot__.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING)
+        self.__bot__.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING)
 
     def __send_text__(self, send_to, any_text: str, **kwargs):
-        with self.__ctx_dump_pickle__():
-            if isinstance(send_to, Update):
-                def _send(sth):
-                    send_to.message.reply_text(sth, **kwargs)
-            elif isinstance(send_to, (int, str)):
-                def _send(sth):
-                    self.__bot__.send_message(send_to, sth, **kwargs)
-            else:
-                raise TypeError(send_to, (Update, int, str))
+        if isinstance(send_to, Update):
+            def _send(sth):
+                send_to.message.reply_text(sth, **kwargs)
+        elif isinstance(send_to, (int, str)):
+            def _send(sth):
+                self.__bot__.send_message(send_to, sth, **kwargs)
+        else:
+            raise TypeError(send_to, (Update, int, str))
 
-            if len(any_text) > constants.MAX_MESSAGE_LENGTH:
-                for s in text.split_by_new_line_with_max_length(any_text, constants.MAX_MESSAGE_LENGTH):
-                    _send(s)
-            else:
-                _send(any_text)
+        if len(any_text) > constants.MAX_MESSAGE_LENGTH:
+            for s in text.split_by_new_line_with_max_length(any_text, constants.MAX_MESSAGE_LENGTH):
+                _send(s)
+        else:
+            _send(any_text)
 
     def __send_markdown__(self, send_to, md_text: str, **kwargs):
         self.__send_text__(send_to, md_text, parse_mode=ParseMode.MARKDOWN, **kwargs)
@@ -190,9 +204,6 @@ class EasyBot:
         tb = traceback.format_exc()
         print(tb)
         self.__send_code_block__(send_to, f'{tb}')
-
-    def __task_loop__(self):
-        ...
 
     def __run__(self, poll_timeout=None):
         poll_param = {}
@@ -216,7 +227,7 @@ on device:
 {ostk.USERNAME} @ {ostk.HOSTNAME} ({ostk.OSNAME})
 
 load:
-{len(self.__the_saved_calls__())} calls
+{len(self.__the_saved_tasks__())} tasks
 {len(self.__the_saved_updates__())} updates
 '''.strip()
 
@@ -263,23 +274,18 @@ qsize={update_queue.qsize()}
     def __dump_pickle__(self):
         with Timer() as t:
             self.__the_saved_updates__(self.__updater__.dispatcher.update_queue.queue)
+            self.__dump_pickle_lock.acquire()
             self.__pickle__.update_bot_data(self.__bot_data__)
             self.__pickle__.flush()
             if path_is_file(self.__pickle_filepath__):
                 shutil.copy(self.__pickle_filepath__, self.__pickle_copy_filepath__)
+            self.__dump_pickle_lock.release()
         print(f'''
 save:
-{len(self.__the_saved_calls__())} calls
+{len(self.__the_saved_tasks__())} tasks
 {len(self.__the_saved_updates__())} updates
 in {t.duration:.3f}s
 '''.strip())
-
-    @contextlib.contextmanager
-    def __ctx_dump_pickle__(self):
-        try:
-            yield
-        finally:
-            self.__dump_pickle__()
 
     def __load_pickle__(self):
         if path_is_file(self.__pickle_copy_filepath__):
@@ -287,33 +293,13 @@ in {t.duration:.3f}s
         p = PicklePersistence(self.__pickle_filepath__)
         return p
 
-    def __handle_saved_calls__(self):
-        calls = self.__the_saved_calls__()
-        while calls:  # don't remove set elements in for-loop, would raise RuntimeError
-            call_data = calls.pop()
-            chat_to = call_data.chat_to
-            print(f'+ {call_data.to_str(include_chat_to=True)}')
-            self.__send_code_block__(chat_to, f'+ {call_data.to_str()}')
-            if not self.__check_internal_call__(call_data):
-                calls.add(call_data)
-                self.__send_code_block__(chat_to, f'^ {call_data.to_str()}')
-            self.__dump_pickle__()
-
-    def __do_internal_call_reply_failure__(self, call_data: EasyBotInternalCallData):
-        chat_to = call_data.chat_to
-        print(f'+ {call_data.to_str(include_chat_to=True)}')
-        self.__send_code_block__(chat_to, f'+ {call_data.to_str()}')
-        if not self.__check_internal_call__(call_data):
-            self.__the_saved_calls__().add(call_data)
-            self.__dump_pickle__()
-
-    def __check_internal_call__(self, call_data: EasyBotInternalCallData) -> bool:
-        target = call_data.target
+    def __check_run_task__(self, task: EasyBotTaskData) -> bool:
+        target = task.target
         if isinstance(target, str):
             target = getattr(self, target)
-        r = target(call_data)
-        if not isinstance(r, EasyBotInternalCallResult):
-            raise TypeError(f'return type of target is not', EasyBotInternalCallResult.__name__)
+        r = target(task)
+        if not isinstance(r, EasyBotTaskResult):
+            raise TypeError(f'return type of target is not', EasyBotTaskResult.__name__)
         return r.ok
 
     def __remove_finished_update__(self, update: Update):
@@ -325,10 +311,6 @@ in {t.duration:.3f}s
             self.__the_saved_updates__(add_updates=[this_update])
         self.__dump_pickle__()
         yield
-        if self.__the_saved_calls__():
-            self.__dump_pickle__()
-            if not self.__update_queue_size__():
-                self.__handle_saved_calls__()
         if this_update:
             self.__the_saved_updates__(remove_updates=[this_update])
         self.__dump_pickle__()
@@ -336,15 +318,15 @@ in {t.duration:.3f}s
     def __update_queue_size__(self):
         return self.__updater__.dispatcher.update_queue.qsize()
 
-    def __the_saved_calls__(self, add=None, update=None, remove=None) -> T.Set[EasyBotInternalCallData]:
-        r = self.__bot_data__.setdefault(an.__string_saved_calls__, set())
+    def __the_saved_tasks__(self, add1=None, add=None, remove1=None) -> T.Set[EasyBotTaskData]:
+        tasks = self.__bot_data__.setdefault(an.__string_saved_tasks__, set())
+        if add1:
+            tasks.add(add1)
         if add:
-            r.add(add)
-        if update:
-            r.update(update)
-        if remove:
-            r.remove(remove)
-        return r
+            tasks.update(add)
+        if remove1:
+            tasks.remove(remove1)
+        return tasks
 
     def __the_saved_updates__(self, updates=None, add_updates=None, remove_updates=None):
         if updates:
@@ -355,3 +337,39 @@ in {t.duration:.3f}s
         if remove_updates:
             updates.difference_update(remove_updates)
         return updates
+
+    def __task_loop__(self):
+        tasks = self.__the_saved_tasks__()
+        while True:
+            try:
+                if not tasks:
+                    sleep(1)
+                    continue
+                task = tasks.pop()
+                chat_to = task.chat_to
+                print(f'+ {task.m_str()}')
+                self.__send_code_block__(chat_to, f'+ {task.m_str()}')
+                if not self.__check_run_task__(task):
+                    tasks.add(task)
+                    print(f'& {task.m_str()}')
+                    self.__send_code_block__(chat_to, f'& {task.m_str()}')
+                self.__dump_pickle__()
+            except Exception as e:
+                if isinstance(e, KeyboardInterrupt):
+                    raise e
+                self.__logger__.error(traceback.format_exc())
+
+    def __start_task_loop__(self):
+        ez_thread_factory(daemon=True)(self.__task_loop__).start()
+
+    def __save_tasks__(self, tasks: T.Iterable[EasyBotTaskData], chat_to=None):
+        self.__the_saved_tasks__(add=tasks)
+        print('\n'.join([f'& {task.m_str()}' for task in tasks]))
+        if chat_to:
+            msg = '\n'.join([f'& {task.m_str()}' for task in tasks])
+            try:
+                self.__send_code_block__(chat_to, msg)
+            except Exception as e:
+                if isinstance(e, KeyboardInterrupt):
+                    raise e
+                self.__logger__.error(traceback.format_exc())
