@@ -120,11 +120,11 @@ def per_site(args: T.List[str]):
                                 '{title}.{artist!S:L80/(various)/}.{extension}"', ]),
                 *args, url]
     elif 'kemono.party' in url:
-        args = [*GLDLCLIArgs(cookies=get_cookies_path('kemonoparty'),
+        args = [*GLDLCLIArgs(cookies=get_cookies_path('kemonoparty'), write_metadata=True,
                              o=['cookies-update=true', 'videos=true', 'tags=true', 'metadata=true',
                                 'directory=["{category} {service} {username} {user}"]',
                                 'filename="{category}.{service}.{user}.{id}_p{num}.{date!S:.10}.{filename}.'
-                                '{title}.{content}.{extension}"', ]),
+                                '{title}.{extension}"', ]),
                 *args, url]
     elif 'nhentai' in url:
         args = [*GLDLCLIArgs(o=make_options_list(dict(
