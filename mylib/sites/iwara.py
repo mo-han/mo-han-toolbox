@@ -60,11 +60,12 @@ def iter_all_video_url_of_user(who: str, ecchi=True, only_urls=False):
     while not end:
         r = easy.call_factory_retry(html.requests.get)(url)
         h = html.HTMLResponseParser(r).check_ok_or_raise().get_html_element()
+        title_d = {a.attrib['href']: a.text for a in h.cssselect('h3.title a')}
         for e in h.cssselect('.field-item a'):
             href = e.attrib['href']
             img_d = e.find('img').attrib
             thumbnail = img_d['src']
-            title = img_d['title']
+            title = img_d['title'] = title_d[href]
             url = f'https://{domain}{href}'
             url_pr = urlparse(url)
             url = urlunparse((url_pr.scheme, url_pr.netloc, url_pr.path, '', '', ''))
