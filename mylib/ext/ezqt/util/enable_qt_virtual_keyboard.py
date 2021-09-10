@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import os
-import PySide2.QtQuick
+import PySide2.QtQuick  # qtvirtualkeyboard need QtQuick
 
 
 def __ref():
