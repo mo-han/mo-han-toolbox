@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from threading import *
-from mylib.easy.__common__ import T
+from mylib.easy.common import T
 
 
 def ez_thread_factory(group=None, name=None, daemon=None):

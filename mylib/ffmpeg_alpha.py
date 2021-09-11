@@ -14,7 +14,7 @@ from mylib.__deprecated__ import fs_find_iter
 from mylib.easy import *
 from mylib.easy.filename_tags import EnclosedFilenameTagsSet
 from mylib.easy.logging import ez_get_logger, LOG_FMT_MESSAGE_ONLY
-from mylib.ext import fstk, tricks, tui, ostk
+from mylib.ext import fstk, tui, ostk
 
 S_ORIGINAL = 'original'
 S_SEGMENT = 'segment'

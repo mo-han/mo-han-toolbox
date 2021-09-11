@@ -2,7 +2,8 @@
 import re
 from argparse import *
 
-from . import typing, SingletonMetaClass, AttrName
+from . import SingletonMetaClass, AttrName
+from .stdlibs import typing
 
 T = typing
 

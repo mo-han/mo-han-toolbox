@@ -12,7 +12,7 @@ import humanize
 import lxml.html
 import requests.utils
 
-from mylib.easy.typing import JSONType
+from mylib.easy.stdlibs.typing import JSONType
 from mylib.ext import fstk, ostk
 from .easy import *
 from mylib.ext.http_headers import CURLCookieJar
