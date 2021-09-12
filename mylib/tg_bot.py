@@ -252,6 +252,12 @@ load:
         menu_str = '\n'.join(lines)
         self.__send_markdown__(update, f'```\n{menu_str}```')
 
+    @deco_factory_bot_handler_method(CommandHandler, on_menu=True)
+    def tasks(self, update: Update, context: CallbackContext):
+        """list tasks"""
+        self.__send_typing__(update)
+        self.__send_code_block__(update, '\n'.join([task.m_str() for task in self.__the_saved_tasks__()]))
+
     def __requeue_update__(self, update: Update):
         update_queue = self.__updater__.dispatcher.update_queue
         update_queue.put(update)
@@ -360,7 +366,7 @@ in {t.duration:.3f}s
                 self.__logger__.error(traceback.format_exc())
 
     def __start_task_loop__(self):
-        ez_thread_factory(daemon=True)(self.__task_loop__).start()
+        threading.ez_thread_factory(daemon=True)(self.__task_loop__).start()
 
     def __save_tasks__(self, tasks: T.Iterable[EasyBotTaskData], chat_to=None):
         self.__the_saved_tasks__(add=tasks)

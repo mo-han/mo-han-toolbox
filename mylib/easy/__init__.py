@@ -13,7 +13,7 @@ from . import io
 from . import shutil
 from .__common__ import *
 from .extra import *
-from .stdlibs.threading import *
+from .stdlibs import threading as threading
 
 REGEX_HEX_CHAR = '[0-9a-fA-F]'
 REGEX_GUID = '-'.join([f'{REGEX_HEX_CHAR}{{{__i}}}' for __i in (8, 4, 4, 4, 12)])
@@ -477,7 +477,7 @@ class ByteStreamBufferedReaderScraperPreAlpha:
         self.close_pipe()
 
     def start_scape(self):
-        ez_thread_factory(daemon=True)(self.scrape).start()
+        threading.ez_thread_factory(daemon=True)(self.scrape).start()
         return self
 
     def scrape(self):
@@ -534,8 +534,8 @@ class SubProcessBytePipeTranscriberPreAlpha:
                                                          scrape_to_bytearray=to_bytearray, scrape_to_pipe=to_pipe)
         self._all_pipe_scrapers_inactive_barrier = threading.Barrier(3)
         self._all_pipe_scrapers_inactive_event = threading.Event()
-        ez_thread_factory(daemon=True)(self._wait_pipe_scraper_inactive, self.o).start()
-        ez_thread_factory(daemon=True)(self._wait_pipe_scraper_inactive, self.e).start()
+        threading.ez_thread_factory(daemon=True)(self._wait_pipe_scraper_inactive, self.o).start()
+        threading.ez_thread_factory(daemon=True)(self._wait_pipe_scraper_inactive, self.e).start()
 
     @property
     def is_complete(self):
