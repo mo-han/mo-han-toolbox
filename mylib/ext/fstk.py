@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 from mylib.easy.fstk import *
-from . import tricks
+from mylib.ext import tricks
 
 
-def __refer_sth():
+def __ref():
     return POTENTIAL_INVALID_CHARS_MAP
 
 
