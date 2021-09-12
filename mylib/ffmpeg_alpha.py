@@ -51,7 +51,8 @@ CODEC_TAGS_DICT = {'o': 'origin', 'a8': 'avc8b', 'h8': 'hevc8b', 'aq8': 'qsvavc8
                    **VIDEO_CODECS_A10N}
 CODEC_TAGS_SET = set(CODEC_TAGS_DICT.values())
 
-decorator_choose_map_preset = mylib.easy.deco_factory_param_value_choices({'map_preset': STREAM_MAP_PRESET_TABLE.keys()})
+decorator_choose_map_preset = mylib.easy.deco_factory_param_value_choices(
+    {'map_preset': STREAM_MAP_PRESET_TABLE.keys()})
 
 
 def file_is_video(filepath):
@@ -418,6 +419,11 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     logger = ez_get_logger(f'{__name__}.smartconv', fmt=LOG_FMT_MESSAGE_ONLY)
     codecs_d = {'h': 'hevc', 'a': None, 'hq': 'hevc_qsv', 'aq': 'h264_qsv', 'v': 'vp9'}
     tags = []
+
+    ft = filetype.guess(filepath)
+    if ft and ft.mime == 'image/vnd.adobe.photoshop':
+        ff.convert([filepath], filepath + '.png')
+        return
 
     if '10bit' in keywords:
         ffmpeg_args = FFmpegArgsList(pix_fmt='yuv420p10le')
@@ -1022,7 +1028,8 @@ class FFmpegSegmentsContainer:
         all_segments = self.list_all_segments()
         lock_segments = self.list_lock_segments()
         done_segments = self.list_done_segments()
-        return mylib.ext.tricks.remove_from_list(mylib.ext.tricks.remove_from_list(all_segments, lock_segments), done_segments)
+        return mylib.ext.tricks.remove_from_list(mylib.ext.tricks.remove_from_list(all_segments, lock_segments),
+                                                 done_segments)
 
     def list_lock_segments(self):
         segments = []
