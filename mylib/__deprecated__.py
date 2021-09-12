@@ -9,7 +9,7 @@ from shutil import Error
 from typing import Callable, Generator
 
 from mylib.easy import *
-from mylib.easy.shutil import DirectoryToFileError, NeitherFileNorDirectoryError, FileToDirectoryError
+from mylib.easy.stdlibs.shutil import DirectoryToFileError, NeitherFileNorDirectoryError, FileToDirectoryError
 from mylib.ext import fstk
 from mylib.ext.ostk import Clipboard
 

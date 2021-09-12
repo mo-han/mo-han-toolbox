@@ -10,10 +10,9 @@ import urllib as urllib
 import urllib.parse
 
 from . import io
-from . import shutil
 from .__common__ import *
 from .extra import *
-from .stdlibs import threading as threading
+from .stdlibs import threading as threading, shutil
 
 REGEX_HEX_CHAR = '[0-9a-fA-F]'
 REGEX_GUID = '-'.join([f'{REGEX_HEX_CHAR}{{{__i}}}' for __i in (8, 4, 4, 4, 12)])

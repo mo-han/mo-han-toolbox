@@ -2,7 +2,8 @@
 import shutil as patched_shutil
 from shutil import *
 
-from .__common__ import *
+from mylib.easy.common import *
+from mylib.easy.stdlibs import threading
 
 global_config = {'copy.buffer.size': 16 * 1024 * 1024}
 
