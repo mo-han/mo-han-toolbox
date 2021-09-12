@@ -19,7 +19,7 @@ from mylib.ext.http_headers import CURLCookieJar
 from .easy.logging import ez_get_logger, LOG_FMT_MESSAGE_ONLY
 from .easy.io import SubscriptableFileIO
 from .ext.tricks import singleton, iter_factory_retry
-from .easy import ez_thread_factory
+from .easy.stdlibs.threading import ez_thread_factory
 
 MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE = '# Netscape HTTP Cookie File'
 USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'
