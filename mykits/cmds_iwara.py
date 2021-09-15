@@ -4,15 +4,16 @@ from mylib.sites import iwara
 
 apr = ArgumentParserRigger()
 an = apr.an
-an.user = an.general = ''
+an.user = an.general = an.L = an.single_line = ''
 
 
 @apr.sub()
 @apr.arg(an.user)
 @apr.true(long_name=an.general)
-@apr.map(user=an.user, general=an.general)
-def user_video_url(user, general=False):
-    s = '\n'.join(iwara.iter_all_video_url_of_user(user, ecchi=not general, only_urls=True))
+@apr.true(an.L, an.single_line)
+@apr.map(user=an.user, general=an.general, single_line=an.single_line)
+def user_video_url(user, general=False, single_line=False):
+    s = (' ' if single_line else '\n').join(iwara.iter_all_video_url_of_user(user, ecchi=not general, only_urls=True))
     print(s)
     ostk.clipboard.set(s)
 
