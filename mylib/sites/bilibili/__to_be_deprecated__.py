@@ -410,6 +410,9 @@ def download_bilibili_video(url: str or int,
     # 确保在Windows操作系统中，SIGINT信号能够被传递到下层扩展中，从而确保Ctrl+C能够立即停止程序
     ensure_sigint_signal()
     lp = LinePrinter()
+    if kwargs.get('force') or kwargs.get('overwrite'):
+        import you_get.common
+        you_get.common.force = True
     b = YouGetBilibiliX(cookies=cookies, qn_max=qn_max, qn_want=qn_want)
 
     if not output:

@@ -823,6 +823,7 @@ bilibili_download = add_sub_parser('bilibili.download', ['bldl'], 'bilibili vide
 bilibili_download.set_defaults(target=bilibili_download_func)
 bilibili_download.add_argument('url')
 bilibili_download.add_argument('-v', '--verbose', action='store_true')
+bilibili_download.add_argument('-f', '--force', action='store_true')
 bilibili_download.add_argument('-c', '--cookies', metavar='FILE')
 bilibili_download.add_argument('-i', '--info', action='store_true')
 bilibili_download.add_argument('-l', '--playlist', action='store_true', help='BUGGY! DO NOT USE!')
