@@ -21,3 +21,4 @@ traitsui
 mykits/cmds_*.yml
 python36.dll
 .venv
+*.egg-info
