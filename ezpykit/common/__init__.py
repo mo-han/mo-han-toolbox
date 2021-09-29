@@ -8,7 +8,7 @@ import subprocess as subprocess
 import sys as sys
 import time as time
 
-from ezpyco.stdlib import typing
+from ezpykit.stdlib import typing
 
 T = typing
 sleep = time.sleep
