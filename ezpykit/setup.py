@@ -7,19 +7,20 @@
 import io
 import os
 import sys
+from datetime import datetime
 from shutil import rmtree
 
 from setuptools import find_packages, setup, Command
 
 # Package meta-data.
+VERSION = '0.0.1a'
+IS_DEV_REVISION = True
 NAME = 'ezpykit'
 DESCRIPTION = 'A easy, simple lib pack, based on python builtins and standard libraries.'
 URL = 'https://github.com/mo-han/mo-han-toolbox/tree/master/ezpykit'
 EMAIL = 'zmhungrown@gmail.com'
 AUTHOR = 'mo-han'
 REQUIRES_PYTHON = '>=3.6.0'
-VERSION = '0.1'
-TAG_PREFIX = NAME
 INCLUDE = [NAME]
 
 # What packages are required for this module to be executed?
@@ -31,6 +32,9 @@ REQUIRED = [
 EXTRAS = {
     # 'fancy feature': ['django'],
 }
+
+if IS_DEV_REVISION:
+    VERSION += '.dev' + datetime.now().isoformat().split('T')[0].replace('-', '')
 
 # The rest you shouldn't have to touch too much :)
 # ------------------------------------------------
@@ -89,8 +93,7 @@ class UploadCommand(Command):
 
         self.status('Pushing git tags…')
         tag_name = 'v{0}'.format(about['__version__'])
-        if TAG_PREFIX:
-            tag_name = TAG_PREFIX + '-' + tag_name
+        tag_name = NAME + '-' + tag_name
         os.system('git tag ' + tag_name)
         os.system('git push --tags')
 
