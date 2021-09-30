@@ -19,6 +19,7 @@ EMAIL = 'zmhungrown@gmail.com'
 AUTHOR = 'mo-han'
 REQUIRES_PYTHON = '>=3.6.0'
 VERSION = '0.1'
+TAG_PREFIX = NAME
 INCLUDE = [NAME]
 
 # What packages are required for this module to be executed?
@@ -87,7 +88,10 @@ class UploadCommand(Command):
         os.system('twine upload dist/*')
 
         self.status('Pushing git tags…')
-        os.system('git tag v{0}'.format(about['__version__']))
+        tag_name = 'v{0}'.format(about['__version__'])
+        if TAG_PREFIX:
+            tag_name = TAG_PREFIX + '-' + tag_name
+        os.system('git tag ' + tag_name)
         os.system('git push --tags')
 
         sys.exit()

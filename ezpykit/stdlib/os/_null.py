@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 import os as _os
 
-ez_dirname = _os.path.dirname
-ez_basename = _os.path.basename
-ez_join_path = _os.path.join
-ez_tilde_path = _os.path.expanduser
-ez_envar_path = _os.path.expandvars
+get_dirname = _os.path.dirname
+get_basename = _os.path.basename
+join_path = _os.path.join
+tilde_path = _os.path.expanduser
+envar_path = _os.path.expandvars
 
 
-class EzEnvVar:
+class EnvVar:
     @staticmethod
     def set(*args, **kwargs):
         for data in [*args, kwargs]:

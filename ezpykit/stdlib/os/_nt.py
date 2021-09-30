@@ -3,7 +3,7 @@ from ._null import *
 import subprocess
 
 
-class EzEnvVar(EzEnvVar):
+class EnvVar(EnvVar):
     @staticmethod
     def save(*args, **kwargs):
         for data in [*args, kwargs]:
