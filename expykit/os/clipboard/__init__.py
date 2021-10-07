@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-import os
+import os as _os
 
-if os.name == 'nt':
+if _os.name == 'nt':
     from .nt import *
-elif os.name == 'posix':
+elif _os.name == 'posix':
     from .posix import *
 else:
     raise NotImplementedError

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
 from ezpykit.stdlib.os import *
-from .clipboard import *
+from .clipboard import clipboard
 
-helper_func_do_nothing(path)
+_ref_ = path

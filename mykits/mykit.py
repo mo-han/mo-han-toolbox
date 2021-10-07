@@ -748,12 +748,15 @@ dukto_x.add_argument('ndrop_args', metavar='[--] arguments for ndrop', nargs=REM
 
 
 def url_from_clipboard():
-    import pyperclip
+    from expykit import os
     from mylib.easy.text import regex_find
     from html import unescape
     args = rtd.args
     pattern = args.pattern
-    t = pyperclip.paste()
+    try:
+        t = os.clipboard.get_html()
+    except AttributeError:
+        t = os.clipboard.get()
     if not pattern:
         urls = []
     elif pattern == 'ed2k':
@@ -763,8 +766,8 @@ def url_from_clipboard():
         p = r'magnet:[^\s"]+'
         urls = regex_find(p, unescape(t), dedup=True)
     elif pattern == 'iwara':
-        from mylib.sites.iwara import find_url_in_text
-        urls = find_url_in_text(t)
+        from mylib.sites.iwara import find_video_url
+        urls = find_video_url(t)
     elif pattern in ('pornhub', 'ph'):
         from mylib.sites.pornhub import find_url_in_text
         urls = find_url_in_text(t)
@@ -780,7 +783,8 @@ def url_from_clipboard():
     else:
         urls = regex_find(pattern, t)
     urls = '\r\n'.join(urls)
-    pyperclip.copy(urls)
+    os.clipboard.clear()
+    os.clipboard.set(urls)
     print(urls)
 
 

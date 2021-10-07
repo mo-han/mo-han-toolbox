@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import re
 from abc import ABCMeta
 from urllib.parse import urlparse, urlunparse
 
@@ -8,17 +9,27 @@ from mylib import easy
 from mylib.easy import text
 from mylib.ext import html
 from mylib.web_client import get_html_element_tree
+from ezpykit import *
 
 HE = html.lxml_html.HtmlElement
 
 regex = easy.re
 
 
-def find_url_in_text(s: str) -> list:
-    prefix = 'https://iwara.tv'
+def find_video_url_guess_path(s: str, ecchi=True) -> list:
+    prefix = 'https://ecchi.iwara.tv' if ecchi else 'https://iwara.tv'
     pattern = '/videos/[0-9a-zA-Z]+'
     urls = [prefix + e for e in text.regex_find(pattern, s, dedup=True) if 'thumbnail' not in e]
     return urls
+
+
+def find_video_url(s: str):
+    r = list()
+    for i in re.findall(r'https?://.*iwara.tv/videos/[0-9a-zA-Z]+', s):
+        r.append_dedup(i)
+    if r:
+        return r
+    return find_video_url_guess_path(s)
 
 
 # ytdl_iwara.InfoExtractor = youtube_dl_x.ytdl_common.InfoExtractor  # SEEMINGLY NO EFFECT
