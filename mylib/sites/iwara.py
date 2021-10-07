@@ -17,7 +17,7 @@ regex = easy.re
 
 
 def find_video_url_guess_path(s: str, ecchi=True) -> list:
-    prefix = 'https://ecchi.iwara.tv' if ecchi else 'https://iwara.tv'
+    prefix = 'https://ecchi.iwara.tv' if ecchi else 'https://www.iwara.tv'
     pattern = '/videos/[0-9a-zA-Z]+'
     urls = [prefix + e for e in text.regex_find(pattern, s, dedup=True) if 'thumbnail' not in e]
     return urls

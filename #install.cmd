@@ -7,8 +7,8 @@ pushd "%~dp0"
 pyclean .
 mkdir %dst%\mylib
 xcopy /s /y mylib %dst%\mylib
-xcopy /s /y mylib %dst%\ezpykit
-xcopy /s /y mylib %dst%\expykit
+xcopy /s /y ezpykit %dst%\ezpykit
+xcopy /s /y expykit %dst%\expykit
 xcopy /s /y mykits %dst%
 xcopy /s /y i18n %dst%\i18n
 popd
