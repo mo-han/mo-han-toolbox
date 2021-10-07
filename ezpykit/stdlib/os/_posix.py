@@ -2,7 +2,7 @@
 from ._null import *
 
 
-class EnvVar(EnvVar):
+class EzEnVar(EzEnVar):
     @staticmethod
     def save(*args, **kwargs):
         envar_fp = f'~/.ezcolib_envar'

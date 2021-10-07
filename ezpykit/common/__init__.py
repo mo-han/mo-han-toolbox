@@ -1,18 +1,12 @@
 #!/usr/bin/env python3
 import glob as glob
-import itertools as itertools
 import pathlib as pathlib
-import queue as queue
 import re as re
 import subprocess as subprocess
-import sys as sys
-import time as time
 
-from ezpykit.stdlib import typing
+from .import_00 import *
+from .import_10 import *
 
-T = typing
-sleep = time.sleep
+helper_func_do_nothing(re, sys, subprocess, time, pathlib, glob)
 
 
-def __avoid_pycharm_optimize_imports():
-    return queue, re, sys, subprocess, time, pathlib, glob, itertools

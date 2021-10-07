@@ -2,6 +2,7 @@
 import pywintypes
 import win32clipboard
 
+import ezpykit.common.util_00
 import mylib.ext.tricks
 from mylib.easy.ostk import *
 
@@ -66,21 +67,21 @@ class Clipboard(metaclass=SingletonMetaClass):
             raise TypeError("'{}' is not str or int".format(x))
         return x
 
-    @mylib.ext.tricks.deco_with_self_context
+    @ezpykit.common.util_00.deco_inside_ctx_method_self
     def clear(self):
         self._wcb.EmptyClipboard()
         return self
 
-    @mylib.ext.tricks.deco_with_self_context
+    @ezpykit.common.util_00.deco_inside_ctx_method_self
     def set(self, data, cf=_wcb.CF_UNICODETEXT):
         cf = self.valid_format(cf)
         return self._wcb.SetClipboardData(cf, data)
 
-    @mylib.ext.tricks.deco_with_self_context
+    @ezpykit.common.util_00.deco_inside_ctx_method_self
     def set_text___fixme(self, text):
         return self._wcb.SetClipboardText(text)
 
-    @mylib.ext.tricks.deco_with_self_context
+    @ezpykit.common.util_00.deco_inside_ctx_method_self
     def get(self, cf=_wcb.CF_UNICODETEXT):
         cf = self.valid_format(cf)
         if self._wcb.IsClipboardFormatAvailable(cf):
@@ -89,7 +90,7 @@ class Clipboard(metaclass=SingletonMetaClass):
             data = None
         return data
 
-    @mylib.ext.tricks.deco_with_self_context
+    @ezpykit.common.util_00.deco_inside_ctx_method_self
     def set_image(self, image):
         import PIL.Image
 
@@ -122,7 +123,7 @@ class Clipboard(metaclass=SingletonMetaClass):
             lines = [line.strip() for line in str(self.get()).splitlines()]
             return [line for line in lines if os.path.exists(line)]
 
-    @mylib.ext.tricks.deco_with_self_context
+    @ezpykit.common.util_00.deco_inside_ctx_method_self
     def get_all(self) -> dict:
         d = {}
         for k, v in self.cf_dict.items():

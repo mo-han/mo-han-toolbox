@@ -251,27 +251,6 @@ def is_hex(s: str):
         return False
 
 
-def deco_with_self_context(target):
-    """decorator: wrap a class method inside a `with self: ...` context"""
-
-    def tgt(self, *args, **kwargs):
-        with self:
-            return target(self, *args, **kwargs)
-
-    return tgt
-
-
-def deco_factory_with_context(context_obj) -> T.Decorator:
-    def deco(target):
-        def tgt(*args, **kwargs):
-            with context_obj:
-                return target(*args, **kwargs)
-
-        return tgt
-
-    return deco
-
-
 def remove_from_list(source: T.Iterable, rmv_set: T.Iterable) -> list:
     """return a list, which contains elements in source but not in rmv_set"""
     return [x for x in source if x not in rmv_set]

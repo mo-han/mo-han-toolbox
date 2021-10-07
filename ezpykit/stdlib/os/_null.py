@@ -8,7 +8,7 @@ tilde_path = _os.path.expanduser
 envar_path = _os.path.expandvars
 
 
-class EnvVar:
+class EzEnVar:
     @staticmethod
     def set(*args, **kwargs):
         for data in [*args, kwargs]:
