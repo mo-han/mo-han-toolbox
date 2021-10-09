@@ -10,6 +10,7 @@ from mylib.easy import text
 from mylib.ext import html
 from mylib.web_client import get_html_element_tree
 from ezpykit import *
+import warnings
 
 HE = html.lxml_html.HtmlElement
 
@@ -55,8 +56,8 @@ class IwaraIE(ytdl_iwara.IwaraIE, metaclass=ABCMeta):
                     id_ = parts[1]
                     data['id'] = f'{id_} {sn}'
                     break
-        except IndexError:
-            pass
+        except IndexError as e:
+            warnings.warn(f'{e}')
         return data
 
 
