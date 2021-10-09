@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-import re
+import warnings
 from abc import ABCMeta
 from urllib.parse import urlparse, urlunparse
 
 import youtube_dl.extractor.iwara as ytdl_iwara
 
+from ezpykit import *
 from mylib import easy
 from mylib.easy import text
 from mylib.ext import html
 from mylib.web_client import get_html_element_tree
-from ezpykit import *
-import warnings
 
 HE = html.lxml_html.HtmlElement
 
