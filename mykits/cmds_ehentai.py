@@ -104,12 +104,14 @@ def hath_sort(src: PathSourceType, *, verbose=False, dry_run=False):
 @apr.arg(an.address, help='remote address for adb connect')
 @apr.map(an.address)
 def remote_control(remote_address: str):
-    """remote control ehviewer app via adb"""
+    """remote control ehviewer app via adb
+
+    adb shell input is slow!"""
     from mylib.ext.pure_python_adb import ADBClient
     from pynput.keyboard import Listener, KeyCode, Key
 
     client = ADBClient()
-    if not client.connect(remote_address):
+    if remote_address and not client.connect(remote_address):
         print(f'! cannot connect to {remote_address}')
         sys.exit(1)
     devices = [d for d in client.devices() if d.serial == remote_address]
@@ -136,8 +138,10 @@ def remote_control(remote_address: str):
         }
         call_list = key2input.get(key, [])
         for func, args in call_list:
-            cp.il(f'{func.__name__}{args}')
-            func(*args)
+            with Timer() as t:
+                s = f'{func.__name__}{args}'
+                func(*args)
+            cp.il(f'{s} in {t.duration}s')
 
     with Listener(on_press=on_press) as lr:
         print('# launched')
