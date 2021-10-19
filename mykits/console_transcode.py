@@ -2,6 +2,7 @@
 import codecs
 
 from mylib.ext.console_app import *
+from ezpykit.stdlib.threading import ez_thread_factory
 
 apr = ArgumentParserRigger()
 
