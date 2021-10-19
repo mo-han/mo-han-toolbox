@@ -98,6 +98,12 @@ def per_site(args: T.List[str]):
                                 'filename="{category}.{id}.{date!S:.10}.{md5}.'
                                 '{tags_character!S:L80/(various)/}.{tags_artist!S:L80/(various)/}.{extension}"', ]),
                 *args, url]
+    elif 'rule34.xxx' in url:
+        args = [*GLDLCLIArgs(o=['cookies-update=true', 'videos=true', 'tags=true',
+                                'directory=["{category} {search_tags}"]',
+                                'filename="{category}.{id}.{date!S:.10}.{md5}.'
+                                '{tags_character!S:L80/(various)/}.{tags_artist!S:L80/(various)/}.{extension}"', ]),
+                *args, url]
     elif 'chan.sankakucomplex.com' in url:
         args = [*GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
                              o=['cookies-update=true', 'videos=true', 'tags=true',
