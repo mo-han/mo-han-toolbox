@@ -14,14 +14,14 @@ from setuptools import find_packages, setup, Command
 
 # Package meta-data.
 VERSION = '0.0.1a'
-IS_DEV_REVISION = True
+DEV = True
 NAME = 'ezpykit'
 DESCRIPTION = 'A easy, simple lib pack, based on python builtins and standard libraries.'
 URL = 'https://github.com/mo-han/mo-han-toolbox/tree/master/ezpykit'
 EMAIL = 'zmhungrown@gmail.com'
 AUTHOR = 'mo-han'
 REQUIRES_PYTHON = '>=3.6.0'
-INCLUDE = [NAME]
+INCLUDE = [NAME + '*']
 
 # What packages are required for this module to be executed?
 REQUIRED = [
@@ -33,7 +33,7 @@ EXTRAS = {
     # 'fancy feature': ['django'],
 }
 
-if IS_DEV_REVISION:
+if DEV:
     VERSION += '.dev' + datetime.now().isoformat().split('T')[0].replace('-', '')
 
 # The rest you shouldn't have to touch too much :)
