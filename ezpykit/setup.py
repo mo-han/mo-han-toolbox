@@ -13,7 +13,7 @@ from shutil import rmtree
 from setuptools import find_packages, setup, Command
 
 # Package meta-data.
-VERSION = '0.0.1a0'
+VERSION = '0.0.1a1'
 DEV = True
 NAME = 'ezpykit'
 DESCRIPTION = 'A easy, simple lib pack, based on python builtins and standard libraries.'
@@ -89,7 +89,7 @@ class UploadCommand(Command):
         os.system('{0} setup.py sdist bdist_wheel --universal'.format(sys.executable))
 
         self.status('Uploading the package to PyPI via Twine…')
-        os.system('twine upload dist/*')
+        os.system('twine upload --verbose dist/*')
 
         self.status('Pushing git tags…')
         tag_name = 'v{0}'.format(about['__version__'])
