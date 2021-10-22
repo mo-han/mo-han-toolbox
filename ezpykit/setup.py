@@ -13,7 +13,7 @@ from shutil import rmtree
 from setuptools import find_packages, setup, Command
 
 # Package meta-data.
-VERSION = '0.0.1a'
+VERSION = '0.0.1a0'
 DEV = True
 NAME = 'ezpykit'
 DESCRIPTION = 'A easy, simple lib pack, based on python builtins and standard libraries.'
