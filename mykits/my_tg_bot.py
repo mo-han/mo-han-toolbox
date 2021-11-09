@@ -73,6 +73,9 @@ class MyAssistantBot(EasyBot):
                 return
             chat_id = update.message.chat_id
             args_ll = [line2args(line) for line in update.message.text.splitlines()]
+            al0 = args_ll[0]
+            if al0 in ('@360p', '@480p'):
+                args_ll = [f'{line} -f "[height<=?{al0[1:-1]}]"' for line in args_ll[1:]]
             tasks = [EasyBotTaskData(target=self._ytdl_internal.__name__, args=args_l, chat_to=chat_id)
                      for args_l in args_ll]
             self.__save_tasks__(tasks, chat_id)
