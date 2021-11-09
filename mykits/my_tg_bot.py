@@ -25,7 +25,7 @@ def ytdl_retry_frozen(*args: str):
     return monitor_sub_process_tty_frozen(p, encoding='u8', timeout=60)
 
 
-def line2args(line: str):
+def line2args(line: str) -> T.List[str]:
     args = shlex.split(line.strip())
     if args[0] in '+-*!':
         args.pop(0)
@@ -73,9 +73,9 @@ class MyAssistantBot(EasyBot):
                 return
             chat_id = update.message.chat_id
             args_ll = [line2args(line) for line in update.message.text.splitlines()]
-            al0 = args_ll[0]
+            al0 = ''.join(args_ll[0])
             if al0 in ('@360p', '@480p'):
-                args_ll = [f'{line} -f "[height<=?{al0[1:-1]}]"' for line in args_ll[1:]]
+                args_ll = [args_l + ['-f', f'[height<=?{al0[1:-1]}]'] for args_l in args_ll[1:]]
             tasks = [EasyBotTaskData(target=self._ytdl_internal.__name__, args=args_l, chat_to=chat_id)
                      for args_l in args_ll]
             self.__save_tasks__(tasks, chat_id)
