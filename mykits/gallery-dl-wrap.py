@@ -180,6 +180,7 @@ def args2url(args):
         url = first
     if url.startswith('https://twitter.com/') and not url.endswith('/media'):
         url += '/media'
+    url = url.replace('chan.sankakucomplex.com/cn/', 'chan.sankakucomplex.com/')
     return url
 
 
