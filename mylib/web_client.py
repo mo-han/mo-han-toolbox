@@ -12,14 +12,14 @@ import humanize
 import lxml.html
 import requests.utils
 
+from mylib.easy import *
+from mylib.easy.io import SubscriptableFileIO
+from mylib.easy.logging import ez_get_logger, LOG_FMT_MESSAGE_ONLY
+from mylib.easy.stdlibs.threading import ez_thread_factory
 from mylib.easy.stdlibs.typing import JSONType
 from mylib.ext import fstk, ostk
-from .easy import *
 from mylib.ext.http_headers import CURLCookieJar
-from .easy.logging import ez_get_logger, LOG_FMT_MESSAGE_ONLY
-from .easy.io import SubscriptableFileIO
-from .ext.tricks import singleton, iter_factory_retry
-from .easy.stdlibs.threading import ez_thread_factory
+from mylib.ext.tricks import singleton, iter_factory_retry
 
 MAGIC_TXT_NETSCAPE_HTTP_COOKIE_FILE = '# Netscape HTTP Cookie File'
 USER_AGENT_FIREFOX_WIN10 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0'
@@ -409,7 +409,7 @@ class DownloadPool(ThreadPoolExecutor):
             stop = start + len(chunk)
             content += chunk
             total = len(content)
-            fstk.write_file_chunk(filepath, start, stop, chunk, total)
+            ostk.write_file_chunk(filepath, start, stop, chunk, total)
         self.logger.debug(HTTPResponseInspection(r, content=content))
         d = Download(r, filepath, content=content)
         return d

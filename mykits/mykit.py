@@ -243,7 +243,10 @@ def tag_filter_files_func():
             for f in rm_set - kp_set:
                 print(f'- {f}')
                 if not dry:
-                    send2trash(f)
+                    try:
+                        send2trash(f)
+                    except OSError:
+                        shutil.remove(f)
 
 
 tag_filter_files = add_sub_parser('tag.filter.files', [], 'filter files by tags and ext')

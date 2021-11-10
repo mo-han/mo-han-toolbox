@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-# encoding=utf8
-
 import requests
-from mylib.ext.fstk import write_json_file, sanitize_xu
+
 from mylib.easy import *
 from mylib.easy.logging import ez_get_logger
+from mylib.ext.fstk import write_json_file, sanitize_xu
 from mylib.ext.tricks import AttributeInflection, Attreebute, width_of_int
-from mylib.web_client import HTTPResponseInspection, parse_https_url, make_requests_kwargs, DownloadPool
+from mylib.web_client import HTTPResponseInspection, parse_https_url, make_requests_kwargs, DownloadPool, \
+    cookies_dict_from_file
 
 FANBOX_DOMAIN = 'fanbox.cc'
 FANBOX_HOMEPAGE = 'https://' + FANBOX_DOMAIN
@@ -129,10 +129,17 @@ def pixiv_fanbox_creator_folder(creator_data: dict):
     return '[{user[name]}] pixiv {user[userId]} fanbox {creatorId}'.format(**creator_data)
 
 
-def download_pixiv_fanbox_post(post_or_id: PixivFanboxPost or dict or str or int, root_dir='.',
+def download_pixiv_fanbox_post(post_or_id: PixivFanboxPost or dict or str or int,
+                               cookies_file=None,
+                               root_dir='.',
                                fanbox_api: PixivFanboxAPI = None,
                                download_pool: DownloadPool = None,
                                retry=-1, **kwargs_for_requests):
+    if cookies_file:
+        c1 = cookies_dict_from_file(cookies_file)
+        c2 = kwargs_for_requests.get('cookies', {})
+        c1.update(c2)
+        kwargs_for_requests['cookies'] = c1
     download_pool = download_pool or DownloadPool()
     if isinstance(post_or_id, PixivFanboxPost):
         post = post_or_id
@@ -172,10 +179,17 @@ def download_pixiv_fanbox_post(post_or_id: PixivFanboxPost or dict or str or int
     download_pool.put_end_of_queue()
 
 
-def download_pixiv_fanbox_creator(creator_id, root_dir='.',
+def download_pixiv_fanbox_creator(creator_id,
+                                  cookies_file=None,
+                                  root_dir='.',
                                   fanbox_api: PixivFanboxAPI = None,
                                   download_pool: DownloadPool = None,
                                   retry=-1, **kwargs_for_requests):
+    if cookies_file:
+        c1 = cookies_dict_from_file(cookies_file)
+        c2 = kwargs_for_requests.get('cookies', {})
+        c1.update(c2)
+        kwargs_for_requests['cookies'] = c1
     download_params = {'retry': retry, **kwargs_for_requests}
     fanbox_api = fanbox_api or PixivFanboxAPI(**kwargs_for_requests)
     download_pool = download_pool or DownloadPool()
@@ -218,15 +232,22 @@ def download_pixiv_fanbox_creator(creator_id, root_dir='.',
     download_pool.put_end_of_queue()
 
 
-def download_pixiv_fanbox_creator_and_all_posts(creator_url_or_id, root_dir='.',
+def download_pixiv_fanbox_creator_and_all_posts(creator_url_or_id,
+                                                cookies_file=None,
+                                                root_dir='.',
                                                 fanbox_api: PixivFanboxAPI = None,
                                                 download_pool: DownloadPool = None,
                                                 retry=-1, **kwargs_for_requests):
+    if cookies_file:
+        c1 = cookies_dict_from_file(cookies_file)
+        c2 = kwargs_for_requests.get('cookies', {})
+        c1.update(c2)
+        kwargs_for_requests['cookies'] = c1
     fanbox_api = fanbox_api or PixivFanboxAPI(**kwargs_for_requests)
     download_pool = download_pool or DownloadPool()
     creator_id = fanbox_creator_id_from_url(creator_url_or_id) or creator_url_or_id
-    download_pixiv_fanbox_creator(creator_id, root_dir, fanbox_api=fanbox_api, download_pool=download_pool, retry=retry,
-                                  **kwargs_for_requests)
+    download_pixiv_fanbox_creator(creator_id, root_dir=root_dir, fanbox_api=fanbox_api, download_pool=download_pool,
+                                  retry=retry, **kwargs_for_requests)
     for p in fanbox_api.list_post_of_creator(creator_id):
-        download_pixiv_fanbox_post(p, root_dir, fanbox_api=fanbox_api, download_pool=download_pool, retry=retry,
-                                   **kwargs_for_requests)
+        download_pixiv_fanbox_post(p, root_dir=root_dir, fanbox_api=fanbox_api, download_pool=download_pool,
+                                   retry=retry, **kwargs_for_requests)
