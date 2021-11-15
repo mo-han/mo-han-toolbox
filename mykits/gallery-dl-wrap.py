@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import webbrowser
 
 from mylib.ext.console_app import *
@@ -54,7 +55,7 @@ def make_options_list(options_dict: dict):
 
 
 def new_gallery_dl_cmd(*args, **kwargs):
-    cmd = GLDLCLIArgs('gallery-dl', R=10, c=conf_path,
+    cmd = GLDLCLIArgs('gallery-dl', R=3, c=conf_path,
                       o=f'base-directory={base_dir}', )
     return cmd
 
@@ -213,7 +214,7 @@ def main():
         try:
             p = subprocess.Popen(cmd)
             print(p.args)
-            if p.wait():
+            if p.wait() and os.environ.get('pauseonerror', 'yes').lower() in {'yes', 'true', '1'}:
                 console_pause()
         except KeyboardInterrupt:
             sys.exit(2)
