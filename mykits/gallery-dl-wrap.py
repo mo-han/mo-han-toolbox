@@ -114,7 +114,7 @@ def per_site(args: T.List[str]):
                                 '{extension}"', ]),
                 *args, url]
     elif 'idol.sankakucomplex.com' in url:
-        args = [*GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
+        args = [*GLDLCLIArgs(cookies=get_cookies_path('sankaku.idol'),
                              o=['cookies-update=true', 'videos=true', 'tags=true',
                                 'directory=["{category} {search_tags}"]',
                                 'filename="{category}.{id}.{created_at!S:.10}.{md5}.'
