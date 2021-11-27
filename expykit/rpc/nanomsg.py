@@ -1,15 +1,17 @@
-import json
-import threading
-
 import pynng
-from functools import lru_cache
+
+from .common import *
 
 
-class RPCError(Exception):
-    pass
+class NanomsgRPCServer:
+    @staticmethod
+    def ping():
+        return 'pong'
 
+    @staticmethod
+    def new_req(name: str, *args, **kwargs):
+        return json.dumps(dict(name=name, args=args, kwargs=kwargs)).encode()
 
-class JSONRPCServer:
     def __init__(self, url):
         self.url = url
         self.__reset__()
@@ -18,21 +20,17 @@ class JSONRPCServer:
         self._running = False
         self._rep_socket = pynng.Rep0()
 
-    def start(self):
+    def __start__(self):
         if not self._running:
             t = threading.Thread(target=self.__run__, daemon=True)
             t.start()
         else:
-            raise RPCError('worker thread either already started, or not correctly stopped')
+            raise RPCError('thread still running, or stopped incorrectly')
 
-    def stop(self):
+    def __stop__(self):
         self.__send_result__(True)
         self._rep_socket.close()
         self.__reset__()
-
-    @staticmethod
-    def ping():
-        return 'pong'
 
     def __run__(self):
         self._rep_socket.listen(self.url)
@@ -53,10 +51,6 @@ class JSONRPCServer:
                         raise
             except Exception as e:
                 self.__send_error__(e)
-
-    @classmethod
-    def __new_req_b__(cls, name: str, *args, **kwargs):
-        return json.dumps(dict(name=name, args=args, kwargs=kwargs)).encode()
 
     @lru_cache()
     def __find_call_target__(self, name):
@@ -86,8 +80,3 @@ class JSONRPCServer:
     def __send_result__(self, json_obj):
         d = dict(ok=True, result=json_obj)
         self.__send_dict__(d)
-
-
-def test_hello(x):
-    print(x)
-    return x
