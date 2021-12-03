@@ -33,7 +33,7 @@ def line2args(line: str) -> T.List[str]:
 
 
 ytdl_regex_pattern = re.compile(r'youtube|youtu\.be|iwara|pornhub|\[ph[\da-f]{13}]|kissjav|xvideos')
-bldl_regex_pattern = re.compile(r'(/|^)BV[\da-zA-Z]{10}|(/|^)av\d+|(/|^)ep\d+|(/|^)ss\d+')
+bldl_regex_pattern = re.compile(r'(/|^)BV[\da-zA-Z]{10}|(/|^)av\d+|(/|^)ep\d+|(/|^)ss\d+|^https://b23.tv/.+')
 
 
 class MyAssistantBot(EasyBot):
