@@ -253,6 +253,8 @@ def bilibili_url_from_vid(vid: str) -> str:
 # 但是对`del_unwanted_dash_streams`的调用却是在被继承的`Bilibili`（的修改版）中进行的
 # noinspection PyUnresolvedReferences
 class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
+    url: str
+
     def __init__(self, *args, cookies: str or dict = None, qn_max=116, qn_want=None):
         super().__init__(*args)
         self.simple_api = api.BilibiliWebAPISimple()
@@ -429,6 +431,10 @@ def download_bilibili_video(url: str or int,
     if moderate_audio:
         b.set_audio_qn(30232)
 
+    if url.startswith('https://b23.tv/') and url[15:17] not in ('BV', 'ss', 'ep', 'av'):
+        r = requests.get(url)
+        if r.ok:
+            url = r.url.split('?', maxsplit=1)[0]
     b.url = url
     b.url = url = b.get_real_url()
     lp.print(url)
