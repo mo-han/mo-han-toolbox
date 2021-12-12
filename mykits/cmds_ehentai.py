@@ -71,7 +71,12 @@ def _sorted_path_of_hentai_at_home_downloaded_gallery(gallery_path, gallery_type
         creators_s = ', '.join(creators) or _unknown_
 
     new_root = fstk.make_path(root_dir, creators_s)
-    dst: str = join_path_dir_base_ext(new_root, f'{sanitized_title} {info["gid_resize"]}', ext)
+    try:
+        dst: str = join_path_dir_base_ext(new_root, f'{sanitized_title} {info["gid_resize"]}', ext)
+    except KeyError:
+        print(gallery_path)
+        print(info)
+        raise
     return dst
 
 

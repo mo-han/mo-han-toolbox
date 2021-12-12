@@ -406,7 +406,7 @@ def parse_hentai_at_home_downloaded_gallery_info(gallery_path, gallery_type=''):
     d['uploader comments'] = cmt.strip() if cmt is not None else None
     root_dir, name, ext = split_path_dir_base_ext(gallery_path, dir_ext=False)
     try:
-        gid_resize = re.search(r' \[\d+(-\d{3,4}x)?]$', name).group(0)
+        gid_resize = re.search(r' ?\[\d+(-\d{3,4}x)?]$', name).group(0)
     except AttributeError:
         gid_resize = ''
     if gid_resize:
