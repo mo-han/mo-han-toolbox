@@ -439,6 +439,51 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     if 'smartblur' in keywords:
         vf_list.append('smartblur')
 
+    for kw in keywords:
+        if kw[0] + kw[-1] in ('vk', 'vM') and kw[1:-1].isdecimal():
+            ffmpeg_args.add(b__v=kw[1:])
+        elif kw[:3] == 'crf':
+            crf = kw[3:]
+        elif kw[0] + kw[-1] == 'ak' and kw[1:-1].isdecimal():
+            ffmpeg_args.add(b__a=kw[1:])
+        elif kw[:3] == 'fps':
+            ffmpeg_args.add(r=kw[3:])
+        elif kw == 'vcopy':
+            ffmpeg_args.add(c__v='copy')
+        elif kw == 'acopy':
+            ffmpeg_args.add(c__a='copy')
+        elif kw == 'copy':
+            ffmpeg_args.add(c='copy')
+        elif kw in ('FHD', 'fhd'):
+            res_limit = 'FHD'
+            tags.append('FHD')
+        elif kw in ('HD', 'hd'):
+            res_limit = 'HD'
+            tags.append('HD')
+        elif kw in ('qHD',):
+            res_limit = 'qHD'
+            tags.append('qHD')
+        elif kw in ('QHD', 'qhd'):
+            res_limit = 'QHD'
+            tags.append('QHD')
+        elif kw.lower() == '4k':
+            res_limit = '4K'
+            tags.append('4K')
+        elif kw.lower() == '360p':
+            res_limit = '360p'
+            tags.append('360p')
+        elif kw in ('2ch', 'stereo'):
+            ffmpeg_args.add(ac=2)
+        elif kw == 'hevc':
+            codec = 'h'
+        elif kw in ('vp9', 'vpx', 'vp90', 'webm'):
+            codec = 'v'
+        elif kw == 'tv2pc':
+            vf_list.append('scale=in_range=limited:out_range=full')
+            tags.append('tv2pc')
+        elif kw == 'opus':
+            ffmpeg_args.add(c__a='libopus')
+
     if 'best' in keywords:
         codec = 'h'
         crf = crf or 16
@@ -503,7 +548,10 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
         output_ft.extension = '.mp4'
     if 'mkv' in keywords:
         output_ft.extension = '.mkv'
-        # ffmpeg_args.add(c__a='libopus')  # opus in mkv make bitrate empty
+        # ffmpeg_args.add(c__a='libopus')
+        # if choose opus as audio codec, then stream bitrate in mkv will lose
+        # need "statistic tags" to specify these bitrate info inside metadata
+        # but ffmpeg not support that :(
     if 'm4a' in keywords:
         output_ft.extension = '.m4a'
         ffmpeg_args.add(map=STREAM_MAP_PRESET_TABLE[S_NO_VIDEO])
@@ -512,49 +560,6 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     if 'webm' in keywords:
         output_ft.extension = '.webm'
     output_ft = output_ft.tag(*tags)
-
-    for kw in keywords:
-        if kw[0] + kw[-1] in ('vk', 'vM') and kw[1:-1].isdecimal():
-            ffmpeg_args.add(b__v=kw[1:])
-        elif kw[:3] == 'crf':
-            crf = kw[3:]
-        elif kw[0] + kw[-1] == 'ak' and kw[1:-1].isdecimal():
-            ffmpeg_args.add(b__a=kw[1:])
-        elif kw[:3] == 'fps':
-            ffmpeg_args.add(r=kw[3:])
-        elif kw == 'vcopy':
-            ffmpeg_args.add(c__v='copy')
-        elif kw == 'acopy':
-            ffmpeg_args.add(c__a='copy')
-        elif kw == 'copy':
-            ffmpeg_args.add(c='copy')
-        elif kw in ('FHD', 'fhd'):
-            res_limit = 'FHD'
-            tags.append('FHD')
-        elif kw in ('HD', 'hd'):
-            res_limit = 'HD'
-            tags.append('HD')
-        elif kw in ('qHD',):
-            res_limit = 'qHD'
-            tags.append('qHD')
-        elif kw in ('QHD', 'qhd'):
-            res_limit = 'QHD'
-            tags.append('QHD')
-        elif kw.lower() == '4k':
-            res_limit = '4K'
-            tags.append('4K')
-        elif kw.lower() == '360p':
-            res_limit = '360p'
-            tags.append('360p')
-        elif kw in ('2ch', 'stereo'):
-            ffmpeg_args.add(ac=2)
-        elif kw == 'hevc':
-            codec = 'h'
-        elif kw in ('vp9', 'vpx', 'vp90', 'webm'):
-            codec = 'v'
-        elif kw == 'tv2pc':
-            vf_list.append('scale=in_range=limited:out_range=full')
-            tags.append('tv2pc')
 
     origin_path = origin_ft.path
     output_path = output_ft.path
