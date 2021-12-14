@@ -546,6 +546,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
         output_ft.extension = '.mp4'
     if 'mkv' in keywords:
         output_ft.extension = '.mkv'
+        ffmpeg_args.add(c__a='libopus')
     if 'm4a' in keywords:
         output_ft.extension = '.m4a'
         ffmpeg_args.add(map=STREAM_MAP_PRESET_TABLE[S_NO_VIDEO])
