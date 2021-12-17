@@ -23,9 +23,7 @@ class SingletonMetaClass(type):
         return cls._instances[cls]
 
 
-def deco_inside_ctx_method_self(target):
-    """decorator: wrap a class method inside a `with self: ...` context"""
-
+def deco_ctx_with_self(target):
     def tgt(self, *args, **kwargs):
         with self:
             return target(self, *args, **kwargs)

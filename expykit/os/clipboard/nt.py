@@ -69,21 +69,21 @@ class Clipboard(HTMLClipboardMixin, metaclass=SingletonMetaClass):
             raise TypeError("'{}' is not str or int".format(x))
         return x
 
-    @deco_inside_ctx_method_self
+    @deco_ctx_with_self
     def clear(self):
         win32clipboard.EmptyClipboard()
         return self
 
-    @deco_inside_ctx_method_self
+    @deco_ctx_with_self
     def set(self, data, cf=win32clipboard.CF_UNICODETEXT):
         cf = self.valid_format(cf)
         return win32clipboard.SetClipboardData(cf, data)
 
-    @deco_inside_ctx_method_self
+    @deco_ctx_with_self
     def set_text___fixme(self, text):
         return win32clipboard.SetClipboardText(text)
 
-    @deco_inside_ctx_method_self
+    @deco_ctx_with_self
     def get(self, cf=win32clipboard.CF_UNICODETEXT):
         cf = self.valid_format(cf)
         if win32clipboard.IsClipboardFormatAvailable(cf):
@@ -92,7 +92,7 @@ class Clipboard(HTMLClipboardMixin, metaclass=SingletonMetaClass):
             data = None
         return data
 
-    @deco_inside_ctx_method_self
+    @deco_ctx_with_self
     def set_image(self, image):
         import PIL.Image
 
@@ -125,7 +125,7 @@ class Clipboard(HTMLClipboardMixin, metaclass=SingletonMetaClass):
             lines = [line.strip() for line in str(self.get()).splitlines()]
             return [line for line in lines if os.path.exists(line)]
 
-    @deco_inside_ctx_method_self
+    @deco_ctx_with_self
     def get_all(self) -> dict:
         d = {}
         for k, v in self.cf_dict.items():
