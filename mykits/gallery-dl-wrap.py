@@ -10,6 +10,7 @@ from mylib.ext.console_app import *
 env_var = os.environ
 conf_path = fstk.make_path(env_var['gallery_dl_conf']).strip('"')
 base_dir = fstk.make_path(env_var['gallery_dl_base_directory']).strip('"')
+pause_on_error = os.environ.get('PAUSEONERROR', 'yes').lower() in {'yes', 'true', '1'}
 
 
 def _console_pause_nt():
@@ -214,7 +215,7 @@ def main():
         try:
             p = subprocess.Popen(cmd)
             print(p.args)
-            if p.wait() and os.environ.get('pauseonerror', 'yes').lower() in {'yes', 'true', '1'}:
+            if p.wait() and pause_on_error:
                 console_pause()
         except KeyboardInterrupt:
             sys.exit(2)
