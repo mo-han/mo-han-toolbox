@@ -14,7 +14,7 @@ NETWORK_NAME = HOSTNAME = NODE_NAME = platform.node()
 USERNAME = getpass.getuser()
 OSNAME = platform.system()
 
-helper_func_do_nothing(os)
+___ref = os
 
 
 def helper_ensure_sigint():

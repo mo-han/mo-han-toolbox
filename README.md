@@ -34,7 +34,8 @@ its attribute is a str same as the name thereof
 实例的属性总是一个和属性名称相同的字符串
 
 ```python
-from mylib.easy import AttrName
+
+from ezpykit import AttrName
 
 an = AttrName()
 assert an.abc_xyz == 'abc_xyz'

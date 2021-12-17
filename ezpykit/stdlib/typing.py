@@ -2,14 +2,15 @@
 from typing import *
 from typing import IO, BinaryIO, TextIO  # necessary!
 
-from ezpykit.common.util_00 import helper_func_do_nothing
+___ref = IO, BinaryIO, TextIO
 
-helper_func_do_nothing(IO, BinaryIO, TextIO)
+NoneType = type(None)
+EllipsisType = type(Ellipsis)
 
-EzDecorator = Callable[[Callable], Callable]
+Decorator = Callable[[Callable], Callable]
 
 
-class EzQueueType:
+class QueueType:
     def put(self, *args, **kwargs):
         ...
 
@@ -17,8 +18,4 @@ class EzQueueType:
         ...
 
 
-EzJSONType = Union[str, int, float, bool, None, Mapping[str, 'JSON'], List['JSON']]
-
-EzNoneType = type(None)
-
-EzEllipsisType = type(Ellipsis)
+JSONType = Union[str, int, float, bool, None, Mapping[str, 'JSON'], List['JSON']]

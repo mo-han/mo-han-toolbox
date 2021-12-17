@@ -6,4 +6,4 @@ from .util_00 import *
 
 sleep = time.sleep
 
-helper_func_do_nothing(sys)
+___ref = sys

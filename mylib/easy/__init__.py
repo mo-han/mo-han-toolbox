@@ -31,15 +31,6 @@ class SingletonMetaClass(type):
         return cls._instances[cls]
 
 
-class AttrName(metaclass=SingletonMetaClass):
-    def __setattr__(self, key, value):
-        pass
-
-    def __getattr__(self, item: str) -> str:
-        self.__dict__[item] = item
-        return item
-
-
 def str_remove_prefix(s: str, prefix: str):
     return s[len(prefix):] if s.startswith(prefix) else s
 

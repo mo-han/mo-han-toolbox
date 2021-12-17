@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-from mylib.easy import T
-
-
-def helper_func_do_nothing(*args, **kwargs):
-    pass
+from ezpykit.stdlib import typing as T
 
 
 def deco_factory_add_method_to_class(cls):
@@ -40,3 +36,12 @@ def deco_factory_ctx(context_obj) -> T.Decorator:
         return tgt
 
     return deco
+
+
+class AttrName(metaclass=SingletonMetaClass):
+    def __setattr__(self, key, value):
+        pass
+
+    def __getattr__(self, item: str) -> str:
+        self.__dict__[item] = item
+        return item
