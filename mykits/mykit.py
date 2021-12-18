@@ -17,7 +17,7 @@ from ezpykit import AttrName
 from mylib.__deprecated__ import fs_inplace_rename, fs_inplace_rename_regex, list_files, list_dirs
 from mylib.cli import arg_type_pow2, arg_type_range_factory, add_dry_run
 from mylib.easy import *
-from mylib.easy.argparse import CompactHelpFormatterWithDefaults
+from ezpykit.stdlib.argparse import CompactHelpFormatterWithDefaults
 from mylib.ext.tricks import Attreebute, eval_or_str, deco_factory_exit_on_keyboard_interrupt
 from mylib.ext import fstk, tui
 from mylib.ext.fstk import make_path, ctx_pushd
@@ -759,7 +759,7 @@ def url_from_clipboard():
     pattern = args.pattern
     try:
         t = os.clipboard.get_html()
-    except AttributeError:
+    except (AttributeError, TypeError):
         t = os.clipboard.get()
     if not pattern:
         urls = []
@@ -785,7 +785,7 @@ def url_from_clipboard():
         p = r'https://hentai.cafe/hc.fyi/\d+'
         urls = regex_find(p, t, dedup=True)
     else:
-        urls = regex_find(pattern, t)
+        urls = regex_find(pattern, t, dedup=True)
     urls = '\r\n'.join(urls)
     os.clipboard.clear()
     os.clipboard.set(urls)

@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
+from ezpykit.stdlib.argparse import *
 from mylib.easy import *
-from mylib.easy.argparse import *
 from mylib.ext import fstk, text, ostk
 
-
-def __ref():
-    return fstk, text
-
+___ref = fstk, text, ArgumentParserRigger
 
 PathSourceTypeTuple = list, str, T.NoneType
 PathSourceType = T.Union[T.List[str], str, T.NoneType]
@@ -18,7 +15,7 @@ def resolve_path_to_dirs_files(x: PathSourceType, *,
                                use_clipboard=True, use_stdin=False,
                                glob_recurse=False, exist_prior_to_glob=True):
     if not isinstance(x, PathSourceTypeTuple):
-        raise TypeError('src', PathSourceType)
+        raise TypeError('x', PathSourceType, type(x), x)
 
     if not x:
         if use_clipboard:

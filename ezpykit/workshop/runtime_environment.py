@@ -5,7 +5,6 @@ import signal
 import sys
 import tempfile
 
-from ezpykit.common.util_00 import *
 from ezpykit.stdlib import os
 
 TEMPDIR = tempfile.gettempdir()

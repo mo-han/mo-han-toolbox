@@ -3,7 +3,8 @@ import tabulate
 
 import mylib.easy
 from mylib.easy import *
-from mylib.easy import argparse, fstk
+from mylib.easy import fstk
+from ezpykit.stdlib import argparse
 
 __dirname__, __filename_without_extension__, __file_extension__ = mylib.easy.split_path_dir_base_ext(__file__)
 sub_apr = argparse.ArgumentParserRigger()

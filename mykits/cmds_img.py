@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from mylib.easy import *
-from mylib.easy import argparse
-from mylib.easy import logging
+from ezpykit.stdlib import argparse
 from mylib.ext import ostk
 
 apr = argparse.ArgumentParserRigger()
