@@ -546,6 +546,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
         return
     if 'mp4' in keywords:
         output_ft.extension = '.mp4'
+        ffmpeg_args.add(movflags='faststart')
     if 'mkv' in keywords:
         output_ft.extension = '.mkv'
         # ffmpeg_args.add(c__a='libopus')
