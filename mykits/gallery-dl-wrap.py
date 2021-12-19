@@ -110,7 +110,7 @@ def per_site(args: T.List[str]):
                 'directory=["{category} {search_tags}"]',
                 'filename="{category}.{id}.{date!S:.10}.{md5}.'
                 # '{tags_character!S:L80/(various)/}.{tags_artist!S:L80/(various)/}.{extension}"',
-                '{search_tags!S:.80}.{extension}'
+                '{search_tags!S:.80}.{extension}"'
             ]
         ),
                 *args, url]

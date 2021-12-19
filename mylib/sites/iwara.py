@@ -24,6 +24,7 @@ def find_video_url_guess_path(s: str, ecchi=True) -> list:
 
 
 def find_video_url(s: str):
+    from ezpykit.builtin import list
     r = list()
     for i in re.findall(r'https?://.*iwara.tv/videos/[0-9a-zA-Z]+', s):
         r.append_dedup(i)
