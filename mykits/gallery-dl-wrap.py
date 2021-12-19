@@ -94,24 +94,40 @@ def per_site(args: T.List[str]):
                                 '{extension}"', ]),
                 *args, url]
     elif 'gelbooru.com' in url:
-        args = [*GLDLCLIArgs(cookies=get_cookies_path('gelbooru'),
-                             o=['cookies-update=true', 'videos=true', 'tags=true',
-                                'directory=["{category} {search_tags}"]',
-                                'filename="{category}.{id}.{date!S:.10}.{md5}.'
-                                '{tags_character!S:L80/(various)/}.{tags_artist!S:L80/(various)/}.{extension}"', ]),
+        args = [*GLDLCLIArgs(
+            cookies=get_cookies_path('gelbooru'),
+            o=['cookies-update=true', 'videos=true', 'tags=true',
+               'directory=["{category} {search_tags}"]',
+               'filename="{category}.{id}.{date!S:.10}.{md5}.'
+               '{tags_character!S:L80/(various)/}.{tags_artist!S:L80/(various)/}.{extension}"', ]
+        ),
+                *args, url]
+    elif 'realbooru.com' in url:
+        args = [*GLDLCLIArgs(
+            # cookies=get_cookies_path('realbooru'),
+            o=[
+                'cookies-update=true', 'videos=true', 'tags=true',
+                'directory=["{category} {search_tags}"]',
+                'filename="{category}.{id}.{date!S:.10}.{md5}.'
+                # '{tags_character!S:L80/(various)/}.{tags_artist!S:L80/(various)/}.{extension}"',
+                '{search_tags!S:.80}.{extension}'
+            ]
+        ),
                 *args, url]
     elif 'rule34.xxx' in url:
-        args = [*GLDLCLIArgs(o=['cookies-update=true', 'videos=true', 'tags=true',
-                                'directory=["{category} {search_tags}"]',
-                                'filename="{category}.{id}.{date!S:.10}.{md5}.'
-                                '{tags_character!S:L80/(various)/}.{tags_artist!S:L80/(various)/}.{extension}"', ]),
+        args = [*GLDLCLIArgs(
+            o=['cookies-update=true', 'videos=true', 'tags=true',
+               'directory=["{category} {search_tags}"]',
+               'filename="{category}.{id}.{date!S:.10}.{md5}.'
+               '{tags_character!S:L80/(various)/}.{tags_artist!S:L80/(various)/}.{extension}"', ]
+        ),
                 *args, url]
     elif 'chan.sankakucomplex.com' in url:
         args = [*GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
                              o=['cookies-update=true', 'videos=true', 'tags=true',
                                 'directory=["{category} {search_tags}"]',
                                 'filename="{category}.{id}.{date!S:.10}.{md5}.'
-                                '{tag_string_character!S:L80/(various)/}.{tag_string_artist!S:L80/(various)/}.'
+                                '{tag_string_character!S:L64/(various)/}.{tag_string_artist!S:L80/(various)/}.'
                                 '{extension}"', ]),
                 *args, url]
     elif 'idol.sankakucomplex.com' in url:
@@ -162,6 +178,8 @@ def args2url(args):
         url = f'https://danbooru.donmai.us/posts?tags={pop_tag_from_args(args)}'
     elif first == 'gelbooru':
         url = f'https://gelbooru.com/index.php?page=post&s=list&tags={pop_tag_from_args(args)}'
+    elif first == 'realbooru':
+        url = f'https://realbooru.com/index.php?page=post&s=list&tags={pop_tag_from_args(args)}'
     elif first == 'sankaku':
         x = pop_tag_from_args(args)
         if x.isdigit():
