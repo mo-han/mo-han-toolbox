@@ -366,25 +366,28 @@ def get_width_height(filepath) -> (int, int):
 
 
 @mylib.easy.deco_factory_param_value_choices({'res_limit': (None, 'FHD', 'HD', 'qHD', 'QHD', '4K', '360p')})
-def get_vf_res_scale_down(width: int, height: int, res_limit='FHD', vf: str = None) -> str or None:
+def get_vf_res_scale_down(width: int, height: int, res_limit='FHD', vf: str = '') -> str:
     """generate 'scale=<w>:<h>' value for ffmpeg `vf` option, to scale down the given resolution
     return empty str if the given resolution is enough low thus scaling is not needed"""
     d = {'FHD': (1920, 1080), 'HD': (1280, 720), 'qHD': (960, 540), 'QHD': (2560, 1440), '4K': (3840, 2160),
          '360p': (640, 360)}
     auto_calc = -2
     if not res_limit:
-        return
+        return vf
     tgt_long, tgt_short = d[res_limit]
     long = max((width, height))
     short = min((width, height))
     if long <= tgt_long and short <= tgt_short:
-        return
+        return vf
     ratio = short / long
     tgt_ratio = tgt_short / tgt_long
     thin = False if ratio > tgt_ratio else True
     portrait = True if height > width else False
     baseline = tgt_long if thin else tgt_short
-    res_scale = 'scale=' + (f'{baseline}:{auto_calc}' if thin ^ portrait else f'{auto_calc}:{baseline}')
+    res_scale = 'scale=' + (
+        f'{baseline}:{auto_calc}' if thin ^ portrait
+        else f'{auto_calc}:{baseline}'
+    )
     return f'{res_scale},{vf}' if vf else res_scale
 
 
@@ -416,6 +419,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
         lvl = 'WARNING'
     ff.logger.setLevel(lvl)
     vf_list = get_filter_list(vf)
+    vf_str = get_filter_str(vf_list)
     logger = ez_get_logger(f'{__name__}.smartconv', fmt=LOG_FMT_MESSAGE_ONLY)
     codecs_d = {'h': 'hevc', 'a': None, 'hq': 'hevc_qsv', 'aq': 'h264_qsv', 'v': 'vp9'}
     tags = []
@@ -456,22 +460,16 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
             ffmpeg_args.add(c='copy')
         elif kw in ('FHD', 'fhd'):
             res_limit = 'FHD'
-            tags.append('FHD')
         elif kw in ('HD', 'hd'):
             res_limit = 'HD'
-            tags.append('HD')
         elif kw in ('qHD',):
             res_limit = 'qHD'
-            tags.append('qHD')
         elif kw in ('QHD', 'qhd'):
             res_limit = 'QHD'
-            tags.append('QHD')
         elif kw.lower() == '4k':
             res_limit = '4K'
-            tags.append('4K')
         elif kw.lower() == '360p':
             res_limit = '360p'
-            tags.append('360p')
         elif kw in ('2ch', 'stereo'):
             ffmpeg_args.add(ac=2)
         elif kw == 'hevc':
@@ -480,9 +478,18 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
             codec = 'v'
         elif kw == 'tv2pc':
             vf_list.append('scale=in_range=limited:out_range=full')
-            tags.append('tv2pc')
+            res_limit = 'tv2pc'
         elif kw == 'opus':
             ffmpeg_args.add(c__a='libopus')
+
+    if res_limit:
+        w, h = get_width_height(filepath)
+        new_vf = get_vf_res_scale_down(w, h, res_limit, vf=vf_str)
+        ffmpeg_args.add(vf=new_vf)
+        if new_vf != vf_str:
+            tags.append(res_limit)
+    else:
+        ffmpeg_args.add(vf=vf_str)
 
     if 'best' in keywords:
         codec = 'h'
@@ -571,14 +578,6 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     lp.l()
 
     try:
-        if res_limit:
-            w, h = get_width_height(filepath)
-            ffmpeg_args.add(
-                vf=get_vf_res_scale_down(
-                    w, h, res_limit,
-                    vf=get_filter_str(vf_list)))
-        else:
-            ffmpeg_args.add(vf=get_filter_str(vf_list))
         ff.convert([filepath], output_path, ffmpeg_args, start=start, end=end, dry_run=dry_run, **kwargs)
         logger.info(f'+ {output_path}')
         shutil.move(filepath, origin_path)
