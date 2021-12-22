@@ -478,7 +478,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
             codec = 'v'
         elif kw == 'tv2pc':
             vf_list.append('scale=in_range=limited:out_range=full')
-            res_limit = 'tv2pc'
+            tags.append(kw)
         elif kw == 'opus':
             ffmpeg_args.add(c__a='libopus')
 
