@@ -55,6 +55,7 @@ def cwebp_call(src: T.Union[str, bytes], dst: T.Union[str, bool, T.NoneType, T.E
         dst_data['scale'] = resize
 
     cmd = new_cwebp_cmd().add(**kwargs).add(o=dst).add('--', src)
+    logger.warning(cmd)
     p = subprocess.run(cmd, input=src_bytes, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     encoding = get_os_default_encoding()
     msg_lines = p.stderr.decode(encoding).splitlines()
@@ -171,7 +172,7 @@ def cwebp_adaptive_gen___alpha(src, max_size: int, max_compress: float, max_q: i
                                *, q_step=5, scale_step=0.05):
     q_step_by_100 = q_step / 100
 
-    _cwebp = partial(cwebp, src, '-')
+    _cwebp = partial(cwebp, src, '-', metadata='all')
 
     def calc_dst_size_compress_divided_by_max(cwebp_data: dict):
         o_size = cwebp_data['dst']['size']
