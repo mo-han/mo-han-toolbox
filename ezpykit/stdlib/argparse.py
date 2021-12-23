@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from argparse import *
 
-from ezpykit import *
+from ezpykit import SingletonMetaClass, T, AttrName, re
 
 
 class CompactHelpFormatterWithDefaults(ArgumentDefaultsHelpFormatter):
