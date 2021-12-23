@@ -55,7 +55,7 @@ def cwebp_call(src: T.Union[str, bytes], dst: T.Union[str, bool, T.NoneType, T.E
         dst_data['scale'] = resize
 
     cmd = new_cwebp_cmd().add(**kwargs).add(o=dst).add('--', src)
-    logger.warning(cmd)
+    logger.debug(cmd)
     p = subprocess.run(cmd, input=src_bytes, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     encoding = get_os_default_encoding()
     msg_lines = p.stderr.decode(encoding).splitlines()
