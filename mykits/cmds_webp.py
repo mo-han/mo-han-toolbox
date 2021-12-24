@@ -102,7 +102,7 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
         os_exit_force(1)
 
 
-@apr.sub(apr.rnu(), aliases=['cvt.in.zip', 'cvt.zip'])
+@apr.sub(apr.rpl_dot, aliases=['cvt.in.zip', 'cvt.zip'])
 @apr.arg(an.src, nargs='*')
 @apr.opt(an.w, an.workdir, default='.')
 @apr.opt(an.x, an.extension, default='.cbz', help='file extension')
@@ -208,7 +208,7 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
             shutil.rmtree(unzip_dir)
 
 
-@apr.sub(apr.rename_underscore())
+@apr.sub(apr.rpl_dot())
 @apr.true('r', 'recursive')
 @apr.true('c', 'clean')
 @apr.true('z', 'cbz')

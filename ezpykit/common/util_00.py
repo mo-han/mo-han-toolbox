@@ -45,3 +45,8 @@ class AttrName(metaclass=SingletonMetaClass):
     def __getattr__(self, item: str) -> str:
         self.__dict__[item] = item
         return item
+
+
+class ObjectWrapper:
+    def __init__(self, obj):
+        self.content = obj

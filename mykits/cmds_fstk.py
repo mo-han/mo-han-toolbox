@@ -27,7 +27,7 @@ class FilesystemError(OSError):
     pass
 
 
-@apr.sub(apr.rnu(), help='remove sub-dirs, put sub-files in flat structure', aliases=['flat.dir'])
+@apr.sub(apr.rpl_dot, help='remove sub-dirs, put sub-files in flat structure', aliases=['flat.dir'])
 def flatten_dir():
     ...
 

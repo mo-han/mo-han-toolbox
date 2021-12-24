@@ -11,7 +11,7 @@ def main():
     apr.run()
 
 
-@apr.sub(apr.rnu(), aliases=['cb.paths'])
+@apr.sub(apr.rpl_dot, aliases=['cb.paths'])
 @apr.true(an.L, apr.dst2opt(an.single_line))
 @apr.true(an.q, an.quote)
 @apr.map(single_line=an.single_line, quote=an.quote)

@@ -10,7 +10,7 @@ apr = ArgumentParserRigger()
 @apr.root()
 @apr.arg('inner_encoding')
 @apr.arg('outer_encoding')
-@apr.map(inner_encoding='inner_encoding', outer_encoding='outer_encoding', args=apr.unknown_placeholder)
+@apr.map(inner_encoding='inner_encoding', outer_encoding='outer_encoding', args=apr.ticket_of_extra)
 def stdout_stderr_transcode(inner_encoding, outer_encoding, args):
     def read_1byte_from_pipe(pipe):
         def read_1byte():

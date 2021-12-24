@@ -50,10 +50,10 @@ an.x = an.y = an.z = an.l = ''  # let the IDE remember these attr names
 @apr.arg(an.z)
 # flag means option with action='store_true', so the flag 'l' means option '-l'
 @apr.flag(an.l, help='print in multiple lines')
-# arg x -> param x, int(1111) -> param y, arg z -> param z, unknown_args -> param y, flag -l -> param multi_line
-@apr.map(an.x, apr.ro(1111), an.z, apr.skip, multi_line=an.l)
+# arg x -> param x, int(1111) -> param y, arg z -> param z, extra -> param y, flag -l -> param multi_line
+@apr.map(an.x, apr.obj(1111), an.z, apr.toe, multi_line=an.l)
 def xyz_and_more(x, y, z, more, multi_line=False):
-    print(f'x={x}', f'y={y}', f'z={z}', f'and more: {", ".join(more)}', sep='\n' if multi_line else ', ')
+  print(f'x={x}', f'y={y}', f'z={z}', f'and more: {", ".join(more)}', sep='\n' if multi_line else ', ')
 
 
 @apr.sub()
@@ -61,7 +61,7 @@ def xyz_and_more(x, y, z, more, multi_line=False):
 @apr.arg('b')
 @apr.map('a', 'b')
 def ab(a, b):
-    print(a, b)
+  print(a, b)
 
 
 apr.parse(catch_unknown_args=True)

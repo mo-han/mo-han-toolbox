@@ -13,7 +13,7 @@ def main():
     apr.run()
 
 
-@apr.sub(apr.rnu(), aliases=['mvfav'])
+@apr.sub(apr.rpl_dot, aliases=['mvfav'])
 @apr.arg(an.cookies)
 @apr.arg('from', choices=[str(i) for i in range(10)], help='src fav slot', metavar='from')
 @apr.arg('to', choices=[str(i) for i in range(10)], help='dst fav slot', metavar='to')
@@ -80,7 +80,7 @@ def _sorted_path_of_hentai_at_home_downloaded_gallery(gallery_path, gallery_type
     return dst
 
 
-@apr.sub(apr.rename_underscore())
+@apr.sub(apr.rpl_dot)
 @apr.arg(an.src, nargs='*')
 @apr.true(an.v, an.verbose)
 @apr.true(an.D, apr.dst2opt(an.dry_run))
@@ -105,7 +105,7 @@ def hath_sort(src: PathSourceType, *, verbose=False, dry_run=False):
                 print(f'! {src}: {repr(e)}')
 
 
-@apr.sub(apr.rename_underscore(), aliases=['rc'])
+@apr.sub(apr.rpl_dot, aliases=['rc'])
 @apr.arg(an.address, help='remote address for adb connect')
 @apr.map(an.address)
 def remote_control(remote_address: str):

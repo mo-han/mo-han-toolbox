@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from argparse import *
 
-from ezpykit import SingletonMetaClass, T, AttrName, re
+from ezpykit import SingletonMetaClass, T, AttrName, re, ObjectWrapper
 
 
 class CompactHelpFormatterWithDefaults(ArgumentDefaultsHelpFormatter):
@@ -14,12 +14,7 @@ class CompactHelpFormatterWithDefaults(ArgumentDefaultsHelpFormatter):
         return ', '.join(sorted(action.option_strings, reverse=True)) + ' ' + args_string
 
 
-class RawObject:
-    def __init__(self, obj):
-        self.value = obj
-
-
-class UnknownArgumentsPlaceholder(metaclass=SingletonMetaClass):
+class ExtraArgumentsTicket(metaclass=SingletonMetaClass):
     pass
 
 
@@ -33,31 +28,27 @@ class ArgumentParserRigger:
         self.arguments_config = {}
         self.target_call_config = {}
         self.namespace: T.Optional[Namespace] = None
-        self.unknown_args: T.List[str] = []
+        self.extra: T.List[str] = []
         self.last_target = None
         self.option_names = ['-h', '--help']
 
-    def get_arg(self, arg_dest: str, default=None):
-        return self.namespace.__dict__.get(arg_dest, default)
-
     @property
-    def unknown_placeholder(self):
-        return UnknownArgumentsPlaceholder()
-
-    @staticmethod
-    def raw_object(x):
-        return RawObject(x)
+    def ticket_of_extra(self):
+        return ExtraArgumentsTicket()
 
     @property
     def attr_name(self):
         return AttrName()
 
     @staticmethod
-    def rename_underscore(repl: str = '.'):
+    def namer_factory_replace_underscore(repl: str = '.'):
         def rename(x: str):
             return x.replace('_', repl)
 
         return rename
+
+    rpl_ = namer_factory_replace_underscore
+    rpl_dot = rpl_()
 
     def find(self, name: str, default=None):
         try:
@@ -65,8 +56,8 @@ class ArgumentParserRigger:
         except AttributeError:
             return default
 
-    def map_args_to_target_params(self, *args: str or RawObject or UnknownArgumentsPlaceholder,
-                                  **kwargs: str or RawObject or UnknownArgumentsPlaceholder):
+    def map_args_to_target_params(self, *args: str or ObjectWrapper or ExtraArgumentsTicket,
+                                  **kwargs: str or ObjectWrapper or ExtraArgumentsTicket):
         """factory decorator to map arguments to the signature of decorated callable target"""
 
         def deco(target):
@@ -95,10 +86,10 @@ class ArgumentParserRigger:
             return target()
 
     def restore_mapped_argument(self, x):
-        if isinstance(x, RawObject):
-            return x.value
-        elif isinstance(x, UnknownArgumentsPlaceholder):
-            return self.unknown_args
+        if isinstance(x, ObjectWrapper):
+            return x.content
+        elif isinstance(x, ExtraArgumentsTicket):
+            return self.extra
         else:
             return getattr(self.namespace, x)
 
@@ -113,7 +104,7 @@ class ArgumentParserRigger:
 
         return deco
 
-    def sub_command(self, rename=None, aliases=(), **kwargs):
+    def sub_command(self, namer=None, aliases=(), **kwargs):
         """factory decorator to add sub command, put this decorator on top"""
         if self.subparsers is None:
             self.subparsers = self.root_parser.add_subparsers(**self.subparsers_kwargs)
@@ -122,12 +113,12 @@ class ArgumentParserRigger:
         def deco(target):
             if not parser_kwargs.get('help') and target.__doc__:
                 parser_kwargs['help'] = target.__doc__
-            if not rename:
+            if not namer:
                 sub_name = target.__name__
-            elif isinstance(rename, str):
-                sub_name = rename
+            elif isinstance(namer, str):
+                sub_name = namer
             else:
-                sub_name = rename(target.__name__)
+                sub_name = namer(target.__name__)
             sub_parser = self.subparsers.add_parser(name=sub_name, aliases=aliases, **parser_kwargs)
             sub_parser.set_defaults(__target__=target)
             for _name, _args, _kwargs in self.arguments_config.get(target, []):
@@ -183,8 +174,8 @@ class ArgumentParserRigger:
                 return self.namespace
         elif item in ('parse_known_args', 'parse_known_intermixed_args'):
             def to_be_returned(*args, **kwargs):
-                self.namespace, self.unknown_args = getattr(p, item)(*args, **kwargs)
-                return self.namespace, self.unknown_args
+                self.namespace, self.extra = getattr(p, item)(*args, **kwargs)
+                return self.namespace, self.extra
         else:
             to_be_returned = getattr(p, item)
         return to_be_returned
@@ -198,9 +189,8 @@ class ArgumentParserRigger:
     sub = sub_command
     map = map_args_to_target_params
     run = run_target
-    ro = raw_object
-    skip = unknown_placeholder
+    obj = ObjectWrapper
+    toe = ticket_of_extra
     an = attr_name
     dst2opt = make_option_name_from_dest_name
     opt2dst = make_dest_name_from_option_name
-    rnu = rename_underscore

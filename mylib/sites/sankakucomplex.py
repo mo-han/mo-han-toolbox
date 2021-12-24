@@ -27,7 +27,7 @@ an.src = an.v = an.verbose = ''
 @apr.sub(aliases=['rm.bad.files'])
 @apr.arg(an.src, nargs='*')
 @apr.true(an.v, an.verbose)
-@apr.map(an.src, verbose=an.verbose, print_dirname=apr.ro(True))
+@apr.map(an.src, verbose=an.verbose, print_dirname=apr.obj(True))
 def remove_expired_link_files(src, verbose=False, print_dirname=False):
     dirs, files = resolve_path_to_dirs_files(src)
     bad_files = []
