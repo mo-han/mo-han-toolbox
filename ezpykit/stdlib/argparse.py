@@ -31,6 +31,7 @@ class ArgumentParserRigger:
         self.extra: T.List[str] = []
         self.last_target = None
         self.option_names = ['-h', '--help']
+        self.rpl_dot = self.rpl_()
 
     @property
     def ticket_of_extra(self):
@@ -48,7 +49,6 @@ class ArgumentParserRigger:
         return rename
 
     rpl_ = namer_factory_replace_underscore
-    rpl_dot = rpl_()
 
     def find(self, name: str, default=None):
         try:
