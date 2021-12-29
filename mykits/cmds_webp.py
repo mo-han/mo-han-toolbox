@@ -208,7 +208,7 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
             shutil.rmtree(unzip_dir)
 
 
-@apr.sub(apr.rpl_dot())
+@apr.sub(apr.rpl_dot)
 @apr.true('r', 'recursive')
 @apr.true('c', 'clean')
 @apr.true('z', 'cbz')
