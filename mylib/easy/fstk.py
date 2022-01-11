@@ -250,6 +250,10 @@ def sanitize_xu240(name: str, encoding: str = 'utf8') -> str:
     return text.ellipt_end(sanitize_xu(name), 240, encoding=encoding)
 
 
+def sanitize_xu_left(name: str, limit: int, encoding: str = 'utf8') -> str:
+    return text.ellipt_end(sanitize_xu(name), limit, encoding=encoding)
+
+
 def ensure_open_file(filepath, mode='r', **kwargs):
     parent, basename = os.path.split(filepath)
     if parent and not os.path.isdir(parent):
