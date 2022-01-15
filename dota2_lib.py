@@ -85,7 +85,7 @@ class Dota2Controller:
                 self.poll_interval = self.TIME_SLOT
             return True
 
-    def accept_then_back(self):
+    def accept(self):
         ready = locateOnScreen(self.material['game_ready'], grayscale=True) \
                 or locateOnScreen(self.material['accept'], grayscale=True) \
                 or None
@@ -93,7 +93,7 @@ class Dota2Controller:
             print('NEW GAME')
             # click(ready)
             keyboard.send_keys('{ENTER}')
-            hotkey('alt', 'tab')
+            # hotkey('alt', 'tab')
 
     def auto_waiter(self, show_trend=(0, 0)):
         last = time()
@@ -102,7 +102,7 @@ class Dota2Controller:
             if self.is_fg():
                 print('DOTA2', end='\r')
                 sleep(0.1)
-                self.accept_then_back()
+                self.accept()
             if show_trend[0]:
                 now = time()
                 if now - last >= show_trend[0]:
