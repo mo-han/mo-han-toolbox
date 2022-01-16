@@ -452,6 +452,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
             ffmpeg_args.add(b__a=kw[1:])
         elif kw[:3] == 'fps':
             ffmpeg_args.add(r=kw[3:])
+            tags.append(kw)
         elif kw == 'vcopy':
             ffmpeg_args.add(c__v='copy')
         elif kw == 'acopy':
