@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import os
 import webbrowser
 
 from mylib.ext.console_app import *
@@ -65,26 +64,30 @@ def get_cookies_path(middle_name):
     return fstk.make_path(env_var['cookies_dir'], f'cookies.{middle_name}.txt')
 
 
-def per_site(args: T.List[str]):
-    url = args2url(args)
+class MultiList(list):
+    pass
+
+
+def per_site(site_args: T.List[str]):
+    url = args2url(site_args)
 
     if 'pixiv.net' in url:
         args = [*GLDLCLIArgs(ugoira_conv=True,
                              o=['cookies-update=true',
                                 'filename="{category}.{id}_p{num}.{date:%Y-%m-%d}.{title}.{extension}"',
                                 'directory=["{category} {user[name]} {user[id]}"]']),
-                *args, url]
+                *site_args, url]
     elif 'fanbox.cc' in url:
         args = [*GLDLCLIArgs(cookies=get_cookies_path('fanbox'),
                              o=['cookies-update=true', 'videos=true',
                                 'filename="{category}.{id}_p{num}.{date!S:.10}.{filename}.@{creatorId}.{extension}"',
                                 'directory=["pixiv {user[name]} {user[userId]} {category} {creatorId}"]']),
-                *args, url]
+                *site_args, url]
     elif 'twitter.com' in url:
         args = [*GLDLCLIArgs(o=['videos=true', 'retweets=false', 'content=true',
                                 'filename="twitter.{tweet_id}_p{num}.{date:%Y-%m-%d}.{filename}.{extension}"',
                                 'directory=["{category} {author[nick]} @{author[name]}"]']),
-                *args, url]
+                *site_args, url]
     elif 'danbooru.donmai.us' in url:
         args = [*GLDLCLIArgs(cookies=get_cookies_path('danbooru'),
                              o=['cookies-update=true', 'videos=true', 'tags=true',
@@ -92,7 +95,7 @@ def per_site(args: T.List[str]):
                                 'filename="{category}.{id}.{created_at:.10}.{md5}.'
                                 '{tag_string_character!S:L80/(various)/}.{tag_string_artist!S:L80/(various)/}.'
                                 '{extension}"', ]),
-                *args, url]
+                *site_args, url]
     elif 'gelbooru.com' in url:
         args = [*GLDLCLIArgs(
             cookies=get_cookies_path('gelbooru'),
@@ -101,7 +104,7 @@ def per_site(args: T.List[str]):
                'filename="{category}.{id}.{date!S:.10}.{md5}.'
                '{tags_character!S:L80/(various)/}.{tags_artist!S:L80/(various)/}.{extension}"', ]
         ),
-                *args, url]
+                *site_args, url]
     elif 'realbooru.com' in url:
         args = [*GLDLCLIArgs(
             # cookies=get_cookies_path('realbooru'),
@@ -113,7 +116,7 @@ def per_site(args: T.List[str]):
                 '{search_tags!S:.80}.{extension}"'
             ]
         ),
-                *args, url]
+                *site_args, url]
     elif 'rule34.xxx' in url:
         args = [*GLDLCLIArgs(
             o=['cookies-update=true', 'videos=true', 'tags=true',
@@ -121,40 +124,71 @@ def per_site(args: T.List[str]):
                'filename="{category}.{id}.{date!S:.10}.{md5}.'
                '{tags_character!S:L80/(various)/}.{tags_artist!S:L80/(various)/}.{extension}"', ]
         ),
-                *args, url]
+                *site_args, url]
     elif 'chan.sankakucomplex.com' in url:
-        args = [*GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
-                             o=['cookies-update=true', 'videos=true', 'tags=true',
-                                'directory=["{category} {search_tags}"]',
-                                'filename="{category}.{id}.{date!S:.10}.{md5}.'
-                                '{tag_string_character!S:L64/(various)/}.{tag_string_artist!S:L80/(various)/}.'
-                                '{extension}"', ]),
-                *args, url]
+        options = [
+            'cookies-update=true', 'videos=true', 'tags=true',
+            'filename="{category}.{id}.{date!S:.10}.{md5}.{tag_string_character!S:L64/(various)/}.'
+            '{tag_string_artist!S:L80/(various)/}.{extension}"',
+        ]
+        site_arg0, *site_args = site_args
+        if site_arg0.startswith('pqr'):
+            num = int(site_arg0[3:])
+            tags_s = url.split('/?tags=', maxsplit=1)[-1]
+            args = MultiList([
+                [
+                    *GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
+                                 o=[*options,
+                                    'directory=["{category} ' + tags_s + ' order:popular,quality,recent"]']),
+                    *site_args, '--range', f'-{num//2}', url + ' order:popular'
+                ],
+                [
+                    *GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
+                                 o=[*options,
+                                    'directory=["{category} ' + tags_s + ' order:popular,quality,recent"]']),
+                    *site_args, '--range', f'-{num}', url + ' order:quality'
+                ],
+                [
+                    *GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
+                                 o=[*options,
+                                    'directory=["{category} ' + tags_s + ' order:popular,quality,recent"]']),
+                    *site_args, '--range', f'-{num//10}', url
+                ],
+            ])
+        else:
+            args = [
+                *GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
+                             o=[*options, 'directory=["{category} {search_tags}"]']),
+                site_arg0, *site_args, url
+            ]
     elif 'idol.sankakucomplex.com' in url:
-        args = [*GLDLCLIArgs(cookies=get_cookies_path('sankaku.idol'),
-                             o=['cookies-update=true', 'videos=true', 'tags=true',
-                                'directory=["{category} {search_tags}"]',
-                                'filename="{category}.{id}.{created_at!S:.10}.{md5}.'
-                                '{tags_idol!S:L80/(various)/}.{extension}"', ]),
-                *args, url]
+        options = [
+            'cookies-update=true', 'videos=true', 'tags=true',
+            'filename="{category}.{id}.{created_at!S:.10}.{md5}.{tags_idol!S:L80/(various)/}.{extension}"',
+        ]
+        args = [
+            *GLDLCLIArgs(cookies=get_cookies_path('sankaku.idol'),
+                         o=[*options, 'directory=["{category} {search_tags}"]']),
+            *site_args, url
+        ]
     elif 'newgrounds.com' in url:
         args = [*GLDLCLIArgs(o=['cookies-update=true', 'videos=true', 'tags=true',
                                 'directory=["[{user}] {category}"]',
                                 'filename="{category}.{index}.{date!S:.10}.'
                                 '{title}.{artist!S:L80/(various)/}.{extension}"', ]),
-                *args, url]
+                *site_args, url]
     elif 'kemono.party' in url:
         args = [*GLDLCLIArgs(cookies=get_cookies_path('kemonoparty'), write_metadata=True,
                              o=['cookies-update=true', 'videos=true', 'tags=true', 'metadata=true',
                                 'directory=["{category} {service} {username} {user}"]',
                                 'filename="{category}.{service}.{user}.{id}_p{num}.{date!S:.10}.{filename}.'
                                 '{title}.{extension}"', ]),
-                *args, url]
+                *site_args, url]
     elif 'nhentai' in url:
         args = [*GLDLCLIArgs(o=make_options_list(dict(
             directory=['{title} [{category} {gallery_id}]'],
             filename='{filename}.{extension}'
-        ))), *args, url]
+        ))), *site_args, url]
     else:
         raise NotImplementedError(url)
 
@@ -229,14 +263,21 @@ def main():
             args.pop(0)
             url = args2url(args)
             return webbrowser.open_new_tab(url)
-        cmd = new_gallery_dl_cmd() + per_site(args)
-        try:
-            p = subprocess.Popen(cmd)
-            print(p.args)
-            if p.wait() and pause_on_error:
-                console_pause()
-        except KeyboardInterrupt:
-            sys.exit(2)
+        site_args = per_site(args)
+        cmd_l = []
+        if isinstance(site_args, MultiList):
+            for i in site_args:
+                cmd_l.append(new_gallery_dl_cmd() + i)
+        else:
+            cmd_l.append(new_gallery_dl_cmd() + site_args)
+        for cmd in cmd_l:
+            try:
+                p = subprocess.Popen(cmd)
+                print(p.args)
+                if p.wait() and pause_on_error:
+                    console_pause()
+            except KeyboardInterrupt:
+                sys.exit(2)
 
 
 if __name__ == '__main__':
