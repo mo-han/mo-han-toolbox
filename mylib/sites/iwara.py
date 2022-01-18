@@ -6,10 +6,11 @@ from urllib.parse import urlparse, urlunparse
 import youtube_dl.extractor.iwara as ytdl_iwara
 
 from ezpykit import *
+from ezpykit.builtin.dict import lkdict
 from mylib import easy
-from mylib.easy import text
+from mylib.easy import text, fstk
 from mylib.ext import html
-from mylib.web_client import get_html_element_tree
+from mylib.web_client import get_html_element_tree, requests
 
 HE = html.lxml_html.HtmlElement
 
@@ -31,6 +32,14 @@ def find_video_url(s: str):
     if r:
         return r
     return find_video_url_guess_path(s)
+
+
+def find_image_url(s: str):
+    from ezpykit.builtin import list
+    r = list()
+    for i in re.findall(r'https?://.*iwara.tv/images/[^">]+', s):
+        r.append_dedup(i)
+    return r
 
 
 # ytdl_iwara.InfoExtractor = youtube_dl_x.ytdl_common.InfoExtractor  # SEEMINGLY NO EFFECT
@@ -95,3 +104,40 @@ def iter_all_video_url_of_user(who: str, ecchi=True, only_urls=False):
 
 def find_video_id_in_link(link: str):
     return regex.match(r'.*/videos/([0-9a-z]+)', link).group(1)
+
+
+class IwaraImagePage:
+    def __init__(self, url):
+        self.data = lkdict()
+        self.url = url
+        self.html_etree = get_html_element_tree(url)
+
+    def parse(self):
+        d = self.data
+        m = 'metadata'
+        h = self.html_etree
+        d[[m, 'title']] = h.cssselect('div.node-info h1.title')[0].text
+        node_info_user = h.cssselect('div.node-info a.username')[0]
+        d[[m, 'uploader_username']] = node_info_user.text
+        d[[m, 'uploader_id']] = node_info_user.attrib['href'].split('/users/')[-1]
+        scheme = urlparse(self.url).scheme
+        photos = []
+        for i in h.cssselect('img'):
+            img_url = i.attrib['src']
+            if '/large/public/photos/' in img_url:
+                photos.append(urlunparse(urlparse(img_url)._replace(scheme=scheme)))
+        d[['resource', 'photos']] = photos
+
+    def download(self, root_dir='iwara images'):
+        if not self.data:
+            self.parse()
+        m = self.data['metadata']
+        title = m['title']
+        uploader = m['uploader_username']
+        folder = fstk.sanitize_xu200(f'{title} [Iwara images][{uploader}]')
+        with fstk.ctx_pushd(easy.path_join(root_dir, folder), ensure_dst=True):
+            for url in self.data[['resource', 'photos']]:
+                r = urlparse(url)
+                fn = easy.path_basename(r.path)
+                with open(fn, 'wb') as f:
+                    f.write(requests.get(url).content)
