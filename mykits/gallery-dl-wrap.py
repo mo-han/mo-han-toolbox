@@ -130,36 +130,36 @@ def per_site(site_args: T.List[str]):
             'filename="{category} {id} {date!S:.10} {md5} {tag_string_character!S:L64/(various)/} '
             '@{tag_string_artist!S:L80/(various)/}.{extension}"',
         ]
-        site_arg0, *site_args = site_args
-        if site_arg0.startswith('pqr'):
-            num = int(site_arg0[3:])
-            tags_s = url.split('/?tags=', maxsplit=1)[-1]
-            args = MultiList([
-                [
-                    *GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
-                                 o=[*options,
-                                    'directory=["{category} ' + tags_s + ' order:popular,quality,recent"]']),
-                    *site_args, '--range', f'-{num//2}', url + ' order:popular'
-                ],
-                [
-                    *GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
-                                 o=[*options,
-                                    'directory=["{category} ' + tags_s + ' order:popular,quality,recent"]']),
-                    *site_args, '--range', f'-{num}', url + ' order:quality'
-                ],
-                [
-                    *GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
-                                 o=[*options,
-                                    'directory=["{category} ' + tags_s + ' order:popular,quality,recent"]']),
-                    *site_args, '--range', f'-{num//10}', url
-                ],
-            ])
-        else:
-            args = [
-                *GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
-                             o=[*options, 'directory=["{category} {search_tags}"]']),
-                site_arg0, *site_args, url
-            ]
+        args = [
+            *GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
+                         o=[*options, 'directory=["{category} {search_tags}"]']),
+            *site_args, url
+        ]
+        if site_args:
+            site_arg0, *site_args = site_args
+            if site_arg0.startswith('pqr'):
+                num = int(site_arg0[3:])
+                tags_s = url.split('/?tags=', maxsplit=1)[-1]
+                args = MultiList([
+                    [
+                        *GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
+                                     o=[*options,
+                                        'directory=["{category} ' + tags_s + ' order:popular,quality,recent"]']),
+                        *site_args, '--range', f'-{num//2}', url + ' order:popular'
+                    ],
+                    [
+                        *GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
+                                     o=[*options,
+                                        'directory=["{category} ' + tags_s + ' order:popular,quality,recent"]']),
+                        *site_args, '--range', f'-{num}', url + ' order:quality'
+                    ],
+                    [
+                        *GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
+                                     o=[*options,
+                                        'directory=["{category} ' + tags_s + ' order:popular,quality,recent"]']),
+                        *site_args, '--range', f'-{num//10}', url
+                    ],
+                ])
     elif 'idol.sankakucomplex.com' in url:
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
