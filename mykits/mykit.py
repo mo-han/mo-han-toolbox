@@ -772,6 +772,9 @@ def url_from_clipboard():
     elif pattern == 'iwara':
         from mylib.sites.iwara import find_video_url
         urls = find_video_url(t)
+    elif pattern == 'iwaraimage':
+        from mylib.sites.iwara import find_image_url
+        urls = find_image_url(t)
     elif pattern in ('pornhub', 'ph'):
         from mylib.sites.pornhub import find_url_in_text
         urls = find_url_in_text(t)
