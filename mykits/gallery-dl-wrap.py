@@ -74,26 +74,26 @@ def per_site(site_args: T.List[str]):
     if 'pixiv.net' in url:
         args = [*GLDLCLIArgs(ugoira_conv=True,
                              o=['cookies-update=true',
-                                'filename="{category}.{id}_p{num}.{date:%Y-%m-%d}.{title}.{extension}"',
+                                'filename="{category} {id}_p{num} {date:%Y-%m-%d} {title}.{extension}"',
                                 'directory=["{category} {user[name]} {user[id]}"]']),
                 *site_args, url]
     elif 'fanbox.cc' in url:
         args = [*GLDLCLIArgs(cookies=get_cookies_path('fanbox'),
                              o=['cookies-update=true', 'videos=true',
-                                'filename="{category}.{id}_p{num}.{date!S:.10}.{filename}.@{creatorId}.{extension}"',
+                                'filename="{category} {id}_p{num} {date!S:.10} {filename} @{creatorId}.{extension}"',
                                 'directory=["pixiv {user[name]} {user[userId]} {category} {creatorId}"]']),
                 *site_args, url]
     elif 'twitter.com' in url:
         args = [*GLDLCLIArgs(o=['videos=true', 'retweets=false', 'content=true',
-                                'filename="twitter.{tweet_id}_p{num}.{date:%Y-%m-%d}.{filename}.{extension}"',
+                                'filename="twitter.{tweet_id}_p{num} {date:%Y-%m-%d} {filename}.{extension}"',
                                 'directory=["{category} {author[nick]} @{author[name]}"]']),
                 *site_args, url]
     elif 'danbooru.donmai.us' in url:
         args = [*GLDLCLIArgs(cookies=get_cookies_path('danbooru'),
                              o=['cookies-update=true', 'videos=true', 'tags=true',
                                 'directory=["{category} {search_tags}"]',
-                                'filename="{category}.{id}.{created_at:.10}.{md5}.'
-                                '{tag_string_character!S:L80/(various)/}.{tag_string_artist!S:L80/(various)/}.'
+                                'filename="{category} {id} {created_at:.10} {md5} '
+                                '{tag_string_character!S:L80/(various)/} @{tag_string_artist!S:L80/(various)/}.'
                                 '{extension}"', ]),
                 *site_args, url]
     elif 'gelbooru.com' in url:
@@ -101,8 +101,8 @@ def per_site(site_args: T.List[str]):
             cookies=get_cookies_path('gelbooru'),
             o=['cookies-update=true', 'videos=true', 'tags=true',
                'directory=["{category} {search_tags}"]',
-               'filename="{category}.{id}.{date!S:.10}.{md5}.'
-               '{tags_character!S:L80/(various)/}.{tags_artist!S:L80/(various)/}.{extension}"', ]
+               'filename="{category} {id} {date!S:.10} {md5} '
+               '{tags_character!S:L80/(various)/} @{tags_artist!S:L80/(various)/}.{extension}"', ]
         ),
                 *site_args, url]
     elif 'realbooru.com' in url:
@@ -111,8 +111,7 @@ def per_site(site_args: T.List[str]):
             o=[
                 'cookies-update=true', 'videos=true', 'tags=true',
                 'directory=["{category} {search_tags}"]',
-                'filename="{category}.{id}.{date!S:.10}.{md5}.'
-                # '{tags_character!S:L80/(various)/}.{tags_artist!S:L80/(various)/}.{extension}"',
+                'filename="{category} {id} {date!S:.10} {md5} '
                 '{search_tags!S:.80}.{extension}"'
             ]
         ),
@@ -121,15 +120,15 @@ def per_site(site_args: T.List[str]):
         args = [*GLDLCLIArgs(
             o=['cookies-update=true', 'videos=true', 'tags=true',
                'directory=["{category} {search_tags}"]',
-               'filename="{category}.{id}.{date!S:.10}.{md5}.'
-               '{tags_character!S:L80/(various)/}.{tags_artist!S:L80/(various)/}.{extension}"', ]
+               'filename="{category} {id} {date!S:.10} {md5} '
+               '{tags_character!S:L80/(various)/} @{tags_artist!S:L80/(various)/}.{extension}"', ]
         ),
                 *site_args, url]
     elif 'chan.sankakucomplex.com' in url:
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
-            'filename="{category}.{id}.{date!S:.10}.{md5}.{tag_string_character!S:L64/(various)/}.'
-            '{tag_string_artist!S:L80/(various)/}.{extension}"',
+            'filename="{category} {id} {date!S:.10} {md5} {tag_string_character!S:L64/(various)/} '
+            '@{tag_string_artist!S:L80/(various)/}.{extension}"',
         ]
         site_arg0, *site_args = site_args
         if site_arg0.startswith('pqr'):
@@ -164,7 +163,7 @@ def per_site(site_args: T.List[str]):
     elif 'idol.sankakucomplex.com' in url:
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
-            'filename="{category}.{id}.{created_at!S:.10}.{md5}.{tags_idol!S:L80/(various)/}.{extension}"',
+            'filename="{category} {id} {created_at!S:.10} {md5} @{tags_idol!S:L80/(various)/}.{extension}"',
         ]
         args = [
             *GLDLCLIArgs(cookies=get_cookies_path('sankaku.idol'),
@@ -174,14 +173,14 @@ def per_site(site_args: T.List[str]):
     elif 'newgrounds.com' in url:
         args = [*GLDLCLIArgs(o=['cookies-update=true', 'videos=true', 'tags=true',
                                 'directory=["[{user}] {category}"]',
-                                'filename="{category}.{index}.{date!S:.10}.'
-                                '{title}.{artist!S:L80/(various)/}.{extension}"', ]),
+                                'filename="{category} {index} {date!S:.10} '
+                                '{title} @{artist!S:L80/(various)/}.{extension}"', ]),
                 *site_args, url]
     elif 'kemono.party' in url:
         args = [*GLDLCLIArgs(cookies=get_cookies_path('kemonoparty'), write_metadata=True,
                              o=['cookies-update=true', 'videos=true', 'tags=true', 'metadata=true',
                                 'directory=["{category} {service} {username} {user}"]',
-                                'filename="{category}.{service}.{user}.{id}_p{num}.{date!S:.10}.{filename}.'
+                                'filename="{category} {service} {user} {id}_p{num} {date!S:.10} {filename} '
                                 '{title}.{extension}"', ]),
                 *site_args, url]
     elif 'nhentai' in url:
