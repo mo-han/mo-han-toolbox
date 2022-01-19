@@ -74,7 +74,7 @@ def per_site(site_args: T.List[str]):
     if 'pixiv.net' in url:
         args = [*GLDLCLIArgs(ugoira_conv=True,
                              o=['cookies-update=true',
-                                'filename="{category} {id}_p{num} {date:%Y-%m-%d} {title} @{user[name].{extension}"',
+                                'filename="{category} {id}_p{num} {date:%Y-%m-%d} {title} @{user[name]}.{extension}"',
                                 'directory=["{category} {user[id]} @{user[name]}"]']),
                 *site_args, url]
     elif 'fanbox.cc' in url:
