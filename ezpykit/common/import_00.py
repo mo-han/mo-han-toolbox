@@ -6,4 +6,4 @@ from .util_00 import *
 
 sleep = time.sleep
 
-___ref = sys
+___ref = sys, SingletonMetaClass
