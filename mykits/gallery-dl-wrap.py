@@ -74,8 +74,8 @@ def per_site(site_args: T.List[str]):
     if 'pixiv.net' in url:
         args = [*GLDLCLIArgs(ugoira_conv=True,
                              o=['cookies-update=true',
-                                'filename="{category} {id}_p{num} {date:%Y-%m-%d} {title}.{extension}"',
-                                'directory=["{category} {user[name]} {user[id]}"]']),
+                                'filename="{category} {id}_p{num} {date:%Y-%m-%d} {title} @{user[name].{extension}"',
+                                'directory=["{category} {user[id]} @{user[name]}"]']),
                 *site_args, url]
     elif 'fanbox.cc' in url:
         args = [*GLDLCLIArgs(cookies=get_cookies_path('fanbox'),
@@ -179,14 +179,19 @@ def per_site(site_args: T.List[str]):
     elif 'kemono.party' in url:
         args = [*GLDLCLIArgs(cookies=get_cookies_path('kemonoparty'), write_metadata=True,
                              o=['cookies-update=true', 'videos=true', 'tags=true', 'metadata=true',
-                                'directory=["{category} {service} {username} {user}"]',
-                                'filename="{category} {service} {user} {id}_p{num} {date!S:.10} {filename} '
-                                '{title}.{extension}"', ]),
+                                'directory=["{category} {service} {user} @{username}"]',
+                                'filename="{category} {service} {id}_p{num} {date!S:.10} {filename} '
+                                '{title} @{username}.{extension}"', ]),
                 *site_args, url]
     elif 'nhentai' in url:
         args = [*GLDLCLIArgs(o=make_options_list(dict(
             directory=['{title} [{category} {gallery_id}]'],
             filename='{filename}.{extension}'
+        ))), *site_args, url]
+    elif 'hentai-foundry' in url:
+        args = [*GLDLCLIArgs(o=make_options_list(dict(
+            directory=['{category} @{artist}'],
+            filename='{category} {index} {date!S:.10} {title} @{artist}.{extension}'
         ))), *site_args, url]
     else:
         raise NotImplementedError(url)
