@@ -165,7 +165,7 @@ def per_site(site_args: T.List[str]):
                                 '{title} @{artist!S:L80/(various)/}.{extension}"', ]),
                 *site_args, url]
     elif 'kemono.party' in url:
-        args = [*GLDLCLIArgs(cookies=get_cookies_path('kemonoparty'), write_metadata=True,
+        args = [*GLDLCLIArgs(cookies=get_cookies_path('kemonoparty'),
                              o=['cookies-update=true', 'videos=true', 'tags=true', 'metadata=true',
                                 'directory=["{username} {category} {service} {user}"]',
                                 'filename="{category} {service} {date!S:.10} {id}_p{num} {filename} '
