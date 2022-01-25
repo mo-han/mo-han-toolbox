@@ -120,7 +120,7 @@ def per_site(site_args: T.List[str]):
     elif 'rule34.xxx' in url:
         args = [*GLDLCLIArgs(
             o=['cookies-update=true', 'videos=true', 'tags=true',
-               'directory=["{category} {search_tags}"]',
+               'directory=["{search_tags} {category}"]',
                'filename="{category} {date!S:.10} {id} {md5} '
                '{tags_character!S:L80/(various)/} @{tags_artist!S:L80/(various)/}.{extension}"', ]
         ),
