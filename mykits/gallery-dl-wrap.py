@@ -140,7 +140,7 @@ def per_site(site_args: T.List[str]):
             pqr_arg, *site_args = site_args
             if pqr_arg.startswith('pqr'):
                 num = int(pqr_arg[3:])
-                tags_s = url.split('/?tags=', maxsplit=1)[-1]
+                tags_s = url.split('/?tags=', maxsplit=1)[-1].strip()
                 gldl_args = GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
                                         o=[*options, f'directory=["{tags_s} {{category}} {pqr_arg}"]'])
                 args = MultiList([
