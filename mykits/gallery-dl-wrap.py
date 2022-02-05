@@ -144,7 +144,7 @@ def per_site(site_args: T.List[str]):
                 gldl_args = GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
                                         o=[*options, f'directory=["{tags_s} {{category}} {pqr_arg}"]'])
                 args = MultiList([
-                    [*gldl_args, *site_args, '--range', f'-{num}', url + ' order:popular'],
+                    [*gldl_args, *site_args, '--range', f'-{num // 2}', url + ' order:popular'],
                     [*gldl_args, *site_args, '--range', f'-{num}', url + ' order:quality'],
                     [*gldl_args, *site_args, '--range', f'-{num // 10}', url],
                 ])
