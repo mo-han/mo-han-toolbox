@@ -137,16 +137,15 @@ def per_site(site_args: T.List[str]):
             *site_args, url
         ]
         if site_args:
-            pqr_arg, *site_args = site_args
-            if pqr_arg.startswith('pqr'):
-                num = int(pqr_arg[3:])
+            pq_arg, *site_args = site_args
+            if pq_arg.startswith('pq'):
+                num = int(pq_arg[2:])
                 tags_s = url.split('/?tags=', maxsplit=1)[-1].strip()
                 gldl_args = GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
-                                        o=[*options, f'directory=["{tags_s} {{category}} {pqr_arg}"]'])
+                                        o=[*options, f'directory=["{tags_s} {{category}} {pq_arg}"]'])
                 args = MultiList([
-                    [*gldl_args, *site_args, '--range', f'-{num // 2}', url + ' order:popular'],
+                    [*gldl_args, *site_args, '--range', f'-{num}', url + ' order:popular'],
                     [*gldl_args, *site_args, '--range', f'-{num}', url + ' order:quality'],
-                    [*gldl_args, *site_args, '--range', f'-{num // 10}', url],
                 ])
     elif 'idol.sankakucomplex.com' in url:
         options = [
