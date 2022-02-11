@@ -331,7 +331,8 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         _, h = self.html
         desc = seq_call_return((
             {'target': lambda: h.xpath('//div[@id="v_desc"]')[0].text_content()},
-            {'target': lambda: h.xpath('//meta[@name="description"]')[0].attrib['content']}
+            {'target': lambda: h.xpath('//meta[@name="description"]')[0].attrib['content']},
+            {'target': lambda: h.cssselect('.video-desc')[0].text},
         ))
         return desc
 
