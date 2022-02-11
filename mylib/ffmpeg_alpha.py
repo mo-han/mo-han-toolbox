@@ -463,12 +463,8 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
             res_limit = 'FHD'
         elif kw in ('HD', 'hd'):
             res_limit = 'HD'
-        elif kw in ('qHD',):
+        elif kw in ('qHD', 'qhd'):
             res_limit = 'qHD'
-        elif kw in ('QHD', 'qhd'):
-            res_limit = 'QHD'
-        elif kw.lower() == '4k':
-            res_limit = '4K'
         elif kw.lower() == '360p':
             res_limit = '360p'
         elif kw in ('2ch', 'stereo'):
