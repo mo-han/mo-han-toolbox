@@ -390,7 +390,10 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     def get_author(self):
         self.ensure_html_updated()
         _, h = self.html
-        return h.xpath('//meta[@name="author"]')[0].attrib['content']
+        return seq_call_return([
+            {'target': lambda: h.xpath('//meta[@name="author"]')[0].attrib['content']},
+            {'target': lambda: h.cssselect('.staff-multi .info-name')[0].text},
+        ], common_exception=IndexError)
 
     def get_author_label(self):
         return f'[{self.get_author()}]'
