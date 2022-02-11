@@ -393,7 +393,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         return seq_call_return([
             {'target': lambda: h.xpath('//meta[@name="author"]')[0].attrib['content']},
             {'target': lambda: h.cssselect('.staff-multi .info-name')[0].text},
-        ], common_exception=IndexError)
+        ])
 
     def get_author_label(self):
         return f'[{self.get_author()}]'
