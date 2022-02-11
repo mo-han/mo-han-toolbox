@@ -306,7 +306,8 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         _, h = self.html
         t = seq_call_return((
             {'target': lambda: h.xpath('//*[@class="video-title"]')[0].attrib['title']},
-            {'target': lambda: h.xpath('//meta[@property="og:title"]')[0].attrib['content']}
+            {'target': lambda: h.xpath('//meta[@property="og:title"]')[0].attrib['content']},
+            {'target': lambda: h.xpath('//title')[0].text},
         ), common_exception=IndexError)
         t += ' ' + self.get_vid_label() + self.get_author_label()
         return t
