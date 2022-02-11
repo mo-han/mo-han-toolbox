@@ -608,7 +608,7 @@ def seq_call_return(tasks: T.Iterable[dict], common_exception=Exception):
         - else, it will be raised, which will stop the whole sequence
     however, if the whole sequence failed (no return), the last exception will be raised
     """
-    e = None
+    d = {'e': None}
     ok = False
     for task in tasks:
         exception = task.get('exception', common_exception)
@@ -619,9 +619,9 @@ def seq_call_return(tasks: T.Iterable[dict], common_exception=Exception):
             ok = True
             return r
         except exception as e:
-            pass
-    if not ok and e:
-        raise e
+            d['e'] = e
+    if not ok and d['e']:
+        raise d['e']
 
 
 class NonBlockingCaller:
