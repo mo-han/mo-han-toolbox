@@ -18,12 +18,24 @@ clipboard = ostk.clipboard
 
 
 class PotPlayerKit:
-    def __init__(self, gasp_time: int or float = 0.01):
+    def __init__(self, gasp_time: int or float = 0.05):
         # import warnings
         # warnings.simplefilter('ignore', category=UserWarning)
         self.gasp_time = gasp_time
         self._window = App().connect(handle=self.list[0].handle).window(found_index=1)
         self._cache = {'fileinfo': {}}
+
+    @staticmethod
+    def find_descendant(node, **kwargs):
+        if not kwargs:
+            raise ValueError('empty condition kwargs')
+        for i in node.descendants():
+            p = i.get_properties()
+            for k, v in kwargs.items():
+                if v != p.get(k):
+                    break
+            else:
+                return i
 
     def select(self, element: HwndElementInfo):
         self._window = App().connect(handle=element.handle)
@@ -37,8 +49,12 @@ class PotPlayerKit:
         return self._cache
 
     @property
-    def current(self):
+    def player_window(self):
         return self._window
+
+    @property
+    def dialog_window(self):
+        return self.player_window.app.windows(class_name='#32770')[0]
 
     @property
     def list(self):
@@ -48,7 +64,7 @@ class PotPlayerKit:
         old_coord = mouse.get_position()
         while True:
             try:
-                self.current.set_focus()
+                self.player_window.set_focus()
                 break
             except pywinauto.findwindows.ElementAmbiguousError as e:
                 print('!', e)
@@ -72,10 +88,13 @@ class PotPlayerKit:
         t0 = time.time()
         clipboard.clear()
         self.focus()
+        self.gasp()
         keyboard.press_and_release('ctrl+f1')
-        for _ in range(5):
-            keyboard.press_and_release('shift+tab')
-        keyboard.press_and_release('enter')
+        self.gasp()
+        # for _ in range(5):
+        #     keyboard.press_and_release('shift+tab')
+        # keyboard.press_and_release('enter')
+        self.find_descendant(self.dialog_window, class_name='Button', control_id=3024).click()
         self.gasp()
         keyboard.press_and_release('alt+p, esc')
         self.gasp()
