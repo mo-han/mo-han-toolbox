@@ -6,7 +6,7 @@ from urllib.parse import urlparse, urlunparse
 import youtube_dl.extractor.iwara as ytdl_iwara
 
 from ezpykit import *
-from ezpykit.builtin.dict import lkdict
+from ezpykit.builtin_enhance._dict import ListKeyDict
 from mylib import easy
 from mylib.easy import text, fstk
 from mylib.ext import html
@@ -25,8 +25,8 @@ def find_video_url_guess_path(s: str, ecchi=True) -> list:
 
 
 def find_video_url(s: str):
-    from ezpykit.builtin import list
-    r = list()
+    from ezpykit.builtin_enhance import EzList
+    r = EzList()
     for i in re.findall(r'https?://.*iwara.tv/videos/[0-9a-zA-Z]+', s):
         r.append_dedup(i)
     if r:
@@ -35,8 +35,8 @@ def find_video_url(s: str):
 
 
 def find_image_url(s: str):
-    from ezpykit.builtin import list
-    r = list()
+    from ezpykit.builtin_enhance import EzList
+    r = EzList()
     for i in re.findall(r'https?://.*iwara.tv/images/[^">]+', s):
         r.append_dedup(i)
     return r
@@ -108,7 +108,7 @@ def find_video_id_in_link(link: str):
 
 class IwaraImagePage:
     def __init__(self, url):
-        self.data = lkdict()
+        self.data = ListKeyDict()
         self.url = url
         self.html_etree = get_html_element_tree(url)
 

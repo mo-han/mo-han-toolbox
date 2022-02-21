@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-from ._null import *
+from .common import *
 
 
-class EzEnVar(EzEnVar):
+class EnVarKit(EnVarKit):
     @staticmethod
     def save(*args, **kwargs):
-        envar_fp = f'~/.ezcolib_envar'
+        envar_fp = f'~/.ezpykit_envar'
         profile_fp = f'~/.profile'
         the_line = f'test -f {envar_fp} && source {envar_fp}\n'
         with open(tilde_path(profile_fp), 'a+') as f:

@@ -2,8 +2,8 @@
 from os import *
 
 if name == 'nt':
-    from ._nt import *
+    from .nt import *
 elif name == 'posix':
-    from ._posix import *
+    from .posix import *
 else:
-    from ._null import *
+    from .common import *

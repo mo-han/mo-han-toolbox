@@ -4,11 +4,13 @@ import os as _os
 get_dirname = _os.path.dirname
 get_basename = _os.path.basename
 join_path = _os.path.join
+split_path = _os.path.split
+split_ext = _os.path.splitext
 tilde_path = _os.path.expanduser
 envar_path = _os.path.expandvars
 
 
-class EzEnVar:
+class EnVarKit:
     @staticmethod
     def set(*args, **kwargs):
         for data in [*args, kwargs]:

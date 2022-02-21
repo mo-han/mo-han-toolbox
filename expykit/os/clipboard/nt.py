@@ -8,11 +8,11 @@ import win32clipboard
 
 from expykit.os.clipboard.nt_html import HTMLClipboardMixin
 from ezpykit import *
-from ezpykit.builtin import str
+from ezpykit.builtin_enhance import *
 
 
 class Clipboard(HTMLClipboardMixin, metaclass=SingletonMetaClass):
-    cf_dict = {str.removeprefix(name, 'CF_'): method for name, method in inspect.getmembers(win32clipboard) if
+    cf_dict = {str_remove_prefix(name, 'CF_'): method for name, method in inspect.getmembers(win32clipboard) if
                name.startswith('CF_')}
 
     class OpenError(Exception):

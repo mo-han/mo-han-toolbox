@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-class list(list):
+class EzList(list):
     def append_dedup(self, x, reindex=False):
         if x in self:
             if reindex:

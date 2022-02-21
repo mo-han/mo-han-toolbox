@@ -1,23 +1,49 @@
 #!/usr/bin/env python3
-class ConfigSourceTypeEnum:
-    yaml = 'yaml'
+from ezpykit.config import *
 
 
-class YAMLFileLoader:
-    def __init__(self, fp, encoding='utf8', **kwargs):
+class YAMLConfig(DictConfig):
+    encoding = 'utf8'
+
+    def __init__(self, filepath=None, document: str = None):
         import yaml
-        x = yaml.safe_load(open(fp, encoding=encoding, **kwargs))
-        if isinstance(x, dict):
-            self.dict = x
-        raise ValueError(f'the document is not a dict: {fp}')
+
+        if filepath:
+            with open(filepath, encoding=self.encoding) as f:
+                s = f.read()
+        elif document:
+            s = document
+        else:
+            raise ValueError('neither filepath nor document')
+        self.set_data(yaml.safe_load(s))
 
 
-class ConfigDict(dict):
-    _loader_map = {ConfigSourceTypeEnum.yaml: YAMLFileLoader}
-    src_type = ConfigSourceTypeEnum.yaml
-    _current_node = None
+class JSONConfigSource(DictConfig):
+    encoding = 'utf8'
 
-    @property
-    def current_node(self):
-        if self._current_node is None:
-            return self
+    def __init__(self, filepath=None, string=None):
+        import json
+
+        if filepath:
+            self.set_data(json.load(filepath, encodings=self.encoding))
+        elif string:
+            self.set_data(json.loads(string))
+        else:
+            raise ValueError('neither filepath nor string')
+
+
+class UnionConfig:
+    def __init__(self, *config: ConfigABC):
+        self.config_sequence = config
+
+    def __contains__(self, item):
+        for config in self.config_sequence:
+            if item in config:
+                return True
+        return False
+
+    def __getitem__(self, item):
+        for c in self.config_sequence:
+            if item in c:
+                return c[item]
+        raise KeyError(item)

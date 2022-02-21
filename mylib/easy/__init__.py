@@ -327,13 +327,13 @@ def glob_or_exist_to_dirs_files(x: T.Union[T.Iterable[str], str, T.NoneType], *,
 
 def deco_factory_param_value_choices(choices: T.Dict[int or str, T.Iterable] or None, *args,
                                      **kwargs) -> T.Decorator:
-    """decorator factory: force arguments of a func limited inside the given choices
+    """decorator factory: force arguments of a func limited inside the given options
 
-    :param choices: a dict which describes the choices of arguments
+    :param choices: a dict which describes the options of arguments
         the key of the dict must be either the index of args or the key(str) of kwargs
         the value of the dict must be an iterable
-        choices could be supplemented by *args and **kwargs
-        choices could be empty or None"""
+        options could be supplemented by *args and **kwargs
+        options could be empty or None"""
     choices = choices or {}
     for i in range(len(args)):
         choices[i] = args[i]

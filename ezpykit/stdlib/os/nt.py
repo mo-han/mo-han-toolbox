@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-from ._null import *
+from .common import *
 import subprocess
 
 
-class EzEnVar(EzEnVar):
+class EnVarKit(EnVarKit):
     @staticmethod
     def save(*args, **kwargs):
         for data in [*args, kwargs]:

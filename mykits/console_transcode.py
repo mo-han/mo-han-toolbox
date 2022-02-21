@@ -2,7 +2,7 @@
 import codecs
 
 from mylib.ext.console_app import *
-from ezpykit.stdlib.threading import ez_thread_factory
+from ezpykit.stdlib.threading import thread_factory
 
 apr = ArgumentParserRigger()
 
@@ -31,9 +31,9 @@ def stdout_stderr_transcode(inner_encoding, outer_encoding, args):
                 to_pipe.flush()
 
     p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-    ez_thread_factory(name='out')(transcode_pipe, p.stdout, inner_encoding, sys.stdout.buffer, outer_encoding).start()
-    ez_thread_factory(name='err')(transcode_pipe, p.stderr, inner_encoding, sys.stderr.buffer, outer_encoding).start()
-    ez_thread_factory(name='in')(transcode_pipe, sys.stdin.buffer, outer_encoding, p.stdin, inner_encoding).start()
+    thread_factory(name='out')(transcode_pipe, p.stdout, inner_encoding, sys.stdout.buffer, outer_encoding).start()
+    thread_factory(name='err')(transcode_pipe, p.stderr, inner_encoding, sys.stderr.buffer, outer_encoding).start()
+    thread_factory(name='in')(transcode_pipe, sys.stdin.buffer, outer_encoding, p.stdin, inner_encoding).start()
     p.wait()
 
 

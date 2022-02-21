@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
-class DictMixinFeatureListKey:
+import collections.abc
+from ezpykit.common.util_00 import DecoListOfNameMagicVar
+
+__all__ = DecoListOfNameMagicVar()
+_Type_Mapping = collections.abc.Mapping
+
+
+@__all__
+def recursive_update_dict(d: dict, m: collections.abc.Mapping, factory_class=dict):
+    for k, v in m.items():
+        if isinstance(v, _Type_Mapping):
+            d[k] = recursive_update_dict(d.get(k, factory_class()), v)
+        else:
+            d[k] = v
+    return d
+
+
+@__all__
+class ListKeyDict(dict):
     @staticmethod
     def _key_is_list(key):
         return isinstance(key, list)
@@ -19,12 +37,16 @@ class DictMixinFeatureListKey:
         return self._getitem_by_list_key(key)
 
     def _getitem_by_list_key(self, key: list):
+        error = KeyError(key)
         i = self
         for k in key:
             try:
                 i = i[k]
             except KeyError:
-                raise KeyError(key)
+                raise error
+            except TypeError as e:
+                if e.args[0].endswith('is not subscriptable'):
+                    raise error
         return i
 
     def __setitem__(self, key, value):
@@ -62,13 +84,12 @@ class DictMixinFeatureListKey:
             return default
 
 
-class lkdict(DictMixinFeatureListKey, dict):
-    """dict supporting list key"""
-
-
 def temp_test():
     import sys
-    d = lkdict({1: {3: {5: 'hi'}}})
+
+    print(__all__)
+    d = ListKeyDict({1: {3: {5: 'hi'}}})
+    print(isinstance(d, collections.abc.Mapping))
     kl = [1, 3, 5]
     wrong = [1, 2]
     print('[]:', d[kl])
@@ -84,7 +105,8 @@ def temp_test():
     print(type(d[[2, 4]]))
     print([2, 4, 6] in d)
     print([2, 3, 4] in d)
-    print(d[[2, 3, 4]])
+    recursive_update_dict(d, {2: 22, 1: {4: 4444, 3: {6: 666666}}}, ListKeyDict)
+    print(d, type(d[[1, 3]]))
 
 
 if __name__ == '__main__':
