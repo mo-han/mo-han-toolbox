@@ -8,7 +8,7 @@ import win32clipboard
 
 from expykit.os.clipboard.nt_html import HTMLClipboardMixin
 from ezpykit import *
-from ezpykit.builtin_enhance import *
+from ezpykit.enhance_builtin import *
 
 
 class Clipboard(HTMLClipboardMixin, metaclass=SingletonMetaClass):

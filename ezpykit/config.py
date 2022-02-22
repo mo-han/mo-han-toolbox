@@ -2,7 +2,7 @@
 import os
 from abc import ABC, abstractmethod
 
-from ezpykit.builtin_enhance import EzList, ListKeyDict
+from ezpykit.enhance_builtin import EzList, ListKeyDict
 from ezpykit.common import T
 
 
