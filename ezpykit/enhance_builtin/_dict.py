@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import collections.abc
-from ezpykit.common.util_00 import DecoListOfNameMagicVar
+from ezpykit.common.util import DecoListOfNameMagicVar
 
 __all__ = DecoListOfNameMagicVar()
 _Type_Mapping = collections.abc.Mapping
