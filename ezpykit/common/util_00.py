@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from ezpykit.stdlib import typing as T
+from ezpykit.enhance_stdlib import typing as T
 from functools import wraps
 
 
@@ -18,6 +18,18 @@ class SingletonMetaClass(type):
         if cls not in cls._instances:
             cls._instances[cls] = super().__call__(*args, **kwargs)
         return cls._instances[cls]
+
+
+def deco_singleton(cls):
+    _instances = {}
+
+    @wraps(cls)
+    def new(*args, **kwargs):
+        if cls not in _instances:
+            _instances[cls] = cls(*args, **kwargs)
+        return _instances[cls]
+
+    return new
 
 
 def deco_ctx_with_self(target):

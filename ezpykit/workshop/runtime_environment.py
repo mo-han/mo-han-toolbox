@@ -5,7 +5,7 @@ import signal
 import sys
 import tempfile
 
-from ezpykit.stdlib import os
+from ezpykit.enhance_stdlib import os
 
 TEMPDIR = tempfile.gettempdir()
 UNAME = platform.uname()

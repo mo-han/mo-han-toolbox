@@ -6,12 +6,14 @@ import os
 import pywintypes
 import win32clipboard
 
-from expykit.os.clipboard.nt_html import HTMLClipboardMixin
+from expykit.os.clipboard.common import ClipboardABC
+from expykit.os.clipboard.nt_win32cb_html import HTMLClipboardMixin
 from ezpykit import *
 from ezpykit.enhance_builtin import *
 
 
-class Clipboard(HTMLClipboardMixin, metaclass=SingletonMetaClass):
+@deco_singleton
+class Clipboard(ClipboardABC, HTMLClipboardMixin):
     cf_dict = {str_remove_prefix(name, 'CF_'): method for name, method in inspect.getmembers(win32clipboard) if
                name.startswith('CF_')}
 
@@ -43,7 +45,7 @@ class Clipboard(HTMLClipboardMixin, metaclass=SingletonMetaClass):
         return not self.__opened
 
     def open(self):
-        if not self.__opened:
+        if self.is_closed:
             sleep(self.delay)
             try:
                 win32clipboard.OpenClipboard()
@@ -52,12 +54,12 @@ class Clipboard(HTMLClipboardMixin, metaclass=SingletonMetaClass):
                 raise self.OpenError
 
     def close(self):
-        if self.__opened:
+        if self.is_opened:
             win32clipboard.CloseClipboard()
             # sleep(self.delay)  # maybe not needed
             self.__opened = False
 
-    def valid_format(self, x: str or int):
+    def ensure_format(self, x: str or int):
         """get valid clipboard format ('CF_*')"""
         if isinstance(x, int):
             pass
@@ -77,7 +79,7 @@ class Clipboard(HTMLClipboardMixin, metaclass=SingletonMetaClass):
 
     @deco_ctx_with_self
     def set(self, data, cf=win32clipboard.CF_UNICODETEXT):
-        cf = self.valid_format(cf)
+        cf = self.ensure_format(cf)
         return win32clipboard.SetClipboardData(cf, data)
 
     @deco_ctx_with_self
@@ -86,7 +88,7 @@ class Clipboard(HTMLClipboardMixin, metaclass=SingletonMetaClass):
 
     @deco_ctx_with_self
     def get(self, cf=win32clipboard.CF_UNICODETEXT):
-        cf = self.valid_format(cf)
+        cf = self.ensure_format(cf)
         if win32clipboard.IsClipboardFormatAvailable(cf):
             data = win32clipboard.GetClipboardData(cf)
         else:

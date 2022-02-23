@@ -4,7 +4,7 @@ import re
 
 import win32clipboard
 
-from .nt_util import deco_ctx_open_win32clipboard
+from ezpykit.common import deco_ctx_with_self
 
 
 class HTMLClipboardMixin:
@@ -51,12 +51,12 @@ class HTMLClipboardMixin:
     html_source_url = None
     html_clipboard_version = None
 
-    def get_cf_html(self):
+    def _get_cf_html(self):
         if self.CF_HTML is None:
             self.CF_HTML = win32clipboard.RegisterClipboardFormat('HTML Format')
         return self.CF_HTML
 
-    @deco_ctx_open_win32clipboard
+    @deco_ctx_with_self
     def _get_available_formats(self):
         formats = []
         while True:
@@ -67,11 +67,11 @@ class HTMLClipboardMixin:
         return formats
 
     def has_html(self):
-        return self.get_cf_html() in self._get_available_formats()
+        return self._get_cf_html() in self._get_available_formats()
 
-    @deco_ctx_open_win32clipboard
+    @deco_ctx_with_self
     def _read_html(self):
-        src = win32clipboard.GetClipboardData(self.get_cf_html())
+        src = win32clipboard.GetClipboardData(self._get_cf_html())
         src = src.decode('u8')
         matches = self.MARKER_BLOCK_EX_RE.match(src)
         if matches:
@@ -109,7 +109,7 @@ class HTMLClipboardMixin:
         sel_end = sel_start + len(selection)
         self._write_html(html, frag_start, frag_end, sel_start, sel_end, source_url)
 
-    @deco_ctx_open_win32clipboard
+    @deco_ctx_with_self
     def _write_html(self, html, fragment_start, fragment_end, selection_start, selection_end, source_url=__file__):
         win32clipboard.EmptyClipboard()
         prefix_dummy = self.MARKER_BLOCK_OUTPUT % (0, 0, 0, 0, 0, 0, source_url)
@@ -120,4 +120,4 @@ class HTMLClipboardMixin:
                                              source_url)
         src = (prefix + html)
         src = src.encode('u8')
-        win32clipboard.SetClipboardData(self.get_cf_html(), src)
+        win32clipboard.SetClipboardData(self._get_cf_html(), src)

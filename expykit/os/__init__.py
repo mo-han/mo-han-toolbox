@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from ezpykit.stdlib.os import *
+from ezpykit.enhance_stdlib.os import *
 from .clipboard import clipboard
 
-_ref_ = path
+__ref = path

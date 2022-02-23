@@ -58,7 +58,7 @@ features:
 ```python
 # test.py
 
-from ezpykit.stdlib.argparse import *
+from ezpykit.enhance_stdlib.argparse import *
 
 apr = ArgumentParserRigger()
 an = apr.an  # an.abc_xyz == 'abc_xyz'

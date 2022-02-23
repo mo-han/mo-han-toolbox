@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from ezpykit.stdlib.argparse import *
+from ezpykit.enhance_stdlib.argparse import *
 from mylib.easy import *
 from mylib.ext import fstk, text, ostk
 
