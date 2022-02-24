@@ -9,6 +9,7 @@ import win32clipboard
 from expykit.os.clipboard.common import ClipboardABC
 from expykit.os.clipboard.nt_win32cb_html import HTMLClipboardMixin
 from ezpykit import *
+from ezpykit.base.singleton import deco_singleton
 from ezpykit.enhance_builtin import *
 
 

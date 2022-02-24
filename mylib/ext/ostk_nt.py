@@ -2,7 +2,7 @@
 import pywintypes
 import win32clipboard
 
-import ezpykit.common.util
+import ezpykit.base.metautil
 import mylib.ext.tricks
 from mylib.easy.ostk import *
 

@@ -1,35 +1,15 @@
 #!/usr/bin/env python3
+from ezpykit.base.singleton import SingletonMetaClass, deco_singleton
 from ezpykit.enhance_stdlib import typing as T
 from functools import wraps
 
 
-def deco_factory_add_method_to_class(cls):
+def decofac_add_method_to_class(cls):
     def deco(func):
         setattr(cls, func.__name__, func)
         return func
 
     return deco
-
-
-class SingletonMetaClass(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super().__call__(*args, **kwargs)
-        return cls._instances[cls]
-
-
-def deco_singleton(cls):
-    _instances = {}
-
-    @wraps(cls)
-    def new(*args, **kwargs):
-        if cls not in _instances:
-            _instances[cls] = cls(*args, **kwargs)
-        return _instances[cls]
-
-    return new
 
 
 def deco_ctx_with_self(target):
@@ -40,7 +20,7 @@ def deco_ctx_with_self(target):
     return tgt
 
 
-def deco_factory_ctx(context_obj) -> T.Decorator:
+def decofac_ctx(context_obj) -> T.Decorator:
     def deco(target):
         def tgt(*args, **kwargs):
             with context_obj:
@@ -71,7 +51,7 @@ class DecoListOfNameMagicVar(list):
         return target
 
 
-def deco_check_arg_type___alphaversion(target):
+def deco_check_arg_type___donotuse(target):
     hint_d = T.get_type_hints(target)
 
     @wraps(target)

@@ -3,7 +3,7 @@ import os
 from abc import ABC, abstractmethod
 
 from ezpykit.enhance_builtin import EzList, ListKeyDict
-from ezpykit.common import T
+from ezpykit.base import T
 
 
 class ConfigABC(ABC):

@@ -11,13 +11,12 @@ import sys
 import tempfile
 import time
 
-from ezpykit.common.util import *
-from ezpykit.enhance_stdlib import io, os, argparse, threading, typing
+from ezpykit.base.metautil import *
+from ezpykit.enhance_stdlib import io, os, argparse, threading
 
 ___ref = re, sys, subprocess, pathlib, glob, queue, threading, io, os, argparse, sys
 
 sleep = time.sleep
-T = typing
 
 TEMPDIR = tempfile.gettempdir()
 UNAME = platform.uname()
@@ -26,6 +25,7 @@ USERNAME = getpass.getuser()
 OSNAME = platform.system()
 
 
-def helper_ensure_sigint():
+def ensure_sigint():
     if sys.platform == 'win32':
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # %ERRORLEVEL% = '-1073741510'
+

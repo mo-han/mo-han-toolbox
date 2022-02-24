@@ -4,7 +4,7 @@ import os
 import pyperclip
 
 from expykit.os.clipboard.common import ClipboardABC
-from ezpykit import deco_singleton
+from ezpykit.base.singleton import deco_singleton
 
 
 @deco_singleton

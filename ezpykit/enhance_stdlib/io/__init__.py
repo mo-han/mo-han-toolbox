@@ -3,12 +3,12 @@ import os as _os
 from io import *
 
 
-class SubscriptableFileIO(FileIO):
+class SliceFileIO(FileIO):
     """slice data in FileIO object"""
 
     def __init__(self, file, mode='rb', *args, **kwargs):
         """refer to doc string of io.FileIO"""
-        super(SubscriptableFileIO, self).__init__(file, mode=mode, *args, **kwargs)
+        super().__init__(file, mode=mode, *args, **kwargs)
         try:
             self._size = _os.path.getsize(file)
         except TypeError:
@@ -47,7 +47,7 @@ class SubscriptableFileIO(FileIO):
             else:
                 r = self.read(size)[::step]
         else:
-            raise TypeError("'{}' is not int or slice".format(key))
+            raise TypeError(key, (int, slice), type(key))
         self.seek(orig_pos)
         return r
 
@@ -57,7 +57,7 @@ class SubscriptableFileIO(FileIO):
 
         if isinstance(key, int):
             if value_len != 1:
-                raise ValueError("overflow write", value)
+                raise NotImplementedError("overflow write")
             if key < 0:
                 key = self.size + key
             self.seek(key)
@@ -85,5 +85,5 @@ class SubscriptableFileIO(FileIO):
             else:
                 raise NotImplementedError('overflow write')
         else:
-            raise TypeError("'{}' is not int or slice".format(key))
+            raise TypeError(key, (int, slice), type(key))
         self.seek(orig_pos)

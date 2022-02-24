@@ -4,7 +4,7 @@ import re
 
 import win32clipboard
 
-from ezpykit.common import deco_ctx_with_self
+from ezpykit.base import deco_ctx_with_self
 
 
 class HTMLClipboardMixin:
