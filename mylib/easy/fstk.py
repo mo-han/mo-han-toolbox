@@ -6,6 +6,7 @@ import urllib.parse
 import zipfile
 from enum import Enum
 
+import ezpykit.enhance_stdlib.re
 from mylib.easy import *
 from mylib.easy import text
 
@@ -39,10 +40,10 @@ def inplace_pattern_rename(src_path: str, pattern: str, repl: str, *,
     if only_basename:
         parent, basename = os.path.split(src_path)
         dst_path = os.path.join(parent,
-                                text.pattern_replace(src_path, pattern, repl, regex=regex,
-                                                     ignore_case=ignore_case))
+                                ezpykit.enhance_stdlib.re.replace(src_path, pattern, repl, use_regex=regex,
+                                                                  ignore_case=ignore_case))
     else:
-        dst_path = text.pattern_replace(src_path, pattern, repl, regex=regex, ignore_case=ignore_case)
+        dst_path = ezpykit.enhance_stdlib.re.replace(src_path, pattern, repl, use_regex=regex, ignore_case=ignore_case)
     if not dry_run:
         shutil.move(src_path, dst_path)
     if src_path != dst_path:
