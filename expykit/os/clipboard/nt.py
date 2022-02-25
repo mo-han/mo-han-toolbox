@@ -15,7 +15,7 @@ from ezpykit.enhance_builtin import *
 
 @deco_singleton
 class Clipboard(ClipboardABC, HTMLClipboardMixin):
-    cf_dict = {str_remove_prefix(name, 'CF_'): method for name, method in inspect.getmembers(win32clipboard) if
+    cf_dict = {EzStr.removeprefix(name, 'CF_'): method for name, method in inspect.getmembers(win32clipboard) if
                name.startswith('CF_')}
 
     class OpenError(Exception):

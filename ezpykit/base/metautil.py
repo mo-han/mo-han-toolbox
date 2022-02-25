@@ -4,9 +4,9 @@ from ezpykit.enhance_stdlib import typing as T
 from functools import wraps
 
 
-def decofac_add_method_to_class(cls):
+def decofac_add_method_to_class(cls, name=None):
     def deco(func):
-        setattr(cls, func.__name__, func)
+        setattr(cls, name or func.__name__, func)
         return func
 
     return deco
