@@ -12,7 +12,7 @@ def find_words(s: str, allow_mix_non_word_chars='\''):
         return findall(r'\w+', s)
 
 
-def replace(s, pattern: str, repl: str, *, use_regex=False, ignore_case=False):
+def simple_replace(s, pattern: str, repl: str, *, use_regex=False, ignore_case=False):
     if use_regex:
         if ignore_case:
             return sub(pattern, repl, s, flags=IGNORECASE)

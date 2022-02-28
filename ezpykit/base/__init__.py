@@ -4,7 +4,6 @@ import glob
 import pathlib
 import platform
 import queue
-import re
 import signal
 import subprocess
 import sys
@@ -12,7 +11,7 @@ import tempfile
 import time
 
 from ezpykit.base.metautil import *
-from ezpykit.enhance_stdlib import io, os, argparse, threading
+from ezpykit.enhance_stdlib import io, os, argparse, threading, re
 
 ___ref = re, sys, subprocess, pathlib, glob, queue, threading, io, os, argparse, sys
 
@@ -28,4 +27,3 @@ OSNAME = platform.system()
 def ensure_sigint():
     if sys.platform == 'win32':
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # %ERRORLEVEL% = '-1073741510'
-
