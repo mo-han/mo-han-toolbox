@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from ezpykit.enhance_stdlib.os import *
-from expykit.os.clipboard import *
+from ezpykitext.os.clipboard import *
 
 clpb: Clipboard = Clipboard()
 

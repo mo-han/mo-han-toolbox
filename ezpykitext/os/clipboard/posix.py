@@ -3,7 +3,7 @@ import os
 
 import pyperclip
 
-from expykit.os.clipboard.common import ClipboardABC
+from ezpykitext.os.clipboard.common import ClipboardABC
 from ezpykit.allinone.singleton import deco_singleton
 
 

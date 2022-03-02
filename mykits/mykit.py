@@ -752,7 +752,7 @@ dukto_x.add_argument('ndrop_args', metavar='[--] arguments for ndrop', nargs=REM
 
 
 def url_from_clipboard():
-    from expykit import os
+    from ezpykitext import os
     from mylib.easy.text import regex_find
     from html import unescape
     args = rtd.args

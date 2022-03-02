@@ -15,7 +15,7 @@ from setuptools import find_packages, setup, Command
 # Package meta-data.
 VERSION = '0.0.1a'
 IS_DEV_REVISION = True
-NAME = 'expykit'
+NAME = 'ezpykitext'
 DESCRIPTION = ''
 URL = 'https://github.com/mo-han/mo-han-toolbox/tree/master/expykit'
 EMAIL = 'zmhungrown@gmail.com'

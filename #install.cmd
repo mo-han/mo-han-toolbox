@@ -8,7 +8,7 @@ pyclean .
 mkdir %dst%\mylib
 xcopy /s /y mylib %dst%\mylib
 xcopy /s /y ezpykit %dst%\ezpykit
-xcopy /s /y expykit %dst%\expykit
+xcopy /s /y ezpykitext %dst%\ezpykitext
 xcopy /s /y mykits %dst%
 xcopy /s /y i18n %dst%\i18n
 popd

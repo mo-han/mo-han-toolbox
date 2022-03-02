@@ -6,8 +6,8 @@ import os
 import pywintypes
 import win32clipboard
 
-from expykit.os.clipboard.common import ClipboardABC
-from expykit.os.clipboard.nt_win32cb_html import HTMLClipboardMixin
+from ezpykitext.os.clipboard.common import ClipboardABC
+from ezpykitext.os.clipboard.nt_win32cb_html import HTMLClipboardMixin
 from ezpykit.allinone import *
 from ezpykit.allinone.singleton import deco_singleton
 from ezpykit.enhance_builtin import *

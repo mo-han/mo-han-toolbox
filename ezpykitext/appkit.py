@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from ezpykit.allinone import *
-from expykit import os
-from ezpykit.enhance_stdlib import argparse
+from ezpykitext import os
 
 
 def isrcpath(source, clipboard_path_as_default=True, exist_first=True):
@@ -14,7 +13,7 @@ def isrcpath(source, clipboard_path_as_default=True, exist_first=True):
             pass
     else:
         if not x:
-            return 
+            return
         if isinstance(x, list):
             yield from x
         elif isinstance(x, str):
