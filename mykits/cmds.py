@@ -7,9 +7,9 @@ from mylib.easy import fstk
 from ezpykit.enhance_stdlib import argparse
 
 __dirname__, __filename_without_extension__, __file_extension__ = mylib.easy.split_path_dir_base_ext(__file__)
-sub_apr = argparse.ArgumentParserRigger()
+sub_apr = argparse.ArgumentParserWrapper()
 an = sub_apr.an
-meta_apr = argparse.ArgumentParserRigger()
+meta_apr = argparse.ArgumentParserWrapper()
 
 
 @functools.lru_cache()

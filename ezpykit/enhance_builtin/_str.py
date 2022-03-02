@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import unicodedata
 
-from ezpykit.base import T, decofac_add_method_to_class
+from ezpykit.allinone import T, decofac_add_method_to_class
 
 CR = '\r'
 LF = '\n'

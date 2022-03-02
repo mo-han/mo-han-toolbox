@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from mylib.ext.console_app import *
 
-apr = ArgumentParserRigger()
+apr = ArgumentParserWrapper()
 an = apr.an
 an.l = an.multiline = an.L = an.single_line = an.q = an.quote = ''
 

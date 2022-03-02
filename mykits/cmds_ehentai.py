@@ -2,7 +2,7 @@
 from mylib.ext.console_app import *
 from mylib.sites import ehentai
 
-apr = ArgumentParserRigger()
+apr = ArgumentParserWrapper()
 an = apr.an
 cp = ConsolePrinter()
 an.src = an.v = an.verbose = an.D = an.dry_run = an.address = an.c = an.cookies = an.p = an.proxy = ''

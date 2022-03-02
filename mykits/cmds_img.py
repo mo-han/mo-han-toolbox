@@ -3,7 +3,7 @@ from mylib.easy import *
 from ezpykit.enhance_stdlib import argparse
 from mylib.ext import ostk
 
-apr = argparse.ArgumentParserRigger()
+apr = argparse.ArgumentParserWrapper()
 an = apr.an
 
 

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import getpass
-import glob
 import pathlib
 import platform
 import queue
@@ -10,8 +9,8 @@ import sys
 import tempfile
 import time
 
-from ezpykit.base.metautil import *
-from ezpykit.enhance_stdlib import io, os, argparse, threading, re
+from ezpykit.allinone.metautil import *
+from ezpykit.enhance_stdlib import io, os, argparse, threading, re, glob
 
 ___ref = re, sys, subprocess, pathlib, glob, queue, threading, io, os, argparse, sys
 

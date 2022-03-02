@@ -3,7 +3,7 @@ from ezpykit.enhance_stdlib.argparse import *
 from mylib.easy import *
 from mylib.ext import fstk, text, ostk
 
-___ref = fstk, text, ArgumentParserRigger
+___ref = fstk, text, ArgumentParserWrapper
 
 PathSourceTypeTuple = list, str, T.NoneType
 PathSourceType = T.Union[T.List[str], str, T.NoneType]

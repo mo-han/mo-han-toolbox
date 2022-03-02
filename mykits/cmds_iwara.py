@@ -2,7 +2,7 @@
 from mylib.ext.console_app import *
 from mylib.sites import iwara
 
-apr = ArgumentParserRigger()
+apr = ArgumentParserWrapper()
 an = apr.an
 an.user = an.general = an.L = an.single_line = ''
 

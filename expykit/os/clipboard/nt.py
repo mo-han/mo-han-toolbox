@@ -8,8 +8,8 @@ import win32clipboard
 
 from expykit.os.clipboard.common import ClipboardABC
 from expykit.os.clipboard.nt_win32cb_html import HTMLClipboardMixin
-from ezpykit import *
-from ezpykit.base.singleton import deco_singleton
+from ezpykit.allinone import *
+from ezpykit.allinone.singleton import deco_singleton
 from ezpykit.enhance_builtin import *
 
 
@@ -138,11 +138,9 @@ class Clipboard(ClipboardABC, HTMLClipboardMixin):
         return d
 
 
-clipboard = Clipboard()
-
-
 def test():
     from pprint import pprint
+    clipboard = Clipboard()
     pprint(clipboard.get_all())
     print(clipboard.get_html())
 

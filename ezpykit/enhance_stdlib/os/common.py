@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 import os as _os
 
-get_dirname = _os.path.dirname
-get_basename = _os.path.basename
-join_path = _os.path.join
-split_path = _os.path.split
-split_ext = _os.path.splitext
-tilde_path = _os.path.expanduser
-envar_path = _os.path.expandvars
+path = _os.path
+get_dirname = path.dirname
+get_basename = path.basename
+join_path = path.join
+split_path = path.split
+split_ext = path.splitext
+tilde_path = path.expanduser
+envar_path = path.expandvars
+path_exists = path.exists
+path_isfile = path.isfile
+path_isdir = path.isdir
 
 
 class EnVarKit:

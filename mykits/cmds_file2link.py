@@ -4,7 +4,7 @@ from mylib.ext.console_app import *
 
 import webbrowser
 
-apr = ArgumentParserRigger()
+apr = ArgumentParserWrapper()
 an = apr.an
 an.s = an.src = an.B = an.not_browse = ''
 

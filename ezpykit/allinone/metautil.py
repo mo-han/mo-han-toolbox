@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from ezpykit.base.singleton import SingletonMetaClass, deco_singleton
+from ezpykit.allinone.singleton import SingletonMetaClass, deco_singleton
 from ezpykit.enhance_stdlib import typing as T
 from functools import wraps
 

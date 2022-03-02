@@ -4,7 +4,7 @@ import codecs
 from mylib.ext.console_app import *
 from ezpykit.enhance_stdlib.threading import thread_factory
 
-apr = ArgumentParserRigger()
+apr = ArgumentParserWrapper()
 
 
 @apr.root()

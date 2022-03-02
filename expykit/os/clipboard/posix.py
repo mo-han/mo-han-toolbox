@@ -4,7 +4,7 @@ import os
 import pyperclip
 
 from expykit.os.clipboard.common import ClipboardABC
-from ezpykit.base.singleton import deco_singleton
+from ezpykit.allinone.singleton import deco_singleton
 
 
 @deco_singleton
@@ -30,6 +30,3 @@ class Clipboard(ClipboardABC):
     def get_path(self, exist_only=True) -> list:
         lines = [line.strip() for line in str(self.get()).splitlines()]
         return [line for line in lines if os.path.exists(line)]
-
-
-clipboard = Clipboard()

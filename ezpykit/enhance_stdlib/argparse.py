@@ -2,8 +2,8 @@
 import re
 from argparse import *
 
-from ezpykit.base.metautil import T, AttrName, ObjectWrapper
-from ezpykit.base.singleton import SingletonMetaClass
+from ezpykit.allinone.metautil import T, AttrName, ObjectWrapper
+from ezpykit.allinone.singleton import SingletonMetaClass
 
 
 class CompactHelpFormatterWithDefaults(ArgumentDefaultsHelpFormatter):
@@ -20,7 +20,7 @@ class ExtraArgumentsTicket(metaclass=SingletonMetaClass):
     pass
 
 
-class ArgumentParserRigger:
+class ArgumentParserWrapper:
     def __init__(self, formatter_class=CompactHelpFormatterWithDefaults,
                  subcommands_title='sub-cmd', subcommands_desc=None, **kwargs):
         self.parser_common_kwargs = dict(formatter_class=formatter_class, **kwargs)

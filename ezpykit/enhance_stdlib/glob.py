@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 from glob import *
+from urllib.parse import urlparse
+from ezpykit.enhance_builtin import EzStr
 
 
-def iglob_chain(*pattern, **kwargs):
-    import itertools
-    return itertools.chain.from_iterable(glob(p, **kwargs) for p in pattern)
+def iglob_url(glob_url, **kwargs):
+    u = urlparse(glob_url)
+    if u.scheme != 'glob':
+        raise ValueError('URL scheme', 'glob', u.scheme)
+    if u.netloc not in ('', 'localhost'):
+        raise NotImplementedError('remote glob')
+    return iglob(EzStr.removeprefix(u.path, '/'))

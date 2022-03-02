@@ -3,7 +3,7 @@ import difflib
 
 from mylib.ext.console_app import *
 
-apr = ArgumentParserRigger()
+apr = ArgumentParserWrapper()
 differ = difflib.Differ()
 an = apr.an
 an.v = an.verbose = an.r = an.recurse = an.dry_run = an.D = ''

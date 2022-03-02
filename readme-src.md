@@ -39,7 +39,7 @@ features:
 
 from ezpykit.enhance_stdlib.argparse import *
 
-apr = ArgumentParserRigger()
+apr = ArgumentParserWrapper()
 an = apr.an  # an.abc_xyz == 'abc_xyz'
 an.x = an.y = an.z = an.l = ''  # let the IDE remember these attr names
 
@@ -53,7 +53,7 @@ an.x = an.y = an.z = an.l = ''  # let the IDE remember these attr names
 # arg x -> param x, int(1111) -> param y, arg z -> param z, extra -> param y, flag -l -> param multi_line
 @apr.map(an.x, apr.obj(1111), an.z, apr.toe, multi_line=an.l)
 def xyz_and_more(x, y, z, more, multi_line=False):
-  print(f'x={x}', f'y={y}', f'z={z}', f'and more: {", ".join(more)}', sep='\n' if multi_line else ', ')
+    print(f'x={x}', f'y={y}', f'z={z}', f'and more: {", ".join(more)}', sep='\n' if multi_line else ', ')
 
 
 @apr.sub()
@@ -61,7 +61,7 @@ def xyz_and_more(x, y, z, more, multi_line=False):
 @apr.arg('b')
 @apr.map('a', 'b')
 def ab(a, b):
-  print(a, b)
+    print(a, b)
 
 
 apr.parse(catch_unknown_args=True)

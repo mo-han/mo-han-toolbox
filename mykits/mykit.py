@@ -758,9 +758,9 @@ def url_from_clipboard():
     args = rtd.args
     pattern = args.pattern
     try:
-        t = os.clipboard.get_html()
+        t = os.clpb.get_html()
     except (AttributeError, TypeError):
-        t = os.clipboard.get()
+        t = os.clpb.get()
     if not pattern:
         urls = []
     elif pattern == 'ed2k':
@@ -790,8 +790,8 @@ def url_from_clipboard():
     else:
         urls = regex_find(pattern, t, dedup=True)
     urls = '\r\n'.join(urls)
-    os.clipboard.clear()
-    os.clipboard.set(urls)
+    os.clpb.clear()
+    os.clpb.set(urls)
     print(urls)
 
 

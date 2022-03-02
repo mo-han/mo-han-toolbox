@@ -48,7 +48,7 @@ SCRIPT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 class EzQtUILoader(QUiLoader):
     """
     Subclass :class:`~PySide.QtUiTools.QUiLoader` to create the user interface
-    in a base instance.
+    in a allinone instance.
     Unlike :class:`~PySide.QtUiTools.QUiLoader` itself this class does not
     create a new instance of the top-level widget, but creates the user
     interface in an existing instance of the top-level class.
@@ -79,7 +79,7 @@ class EzQtUILoader(QUiLoader):
         """
 
         if parent is None and self.baseinstance:
-            # supposed to create the top-level widget, return the base instance
+            # supposed to create the top-level widget, return the allinone instance
             # instead
             return self.baseinstance
 
@@ -101,7 +101,7 @@ class EzQtUILoader(QUiLoader):
                         'No custom widget ' + class_name + ' found in customWidgets param of UiLoader __init__.')
 
             if self.baseinstance:
-                # set an attribute for the new child widget on the base
+                # set an attribute for the new child widget on the allinone
                 # instance, just like PyQt4.uic.loadUi does.
                 setattr(self.baseinstance, name, widget)
 

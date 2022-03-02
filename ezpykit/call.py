@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from ezpykit.base import T
+from ezpykit.allinone import T
 
 
 class SimpleCall:

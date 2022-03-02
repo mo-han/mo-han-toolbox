@@ -2,7 +2,7 @@
 from mylib.ext.console_app import *
 from mylib.sites import misc
 
-apr = ArgumentParserRigger()
+apr = ArgumentParserWrapper()
 an = apr.an
 
 

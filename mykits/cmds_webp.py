@@ -19,7 +19,7 @@ MAX_Q = 80
 MIN_Q = 50
 MAX_COMPRESS = 0.667
 
-apr = ArgumentParserRigger()
+apr = ArgumentParserWrapper()
 an = apr.an
 cpr = ConsolePrinter()
 an.B = an.trash_bin = an.src = an.file = an.x = an.extension = an.w = an.workdir = an.v = an.verbose = ''

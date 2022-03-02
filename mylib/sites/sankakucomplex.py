@@ -19,7 +19,7 @@ def find_bad_files_iter(files):
             yield fp
 
 
-apr = ArgumentParserRigger()
+apr = ArgumentParserWrapper()
 an = apr.an
 an.src = an.v = an.verbose = ''
 

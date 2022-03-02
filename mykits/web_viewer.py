@@ -19,7 +19,7 @@ def window_handler(window: webview.window.Window, title=None):
     window.set_title(title)
 
 
-apr = ArgumentParserRigger()
+apr = ArgumentParserWrapper()
 an = apr.an
 
 an.url = an.t = an.title = ''

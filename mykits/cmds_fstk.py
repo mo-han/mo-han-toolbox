@@ -10,7 +10,7 @@ _logger = logging.ez_get_logger(__name__)
 FILE_DIR_CHOICES = {'f', 'd', 'fd'}
 ON_EXIST_CHOICES = {'error', 'overwrite', 'rename'}
 
-apr = ArgumentParserRigger()
+apr = ArgumentParserWrapper()
 an = apr.an
 path_is_file = os.path.isfile
 path_is_dir = os.path.isdir
