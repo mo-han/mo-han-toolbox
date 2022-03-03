@@ -1,5 +1,5 @@
 @echo off
-set default.dst=%locallib_env%\_winbin
+set default.dst=%locallib_env%\
 set dst=%1
 if not defined dst set dst=%default.dst%
 
