@@ -108,19 +108,24 @@ class ArgumentParserWrapper:
 
     def sub_command(self, namer=None, aliases=(), **kwargs):
         """factory decorator to add sub command, put this decorator on top"""
+        aliases = list(aliases)
         if self.subparsers is None:
             self.subparsers = self.root_parser.add_subparsers(**self.subparsers_kwargs)
         parser_kwargs = dict(**self.parser_common_kwargs, **kwargs)
 
         def deco(target):
-            if not parser_kwargs.get('help') and target.__doc__:
-                parser_kwargs['help'] = target.__doc__
+            target_name = target.__name__
+            target_doc = target.__doc__
+            if not parser_kwargs.get('help') and target_doc:
+                parser_kwargs['help'] = target_doc
             if not namer:
-                sub_name = target.__name__
+                sub_name = target_name
             elif isinstance(namer, str):
                 sub_name = namer
+                aliases.append(target_name)
             else:
-                sub_name = namer(target.__name__)
+                sub_name = namer(target_name)
+                aliases.append(target_name)
             sub_parser = self.subparsers.add_parser(name=sub_name, aliases=aliases, **parser_kwargs)
             sub_parser.set_defaults(__target__=target)
             for _name, _args, _kwargs in self.arguments_config.get(target, []):

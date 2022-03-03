@@ -19,7 +19,7 @@ class EnVarKit:
     def set(*args, **kwargs):
         for data in [*args, kwargs]:
             for k, v in data.items():
-                _os.environ[k] = v
+                _os.environ[str(k)] = str(v)
 
     @staticmethod
     def save(*args, **kwargs):
