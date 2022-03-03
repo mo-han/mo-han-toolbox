@@ -9,7 +9,7 @@ except ModuleNotFoundError:
     os.system('pip install pyyaml')
     import yaml
 
-DEFAULT_ENCODING = 'UTF-8'
+DEFAULT_ENCODING = 'UTF-8-SIG'
 
 
 class EzYAML:
