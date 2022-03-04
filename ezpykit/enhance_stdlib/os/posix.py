@@ -3,6 +3,8 @@ from .common import *
 
 
 class EnVarKit(EnVarKit):
+    path_sep = ':'
+
     @staticmethod
     def save(*args, **kwargs):
         envar_fp = f'~/.ezpykit_envar'

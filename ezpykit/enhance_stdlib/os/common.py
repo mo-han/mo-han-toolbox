@@ -1,26 +1,65 @@
 #!/usr/bin/env python3
 import os as _os
+from ezpykit.allinone import T
+from ezpykit.enhance_builtin import ezlist
 
-path = _os.path
-get_dirname = path.dirname
-get_basename = path.basename
-join_path = path.join
-split_path = path.split
-split_ext = path.splitext
-tilde_path = path.expanduser
-envar_path = path.expandvars
-path_exists = path.exists
-path_isfile = path.isfile
-path_isdir = path.isdir
+get_dirname = _os.path.dirname
+get_basename = _os.path.basename
+join_path = _os.path.join
+split_path = _os.path.split
+split_ext = _os.path.splitext
+tilde_path = _os.path.expanduser
+envar_path = _os.path.expandvars
+path_exists = _os.path.exists
+path_isfile = _os.path.isfile
+path_isdir = _os.path.isdir
 
 
 class EnVarKit:
-    @staticmethod
-    def set(*args, **kwargs):
+    upper_case = True
+    path_sep = None
+
+    @classmethod
+    def valid_key(cls, k):
+        return str(k).upper() if cls.upper_case else str(k)
+
+    @classmethod
+    def set(cls, *args, **kwargs):
         for data in [*args, kwargs]:
             for k, v in data.items():
-                _os.environ[str(k)] = str(v)
+                _os.environ[cls.valid_key(k)] = str(v)
 
-    @staticmethod
-    def save(*args, **kwargs):
+    @classmethod
+    def save(cls, *args, **kwargs):
         raise NotImplementedError(_os.name)
+
+    @classmethod
+    def get_saved_path_list(cls, *args, **kwargs):
+        raise NotImplementedError(_os.name)
+
+    @classmethod
+    def save_path_replace(cls, paths: T.Union[str, T.Iterable[str]]):
+        name = 'PATH'
+        if isinstance(paths, str):
+            value = paths
+        else:
+            value = cls.path_sep.join(paths)
+        cls.save({name: value})
+
+    @classmethod
+    def save_path(cls, insert: T.Iterable[str] = None, remove: T.Iterable[str] = None, append: T.Iterable[str] = None):
+        name = 'PATH'
+        paths = cls.get_saved_path_list()
+        if insert:
+            for i in insert:
+                ezlist.remove_all(paths, str(i))
+            paths = list(insert) + paths
+        if remove:
+            for r in remove:
+                ezlist.remove_all(paths, str(r))
+        if append:
+            for a in append:
+                ezlist.remove_all(paths, str(a))
+            paths = paths + list(append)
+        cls.save({name: cls.path_sep.join(paths)})
+

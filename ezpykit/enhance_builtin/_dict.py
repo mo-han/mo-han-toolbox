@@ -17,7 +17,8 @@ def recursive_update_dict(d: dict, m: collections.abc.Mapping, factory_class=dic
 
 
 @__all__
-class ListKeyDict(dict):
+class lkdict(dict):
+    """list key dict (support list type key as nested key path)"""
     @staticmethod
     def _key_is_list(key):
         return isinstance(key, list)
@@ -88,7 +89,7 @@ def temp_test():
     import sys
 
     print(__all__)
-    d = ListKeyDict({1: {3: {5: 'hi'}}})
+    d = lkdict({1: {3: {5: 'hi'}}})
     print(isinstance(d, collections.abc.Mapping))
     kl = [1, 3, 5]
     wrong = [1, 2]
@@ -105,7 +106,7 @@ def temp_test():
     print(type(d[[2, 4]]))
     print([2, 4, 6] in d)
     print([2, 3, 4] in d)
-    recursive_update_dict(d, {2: 22, 1: {4: 4444, 3: {6: 666666}}}, ListKeyDict)
+    recursive_update_dict(d, {2: 22, 1: {4: 4444, 3: {6: 666666}}}, lkdict)
     print(d, type(d[[1, 3]]))
 
 

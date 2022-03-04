@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 import unicodedata
 
-from ezpykit.allinone import T, decofac_add_method_to_class
+from ezpykit.allinone.metautil import decofac_add_method_to_class
+from ezpykit.enhance_stdlib import typing as T
 
 CR = '\r'
 LF = '\n'
 CRLF = '\r\n'
 
 
-class EzStr(str):
+class ezstr(str):
     def get_width(self: str):
         eaw = unicodedata.east_asian_width
         n = len(self)
@@ -19,8 +20,8 @@ class EzStr(str):
         half_limit = (max_len - len(the_ellipsis.encode(encoding=encoding) if encoding else the_ellipsis)) // 2
         common_params = dict(encoding=encoding, the_ellipsis='', max_len=half_limit)
         half_s_len = len(self) // 2 + 1
-        left = EzStr.ellipt_end(self[:half_s_len], left_side=False, **common_params)
-        right = EzStr.ellipt_end(self[half_s_len:], left_side=True, **common_params)
+        left = ezstr.ellipt_end(self[:half_s_len], left_side=False, **common_params)
+        right = ezstr.ellipt_end(self[half_s_len:], left_side=True, **common_params)
         lr = f'{left}{right}'
         if the_ellipsis:
             if len(lr) == len(self):
@@ -74,34 +75,34 @@ class EzStr(str):
         return u"".join([c for c in unicodedata.normalize('NFKD', self) if not unicodedata.combining(c)])
 
 
-if hasattr(EzStr, 'removeprefix'):
+if hasattr(ezstr, 'removeprefix'):
     str_remove_prefix = str.removeprefix
 else:
-    @decofac_add_method_to_class(EzStr, 'removeprefix')
+    @decofac_add_method_to_class(ezstr, 'removeprefix')
     def str_remove_prefix(s: str, prefix: str):
         return s[len(prefix):] if s.startswith(prefix) else s
 
-if hasattr(EzStr, 'removesuffix'):
+if hasattr(ezstr, 'removesuffix'):
     str_remove_suffix = str.removesuffix
 else:
-    @decofac_add_method_to_class(EzStr, 'removesuffix')
+    @decofac_add_method_to_class(ezstr, 'removesuffix')
     def str_remove_suffix(s: str, suffix: str):
         return s[len(suffix):] if s.endswith(suffix) else s
 
 
-class EzStrKit:
+class ezstrkit:
     @staticmethod
     def to_columns(items: T.Iterable, total_max_width, *, horizontal=False, sep=' '):
         """convert items into a single `str` in columns"""
         items = [s for s in items]
         num = len(items)
-        max_len = max([EzStr.get_width(s) for s in items])
-        col_w = max_len + EzStr.get_width(sep)
+        max_len = max([ezstr.get_width(s) for s in items])
+        col_w = max_len + ezstr.get_width(sep)
         col_w_max = total_max_width // col_w or 1
         row_n = num // col_w_max + bool(num % col_w_max)
         if horizontal:
             rows = [items[i:i + col_w_max] for i in range(0, num, col_w_max)]
         else:
             rows = [items[i::row_n] for i in range(0, row_n)]
-        lines_l = [sep.join([f'{s}{" " * (max_len - EzStr.get_width(s))}' for s in row]) for row in rows]
+        lines_l = [sep.join([f'{s}{" " * (max_len - ezstr.get_width(s))}' for s in row]) for row in rows]
         return '\n'.join(lines_l)

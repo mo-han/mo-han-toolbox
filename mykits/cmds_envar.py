@@ -11,7 +11,7 @@ def main():
     ap.run()
 
 
-@ap.sub()
+@ap.sub('setuv')
 @ap.arg('entry', nargs='*', help='name=value')
 @ap.opt('f', 'file', nargs='*')
 @ap.map('entry', files='file')

@@ -2,7 +2,7 @@
 import os
 from abc import ABC, abstractmethod
 
-from ezpykit.enhance_builtin import EzList, ListKeyDict
+from ezpykit.enhance_builtin import ezlist, lkdict
 from ezpykit.allinone import T
 
 
@@ -45,7 +45,7 @@ class EnVarConfig(ConfigABC):
         return self.auto_convert(v) if self.convert_value else v
 
     def keys_sequence_of_search(self, key) -> list:
-        keys = EzList()
+        keys = ezlist()
 
         def _add_key(k):
             if not self.uppercase_only:
@@ -73,12 +73,12 @@ class EnVarConfig(ConfigABC):
 
 
 class DictConfig(ConfigABC):
-    data: ListKeyDict
+    data: lkdict
 
     def set_data(self, x):
         if not isinstance(x, T.Mapping):
             raise TypeError('x', T.Mapping, type(x))
-        self.data = ListKeyDict(x)
+        self.data = lkdict(x)
         return self
 
     def keys_sequence_of_search(self, key) -> list:

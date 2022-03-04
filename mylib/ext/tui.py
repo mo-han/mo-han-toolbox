@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import mylib.ext.tricks
-from ezpykit.enhance_builtin import EzStrKit
+from ezpykit.enhance_builtin import ezstrkit
 from mylib.easy import *
 
 CRLF = f'\r\n'
@@ -49,7 +49,7 @@ def prompt_choose_number(header: str, choices, default_num: int = None, *, in_co
     choices_n = len(choices)
     choices_menu = [f'  {i + 1}) {choices[i]}' for i in range(choices_n)]
     if in_columns:
-        choices_menu = EzStrKit.to_columns(choices_menu, get_terminal_width() - 2)
+        choices_menu = ezstrkit.to_columns(choices_menu, get_terminal_width() - 2)
     else:
         choices_menu = CRLF.join(choices_menu)
     prompt_end = f' [{default_num}]: ' if default_num else ': '
@@ -67,7 +67,7 @@ def prompt_choose_number(header: str, choices, default_num: int = None, *, in_co
 def prompt_choose(header: str, choices: dict, default_key=None, *, in_columns=True):
     choices_menu = [f'  {x}) {y}' for x, y in choices.items()]
     if in_columns:
-        choices_menu = EzStrKit.to_columns(choices_menu, get_terminal_width() - 2)
+        choices_menu = ezstrkit.to_columns(choices_menu, get_terminal_width() - 2)
     else:
         choices_menu = CRLF.join(choices_menu)
     input_choices = '/'.join(
