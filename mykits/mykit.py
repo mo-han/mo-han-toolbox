@@ -13,7 +13,7 @@ from send2trash import send2trash
 import mylib.__deprecated__
 import mylib.easy
 import mylib.ext.ostk
-from ezpykit import AttrName
+from ezpykit.allinone import AttrName
 from mylib.__deprecated__ import fs_inplace_rename, fs_inplace_rename_regex, list_files, list_dirs
 from mylib.cli import arg_type_pow2, arg_type_range_factory, add_dry_run
 from mylib.easy import *
