@@ -8,13 +8,17 @@ import subprocess
 class EnVarKit(EnVarKit):
     path_sep = ';'
     reg_path = r'HKCU\Environment'
+    use_reg_expand_sz = True
 
     @classmethod
     def save(cls, *args, **kwargs):
         for data in [*args, kwargs]:
             for k, v in data.items():
+                cmd = ['reg', 'add', cls.reg_path, '/f', '/v', cls.valid_key(k), '/d', str(v)]
+                if cls.use_reg_expand_sz:
+                    cmd += ['/t', 'REG_EXPAND_SZ']
                 subprocess.run(
-                    ['reg', 'add', cls.reg_path, '/v', cls.valid_key(k), '/d', str(v), '/f'],
+                    cmd,
                     stdout=subprocess.DEVNULL
                 )
                 # subprocess.run(['setx', str(k), str(v)])  # very slow
