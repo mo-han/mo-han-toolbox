@@ -10,6 +10,7 @@ from pprint import pprint
 
 from send2trash import send2trash
 
+import ezpykit.enhance_stdlib.shutil.__deprecated__
 import mylib.__deprecated__
 import mylib.easy
 import mylib.ext.ostk
@@ -247,7 +248,7 @@ def tag_filter_files_func():
                     try:
                         send2trash(f)
                     except OSError:
-                        shutil.remove(f)
+                        ezpykit.enhance_stdlib.shutil.__deprecated__.remove(f)
 
 
 tag_filter_files = add_sub_parser('tag.filter.files', [], 'filter files by tags and ext')
