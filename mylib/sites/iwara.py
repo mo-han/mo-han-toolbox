@@ -5,8 +5,8 @@ from urllib.parse import urlparse, urlunparse
 
 import youtube_dl.extractor.iwara as ytdl_iwara
 
-from ezpykit import *
-from ezpykit.enhance_builtin._dict import lkdict
+from ezpykit.allinone import *
+from ezpykit.enhance_builtin import lkdict
 from mylib import easy
 from mylib.easy import text, fstk
 from mylib.ext import html
