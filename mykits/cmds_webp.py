@@ -10,6 +10,7 @@ import filetype
 from humanize import naturaldelta, naturalsize
 from send2trash import send2trash
 
+import ezpykit.enhance_stdlib.shutil.__deprecated__
 from mylib.easy import logging
 from mylib.ext.console_app import *
 from mylib.wrapper import cwebp
@@ -220,7 +221,7 @@ def auto_cvt(src, recursive, clean, cbz, workers=None, trash_bin=False, verbose=
     """convert images to webp with auto-clean, auto-compress-to-cbz, adaptive-quality-scale"""
     workers = workers or os.cpu_count() - 1 or os.cpu_count()
     lgr = logging.ez_get_logger(auto_cvt.__name__, 'INFO' if verbose else 'ERROR', fmt=logging.LOG_FMT_MESSAGE_ONLY)
-    delete = send2trash if trash_bin else shutil.remove
+    delete = send2trash if trash_bin else ezpykit.enhance_stdlib.shutil.__deprecated__.remove
 
     dirs, files = resolve_path_to_dirs_files(src)
     src = dirs + files

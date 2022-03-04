@@ -10,9 +10,9 @@ import tempfile
 import time
 
 from ezpykit.allinone.metautil import *
-from ezpykit.enhance_stdlib import io, os, argparse, threading, re, glob
+from ezpykit.enhance_stdlib import io, os, argparse, threading, re, glob, shutil
 
-___ref = re, sys, subprocess, pathlib, glob, queue, threading, io, os, argparse, sys
+___ref = re, sys, subprocess, pathlib, glob, queue, threading, io, os, argparse, shutil
 
 sleep = time.sleep
 
