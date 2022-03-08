@@ -5,11 +5,10 @@ import sys
 if os.name == 'nt' and sys.version_info < (3, 8):
     import shutil as _shutil
 
-    BUFFER_SIZE_4M = 4 * 1024 * 1024
-    BUFFER_SIZE_1M = 1 * 1024 * 1024
+    DEFAULT_BUFFER_SIZE = 1024 * 512
 
 
-    def copyfileobj_biggerbuffer_memoryview(fsrc, fdst, length=BUFFER_SIZE_4M):
+    def copyfileobj_biggerbuffer_memoryview(fsrc, fdst, length=DEFAULT_BUFFER_SIZE):
         v = memoryview(bytearray(length))
         while 1:
             n = fsrc.readinto(v)
@@ -21,7 +20,7 @@ if os.name == 'nt' and sys.version_info < (3, 8):
                 fdst.write(v[:n])
 
 
-    def copyfileobj_biggerbuffer_memoryview_threading___x(fsrc, fdst, length=BUFFER_SIZE_1M):
+    def copyfileobj_biggerbuffer_memoryview_threading___a(fsrc, fdst, length=DEFAULT_BUFFER_SIZE):
         """about 10% speed-up compared with `copyfileobj_biggerbuffer_memoryview`, still cannot handle ctrl-c"""
         import threading
         import queue
@@ -114,7 +113,7 @@ if os.name == 'nt' and sys.version_info < (3, 8):
         # print('end')
 
 
-    copyfileobj = _shutil.copyfileobj = copyfileobj_biggerbuffer_memoryview
+    copyfileobj = _shutil.copyfileobj = copyfileobj_biggerbuffer_memoryview_threading___a
     copyfile = _shutil.copyfile
     copy = _shutil.copy
     copy2 = _shutil.copy2
