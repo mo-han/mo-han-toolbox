@@ -10,6 +10,7 @@ from PIL import Image
 from disjoint_set import DisjointSet
 from imagehash import average_hash, dhash, phash, whash, hex_to_hash
 
+import ezpykit.enhance_stdlib.os.common
 from mylib.easy import *
 from mylib.ext import fstk
 from mylib.ext.ostk import check_file_ext
@@ -216,7 +217,7 @@ def view_similar_image_groups(similar_groups: DisjointSet):
                 except (FileNotFoundError, shutil.Error):
                     pass
     except KeyboardInterrupt:
-        with fstk.ctx_pushd(folder):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(folder):
             for f in os.listdir():
                 shutil.move(f, '..')
         sys.exit(2)

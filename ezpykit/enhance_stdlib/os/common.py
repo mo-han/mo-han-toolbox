@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import contextlib
+import os
 import os as _os
 from ezpykit.allinone import T
 from ezpykit.enhance_builtin import ezlist
@@ -63,3 +65,30 @@ class EnVarKit:
             paths = paths + list(append)
         cls.save({name: cls.path_sep.join(paths)})
 
+
+@contextlib.contextmanager
+def ctx_pushd(dst, ensure_dst: bool = False):
+    if dst == '':
+        yield
+        return
+    if ensure_dst:
+        cd = ensure_chdir
+    else:
+        cd = os.chdir
+    prev = os.getcwd()
+    error = None
+    try:
+        cd(dst)
+        yield
+    except Exception as e:
+        error = e
+    finally:
+        cd(prev)
+        if error:
+            raise error
+
+
+def ensure_chdir(dest):
+    if not os.path.isdir(dest):
+        os.makedirs(dest, exist_ok=True)
+    os.chdir(dest)

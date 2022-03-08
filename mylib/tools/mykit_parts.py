@@ -3,6 +3,7 @@
 
 from send2trash import send2trash
 
+import ezpykit.enhance_stdlib.os.common
 import mylib.ext.fstk
 import mylib.ext.ostk
 import mylib.easy
@@ -148,7 +149,7 @@ def flat_dir(src, prefix, dry_run):
         if not os.path.isdir(s):
             print(f'! skip non-folder: {s}')
             continue
-        with fstk.ctx_pushd(s):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(s):
             print(s)
             for fp in fstk.find_iter('f', '.', win32_unc=is_win32):
                 new = os.path.relpath(fp, fstk.make_path('.', win32_unc=is_win32))

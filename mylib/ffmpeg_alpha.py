@@ -7,6 +7,7 @@ from math import log
 import ffmpeg
 import filetype
 
+import ezpykit.enhance_stdlib.os.common
 import mylib.easy
 import mylib.easy.io
 import mylib.ext.tricks
@@ -724,7 +725,7 @@ class FFmpegSegmentsContainer:
         if not fn:
             return
         self.input_data[S_FILENAME] = fn
-        with fstk.ctx_pushd(self.root):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(self.root):
             prefix = self.input_filename_prefix
             for f in fs_find_iter(pattern=prefix + '*', recursive=False, strip_root=True):
                 fstk.x_rename(f, prefix + fn, append_src_ext=False)
@@ -734,7 +735,7 @@ class FFmpegSegmentsContainer:
             fstk.write_json_file(self.input_json, self.input_data, indent=4)
 
     def read_filename(self):
-        with fstk.ctx_pushd(self.root):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(self.root):
             prefix = self.input_filename_prefix
             for f in fs_find_iter(pattern=prefix + '*', recursive=False, strip_root=True):
                 filename = f.lstrip(prefix)
@@ -749,7 +750,7 @@ class FFmpegSegmentsContainer:
             raise self.ContainerError('no input filepath')
         d = self.input_data or {S_SEGMENT: {}, S_NON_SEGMENT: {}}
 
-        with fstk.ctx_pushd(self.root):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(self.root):
             for stream in ffmpeg.probe(i_file, select_streams=select_streams)['streams']:
                 index = stream['index']
                 # codec = stream['codec_name']
@@ -760,7 +761,7 @@ class FFmpegSegmentsContainer:
                 d[S_SEGMENT][index] = {}
                 seg_folder = self.input_prefix + index
                 os.makedirs(seg_folder, exist_ok=True)
-                with fstk.ctx_pushd(seg_folder):
+                with ezpykit.enhance_stdlib.os.common.ctx_pushd(seg_folder):
                     self.ff.segment(i_file, segment_output, map='0:{}'.format(index))
             try:
                 self.ff.convert([i_file], self.input_picture, copy_all=True, map_preset=S_ONLY_PICTURE)
@@ -778,7 +779,7 @@ class FFmpegSegmentsContainer:
         self.write_input_json()
 
     def write_metadata(self):
-        with fstk.ctx_pushd(self.root):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(self.root):
             self.ff.metadata_file(self.input_filepath, self.metadata_file)
             with open(self.metadata_file, encoding='utf8') as f:
                 meta_lines = f.readlines()
@@ -791,11 +792,11 @@ class FFmpegSegmentsContainer:
         d = self.input_data or {}
         prefix = self.input_prefix
 
-        with fstk.ctx_pushd(self.root):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(self.root):
             for k in d[S_SEGMENT]:
                 seg_folder = prefix + k
                 d[S_SEGMENT][k] = {}
-                with fstk.ctx_pushd(seg_folder):
+                with ezpykit.enhance_stdlib.os.common.ctx_pushd(seg_folder):
                     for file in fs_find_iter(pattern=self.segment_filename_regex_pattern, regex=True,
                                              recursive=False, strip_root=True):
                         d[S_SEGMENT][k][file] = excerpt_single_video_stream(file)
@@ -810,13 +811,13 @@ class FFmpegSegmentsContainer:
         self.input_data = d
 
     def read_input_json(self):
-        with fstk.ctx_pushd(self.root):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(self.root):
             self.input_data = fstk.read_json_file(self.input_json)
         self.write_filename()
         return self.input_data
 
     def read_output_json(self):
-        with fstk.ctx_pushd(self.root):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(self.root):
             self.output_data = fstk.read_json_file(self.output_json)
             if not self.output_data:
                 self.config()
@@ -824,16 +825,16 @@ class FFmpegSegmentsContainer:
         return self.output_data
 
     def write_output_json(self):
-        with fstk.ctx_pushd(self.root):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(self.root):
             fstk.write_json_file(self.output_json, self.output_data, indent=4)
 
     def tag_container_folder(self):
-        with fstk.ctx_pushd(self.root):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(self.root):
             with open(self.tag_file, 'w') as f:
                 f.write(self.tag_sig)
 
     def container_is_tagged(self) -> bool:
-        with fstk.ctx_pushd(self.root):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(self.root):
             try:
                 with open(self.tag_file) as f:
                     return f.readline().rstrip('\r\n') == self.tag_sig
@@ -994,19 +995,19 @@ class FFmpegSegmentsContainer:
             extra_input_list.append(i)
             output_args.extend(args)
         output_args.extend(d[S_MORE])
-        with fstk.ctx_pushd(self.root):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(self.root):
             self.ff.concat(concat_list, d[S_FILENAME], output_args,
                            concat_demuxer=True, extra_inputs=extra_input_list, copy_all=False,
                            metadata_file=self.metadata_file,
                            **d['kwargs'])
 
     def write_output_concat_list_file(self):
-        with fstk.ctx_pushd(self.root):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(self.root):
             d = self.input_data[S_SEGMENT]
             for index in d:
                 folder = self.output_prefix + index
                 os.makedirs(folder, exist_ok=True)
-                with fstk.ctx_pushd(folder):
+                with ezpykit.enhance_stdlib.os.common.ctx_pushd(folder):
                     lines = ["file '{}'".format(os.path.join(folder, seg)) for seg in
                              sorted(d[index].keys(), key=lambda x: int(os.path.splitext(x)[0]))]
                     with fstk.ensure_open_file(self.concat_list_file, 'w') as f:
@@ -1037,9 +1038,9 @@ class FFmpegSegmentsContainer:
     def list_lock_segments(self):
         segments = []
         prefix = self.output_prefix
-        with fstk.ctx_pushd(self.root):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(self.root):
             for index in self.input_data[S_SEGMENT]:
-                with fstk.ctx_pushd(prefix + index):
+                with ezpykit.enhance_stdlib.os.common.ctx_pushd(prefix + index):
                     segments.extend([(index, f.rstrip(self.suffix_lock)) for f in
                                      fs_find_iter('*' + self.suffix_lock)])
         return segments
@@ -1047,9 +1048,9 @@ class FFmpegSegmentsContainer:
     def list_done_segments(self):
         segments = []
         prefix = self.output_prefix
-        with fstk.ctx_pushd(self.root):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(self.root):
             for index in self.input_data[S_SEGMENT]:
-                with fstk.ctx_pushd(prefix + index):
+                with ezpykit.enhance_stdlib.os.common.ctx_pushd(prefix + index):
                     segments.extend([(index, f.rstrip(self.suffix_done)) for f in
                                      fs_find_iter('*' + self.suffix_done)])
         return segments
@@ -1097,7 +1098,7 @@ class FFmpegSegmentsContainer:
         i_seg = self.input_prefix + segment_path_no_prefix
         o_seg = self.output_prefix + segment_path_no_prefix
         args = self.output_data[S_SEGMENT]
-        with fstk.ctx_pushd(self.root):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(self.root):
             self.nap()
             if self.file_has_lock(o_seg):
                 raise self.SegmentLockedError
@@ -1127,7 +1128,7 @@ class FFmpegSegmentsContainer:
             o_seg = filepath
         else:
             o_seg = os.path.join(self.output_prefix + stream_id, segment_filename)
-        with fstk.ctx_pushd(self.root):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(self.root):
             if not self.file_has_done(o_seg):
                 raise self.SegmentNotDoneError
             return excerpt_single_video_stream(o_seg)
@@ -1171,12 +1172,12 @@ class FFmpegSegmentsContainer:
                               'bit_rate': 8 * estimated_output_size // total_duration,
                               'ratio': round(estimated_output_size / total_input_size, 3)}
 
-        with fstk.ctx_pushd(self.root):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(self.root):
             fstk.write_json_file(self.test_json, d, indent=4)
         return {k: v['estimate']['ratio'] for k, v in d.items()}
 
     def clear(self):
-        with fstk.ctx_pushd(self.root):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(self.root):
             segments = self.list_lock_segments() + self.list_done_segments()
             while segments:
                 for i, seg in segments:

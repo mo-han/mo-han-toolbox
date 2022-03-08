@@ -5,6 +5,7 @@ from urllib.parse import urlparse, urlunparse
 
 import youtube_dl.extractor.iwara as ytdl_iwara
 
+import ezpykit.enhance_stdlib.os.common
 from ezpykit.allinone import *
 from ezpykit.enhance_builtin import lkdict
 from mylib import easy
@@ -135,7 +136,7 @@ class IwaraImagePage:
         title = m['title']
         uploader = m['uploader_username']
         folder = fstk.sanitize_xu200(f'{title} [Iwara images][{uploader}]')
-        with fstk.ctx_pushd(easy.path_join(root_dir, folder), ensure_dst=True):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(easy.path_join(root_dir, folder), ensure_dst=True):
             for url in self.data[['resource', 'photos']]:
                 r = urlparse(url)
                 fn = easy.path_basename(r.path)

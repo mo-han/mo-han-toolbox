@@ -5,6 +5,7 @@ from collections import defaultdict
 
 import requests
 
+import ezpykit.enhance_stdlib.os.common
 from mylib.__deprecated__ import get_re_groups
 from mylib.easy import *
 from mylib.easy import logging
@@ -74,7 +75,7 @@ def ehviewer_images_catalog(root_dir, *, dry_run: bool = False, db_json_path: st
     else:
         db = {}
 
-    with fstk.ctx_pushd(root_dir):
+    with ezpykit.enhance_stdlib.os.common.ctx_pushd(root_dir):
         not_found_gid_token = []
         files = []
         for f in next(os.walk('.'))[-1]:
@@ -348,7 +349,7 @@ class EHentaiError(Exception):
 
 def ehviewer_dl_folder_rename(folder_path: str, *, db: dict = None, update_db=False):
     db = db or {}
-    with fstk.ctx_pushd(folder_path):
+    with ezpykit.enhance_stdlib.os.common.ctx_pushd(folder_path):
         with open('.ehviewer') as info_file:
             info_lines = info_file.readlines()
     gid = info_lines[2].strip()
@@ -367,7 +368,7 @@ def parse_hentai_at_home_downloaded_gallery_info(gallery_path, gallery_type=''):
     info = 'galleryinfo.txt'
     desc = 'Downloaded from E-Hentai Galleries by the Hentai@Home Downloader <3'
     if 'd' in gallery_type or os.path.isdir(gallery_path):
-        with fstk.ctx_pushd(gallery_path):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(gallery_path):
             try:
                 with open(info, 'tr', encoding='u8') as f:
                     s = f.read()

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import tabulate
 
+import ezpykit.enhance_stdlib.os.common
 import mylib.easy
 from mylib.easy import *
 from mylib.easy import fstk
@@ -15,7 +16,7 @@ meta_apr = argparse.ArgumentParserWrapper()
 @functools.lru_cache()
 def find_module_path():
     r = {}
-    with fstk.ctx_pushd(__dirname__):
+    with ezpykit.enhance_stdlib.os.common.ctx_pushd(__dirname__):
         for f in glob.glob(__filename_without_extension__ + '*.py*'):
             match = re.match(rf'({__filename_without_extension__})_([^.-]+)', f)
             if not match:

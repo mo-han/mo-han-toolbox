@@ -21,7 +21,8 @@ from mylib.easy import *
 from ezpykit.enhance_stdlib.argparse import CompactHelpFormatterWithDefaults
 from mylib.ext.tricks import Attreebute, eval_or_str, deco_factory_exit_on_keyboard_interrupt
 from mylib.ext import fstk, tui
-from mylib.ext.fstk import make_path, ctx_pushd
+from mylib.ext.fstk import make_path
+from ezpykit.enhance_stdlib.os import ctx_pushd
 from mylib.ext.ostk import clipboard, set_console_title
 
 rtd = Attreebute()  # runtime data
