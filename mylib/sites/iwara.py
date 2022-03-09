@@ -7,7 +7,7 @@ import youtube_dl.extractor.iwara as ytdl_iwara
 
 import ezpykit.enhance_stdlib.os.common
 from ezpykit.allinone import *
-from ezpykit.enhance_builtin import lkdict
+from ezpykit.enhance_builtin import ezdict
 from mylib import easy
 from mylib.easy import text, fstk
 from mylib.ext import html
@@ -109,7 +109,7 @@ def find_video_id_in_link(link: str):
 
 class IwaraImagePage:
     def __init__(self, url):
-        self.data = lkdict()
+        self.data = ezdict()
         self.url = url
         self.html_etree = get_html_element_tree(url)
 
