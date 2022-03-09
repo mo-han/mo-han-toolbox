@@ -201,3 +201,7 @@ def move_to___a(src, dst, overwrite=False, follow_symlinks=False):
         move(src, dst)
     else:
         raise NotImplementedError(r)
+
+
+copy_to = copy_to___a
+move_to = move_to___a
