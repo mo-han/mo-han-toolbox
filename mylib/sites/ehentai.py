@@ -129,6 +129,8 @@ def ehviewer_images_catalog(root_dir, *, dry_run: bool = False, db_json_path: st
                 creators = tags['artist']
             elif 'group' in tags:
                 creators = tags['group']
+            elif 'cosplayer' in tags:
+                creators = tags['cosplayer']
             else:
                 creators = guess_creators_from_ehentai_title(title)
                 if creators:
