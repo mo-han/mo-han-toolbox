@@ -349,7 +349,7 @@ class EHentaiError(Exception):
             return 'EHentai Error {}: {}'.format(self.code, self.reason)
 
 
-def ehviewer_dl_folder_rename(folder_path: str, *, db: dict = None, update_db=False):
+def ehviewer_dl_folder_rename(folder_path: str, *, db: dict = None, update_db=True):
     db = db or {}
     with ezpykit.enhance_stdlib.os.common.ctx_pushd(folder_path):
         with open('.ehviewer') as info_file:
