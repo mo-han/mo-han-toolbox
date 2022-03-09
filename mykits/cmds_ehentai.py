@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-from mylib.ext.console_app import *
+from ezpykitext.appkit import *
+from mylib.ext.console_app import ConsolePrinter, fstk, split_path_dir_base_ext, join_path_dir_base_ext, PathSourceType, \
+    resolve_path_to_dirs_files, Timer
 from mylib.sites import ehentai
 
-apr = ArgumentParserWrapper()
+apr = argparse.ArgumentParserWrapper()
 an = apr.an
 cp = ConsolePrinter()
 an.src = an.v = an.verbose = an.D = an.dry_run = an.address = an.c = an.cookies = an.p = an.proxy = ''
@@ -11,6 +13,31 @@ an.src = an.v = an.verbose = an.D = an.dry_run = an.address = an.c = an.cookies 
 def main():
     apr.parse()
     apr.run()
+
+
+@apr.sub(aliases=['ehvdl2img'])
+def ehviewer_downloads_to_images():
+    "convert images downloaded via EhViewer, into images named as <gid>-<gtoken>-%%d08.jpg, just like EhViewer would do."
+    metadata_fn = '.ehviewer'
+    for p in isrcpath(None):
+        if os.path_isdir(p):
+            with os.ctx_pushd(p):
+                if not os.path_isfile(metadata_fn):
+                    continue
+                with open(metadata_fn) as f:
+                    lines = [e.strip() for e in f.readlines()]
+                if not lines or lines[0] != 'VERSION2':
+                    continue
+                print(f'+ {p}')
+                gid = lines[2]
+                gtoken = lines[3]
+                ehvimg = os.join_path('..', '..', 'ehviewer-image')
+                os.makedirs(ehvimg, exist_ok=True)
+                for f in set(os.listdir()) - {'.thumb', metadata_fn}:
+                    new = f'{gid}-{gtoken}-{f}'
+                    dst = os.join_path(ehvimg, new)
+                    shutil.move(f, dst)
+                    print(f'* {f} -> {dst}')
 
 
 @apr.sub(apr.rpl_dot, aliases=['mvfav'])
