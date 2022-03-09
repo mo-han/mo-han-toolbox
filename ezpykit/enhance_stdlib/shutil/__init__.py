@@ -23,13 +23,15 @@ if os.name == 'nt' and sys.version_info < (3, 8):
 
 
     def copyfileobj_biggerbuffer_memoryview_threading___a(fsrc, fdst, length=DEFAULT_BUFFER_SIZE):
-        """about 10% speed-up compared with `copyfileobj_biggerbuffer_memoryview`, still cannot handle ctrl-c"""
+        """only 10% faster than `copyfileobj_biggerbuffer_memoryview`, but much more CPU usage, not worthy"""
         import threading
         import queue
 
         qn = 2
         q = queue.Queue(maxsize=qn)
-        vl = [memoryview(bytearray(length)) for i in range(qn)]
+        vl = [memoryview(bytearray(length)) for i in range(qn + 2)]  # at least 2 more than qsize,
+        # so the queue's blocking can guarantee that the memoryview being written won't be altered by the read loop:
+        # taken_by_write_loop <-- (the queue)[ one, another, ... ](is full) <-- new_from_read_loop(blocked)
         force_stop = threading.Event()
         rok = threading.Event()
         wok = threading.Event()
@@ -115,12 +117,7 @@ if os.name == 'nt' and sys.version_info < (3, 8):
         # print('end')
 
 
-    copyfileobj = _shutil.copyfileobj = copyfileobj_biggerbuffer_memoryview_threading___a
-    copyfile = _shutil.copyfile
-    copy = _shutil.copy
-    copy2 = _shutil.copy2
-    copytree = _shutil.copytree
-    move = _shutil.move
+    copyfileobj = _shutil.copyfileobj = copyfileobj_biggerbuffer_memoryview
 
 
 def _check_src_to_dst(src, dst):
