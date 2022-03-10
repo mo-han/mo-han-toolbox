@@ -44,7 +44,9 @@ class ImageWrapper:
                     raise ValueError('invalid html base64 image data', source)
                 data = m.group(3).strip()
                 self.open_file_from_bytes(base64.tolerant_b64decode(data))
-        elif isinstance(source, bytes):
+            else:
+                self.image = Image.open(source, *args, **kwargs)
+        elif isinstance(source, (bytes, bytearray, memoryview)):
             if os.path.isfile(source):
                 self.image = Image.open(source, *args, **kwargs)
             elif args or kwargs:
