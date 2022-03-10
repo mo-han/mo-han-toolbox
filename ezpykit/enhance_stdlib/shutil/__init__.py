@@ -147,8 +147,8 @@ def _check_src_to_dst(src, dst):
 
 
 def copy_to___a(src, dst, overwrite=False, follow_symlinks=False):
-    copy_to_kwargs = dict(overwrite=False, follow_symlinks=False)
-    copy_kwargs = dict(follow_symlinks=False)
+    copy_to_kwargs = dict(overwrite=False, follow_symlinks=follow_symlinks)
+    copy_kwargs = dict(follow_symlinks=follow_symlinks)
     copytree_kwargs = dict(symlinks=not follow_symlinks)
     r = _check_src_to_dst(src, dst)
     if r == 'dir to dir':
@@ -173,8 +173,8 @@ def copy_to___a(src, dst, overwrite=False, follow_symlinks=False):
 
 
 def move_to___a(src, dst, overwrite=False, follow_symlinks=False):
-    move_to_kwargs = dict(overwrite=False, follow_symlinks=False)
-    copy_kwargs = dict(follow_symlinks=False)
+    move_to_kwargs = dict(overwrite=False, follow_symlinks=follow_symlinks)
+    copy_kwargs = dict(follow_symlinks=follow_symlinks)
     r = _check_src_to_dst(src, dst)
     if r == 'dir to dir':
         _, sub_dirs, sub_files = next(os.walk(src))
