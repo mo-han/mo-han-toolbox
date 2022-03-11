@@ -9,7 +9,7 @@ import sys
 import tempfile
 import time
 
-from ezpykit.allinone.metautil import *
+from ezpykit.metautil import *
 from ezpykit.builtin import *
 from ezpykit.stdlib import io, os, argparse, threading, re, glob, shutil, base64
 

@@ -2,6 +2,8 @@
 import os as _os
 from io import *
 
+from ezpykit.stdlib import typing as T
+
 
 class SliceFileIO(FileIO):
     """slice data in FileIO object"""
@@ -99,3 +101,22 @@ class IOKit:
     def write_exit(x, *args, **kwargs):
         with x:
             return x.write(*args, **kwargs)
+
+
+class VirtualFileIOWrapper:
+    _instances: T.Dict[T.Tuple, T.Union[StringIO, BytesIO]] = {}
+    obj: T.Union[StringIO, BytesIO]
+
+    def __init__(self, name, mode='r'):
+        key = name, mode
+        if key in self._instances:
+            obj = self._instances[key]
+            if not obj.closed:
+                self.obj = obj
+                return
+        if 'b' in mode:
+            obj = BytesIO()
+        else:
+            obj = StringIO()
+        self._instances[key] = obj
+        self.obj = obj
