@@ -5,7 +5,7 @@ from collections import defaultdict
 
 import requests
 
-import ezpykit.enhance_stdlib.os.common
+import ezpykit.stdlib.os.common
 from mylib.__deprecated__ import get_re_groups
 from mylib.easy import *
 from mylib.easy import logging

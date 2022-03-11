@@ -7,7 +7,7 @@ from math import log
 import ffmpeg
 import filetype
 
-import ezpykit.enhance_stdlib.os.common
+import ezpykit.stdlib.os.common
 import mylib.easy
 import mylib.easy.io
 import mylib.ext.tricks

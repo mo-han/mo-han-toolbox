@@ -10,7 +10,7 @@ from ezpykitext.os.clipboard.common import ClipboardABC
 from ezpykitext.os.clipboard.nt_win32cb_html import HTMLClipboardMixin
 from ezpykit.allinone import *
 from ezpykit.allinone.singleton import deco_singleton
-from ezpykit.enhance_builtin import *
+from ezpykit.builtin import *
 
 
 @deco_singleton

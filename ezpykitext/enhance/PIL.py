@@ -3,7 +3,7 @@ import io
 import os
 import re
 
-from ezpykit.enhance_stdlib import base64
+from ezpykit.stdlib import base64
 
 try:
     import PIL as ___

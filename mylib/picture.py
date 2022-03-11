@@ -10,7 +10,7 @@ from PIL import Image
 from disjoint_set import DisjointSet
 from imagehash import average_hash, dhash, phash, whash, hex_to_hash
 
-import ezpykit.enhance_stdlib.os.common
+import ezpykit.stdlib.os.common
 from mylib.easy import *
 from mylib.ext import fstk
 from mylib.ext.ostk import check_file_ext

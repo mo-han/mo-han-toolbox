@@ -2,7 +2,7 @@
 import os
 from abc import ABC, abstractmethod
 
-from ezpykit.enhance_builtin import ezlist, ezdict
+from ezpykit.builtin import ezlist, ezdict
 from ezpykit.allinone import T
 
 
