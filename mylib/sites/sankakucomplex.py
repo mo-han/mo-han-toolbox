@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import ezpykit.enhance_stdlib.shutil.__deprecated__
+import ezpykit.stdlib.shutil.__deprecated__
 from mylib.ext.console_app import *
 import hashlib
 

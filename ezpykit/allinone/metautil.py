@@ -2,7 +2,7 @@
 from functools import wraps
 
 from ezpykit.allinone.singleton import deco_singleton
-from ezpykit.enhance_stdlib import typing as T
+from ezpykit.stdlib import typing as T
 
 
 def decofac_add_method_to_class(cls, name=None):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from ezpykit.enhance_stdlib.io import IOKit
+from ezpykit.stdlib.io import IOKit
 
 try:
     import yaml

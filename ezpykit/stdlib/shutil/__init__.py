@@ -2,7 +2,7 @@
 import sys
 from shutil import *
 
-from ezpykit.enhance_stdlib import os
+from ezpykit.stdlib import os
 
 if os.name == 'nt' and sys.version_info < (3, 8):
     import shutil as _shutil

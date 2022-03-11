@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import ezpykit.enhance_stdlib.re
+import ezpykit.stdlib.re
 from mylib.ext.console_app import *
 
 import webbrowser

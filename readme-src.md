@@ -37,7 +37,7 @@ features:
 ```python
 # test.py
 
-from ezpykit.enhance_stdlib.argparse import *
+from ezpykit.stdlib.argparse import *
 
 apr = ArgumentParserWrapper()
 an = apr.an  # an.abc_xyz == 'abc_xyz'

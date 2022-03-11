@@ -3,7 +3,7 @@ import contextlib
 import os
 import os as _os
 from ezpykit.allinone import T
-from ezpykit.enhance_builtin import ezlist
+from ezpykit.builtin import ezlist
 
 get_dirname = _os.path.dirname
 get_basename = _os.path.basename
