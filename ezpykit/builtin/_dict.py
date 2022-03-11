@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 import collections.abc
-from ezpykit.allinone.metautil import DecoListOfNameMagicVar
+from functools import reduce
 
-__all__ = DecoListOfNameMagicVar()
 _Type_Mapping = collections.abc.Mapping
 
 
-@__all__
 def recursive_update_dict(d: dict, m: collections.abc.Mapping, factory_class=dict):
     for k, v in m.items():
         if isinstance(v, _Type_Mapping):
@@ -16,9 +14,7 @@ def recursive_update_dict(d: dict, m: collections.abc.Mapping, factory_class=dic
     return d
 
 
-@__all__
-class lkdict(dict):
-    """list key dict (support list type key as nested key path)"""
+class ezdict(dict):
     @staticmethod
     def _key_is_list(key):
         return isinstance(key, list)
@@ -84,12 +80,32 @@ class lkdict(dict):
             self._setitem_by_list_key(key, default)
             return default
 
+    def batch_get(self, *args, **kwargs):
+        r = ezdict()
+        for a in args:
+            r[a] = self.get(a, None)
+        for k, d in kwargs:
+            r[k] = self.get(k, d)
+        return r
+
+    def intersection(self, *d):
+        return reduce(lambda x, y: ezdict([(k, v) for k, v in x.items() if (k, v) in y.items()]),
+                      [self, *d])
+
+    def union(self, *d):
+        r = ezdict()
+        for i in [self, *d]:
+            recursive_update_dict(r, i)
+        return r
+
+    def difference(self, d):
+        return ezdict([(k, v) for k, v in self.items() if (k, v) not in d.items()])
+
 
 def temp_test():
     import sys
 
-    print(__all__)
-    d = lkdict({1: {3: {5: 'hi'}}})
+    d = ezdict({1: {3: {5: 'hi'}}})
     print(isinstance(d, collections.abc.Mapping))
     kl = [1, 3, 5]
     wrong = [1, 2]
@@ -106,8 +122,10 @@ def temp_test():
     print(type(d[[2, 4]]))
     print([2, 4, 6] in d)
     print([2, 3, 4] in d)
-    recursive_update_dict(d, {2: 22, 1: {4: 4444, 3: {6: 666666}}}, lkdict)
+    recursive_update_dict(d, {2: 22, 1: {4: 4444, 3: {6: 666666}}}, ezdict)
     print(d, type(d[[1, 3]]))
+    print(d.get([1, 3, 5]))
+    print(d.batch_get([2, 22], [1, 3, 5], 3))
 
 
 if __name__ == '__main__':

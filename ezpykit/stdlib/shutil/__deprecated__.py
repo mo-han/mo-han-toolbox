@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from shutil import rmtree
 
-from ezpykit.enhance_stdlib import os
+from ezpykit.stdlib import os
 
 
 class FilesystemOperationError(Exception):

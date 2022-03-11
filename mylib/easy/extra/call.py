@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from ..__common__ import *
-from ezpykit.enhance_stdlib.threading import thread_factory
+from ezpykit.stdlib.threading import thread_factory
 
 
 def ez_args_kwargs_str(args, kwargs):

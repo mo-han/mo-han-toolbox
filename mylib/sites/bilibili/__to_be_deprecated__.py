@@ -436,7 +436,8 @@ def download_bilibili_video(url: str or int,
     if moderate_audio:
         b.set_audio_qn(30232)
 
-    if url.startswith('https://b23.tv/') and url[15:17] not in ('BV', 'ss', 'ep', 'av'):
+    if (url.startswith('https://b23.tv/BV') and len(url) == 22) or (
+            url.startswith('https://b23.tv/') and url[15:17] not in ('BV', 'ss', 'ep', 'av')):
         r = requests.get(url)
         if r.ok:
             url = r.url.split('?', maxsplit=1)[0]

@@ -3,6 +3,7 @@
 
 from send2trash import send2trash
 
+import ezpykit.stdlib.os.common
 import mylib.ext.fstk
 import mylib.ext.ostk
 import mylib.easy
@@ -43,7 +44,7 @@ def list_several_cloudflare_ipaddr(file, hostname, as_list, isp):
 
 def move_into_dir(src, dst, pattern, alias, dry_run, sub_dir):
     from mylib.ext.ostk import fs_move_cli
-    from ezpykit.enhance_stdlib.re import find_words
+    from ezpykit.stdlib.re import find_words
     from mylib.ext.tui import prompt_choose_number, prompt_confirm
     conf_file = fstk.make_path('~', '.config', 'fs.put_in_dir.json', user_home=True)
     conf = fstk.read_json_file(conf_file) or {'dst_map': {}}
@@ -148,7 +149,7 @@ def flat_dir(src, prefix, dry_run):
         if not os.path.isdir(s):
             print(f'! skip non-folder: {s}')
             continue
-        with fstk.ctx_pushd(s):
+        with ezpykit.enhance_stdlib.os.common.ctx_pushd(s):
             print(s)
             for fp in fstk.find_iter('f', '.', win32_unc=is_win32):
                 new = os.path.relpath(fp, fstk.make_path('.', win32_unc=is_win32))

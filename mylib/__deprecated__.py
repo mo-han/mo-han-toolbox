@@ -9,7 +9,7 @@ from shutil import Error
 from typing import Callable, Generator
 
 from mylib.easy import *
-from ezpykit.enhance_stdlib.shutil.__deprecated__ import FileToDirectoryError, DirectoryToFileError, \
+from ezpykit.stdlib.shutil.__deprecated__ import FileToDirectoryError, DirectoryToFileError, \
     NeitherFileNorDirectoryError
 from mylib.ext import fstk
 from mylib.ext.ostk import Clipboard

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import os as _os
-from io import *
+from io import FileIO
 
 
 class SliceFileIO(FileIO):
@@ -87,15 +87,3 @@ class SliceFileIO(FileIO):
         else:
             raise TypeError(key, (int, slice), type(key))
         self.seek(orig_pos)
-
-
-class IOKit:
-    @staticmethod
-    def read_exit(x, *args, **kwargs):
-        with x:
-            return x.read(*args, **kwargs)
-
-    @staticmethod
-    def write_exit(x, *args, **kwargs):
-        with x:
-            return x.write(*args, **kwargs)

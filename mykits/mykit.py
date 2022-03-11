@@ -10,7 +10,7 @@ from pprint import pprint
 
 from send2trash import send2trash
 
-import ezpykit.enhance_stdlib.shutil.__deprecated__
+import ezpykit.stdlib.shutil.__deprecated__
 import mylib.__deprecated__
 import mylib.easy
 import mylib.ext.ostk
@@ -18,10 +18,11 @@ from ezpykit.allinone import AttrName
 from mylib.__deprecated__ import fs_inplace_rename, fs_inplace_rename_regex, list_files, list_dirs
 from mylib.cli import arg_type_pow2, arg_type_range_factory, add_dry_run
 from mylib.easy import *
-from ezpykit.enhance_stdlib.argparse import CompactHelpFormatterWithDefaults
+from ezpykit.stdlib.argparse import CompactHelpFormatterWithDefaults
 from mylib.ext.tricks import Attreebute, eval_or_str, deco_factory_exit_on_keyboard_interrupt
 from mylib.ext import fstk, tui
-from mylib.ext.fstk import make_path, ctx_pushd
+from mylib.ext.fstk import make_path
+from ezpykit.stdlib.os import ctx_pushd
 from mylib.ext.ostk import clipboard, set_console_title
 
 rtd = Attreebute()  # runtime data

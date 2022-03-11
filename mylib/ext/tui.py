@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import mylib.ext.tricks
-from ezpykit.enhance_builtin import ezstrkit
+from ezpykit.builtin import ezstrkit
 from mylib.easy import *
 
 CRLF = f'\r\n'

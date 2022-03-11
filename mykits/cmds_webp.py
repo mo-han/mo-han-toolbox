@@ -10,7 +10,7 @@ import filetype
 from humanize import naturaldelta, naturalsize
 from send2trash import send2trash
 
-import ezpykit.enhance_stdlib.shutil.__deprecated__
+import ezpykit.stdlib.shutil.__deprecated__
 from mylib.easy import logging
 from mylib.ext.console_app import *
 from mylib.wrapper import cwebp

@@ -270,34 +270,6 @@ def ensure_open_file(filepath, mode='r', **kwargs):
     return open(filepath, mode, **kwargs)
 
 
-@contextlib.contextmanager
-def ctx_pushd(dst: str, ensure_dst: bool = False):
-    if dst == '':
-        yield
-        return
-    if ensure_dst:
-        cd = ensure_chdir
-    else:
-        cd = os.chdir
-    prev = os.getcwd()
-    saved_error = None
-    try:
-        cd(dst)
-        yield
-    except Exception as e:
-        saved_error = e
-    finally:
-        cd(prev)
-        if saved_error:
-            raise saved_error
-
-
-def ensure_chdir(dest: str):
-    if not os.path.isdir(dest):
-        os.makedirs(dest, exist_ok=True)
-    os.chdir(dest)
-
-
 def path_or_glob(pathname, *, recursive=False):
     if os.path.exists(pathname):
         return [pathname]

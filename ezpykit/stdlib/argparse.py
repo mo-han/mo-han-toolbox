@@ -2,8 +2,8 @@
 import re
 from argparse import *
 
-from ezpykit.allinone.metautil import T, AttrName, ObjectWrapper
-from ezpykit.allinone.singleton import SingletonMetaClass
+from ezpykit.metautil import T, AttrName, ObjectWrapper
+from ezpykit.metautil.singleton import SingletonMetaClass
 
 
 class CompactHelpFormatterWithDefaults(ArgumentDefaultsHelpFormatter):

@@ -2,7 +2,7 @@
 import os
 from abc import ABC, abstractmethod
 
-from ezpykit.enhance_builtin import ezlist, lkdict
+from ezpykit.builtin import ezlist, ezdict
 from ezpykit.allinone import T
 
 
@@ -73,12 +73,12 @@ class EnVarConfig(ConfigABC):
 
 
 class DictConfig(ConfigABC):
-    data: lkdict
+    data: ezdict
 
     def set_data(self, x):
         if not isinstance(x, T.Mapping):
             raise TypeError('x', T.Mapping, type(x))
-        self.data = lkdict(x)
+        self.data = ezdict(x)
         return self
 
     def keys_sequence_of_search(self, key) -> list:

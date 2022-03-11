@@ -8,7 +8,7 @@ from glob import glob
 import argparse
 
 from mylib.sites.bilibili.__to_be_deprecated__ import BilibiliAppCacheEntry
-from ezpykit.enhance_stdlib.argparse import CompactHelpFormatterWithDefaults
+from ezpykit.stdlib.argparse import CompactHelpFormatterWithDefaults
 
 
 def parse_args():
