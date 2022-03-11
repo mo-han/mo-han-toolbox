@@ -18,3 +18,15 @@ class ezlist(list):
                     i += 1
             except IndexError:
                 break
+
+    def get(self, index, default=None):
+        try:
+            return self[index]
+        except IndexError:
+            return default
+
+    def first(self, default=None):
+        return self.get(0, default=default)
+
+    def last(self, default=None):
+        return self.get(-1, default=default)
