@@ -13,7 +13,7 @@ from ezpykit.metautil import *
 from ezpykit.builtin import *
 from ezpykit.stdlib import io, os, argparse, threading, re, glob, shutil, base64
 
-___ref = re, sys, subprocess, pathlib, glob, queue, threading, io, os, argparse, shutil, base64, ezdict
+___ref = re, sys, subprocess, pathlib, glob, queue, threading, io, os, argparse, shutil, base64, ezdict, deco_singleton
 
 sleep = time.sleep
 
