@@ -41,9 +41,17 @@ class VirtualFileManager:
         cls._files[vfname] = vf
         return vf
 
+    @staticmethod
+    def _post_process(vf, mode):
+        if 'w' in mode:
+            vf.truncate()
+        elif 'a' in mode:
+            vf.read()
+        return vf
+
     @classmethod
     def get(cls, vfname, mode: str, **kwargs):
-        if any([i in mode for i in 'ax+']):
+        if any([i in mode for i in 'x+']):
             raise NotImplementedError('mode', mode)
         want_bin = 'b' in mode
         if vfname in cls._files:
@@ -56,14 +64,17 @@ class VirtualFileManager:
                 has_bin = False
             else:
                 return cls.new(vfname, binary=want_bin)
+            import locale
+            encoding = kwargs.get('encoding') or locale.getpreferredencoding(False)
             if has_bin == want_bin:
-                return vf
+                pass
             elif want_bin:
-                return cls.new(vfname, binary=True, value=vf.getvalue().encode(kwargs.get('encoding') or 'utf-8'))
+                vf = cls.new(vfname, binary=True, value=vf.getvalue().encode(encoding))
             else:
-                return cls.new(vfname, binary=False, value=vf.getvalue().decode(kwargs.get('encoding') or 'utf-8'))
+                vf = cls.new(vfname, binary=False, value=vf.getvalue().decode(encoding))
         else:
-            return cls.new(vfname, binary=want_bin)
+            vf = cls.new(vfname, binary=want_bin)
+        return cls._post_process(vf, mode)
 
     @classmethod
     def set(cls, vfname, vfobj):
@@ -85,8 +96,12 @@ def open_virtual_file_io(file, mode='r', **kwargs):
 
 
 def replace_open_support_vitual_file_io():
-    open_virtual_file_io.replace = builtins.open
-    builtins.open = open_virtual_file_io
+    try:
+        open_virtual_file_io.replace = builtins.open
+    except AttributeError:
+        return
+    else:
+        builtins.open = open_virtual_file_io
 
 
 def restore_open():
