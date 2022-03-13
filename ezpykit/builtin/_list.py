@@ -26,7 +26,7 @@ class ezlist(list):
             return default
 
     def first(self, default=None):
-        return self.get(0, default=default)
+        return ezlist.get(self, 0, default=default)
 
     def last(self, default=None):
-        return self.get(-1, default=default)
+        return ezlist.get(self, -1, default=default)

@@ -96,11 +96,8 @@ def open_virtual_file_io(file, mode='r', **kwargs):
 
 
 def replace_open_support_vitual_file_io():
-    try:
+    if not hasattr(open_virtual_file_io, 'replace'):
         open_virtual_file_io.replace = builtins.open
-    except AttributeError:
-        return
-    else:
         builtins.open = open_virtual_file_io
 
 
