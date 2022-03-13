@@ -422,7 +422,12 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     vf_list = get_filter_list(vf)
     vf_str = get_filter_str(vf_list)
     logger = ez_get_logger(f'{__name__}.smartconv', fmt=LOG_FMT_MESSAGE_ONLY)
-    codecs_d = {'h': 'hevc', 'a': None, 'hq': 'hevc_qsv', 'aq': 'h264_qsv', 'v': 'vp9'}
+    codecs_d = {
+        'h': 'hevc', 'a': None,
+        'hq': 'hevc_qsv', 'aq': 'h264_qsv',
+        'v': 'vp9',
+        'hnv': 'hevc_nvenc', 'anv': 'h264_nvenc'
+    }
     tags = []
 
     ft = filetype.guess(filepath)
@@ -512,7 +517,14 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     if 'qsv' in keywords and codec in ('a', 'h'):
         tags.append('qsv')
         codec += 'q'
-        ffmpeg_args.add(vcodec=codecs_d[codec], global_quality=crf)
+        crf = None
+        ffmpeg_args.add(vcodec=codecs_d[codec])
+    elif 'nvenc' in keywords and codec in ('a', 'h'):
+        tags.append('nvenc')
+        codec += 'nv'
+        ffmpeg_args.add(c__v=codecs_d[codec], preset__v='p7', tune__v='hq', rc__v='vbr', cq__v=crf)
+        if crf:
+            ffmpeg_args.add(b__v=0)
     else:
         ffmpeg_args.add(vcodec=codecs_d[codec], crf=crf)
     ffmpeg_args.add(ffmpeg_opts)
