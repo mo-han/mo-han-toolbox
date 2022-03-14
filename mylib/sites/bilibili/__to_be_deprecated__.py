@@ -14,6 +14,7 @@ import requests
 import you_get.util.strings
 from lxml import html
 
+import ezpykitext.webclient.headers
 from mylib import web_client
 from mylib.__deprecated__ import concat_videos, merge_m4s
 from mylib._misc import safe_print, safe_basename
@@ -27,7 +28,7 @@ from mylib.ext.tui import LinePrinter
 from mylib.sites.bilibili import api
 
 API_HEADERS_HANDLER: http_headers.HTTPHeadersBuilder = http_headers.HTTPHeadersBuilder().user_agent(
-    http_headers.UserAgentExamples.GOOGLE_CHROME_WINDOWS)
+    ezpykitext.webclient.headers.UserAgentExamples.GOOGLE_CHROME_WINDOWS)
 
 BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'
 BILIBILI_EPISODE_URL_PREFIX = 'https://www.bilibili.com/bangumi/play/'

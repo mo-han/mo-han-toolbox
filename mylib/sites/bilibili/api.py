@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 import datetime
 
+import ezpykitext.webclient.headers
 from mylib.ext import http_headers
 from mylib.easy import *
 
 BILIBILI_HOME_PAGE_URL = 'https://www.bilibili.com'
 
 common_headers = http_headers.HTTPHeadersBuilder().user_agent(
-    http_headers.UserAgentExamples.GOOGLE_CHROME_WINDOWS).referer(BILIBILI_HOME_PAGE_URL).origin(
+    ezpykitext.webclient.headers.UserAgentExamples.GOOGLE_CHROME_WINDOWS).referer(BILIBILI_HOME_PAGE_URL).origin(
     BILIBILI_HOME_PAGE_URL).headers
 
 
