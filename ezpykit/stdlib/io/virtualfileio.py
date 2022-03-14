@@ -2,6 +2,7 @@
 import builtins
 import io as _io
 from io import StringIO, BytesIO
+from contextlib import contextmanager
 
 
 class VirtualFileIOBase:
@@ -95,7 +96,7 @@ def open_virtual_file_io(file, mode='r', **kwargs):
         return _io.open(file, mode=mode, **kwargs)
 
 
-def replace_open_support_vitual_file_io():
+def replace_open_support_virtualfileio():
     if not hasattr(open_virtual_file_io, 'replace'):
         open_virtual_file_io.replace = builtins.open
         builtins.open = open_virtual_file_io
@@ -103,3 +104,11 @@ def replace_open_support_vitual_file_io():
 
 def restore_open():
     builtins.open = open_virtual_file_io.replace
+    delattr(open_virtual_file_io, 'replace')
+
+
+@contextmanager
+def ctx_open_virtualfileio():
+    replace_open_support_virtualfileio()
+    yield
+    restore_open()

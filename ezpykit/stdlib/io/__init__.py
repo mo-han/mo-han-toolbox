@@ -9,11 +9,11 @@ ___ref = IOBase
 
 class IOKit:
     @staticmethod
-    def read_exit(x, *args, **kwargs):
-        with x:
-            return x.read(*args, **kwargs)
+    def read_exit(io_obj, *args, **kwargs):
+        with io_obj:
+            return io_obj.read(*args, **kwargs)
 
     @staticmethod
-    def write_exit(x, *args, **kwargs):
-        with x:
-            return x.write(*args, **kwargs)
+    def write_exit(io_obj, *args, **kwargs):
+        with io_obj:
+            return io_obj.write(*args, **kwargs)
