@@ -23,17 +23,23 @@ NETSCAPE_HEADER_TEXT = """\
 
 
 class SingleCookieDict(dict):
+    class InvalidCookieDict(Exception):
+        pass
+
     def to_netscape_line(self):
-        s_true = 'TRUE'
-        s_false = 'FALSE'
-        domain = f'#HttpOnly_{self["domain"]}' if self['httpOnly'] else self['domain']
-        include_subdomains = s_false if self['hostOnly'] else s_true
-        path = self['path']
-        secure = s_true if self['secure'] else s_false
-        expire = self.get('expirationDate', 0)
-        name = self['name']
-        value = self['value']
-        return '\t'.join([domain, include_subdomains, path, secure, str(expire), name, value])
+        try:
+            s_true = 'TRUE'
+            s_false = 'FALSE'
+            domain = f'#HttpOnly_{self["domain"]}' if self['httpOnly'] else self['domain']
+            include_subdomains = s_false if self['hostOnly'] else s_true
+            path = self['path']
+            secure = s_true if self['secure'] else s_false
+            expire = self.get('expirationDate', 0)
+            name = self['name']
+            value = self['value']
+            return '\t'.join([domain, include_subdomains, path, secure, str(expire), name, value])
+        except KeyError as e:
+            raise self.InvalidCookieDict('missing key', *e.args)
 
 
 class EzCookieJar(MozillaCookieJar, RequestsCookieJar):
@@ -60,8 +66,15 @@ class EzCookieJar(MozillaCookieJar, RequestsCookieJar):
         j = json.loads(source)
         if isinstance(j, dict) and 'cookies' in j:
             j = j['cookies']
-        if isinstance(j, list) and ezlist.first(j) and len(
-                j[0].keys() & {'name', 'value', 'domain', 'hostOnly', 'path', 'secure', 'httpOnly'}) == 7:
+        # if isinstance(j, list) and ezlist.first(j) and len(
+        #         j[0].keys() & {'name', 'value', 'domain', 'hostOnly', 'path', 'secure', 'httpOnly'}) == 7:
+        if isinstance(j, list):
+            first = ezlist.first(j)
+            if not first:
+                return
+            elif not isinstance(first, dict):
+                raise TypeError('cookie dict', type(first))
+            SingleCookieDict(first).to_netscape_line()
             netscape_text = self.convert_json_cookies_to_netscape_text(j)
             if len(netscape_text) > self.max_vfsize:
                 raise RuntimeError('content too leng', self.max_vfsize, len(netscape_text))
