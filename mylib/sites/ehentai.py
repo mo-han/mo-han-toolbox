@@ -97,7 +97,7 @@ def ehviewer_images_catalog(root_dir, *, dry_run: bool = False, db_json_path: st
             eh_api = EHentaiAPI()
             for d in eh_api.get_gallery_data(not_found_gid_token):
                 db[d['gid']] = d
-            fstk.write_json_file(db_json_path, db, indent=4)
+            fstk.write_json_file(db_json_path, db)
 
         for f in files:
             g = EHentaiGallery(f, logger=logger)
