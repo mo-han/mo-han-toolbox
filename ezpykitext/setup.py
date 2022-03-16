@@ -13,15 +13,16 @@ from shutil import rmtree
 from setuptools import find_packages, setup, Command
 
 # Package meta-data.
-VERSION = '0.0.1a'
-IS_DEV_REVISION = True
+VERSION = '0.1a'
+DEV = True
 NAME = 'ezpykitext'
-DESCRIPTION = ''
-URL = 'https://github.com/mo-han/mo-han-toolbox/tree/master/expykit'
+DESCRIPTION = 'extend ezpykit'
+URL = 'https://github.com/mo-han/mo-han-toolbox/tree/master/ezpykitext'
 EMAIL = 'zmhungrown@gmail.com'
 AUTHOR = 'mo-han'
 REQUIRES_PYTHON = '>=3.6.0'
-INCLUDE = [NAME]
+INCLUDE = [NAME, NAME + '.*']
+EXCLUDE = []
 
 # What packages are required for this module to be executed?
 REQUIRED = [
@@ -34,7 +35,7 @@ EXTRAS = {
     # 'fancy feature': ['django'],
 }
 
-if IS_DEV_REVISION:
+if DEV:
     VERSION += '.dev' + datetime.now().isoformat().split('T')[0].replace('-', '')
 
 # The rest you shouldn't have to touch too much :)
@@ -112,7 +113,7 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    packages=find_packages(include=INCLUDE, exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
+    packages=find_packages(include=INCLUDE, exclude=["tests", "*.tests", "*.tests.*", "tests.*", *EXCLUDE]),
     # If your package is a single module, use this instead of 'packages':
     # py_modules=['mypackage'],
 

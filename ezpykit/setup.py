@@ -21,7 +21,8 @@ URL = 'https://github.com/mo-han/mo-han-toolbox/tree/master/ezpykit'
 EMAIL = 'zmhungrown@gmail.com'
 AUTHOR = 'mo-han'
 REQUIRES_PYTHON = '>=3.6.0'
-INCLUDE = [NAME + '*']
+INCLUDE = [NAME, NAME + '.*']
+EXCLUDE = []
 
 # What packages are required for this module to be executed?
 REQUIRED = [
@@ -111,7 +112,7 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    packages=find_packages(include=INCLUDE, exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
+    packages=find_packages(include=INCLUDE, exclude=["tests", "*.tests", "*.tests.*", "tests.*", *EXCLUDE]),
     # If your package is a single module, use this instead of 'packages':
     # py_modules=['mypackage'],
 
