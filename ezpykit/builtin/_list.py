@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-class ezlist(list):
+from ezpykit.stdlib import typing as T
+
+
+class ezlist(list, T.Generic[T.T]):
     def append_dedup(self, x, reindex=False):
         if x in self:
             if reindex:
@@ -38,3 +41,12 @@ class ezlist(list):
     @property
     def last(self):
         return self.get_last()
+
+    def ichunks(self: T.Iterable[T.T], n):
+        r = []
+        for e in self:
+            r.append(e)
+            if len(r) == n:
+                yield r
+                r = []
+        yield r

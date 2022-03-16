@@ -2,6 +2,7 @@
 from functools import wraps
 
 from ezpykit.metautil.singleton import deco_singleton
+from ezpykit.metautil.timer import ctx_minimum_duration
 from ezpykit.stdlib import typing as T
 
 

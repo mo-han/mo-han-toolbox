@@ -10,7 +10,7 @@ from ezpykitext.webclient.cookies import EzCookieJar
 from ezpykitext.webclient.lxml_html import *
 
 
-class EHentaiGallery:
+class EHentaiGallery(T.Generic[T.T]):
     def __init__(self, x):
         self.home = 'https://e-hentai.org'
         if isinstance(x, str):
@@ -102,3 +102,78 @@ class EHentaiAPI:
 
     def del_fav(self, gallery):
         return self.set_fav(gallery, 'favdel')
+
+    @staticmethod
+    def post_request_official_api(json_data: dict):
+        with ctx_minimum_duration(1):
+            r = requests.post('https://api.e-hentai.org/api.php', json=json_data)
+            r.raise_for_status()
+            return r.json()
+
+    @staticmethod
+    def sort_tags_in_metadata(data: dict):
+        tags_s = 'tags'
+        if tags_s not in data:
+            return data
+        all_tags = data[tags_s]
+        all_tags_d = {}
+        for tag in all_tags:
+            if ':' in tag:
+                k, v = tag.split(':', maxsplit=1)
+            else:
+                k, v = 'misc', tag
+            tag_l = all_tags_d.setdefault(k, [])
+            tag_l.append(v)
+        data['tags'] = all_tags_d
+        return data
+
+    def iget_meta(self, galleries):
+        for group in ezlist.ichunks((EHentaiGallery(x) for x in galleries), 25):
+            gid_token_group = [[g.gid, g.token] for g in group]
+            j = self.post_request_official_api(dict(method='gdata', namespace=1, gidlist=gid_token_group))
+            if 'error' in j:
+                raise EHentaiError(j['error'])
+            for metadata in j['gmetadata']:
+                yield self.sort_tags_in_metadata(metadata)
+
+
+class EHentaiError(Exception):
+    errors_d = {
+        -1: 'unknown',
+        1: 'api invalid json',
+        2: 'api invalid key',
+        403: 'ip banned',
+        404: 'gallery not found',
+    }
+
+    def __init__(self, x):
+        code, reason, comment = None, None, None
+        if isinstance(x, int):
+            if x in self.errors_d:
+                code = x
+            else:
+                reason = "undefined error number '{}'".format(x)
+        else:
+            x = str(x)
+            if x.startswith('Your IP address has been temporarily banned'):
+                code = 403
+                split_by_expire = x.rsplit('The ban expires in ', maxsplit=1)
+                if len(split_by_expire) == 2:
+                    comment = 'recovering in ' + split_by_expire[-1]
+            elif x == 'Key missing, or incorrect key provided.':
+                code = 2
+            elif x == 'Invalid JSON Request':
+                code = 1
+            else:
+                code = -1
+                comment = x
+        self.code = code or -1
+        self.reason = reason or self.errors_d[self.code]
+        if comment:
+            self.comment = comment
+
+    def __str__(self):
+        if self.comment:
+            return 'EHentai Error {}: {}, {}'.format(self.code, self.reason, self.comment)
+        else:
+            return 'EHentai Error {}: {}'.format(self.code, self.reason)

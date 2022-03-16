@@ -13,6 +13,7 @@ from mylib.easy import logging
 from mylib.ext.tricks import is_hex
 from mylib.ext import fstk
 from mylib.web_client import cookies_dict_from_netscape_file, get_html_element_tree
+from websites.ehentai import EHentaiError
 
 VARIOUS = '(various)'
 UNKNOWN = '(unknown)'
@@ -306,48 +307,6 @@ class EHentaiGallery:
         d[self.gid] = self.data
         with open(file_path, 'w') as f:
             json.dump(d, f, indent=indent)
-
-
-class EHentaiError(Exception):
-    errors_d = {
-        -1: 'unknown',
-        1: 'api invalid json',
-        2: 'api invalid key',
-        403: 'ip banned',
-        404: 'gallery not found',
-    }
-
-    def __init__(self, x):
-        code, reason, comment = None, None, None
-        if isinstance(x, int):
-            if x in self.errors_d:
-                code = x
-            else:
-                reason = "undefined error number '{}'".format(x)
-        else:
-            x = str(x)
-            if x.startswith('Your IP address has been temporarily banned'):
-                code = 403
-                split_by_expire = x.rsplit('The ban expires in ', maxsplit=1)
-                if len(split_by_expire) == 2:
-                    comment = 'recovering in ' + split_by_expire[-1]
-            elif x == 'Key missing, or incorrect key provided.':
-                code = 2
-            elif x == 'Invalid JSON Request':
-                code = 1
-            else:
-                code = -1
-                comment = x
-        self.code = code or -1
-        self.reason = reason or self.errors_d[self.code]
-        if comment:
-            self.comment = comment
-
-    def __str__(self):
-        if self.comment:
-            return 'EHentai Error {}: {}, {}'.format(self.code, self.reason, self.comment)
-        else:
-            return 'EHentai Error {}: {}'.format(self.code, self.reason)
 
 
 def ehviewer_dl_folder_rename(folder_path: str, *, db: dict = None, update_db=True):
