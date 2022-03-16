@@ -174,22 +174,6 @@ class ExceptionWithKwargs(Exception):
         return f'{self.__class__.__name__}{self}'
 
 
-class VoidDuck:
-    """a void, versatile, useless and quiet duck, call in any way, return nothing, raise nothing"""
-
-    def __init__(self, *args, **kwargs):
-        pass
-
-    def __getattr__(self, item):
-        return self
-
-    def __call__(self, *args, **kwargs):
-        return self
-
-    def __bool__(self):
-        return False
-
-
 def split_path_dir_base_ext(path, dir_ext=True) -> T.Tuple[str, str, str]:
     """path -> dirname, basename, extension"""
     split = os.path.split

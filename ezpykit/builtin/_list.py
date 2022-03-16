@@ -25,8 +25,16 @@ class ezlist(list):
         except IndexError:
             return default
 
-    def first(self, default=None):
+    def get_first(self, default=None):
         return ezlist.get(self, 0, default=default)
 
-    def last(self, default=None):
+    def get_last(self, default=None):
         return ezlist.get(self, -1, default=default)
+
+    @property
+    def first(self):
+        return self.get_first()
+
+    @property
+    def last(self):
+        return self.get_last()

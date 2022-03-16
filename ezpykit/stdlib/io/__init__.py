@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from io import *
+from ezpykit.stdlib import typing as T
 
 from ezpykit.stdlib.io.slicefileio import *
 from ezpykit.stdlib.io.virtualfileio import *
@@ -9,7 +10,7 @@ ___ref = IOBase
 
 class IOKit:
     @staticmethod
-    def read_exit(io_obj, *args, **kwargs):
+    def read_exit(io_obj, *args, **kwargs) -> T.Union[str, bytes]:
         with io_obj:
             return io_obj.read(*args, **kwargs)
 

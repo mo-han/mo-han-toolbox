@@ -2,7 +2,7 @@
 import json
 
 from ezpykit.allinone import io, os, ezlist
-from ezpykit.stdlib.http.cookiejar import MozillaCookieJar
+from ezpykit.stdlib.http.cookiejar import MozillaCookieJar, LoadError
 
 try:
     import requests.cookies as ___
@@ -46,7 +46,7 @@ class EzCookieJar(MozillaCookieJar, RequestsCookieJar):
     temp_vfname = f'virtualfile:///EzCookieJar.temp.txt'
     max_vfsize = 1024 * 1024 * 16
 
-    def smart_load(self, source):
+    def smart_load(self, source, ignore_discard=False, ignore_expires=False):
         if os.path_isfile(source):
             source = io.IOKit.read_exit(open(source))
         try:
@@ -56,11 +56,26 @@ class EzCookieJar(MozillaCookieJar, RequestsCookieJar):
         else:
             is_json = True
         if is_json:
-            self.load_json(source)
+            self.load_json(source, ignore_discard=ignore_discard, ignore_expires=ignore_expires)
         else:
-            self.load_netscape(source)
+            try:
+                self.load_netscape(source, ignore_discard=ignore_discard, ignore_expires=ignore_expires)
+            except LoadError:
+                self.load_string(source)
 
-    def load_json(self, source):
+    def load_string(self, source, ignore_discard=False, ignore_expires=False):
+        if os.path_isfile(source):
+            source = io.IOKit.read_exit(open(source))
+        sep = ';' if ';' in source else ','
+        pairs = source.split(sep)
+        d = {}
+        for p in pairs:
+            sep = '=' if '=' in p else ':'
+            k, v = [s.strip() for s in p.split(sep, maxsplit=1)]
+            d[k] = v
+        self.update(d)
+
+    def load_json(self, source, ignore_discard=False, ignore_expires=False):
         if os.path_isfile(source):
             source = io.IOKit.read_exit(open(source))
         j = json.loads(source)
@@ -69,7 +84,7 @@ class EzCookieJar(MozillaCookieJar, RequestsCookieJar):
         # if isinstance(j, list) and ezlist.first(j) and len(
         #         j[0].keys() & {'name', 'value', 'domain', 'hostOnly', 'path', 'secure', 'httpOnly'}) == 7:
         if isinstance(j, list):
-            first = ezlist.first(j)
+            first = ezlist.get_first(j)
             if not first:
                 return
             elif not isinstance(first, dict):
@@ -80,18 +95,18 @@ class EzCookieJar(MozillaCookieJar, RequestsCookieJar):
                 raise RuntimeError('content too leng', self.max_vfsize, len(netscape_text))
             with io.ctx_open_virtualfileio():
                 io.IOKit.write_exit(open(self.temp_vfname, 'w'), netscape_text)
-                super().load(self.temp_vfname)
+                super().load(self.temp_vfname, ignore_discard=ignore_discard, ignore_expires=ignore_expires)
                 return
         raise ValueError('invalid json source')
 
-    def load_netscape(self, source):
+    def load_netscape(self, source, ignore_discard=False, ignore_expires=False):
         if os.path_isfile(source):
             source = io.IOKit.read_exit(open(source))
         if len(source) > self.max_vfsize:
             raise RuntimeError('content too leng', self.max_vfsize, len(source))
         with io.ctx_open_virtualfileio():
             io.IOKit.write_exit(open(self.temp_vfname, 'w'), source)
-            super().load(self.temp_vfname)
+            super().load(self.temp_vfname, ignore_discard=ignore_discard, ignore_expires=ignore_expires)
 
     @staticmethod
     def convert_json_cookies_to_netscape_text(list_of_cookie_dict):

@@ -16,7 +16,7 @@ meta_apr = argparse.ArgumentParserWrapper()
 @functools.lru_cache()
 def find_module_path():
     r = {}
-    with ezpykit.enhance_stdlib.os.common.ctx_pushd(__dirname__):
+    with ezpykit.stdlib.os.common.ctx_pushd(__dirname__):
         for f in glob.glob(__filename_without_extension__ + '*.py*'):
             match = re.match(rf'({__filename_without_extension__})_([^.-]+)', f)
             if not match:

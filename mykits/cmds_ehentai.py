@@ -3,6 +3,7 @@ from ezpykitext.appkit import *
 from mylib.ext.console_app import ConsolePrinter, fstk, split_path_dir_base_ext, join_path_dir_base_ext, PathSourceType, \
     resolve_path_to_dirs_files, Timer
 from mylib.sites import ehentai
+from websites.ehentai import EHentaiAPI
 
 apr = argparse.ArgumentParserWrapper()
 an = apr.an
@@ -16,9 +17,14 @@ def main():
 
 
 @apr.sub(aliases=['ehvdl2img'])
-def ehviewer_downloads_to_images():
-    "convert images downloaded via EhViewer, into images named as <gid>-<gtoken>-%%d08.jpg, just like EhViewer would do."
+@apr.true('x', 'exhentai')
+@apr.opt('c', 'cookies')
+@apr.opt('f', 'favcat')
+@apr.map(ex='exhentai', cookies='cookies', favcat='favcat')
+def ehviewer_downloads_to_images(ex=False, cookies=None, favcat=None):
+    "convert images downloaded via EhViewer, into images named as <gid>-<gtoken>-%%d08.jpg, like saving images in EhViewer."
     metadata_fn = '.ehviewer'
+    api = EHentaiAPI(ex=ex, cookies=cookies)
     for p in isrcpath(None):
         if os.path_isdir(p):
             with os.ctx_pushd(p):
@@ -38,6 +44,9 @@ def ehviewer_downloads_to_images():
                     dst = os.join_path(ehvimg, new)
                     shutil.move(f, dst)
                     print(f'* {f} -> {dst}')
+                if favcat:
+                    api.set_fav((gid, gtoken), favcat)
+                    print(f'* /g/{gid}/{gtoken} -> favorite {favcat}')
 
 
 @apr.sub(apr.rpl_dot, aliases=['mvfav'])

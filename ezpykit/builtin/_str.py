@@ -66,13 +66,19 @@ class ezstr(str):
         form = f'NF{forms[(bool(compose), bool(compatibility))]}'
         return unicodedata.normalize(form, self)
 
-    def remove_accent_chars(self: str) -> str:
-        return u"".join([c for c in (unicodedata.normalize('NFKD', self)) if not unicodedata.combining(c)])
-
-    def remove_accent_chars_join(self: str):
+    def remove_accent_chars_via_join(self: str):
         # answer by MiniQuark
         # https://stackoverflow.com/a/517974/7966259
         return u"".join([c for c in unicodedata.normalize('NFKD', self) if not unicodedata.combining(c)])
+
+    remove_accent_chars = remove_accent_chars_via_join
+
+    def is_hex(self: str):
+        try:
+            int(self, 16)
+            return True
+        except ValueError:
+            return False
 
 
 if hasattr(ezstr, 'removeprefix'):

@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+from ezpykit.allinone import os
+
+try:
+    import requests.cookies as ___
+except ImportError:
+    if os.system('pip install requests'):
+        raise ImportError('failed to install', 'requests')
+
+from requests.structures import CaseInsensitiveDict
 
 
 class UserAgentExamples:
@@ -15,3 +24,11 @@ class UserAgentExamples:
     CURL = 'curl/7.35.0'
     WGET = 'Wget'
     LYNX = 'Lynx'
+
+
+class EzHeaders(CaseInsensitiveDict):
+    def set_user_agent(self, ua=UserAgentExamples.MOZILLA_FIREFOX_WINDOWS):
+        self['User-Agent'] = ua
+        return self
+
+    set_ua = set_user_agent

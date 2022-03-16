@@ -96,3 +96,29 @@ def decofac_check_arg_choice(options: T.Dict[str, T.Iterable], **option_kwargs):
         return tgt
 
     return deco
+
+
+def install_module(name):
+    import os
+    if os.system(f'pip install {name}'):
+        raise ImportError('failed to install', name)
+
+
+class VoidDuck:
+    """a void, versatile, useless and quiet duck, call in any way, return nothing, raise nothing"""
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __getattr__(self, item):
+        return self
+
+    def __call__(self, *args, **kwargs):
+        return self
+
+    def __bool__(self):
+        return False
+
+
+def hasattr_batch(obj, names):
+    return all(map(lambda name: hasattr(obj, name), names))

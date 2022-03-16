@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 
 from ezpykit.builtin import ezlist, ezdict
 from ezpykit.allinone import T
+from ezpykit.stdlib.urllib.parse import tolerant_urlparse
 
 
 class ConfigABC(ABC):
@@ -24,7 +25,7 @@ class ConfigABC(ABC):
                 return True
         return False
 
-    def get(self, key, default):
+    def get(self, key, default=None):
         return self[key] if key in self else default
 
     @abstractmethod
@@ -70,6 +71,20 @@ class EnVarConfig(ConfigABC):
             except ValueError:
                 continue
         return s
+
+    def get_proxy(self):
+        def _to_dict(proxy_value):
+            r = tolerant_urlparse(proxy_value)
+            return dict(url=proxy_value, hostname=r.hostname, port=r.port, urlparse=r)
+
+        http_proxy = self.get('http_proxy')
+        https_proxy = self.get('https_proxy')
+        proxies = {}
+        if http_proxy:
+            proxies['http'] = _to_dict(http_proxy)
+        if https_proxy:
+            proxies['https'] = _to_dict(https_proxy)
+        return proxies
 
 
 class DictConfig(ConfigABC):
