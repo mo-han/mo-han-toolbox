@@ -53,7 +53,7 @@ TROVE_CLASSIFIERS = [
 
 def get_full_version():
     if DEV:
-        v = VERSION + '.dev' + datetime.now().isoformat().replace('-', '').replace(':', '')[:13]
+        v = VERSION + '.dev' + datetime.now().isoformat()[:16].replace('-', '').replace(':', '').replace('T', '')
     else:
         v = VERSION
     return v
