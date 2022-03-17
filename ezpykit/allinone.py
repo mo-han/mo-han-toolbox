@@ -4,16 +4,15 @@ import pathlib
 import platform
 import queue
 import signal
-import subprocess
 import sys
 import tempfile
 import time
 
-from ezpykit.metautil import *
 from ezpykit.builtin import *
-from ezpykit.stdlib import io, os, argparse, threading, re, glob, shutil, base64
+from ezpykit.metautil import *
+from ezpykit.stdlib import *
 
-___ref = re, sys, subprocess, pathlib, glob, queue, threading, io, os, argparse, shutil, base64, ezdict, deco_singleton
+___ref = [pathlib, queue, ezstr, deco_singleton, T]
 
 sleep = time.sleep
 

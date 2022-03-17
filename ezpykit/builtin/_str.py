@@ -81,22 +81,7 @@ class ezstr(str):
             return False
 
 
-if hasattr(ezstr, 'removeprefix'):
-    str_remove_prefix = str.removeprefix
-else:
-    @decofac_add_method_to_class(ezstr, 'removeprefix')
-    def str_remove_prefix(s: str, prefix: str):
-        return s[len(prefix):] if s.startswith(prefix) else s
-
-if hasattr(ezstr, 'removesuffix'):
-    str_remove_suffix = str.removesuffix
-else:
-    @decofac_add_method_to_class(ezstr, 'removesuffix')
-    def str_remove_suffix(s: str, suffix: str):
-        return s[len(suffix):] if s.endswith(suffix) else s
-
-
-class ezstrkit:
+class StrKit:
     @staticmethod
     def to_columns(items: T.Iterable, total_max_width, *, horizontal=False, sep=' '):
         """convert items into a single `str` in columns"""
@@ -112,3 +97,26 @@ class ezstrkit:
             rows = [items[i::row_n] for i in range(0, row_n)]
         lines_l = [sep.join([f'{s}{" " * (max_len - ezstr.get_width(s))}' for s in row]) for row in rows]
         return '\n'.join(lines_l)
+
+    @staticmethod
+    def percentage(x, ndigits: int = 1):
+        if not isinstance(ndigits, int):
+            raise TypeError('ndigits', int, type(ndigits))
+        if ndigits < 0:
+            raise ValueError('ndigits should be a natural number', ndigits)
+        return f'{x:.{ndigits}%}'
+
+
+if hasattr(ezstr, 'removeprefix'):
+    str_remove_prefix = str.removeprefix
+else:
+    @decofac_add_method_to_class(ezstr, 'removeprefix')
+    def str_remove_prefix(s: str, prefix: str):
+        return s[len(prefix):] if s.startswith(prefix) else s
+
+if hasattr(ezstr, 'removesuffix'):
+    str_remove_suffix = str.removesuffix
+else:
+    @decofac_add_method_to_class(ezstr, 'removesuffix')
+    def str_remove_suffix(s: str, suffix: str):
+        return s[len(suffix):] if s.endswith(suffix) else s
