@@ -25,7 +25,7 @@ def post_id(fp_list, not_browse):
     urls_l = []
     for bn in map(path_basename, resolve_path_to_dirs_files(fp_list)[1] or ostk.clipboard.get().splitlines()):
         print(f'@ {bn}')
-        words = ezpykit.enhance_stdlib.re.find_words(bn, allow_mix_non_word_chars='-')
+        words = ezpykit.stdlib.re.find_words(bn, allow_mix_non_word_chars='-')
         intersect = set(words) & set(sites_post_url_fmt.keys())
         if not intersect:
             continue

@@ -136,7 +136,7 @@ class IwaraImagePage:
         title = m['title']
         uploader = m['uploader_username']
         folder = fstk.sanitize_xu200(f'{title} [Iwara images][{uploader}]')
-        with ezpykit.enhance_stdlib.os.common.ctx_pushd(easy.path_join(root_dir, folder), ensure_dst=True):
+        with ezpykit.stdlib.os.common.ctx_pushd(easy.path_join(root_dir, folder), ensure_dst=True):
             for url in self.data[['resource', 'photos']]:
                 r = urlparse(url)
                 fn = easy.path_basename(r.path)

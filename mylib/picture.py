@@ -217,7 +217,7 @@ def view_similar_image_groups(similar_groups: DisjointSet):
                 except (FileNotFoundError, shutil.Error):
                     pass
     except KeyboardInterrupt:
-        with ezpykit.enhance_stdlib.os.common.ctx_pushd(folder):
+        with ezpykit.stdlib.os.common.ctx_pushd(folder):
             for f in os.listdir():
                 shutil.move(f, '..')
         sys.exit(2)

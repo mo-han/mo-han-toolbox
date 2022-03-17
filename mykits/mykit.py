@@ -249,7 +249,7 @@ def tag_filter_files_func():
                     try:
                         send2trash(f)
                     except OSError:
-                        ezpykit.enhance_stdlib.shutil.__deprecated__.remove(f)
+                        ezpykit.stdlib.shutil.__deprecated__.remove(f)
 
 
 tag_filter_files = add_sub_parser('tag.filter.files', [], 'filter files by tags and ext')
