@@ -2,7 +2,7 @@
 import re
 from argparse import *
 
-from ezpykit.metautil import T, AttrName, ObjectWrapper
+from ezpykit.metautil import AttrName, ObjectWrapper, T
 from ezpykit.metautil.singleton import SingletonMetaClass
 
 

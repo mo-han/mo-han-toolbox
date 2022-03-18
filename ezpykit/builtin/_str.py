@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 import unicodedata
 
-from ezpykit.metautil import decofac_add_method_to_class
-from ezpykit.stdlib import typing as T
+from ezpykit.metautil import decofac_add_method_to_class, typing as T
 
 CR = '\r'
 LF = '\n'

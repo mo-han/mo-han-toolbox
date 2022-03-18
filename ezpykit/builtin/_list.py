@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from ezpykit.stdlib import typing as T
+from ezpykit.metautil import typing as T
 
 
 class ezlist(list, T.Generic[T.T]):

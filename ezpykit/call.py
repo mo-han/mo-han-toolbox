@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-from ezpykit.allinone import T
+from queue import Queue, Empty
+
+from ezpykit.allinone import T, threading
+
+
+class CallTimeoutError(TimeoutError):
+    pass
 
 
 class SimpleCall:
@@ -8,6 +14,10 @@ class SimpleCall:
     kwargs: dict
     exception_ignored: T.Union[Exception, T.Tuple[Exception]] = ()
     exception_handler: T.Callable[[Exception], T.Any] = None
+    _result_queue = Queue(maxsize=1)
+    _exception_queue = Queue(maxsize=1)
+    _queue_lock = threading.Lock()
+
     _ok = False
     _result = None
     _exception: Exception = None
@@ -24,6 +34,11 @@ class SimpleCall:
                     setattr(self, k, callee[k])
         else:
             raise TypeError('callee', T.Union[T.Callable, T.Dict], type(callee))
+
+    def reset(self):
+        self._ok = False
+        self._result = None
+        self._exception = None
 
     @property
     def args_str(self):
@@ -49,11 +64,16 @@ class SimpleCall:
         return self._exception
 
     def run(self, quiet=False):
-        self._ok = False
+        self.reset()
         try:
-            self._result = self.callee(*self.args, **self.kwargs)
+            self._result = r = self.callee(*self.args, **self.kwargs)
             self._ok = True
-            return self._result
+            with self._queue_lock:
+                rq = self._result_queue
+                if rq.qsize():
+                    rq.get()
+                rq.put(r)
+            return r
         except self.exception_ignored:
             pass
         except Exception as e:
@@ -62,12 +82,30 @@ class SimpleCall:
                     self.exception_handler(e)
                 except Exception as he:
                     self._exception = he
-                    if not quiet:
-                        raise he
             else:
                 self._exception = e
-            if not quiet:
-                raise e
+        finally:
+            if self._exception:
+                with self._queue_lock:
+                    eq = self._exception_queue
+                    if eq.qsize():
+                        eq.get()
+                    eq.put(self._exception)
+                if not quiet:
+                    raise self._exception
+
+    def get(self, timeout=None, quiet=False):
+        t = threading.thread_factory(daemon=True)(self.run, quiet=quiet)
+        t.start()
+        rq = self._result_queue
+        eq = self._exception_queue
+        try:
+            return rq.get(timeout=timeout)
+        except Empty:
+            try:
+                raise eq.get(block=False)
+            except Empty:
+                raise CallTimeoutError
 
 
 class BatchCall:

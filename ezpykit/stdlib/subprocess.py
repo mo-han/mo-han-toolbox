@@ -2,7 +2,7 @@
 from subprocess import *
 
 from ezpykit.builtin import ezlist
-from ezpykit.stdlib.sub_init import T
+from ezpykit.metautil import T
 
 ___ref = [run]
 

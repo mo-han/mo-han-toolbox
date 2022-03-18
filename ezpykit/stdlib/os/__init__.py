@@ -2,8 +2,8 @@
 from os import *
 
 if name == 'nt':
-    from .nt import *
+    from ezpykit.stdlib.os.nt import *
 elif name == 'posix':
-    from .posix import *
+    from ezpykit.stdlib.os.posix import *
 else:
-    from .common import *
+    from ezpykit.stdlib.os.common import *

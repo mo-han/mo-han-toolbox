@@ -11,4 +11,3 @@ from ezpykit.stdlib import shutil
 from ezpykit.stdlib import subprocess
 from ezpykit.stdlib import threading
 from ezpykit.stdlib import urllib
-from ezpykit.stdlib.sub_init import *

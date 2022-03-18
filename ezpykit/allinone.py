@@ -13,6 +13,7 @@ from ezpykit.metautil import *
 from ezpykit.stdlib import *
 
 ___ref = [pathlib, queue, ezstr, deco_singleton, T]
+___ref.extend([])
 
 sleep = time.sleep
 

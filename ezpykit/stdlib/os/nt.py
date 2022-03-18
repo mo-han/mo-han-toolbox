@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import time
 
-from .common import *
+from ezpykit.stdlib.os.common import *
 import subprocess
 
 
