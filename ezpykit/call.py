@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from queue import Queue, Empty
 
-from ezpykit.allinone import T, threading
+from ezpykit.allinone import T, threading, ensure_sigint
 
 
 class CallTimeoutError(TimeoutError):
@@ -17,10 +17,12 @@ class SimpleCall:
     _result_queue = Queue(maxsize=1)
     _exception_queue = Queue(maxsize=1)
     _queue_lock = threading.Lock()
+    _counter = 0
+    _running_lock = threading.Lock()
 
     _ok = False
     _result = None
-    _exception: Exception = None
+    _exception: T.Optional[Exception] = None
 
     def __init__(self, callee: T.Union[T.Callable, T.Dict], *args, **kwargs):
         self.kwargs = {}
@@ -64,41 +66,42 @@ class SimpleCall:
         return self._exception
 
     def run(self, quiet=False):
-        self.reset()
-        try:
-            self._result = r = self.callee(*self.args, **self.kwargs)
-            self._ok = True
-            with self._queue_lock:
-                rq = self._result_queue
-                if rq.qsize():
-                    rq.get()
-                rq.put(r)
-            return r
-        except self.exception_ignored:
-            pass
-        except Exception as e:
-            if isinstance(self.exception_handler, T.Callable):
-                try:
-                    self.exception_handler(e)
-                except Exception as he:
-                    self._exception = he
-            else:
-                self._exception = e
-        finally:
-            if self._exception:
+        with self._running_lock:
+            self._counter += 1
+            self.reset()
+            try:
+                self._result = r = self.callee(*self.args, **self.kwargs)
+                self._ok = True
                 with self._queue_lock:
-                    eq = self._exception_queue
-                    if eq.qsize():
-                        eq.get()
-                    eq.put(self._exception)
-                if not quiet:
-                    raise self._exception
+                    rq = self._result_queue
+                    rq.put(r)
+                return r
+            except self.exception_ignored:
+                pass
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except Exception as e:
+                if isinstance(self.exception_handler, T.Callable):
+                    try:
+                        self.exception_handler(e)
+                    except Exception as he:
+                        self._exception = he
+                else:
+                    self._exception = e
+            finally:
+                if self._exception:
+                    with self._queue_lock:
+                        eq = self._exception_queue
+                        eq.put(self._exception)
+                    if not quiet:
+                        raise self._exception
 
     def get(self, timeout=None, quiet=False):
-        t = threading.thread_factory(daemon=True)(self.run, quiet=quiet)
-        t.start()
         rq = self._result_queue
         eq = self._exception_queue
+        if not self._running_lock.locked():
+            t = threading.thread_factory(name=f'{self!r}: {self.run.__name__}-{self._counter}')(self.run, quiet=quiet)
+            t.start()
         try:
             return rq.get(timeout=timeout)
         except Empty:
