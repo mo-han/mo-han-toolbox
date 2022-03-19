@@ -1,0 +1,1 @@
+%1\setup.py clean --all bdist_wheel upload clean --all
