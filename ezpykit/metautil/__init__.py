@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 from functools import wraps
 
-from ezpykit.metautil import typing as T
+from ezpykit.metautil import typing
 from ezpykit.metautil.singleton import deco_singleton
 from ezpykit.metautil.timer import ctx_minimum_duration
+
+T = typing
 
 
 def decofac_add_method_to_class(cls, name=None):
