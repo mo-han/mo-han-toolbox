@@ -8,11 +8,16 @@ ___ref = [run]
 
 
 class CommandLineList(ezlist):
-    enable_single_option_multi_value = False
+    enable_option_multi_value = False
+    enable_option_equal_sign = False
 
     def __init__(self, *args, **kwargs):
         super().__init__()
         self.add(*args, **kwargs)
+
+    def copy(self):
+        new = self.__class__(self)
+        return new
 
     def add_argument(self, arg):
         if isinstance(arg, str):
@@ -31,7 +36,7 @@ class CommandLineList(ezlist):
             self.append(name)
             self.append(value)
         elif isinstance(value, T.Iterable):
-            if self.enable_single_option_multi_value:
+            if self.enable_option_multi_value:
                 self.add(name, *value)
             else:
                 for v in value:
@@ -40,6 +45,8 @@ class CommandLineList(ezlist):
             self.append(name)
         elif value is None or value is False:
             pass
+        elif self.enable_option_equal_sign:
+            self.append(f'{name}={value}')
         else:
             self.append(name)
             self.append(str(value))
