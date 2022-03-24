@@ -20,6 +20,6 @@ xcopy /s /y ezpykitext %dst%\ezpykitext
 mkdir %dst%\websites
 xcopy /s /y websites %dst%\websites
 mkdir %dst%\apps
-xcopy /s /y apps %dst%\apps
+xcopy /s /y apps %dst%
 
 popd

@@ -9,3 +9,5 @@ install -p -m 755 mykits/my_tg_bot.py ~/bin/my_tg_bot
 cp -rp ezpykit ~/bin/
 cp -rp ezpykitext ~/bin/
 cp -rp websites ~/bin/
+chmod -R +x apps
+cp -pt ~/bin apps/*
