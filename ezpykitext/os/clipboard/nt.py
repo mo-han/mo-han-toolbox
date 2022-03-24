@@ -32,10 +32,12 @@ class Clipboard(ClipboardABC, HTMLClipboardMixin):
 
     def __enter__(self):
         self.open()
+        # print('open')
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
+        # print('close')
 
     @property
     def is_opened(self):

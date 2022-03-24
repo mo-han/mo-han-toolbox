@@ -91,7 +91,7 @@ class HTMLClipboardMixin:
                 self.html_source_url = matches.group(6)
                 self.html_selection = self.html_fragment
 
-    def get_html(self, refresh=False):
+    def get_html(self, refresh=True):
         if not self.html or refresh:
             self._read_html()
         return self.html
