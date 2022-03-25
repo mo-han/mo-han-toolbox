@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from ezpykit.allinone import *
-from ezpykitext import os
+from ezpykitext.stdlib import os
 
 
 def isrcpath(source, clipboard_path_as_default=True, exist_first=True):

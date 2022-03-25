@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 from functools import wraps
 
 from ezpykit.metautil import typing
@@ -125,3 +126,13 @@ class VoidDuck:
 
 def hasattr_batch(obj, names):
     return all(map(lambda name: hasattr(obj, name), names))
+
+
+def ensure_module(name, pkg_name=None):
+    from importlib import import_module
+    try:
+        import_module(name)
+    except ModuleNotFoundError:
+        cmd = 'pip install ' + (pkg_name or name)
+        if os.system(cmd):
+            raise
