@@ -4,12 +4,9 @@ import os
 import re
 
 from ezpykit.stdlib import base64
+from ezpykit.allinone import ctx_ensure_module
 
-try:
-    import PIL as ___
-except ImportError:
-    os.system('pip install Pillow')
-else:
+with ctx_ensure_module('PIL', 'Pillow'):
     from PIL import Image, ImageFile, ImageGrab
 
 __ref = ImageGrab
