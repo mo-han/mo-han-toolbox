@@ -134,6 +134,7 @@ def ctx_ensure_module(name, install_name=None):
     from importlib import import_module
     try:
         import_module(name)
+        yield
     except ModuleNotFoundError:
         cmd = 'pip install ' + (install_name or name)
         if os.system(cmd):
