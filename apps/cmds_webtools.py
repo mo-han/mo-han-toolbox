@@ -11,12 +11,12 @@ def main():
     apr.run()
 
 
-@apr.sub(aliases=['cvck'])
+@apr.sub(aliases=['get-cookies'])
 @apr.opt('s', 'src')
 @apr.opt('d', 'dst')
 @apr.true('v', 'verbose')
 @apr.map('src', 'dst', verbose='verbose')
-def convert_cookies(src, dst, verbose=False):
+def get_netscape_cookies(src, dst, verbose=False):
     src = get_from_source(src)
     if verbose:
         cprint(src, 'grey', 'on_green', file=sys.stderr)
