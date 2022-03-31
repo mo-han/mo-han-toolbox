@@ -41,20 +41,30 @@ def iter_path(source=None, clipboard_as_default=True, exist_first=True, use_pipe
                 yield from glob.iglob(s, recursive=recursive_glob)
 
 
-def get_from_source(source=None, clipboard_as_default=True, use_pipe=True):
+def get_from_source(source=None, clipboard_as_default=True, use_pipe=True, read_file=False):
     if clipboard_as_default and not source:
         return os.clpb.get()
     if use_pipe and source == '-':
         return sys.stdin.read()
+    if read_file and os.path_isfile(source):
+        return io.IOKit.read_exit(io.IOKit.open(source, open_with=read_file))
+    if is_iterable_but_not_string(source):
+        return list(source)
     if os.clpb.check_uri(source):
         return os.clpb.uri_api(source)
     return str(source)
 
 
-def give_to_sink(x, sink=None, clipboard_as_default=True, use_pipe=True):
+def give_to_sink(x, sink=None, clipboard_as_default=True, use_pipe=True, write_file=True):
+    if write_file is True:
+        write_file = dict(mode='w')
     if clipboard_as_default and not sink:
         os.clpb.set(x)
-    if use_pipe and sink=='-':
+    elif use_pipe and sink == '-':
         sys.stdout.write(x)
-    if os.clpb.check_uri(sink):
+    elif write_file and os.path_isfile(sink):
+        io.IOKit.write_exit(io.IOKit.open(sink, open_with=write_file), x)
+    elif os.clpb.check_uri(sink):
         os.clpb.uri_api(sink, x)
+    else:
+        raise ValueError('invalid sink', sink)

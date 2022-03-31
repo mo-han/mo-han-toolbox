@@ -140,3 +140,7 @@ def ctx_ensure_module(name, pkg_name=None):
             raise
     else:
         yield
+
+
+def is_iterable_but_not_string(x, string_types=(str, bytes, bytearray)):
+    return isinstance(x, T.Iterable) and not isinstance(x, string_types)

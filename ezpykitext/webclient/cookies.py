@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import json
 
-from ezpykit.allinone import io, os, ezlist
+from ezpykit.allinone import io, os, ezlist, ezstr
 from ezpykit.stdlib.http.cookiejar import MozillaCookieJar, LoadError
 
 try:
@@ -26,7 +26,7 @@ class SingleCookieDict(dict):
     class InvalidCookieDict(Exception):
         pass
 
-    def to_netscape_line(self):
+    def get_netscape_line(self):
         try:
             s_true = 'TRUE'
             s_false = 'FALSE'
@@ -61,16 +61,22 @@ class EzCookieJar(MozillaCookieJar, RequestsCookieJar):
             try:
                 self.load_netscape(source, ignore_discard=ignore_discard, ignore_expires=ignore_expires)
             except LoadError:
-                self.load_string(source)
+                try:
+                    self.load_string(source)
+                except ValueError:
+                    raise ValueError('failed to load', source)
 
-    def load_string(self, source, ignore_discard=False, ignore_expires=False):
+    def load_string(self, source, **kwargs):
         if os.path_isfile(source):
             source = io.IOKit.read_exit(open(source))
+        cookie_ = 'Cookie:'
+        if source.startswith(cookie_):
+            ezstr.removeprefix(source, cookie_).strip()
         sep = ';' if ';' in source else ','
         pairs = source.split(sep)
         d = {}
         for p in pairs:
-            sep = '=' if '=' in p else ':'
+            sep = ':' if ':' in p else '='
             k, v = [s.strip() for s in p.split(sep, maxsplit=1)]
             d[k] = v
         self.update(d)
@@ -89,7 +95,7 @@ class EzCookieJar(MozillaCookieJar, RequestsCookieJar):
                 return
             elif not isinstance(first, dict):
                 raise TypeError('cookie dict', type(first))
-            SingleCookieDict(first).to_netscape_line()
+            SingleCookieDict(first).get_netscape_line()
             netscape_text = self.convert_json_cookies_to_netscape_text(j)
             if len(netscape_text) > self.max_vfsize:
                 raise RuntimeError('content too leng', self.max_vfsize, len(netscape_text))
@@ -103,15 +109,33 @@ class EzCookieJar(MozillaCookieJar, RequestsCookieJar):
         if os.path_isfile(source):
             source = io.IOKit.read_exit(open(source))
         if len(source) > self.max_vfsize:
-            raise RuntimeError('content too leng', self.max_vfsize, len(source))
+            raise RuntimeError('content too long', self.max_vfsize, len(source))
         with io.ctx_open_virtualfileio():
             io.IOKit.write_exit(open(self.temp_vfname, 'w'), source)
             super().load(self.temp_vfname, ignore_discard=ignore_discard, ignore_expires=ignore_expires)
+
+    def get_netscape_text(self, ignore_discard=False, ignore_expires=False):
+        with io.ctx_open_virtualfileio():
+            self.save(self.temp_vfname, ignore_discard=ignore_discard, ignore_expires=ignore_expires)
+            return io.IOKit.read_exit(open(self.temp_vfname))
+
+    def get_header_string(self, *names, domain=None, path=None, header='Cookie: '):
+        return header + '; '.join(self.get_list(*names, joiner='=', domain=domain, path=path))
+
+    def get_list(self, *names, joiner='=', domain=None, path=None):
+        d = self.get_dict(domain=domain, path=path)
+        items = list(d.items())
+        if names:
+            items = [(k, v) for k, v in items if k in names]
+        if joiner:
+            return [f'{k}={v}' for k, v in items]
+        else:
+            return items
 
     @staticmethod
     def convert_json_cookies_to_netscape_text(list_of_cookie_dict):
         lines = [NETSCAPE_HEADER_TEXT]
         for d in list_of_cookie_dict:
             c = SingleCookieDict(d)
-            lines.append(c.to_netscape_line())
+            lines.append(c.get_netscape_line())
         return '\n'.join(lines)
