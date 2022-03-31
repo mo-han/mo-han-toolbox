@@ -34,11 +34,14 @@ class ImageWrapper:
         elif isinstance(source, os.PathLike):
             self.image = Image.open(source, *args, **kwargs)
         elif isinstance(source, str):
-            source = source.strip()
+            source = source.strip().strip('"')
             if source.startswith('data:image/') and ';base64,' in source:
-                m = re.match(r'data:image/(\w+);(charset=.+;)?base64,(.+)', source)
+                m = re.match(r'data:image/([+\w]+);(charset=.+;)?base64,(.+)', source)
                 if not m:
                     raise ValueError('invalid html base64 image data', source)
+                fmt = m.group(1)
+                if fmt == 'svg+xml':
+                    raise NotImplementedError('base64', fmt)
                 data = m.group(3).strip()
                 self.open_file_from_bytes(base64.tolerant_b64decode(data))
             else:

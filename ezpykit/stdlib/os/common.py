@@ -18,6 +18,15 @@ path_isfile = _os.path.isfile
 path_isdir = _os.path.isdir
 
 
+def split_path_dir_stem_ext(fp, dir_ext=True) -> T.Tuple[str, str, str]:
+    parent, base = split_path(fp)
+    if not dir_ext and os.path.isdir(fp):
+        stem, ext = base, ''
+    else:
+        stem, ext = split_ext(base)
+    return parent, stem, ext
+
+
 class EnVarKit:
     upper_case = True
     path_sep = None

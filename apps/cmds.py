@@ -1,28 +1,27 @@
 #!/usr/bin/env python3
+from functools import lru_cache
+
 import tabulate
 
-import ezpykit.stdlib.os.common
-import mylib.easy
-from mylib.easy import *
-from mylib.easy import fstk
-from ezpykit.stdlib import argparse
+from ezpykit.allinone import *
+from mylib.easy import python_module_from_filepath
 
-__dirname__, __filename_without_extension__, __file_extension__ = mylib.easy.split_path_dir_base_ext(__file__)
+__dirname__, __stem__, __ext__ = os.split_path_dir_stem_ext(__file__)
 sub_apr = argparse.ArgumentParserWrapper()
 an = sub_apr.an
 meta_apr = argparse.ArgumentParserWrapper()
 
 
-@functools.lru_cache()
+@lru_cache()
 def find_module_path():
     r = {}
-    with ezpykit.stdlib.os.common.ctx_pushd(__dirname__):
-        for f in glob.glob(__filename_without_extension__ + '*.py*'):
-            match = re.match(rf'({__filename_without_extension__})_([^.-]+)', f)
+    with os.common.ctx_pushd(__dirname__):
+        for f in glob.glob(__stem__ + '*.py*'):
+            match = re.match(rf'({__stem__})_([^.-]+)', f)
             if not match:
                 continue
             name = match.group(2)
-            r[name] = fstk.make_path(__dirname__, f)
+            r[name] = os.join_path(__dirname__, f)
     return r
 
 
@@ -54,11 +53,11 @@ def goto_sub_cmd_module(cmd_name=None):
         if cmd_name in module_paths_d:
             module_path = module_paths_d[cmd_name]
             argv = sys.argv
-            argv = [f'{__filename_without_extension__}{__file_extension__} {cmd_name}', *argv[2:]]
+            argv = [f'{__stem__}{__ext__} {cmd_name}', *argv[2:]]
             if len(argv) < 2:
                 argv.append('-h')
             sys.argv = argv
-            module = python_module_from_filepath('module', module_path)
+            module = python_module_from_filepath(f'{__stem__}_{cmd_name}', module_path)
             module.main()
         else:
             print('module not found:', cmd_name, file=sys.stderr)

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import inspect
+import io
 
 from ezpykit.allinone import *
 from ezpykit.builtin import *
@@ -60,18 +61,18 @@ class Clipboard(ClipboardABC, HTMLClipboardMixin):
             # sleep(self.delay)  # maybe not needed
             self.__opened = False
 
-    def ensure_format(self, x: str or int):
+    def ensure_format(self, fmt: str or int):
         """get valid clipboard format ('CF_*')"""
-        if isinstance(x, int):
+        if isinstance(fmt, int):
             pass
-        elif isinstance(x, str):
-            x = x.upper()
-            if not x.startswith('x_'):
-                x = 'CF_' + x
-            x = getattr(win32clipboard, x)
+        elif isinstance(fmt, str):
+            fmt = self.cf_dict[ezstr.removeprefix(fmt.upper(), 'CF_')]
         else:
-            raise TypeError("'{}' is not str or int".format(x))
-        return x
+            raise TypeError("'{}' is not str or int".format(fmt))
+        return fmt
+
+    def has_format(self, fmt):
+        return win32clipboard.IsClipboardFormatAvailable(self.ensure_format(fmt))
 
     @deco_ctx_with_self
     def clear(self):
@@ -83,40 +84,28 @@ class Clipboard(ClipboardABC, HTMLClipboardMixin):
         cf = self.ensure_format(cf)
         return win32clipboard.SetClipboardData(cf, data)
 
+    def set_image(self, source, *args, **kwargs):
+        from ezpykitext.extlib import PIL
+        iw = PIL.ImageWrapper(source, *args, **kwargs)
+        with io.BytesIO() as buf:
+            iw.image.convert('RGB').save(buf, 'BMP')
+            data = buf.getvalue()[14:]
+        self.set(data, win32clipboard.CF_DIB)
+
     @deco_ctx_with_self
     def set_text___fixme(self, text):
         return win32clipboard.SetClipboardText(text)
 
     @deco_ctx_with_self
+    def _get(self, cf):
+        return win32clipboard.GetClipboardData(cf)
+
     def get(self, cf=win32clipboard.CF_UNICODETEXT):
         cf = self.ensure_format(cf)
-        if win32clipboard.IsClipboardFormatAvailable(cf):
-            data = win32clipboard.GetClipboardData(cf)
+        if self.has_format(cf):
+            return self._get(cf)
         else:
-            data = None
-        return data
-
-    @deco_ctx_with_self
-    def set_image(self, image):
-        import PIL.Image
-
-        if isinstance(image, str):
-            if re.match(r'data:image/\w+;base64, [A-Za-z0-9+/=]+', image):
-                raise NotImplementedError('base64 image data')
-            else:
-                i = PIL.Image.open(image)
-                with io.BytesIO() as o:
-                    i.convert('RGB').save(o, 'BMP')
-                    data = o.getvalue()[14:]  # https://stackoverflow.com/questions/34322132/copy-image-to-clipboard
-        elif isinstance(image, PIL.Image.Image):
-            with io.BytesIO() as o:
-                image.convert('RGB').save(o, 'BMP')
-                data = o.getvalue()[14:]
-        elif isinstance(image, bytes):
-            data = image
-        else:
-            raise TypeError('image', (str, PIL.Image.Image, bytes), type(image))
-        self.set(data, win32clipboard.CF_DIB)
+            raise
 
     def get_path(self, exist_only=True) -> list:
         paths = self.get(win32clipboard.CF_HDROP)

@@ -62,9 +62,9 @@ def give_to_sink(x, sink=None, clipboard_as_default=True, use_pipe=True, write_f
         os.clpb.set(x)
     elif use_pipe and sink == '-':
         sys.stdout.write(x)
-    elif write_file and os.path_isfile(sink):
-        io.IOKit.write_exit(io.IOKit.open(sink, open_with=write_file), x)
     elif os.clpb.check_uri(sink):
         os.clpb.uri_api(sink, x)
+    elif write_file:
+        io.IOKit.write_exit(io.IOKit.open(sink, open_with=write_file), x)
     else:
         raise ValueError('invalid sink', sink)

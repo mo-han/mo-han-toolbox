@@ -56,3 +56,9 @@ def init_root(fmt=FMT_LEVEL1_NO_TIME, dtfmt=DTFMT_ISO, **kwargs):
 def set_root_level(level):
     d = dict(version=1, root=dict(level=level))
     dict_config(d, only_new=False, incremental=True)
+
+
+def get_logger(name, suffix=None):
+    if suffix:
+        name = f'{name}.{suffix}'
+    return getLogger(name)
