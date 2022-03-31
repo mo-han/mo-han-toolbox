@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 from queue import Queue, Empty
 
-from ezpykit.allinone import T, threading, ensure_sigint
+from ezpykit.allinone import T, threading
 
 
 class CallTimeoutError(TimeoutError):
+    pass
+
+
+class BatchCallExceptions(Exception):
+    """calls not ok stored in `self.args`"""
     pass
 
 
@@ -128,8 +133,11 @@ class BatchCall:
                 raise TypeError('calls item', (SimpleCall, T.Union[SimpleCall, T.Dict], type(x)))
 
     def first_result(self):
+        e = []
         for call in self.calls:
             call.run(quiet=True)
             if call.ok:
                 return call.result
-        raise ValueError('all calls failed, nothing returned')
+            else:
+                e.append(call)
+        raise BatchCallExceptions(*e)

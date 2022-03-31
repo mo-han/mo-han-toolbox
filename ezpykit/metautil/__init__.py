@@ -4,7 +4,7 @@ from functools import wraps
 from contextlib import contextmanager
 
 from ezpykit.metautil import typing
-from ezpykit.metautil.singleton import deco_singleton
+from ezpykit.metautil.singleton import deco_singleton, SingletonMetaClass
 from ezpykit.metautil.timer import ctx_minimum_duration
 
 T = typing

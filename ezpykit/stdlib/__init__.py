@@ -5,6 +5,7 @@ from ezpykit.stdlib import datetime
 from ezpykit.stdlib import glob
 from ezpykit.stdlib import http
 from ezpykit.stdlib import io
+from ezpykit.stdlib import logging
 from ezpykit.stdlib import os
 from ezpykit.stdlib import re
 from ezpykit.stdlib import shutil

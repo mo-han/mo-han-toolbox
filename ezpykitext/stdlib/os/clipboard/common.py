@@ -2,7 +2,16 @@
 from abc import ABC, abstractmethod
 from urllib.parse import urlparse
 
+from ezpykit.builtin import ensure_str
 from ezpykit.call import SimpleCall
+
+
+class ClipboardError(Exception):
+    pass
+
+
+class ClipboardURIError(ClipboardError):
+    pass
 
 
 class ClipboardABC(ABC):
@@ -30,23 +39,43 @@ class ClipboardABC(ABC):
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
-    def url_api(self, url: str):
+    def get_lines(self):
+        return self.get().splitlines()
+
+    def resolve_uri(self, uri: str) -> SimpleCall:
+        uri = ensure_str(uri)
         slash = '/'
         calling_map = {
             'get': SimpleCall(self.get),
             'get/path': SimpleCall(self.get_path),
+            'get/lines': SimpleCall(self.get_lines),
+            'set': SimpleCall(self.set)
         }
 
-        pr = urlparse(url)
+        pr = urlparse(uri)
         if pr.scheme not in ('clip', 'clipboard'):
-            raise ValueError('invalid scheme', pr.scheme)
+            raise ClipboardURIError('invalid scheme', pr.scheme)
         if pr.netloc not in ('', 'localhost'):
             raise NotImplementedError('remote clipboard')
         if pr.params or pr.query:
             raise NotImplementedError('URL parameters & query string')
         entry = pr.path.strip(slash)
         if entry in calling_map:
-            c: SimpleCall = calling_map[entry]
-            return c.run()
+            return calling_map[entry]
         else:
-            raise NotImplementedError('URL path entry', entry)
+            raise NotImplementedError('URI path entry', entry)
+
+    def check_uri(self, uri: str):
+        uri = ensure_str(uri)
+        try:
+            if self.resolve_uri(uri):
+                return True
+        except (ClipboardURIError, NotImplementedError):
+            return False
+
+    def uri_api(self, uri: str, *args, **kwargs):
+        call = self.resolve_uri(uri)
+        if args or kwargs:
+            call.args = args
+            call.kwargs = kwargs
+        return call.run()

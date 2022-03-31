@@ -25,7 +25,7 @@ def ehviewer_downloads_to_images(ex=False, cookies=None, favcat=None):
     "convert images downloaded via EhViewer, into images named as <gid>-<gtoken>-%%d08.jpg, like saving images in EhViewer."
     metadata_fn = '.ehviewer'
     api = EHentaiAPI(ex=ex, cookies=cookies)
-    for p in isrcpath(None):
+    for p in iter_path(None):
         if os.path_isdir(p):
             with os.ctx_pushd(p):
                 if not os.path_isfile(metadata_fn):

@@ -119,3 +119,9 @@ else:
     @decofac_add_method_to_class(ezstr, 'removesuffix')
     def str_remove_suffix(s: str, suffix: str):
         return s[len(suffix):] if s.endswith(suffix) else s
+
+
+def ensure_str(x, str_class=ezstr):
+    if not isinstance(x, str):
+        x = str_class(x)
+    return x
