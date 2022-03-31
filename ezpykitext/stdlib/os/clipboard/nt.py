@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 import inspect
-import io
 
-import pywintypes
-import win32clipboard
-
+from ezpykit.allinone import *
+from ezpykit.builtin import *
 from ezpykitext.stdlib.os.clipboard.common import ClipboardABC
 from ezpykitext.stdlib.os.clipboard.nt_win32cb_html import HTMLClipboardMixin
-from ezpykit.allinone import *
-from ezpykit.metautil import deco_singleton
-from ezpykit.builtin import *
+
+with ctx_ensure_module('win32clipboard', 'pywin32'):
+    import pywintypes
+    import win32clipboard
 
 
 @deco_singleton

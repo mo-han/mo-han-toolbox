@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 import os
 
-import pyperclip
-
+from ezpykit.allinone import ctx_ensure_module, deco_singleton
 from ezpykitext.stdlib.os.clipboard.common import ClipboardABC
-from ezpykit.allinone.singleton import deco_singleton
+
+with ctx_ensure_module('pyperclip'):
+    import pyperclip
 
 
 @deco_singleton
