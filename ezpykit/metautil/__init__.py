@@ -130,16 +130,16 @@ def hasattr_batch(obj, names):
 
 
 @contextmanager
-def ctx_ensure_module(name, pkg_name=None):
+def ctx_ensure_module(name, install_name=None):
     from importlib import import_module
     try:
         import_module(name)
     except ModuleNotFoundError:
-        cmd = 'pip install ' + (pkg_name or name)
+        cmd = 'pip install ' + (install_name or name)
         if os.system(cmd):
             raise
-    else:
-        yield
+        else:
+            yield
 
 
 def is_iterable_but_not_string(x, string_types=(str, bytes, bytearray)):
