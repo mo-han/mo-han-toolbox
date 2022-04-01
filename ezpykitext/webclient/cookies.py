@@ -49,7 +49,7 @@ class EzCookieJar(MozillaCookieJar, RequestsCookieJar):
     def smart_load(self, source, ignore_discard=False, ignore_expires=False):
         common_kwargs = dict(ignore_discard=ignore_discard, ignore_expires=ignore_expires)
         if isinstance(source, list):
-            return self.load_dict_list(source, **common_kwargs)
+            return self.load_json_list(source, **common_kwargs)
         if os.is_path(source) and os.path_isfile(source):
             source = io.IOKit.read_exit(open(source))
         try:
@@ -91,16 +91,16 @@ class EzCookieJar(MozillaCookieJar, RequestsCookieJar):
         if isinstance(j, dict) and 'cookies' in j:
             j = j['cookies']
         if isinstance(j, list):
-            return self.load_dict_list(j, ignore_discard=ignore_discard, ignore_expires=ignore_expires)
+            return self.load_json_list(j, ignore_discard=ignore_discard, ignore_expires=ignore_expires)
         raise ValueError('invalid json source')
 
-    def load_dict_list(self, cookie_dict_list, ignore_discard=False, ignore_expires=False):
-        first = ezlist.get_first(cookie_dict_list)
+    def load_json_list(self, cookie_json_list, ignore_discard=False, ignore_expires=False):
+        first = ezlist.get_first(cookie_json_list)
         if not first:
             return
         elif not isinstance(first, dict):
             raise TypeError('cookie dict', type(first))
-        netscape_text = self.get_netscape_text_from_dict_list(cookie_dict_list)
+        netscape_text = self.get_netscape_text_from_json_list(cookie_json_list)
         if len(netscape_text) > self.max_vfsize:
             raise RuntimeError('content too leng', self.max_vfsize, len(netscape_text))
         with io.ctx_open_virtualfileio():
@@ -123,9 +123,9 @@ class EzCookieJar(MozillaCookieJar, RequestsCookieJar):
             return io.IOKit.read_exit(open(self.temp_vfname))
 
     @staticmethod
-    def get_netscape_text_from_dict_list(cookie_dict_list):
+    def get_netscape_text_from_json_list(cookie_json_list):
         lines = [NETSCAPE_HEADER_TEXT]
-        for d in cookie_dict_list:
+        for d in cookie_json_list:
             lines.append(SingleCookieDict(d).get_netscape_line())
         return '\n'.join(lines)
 
