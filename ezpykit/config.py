@@ -3,7 +3,7 @@ import os
 from abc import ABC, abstractmethod
 
 from ezpykit.builtin import ezlist, ezdict
-from ezpykit.allinone import T
+from ezpykit.metautil import T
 from ezpykit.stdlib.urllib.parse import tolerant_urlparse
 
 

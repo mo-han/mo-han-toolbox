@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 from functools import lru_cache
+from http import cookiejar as offical_cookiejar
 
-from ezpykit.allinone import install_module, T
-from ezpykit.config import EnVarConfig
+from ezpykit.allinone import install_module, T, call, config
+from ezpykit.stdlib.http import cookiejar
 from ezpykit.stdlib.urllib.parse import tolerant_urlparse
 
 try:
@@ -15,7 +16,7 @@ import splinter.driver.webdriver
 
 def make_proxy_settings(http: tuple = None, ssl: tuple = None):
     if not http and not ssl:
-        env_proxy = EnVarConfig().get_proxy()
+        env_proxy = config.EnVarConfig().get_proxy()
         _http = env_proxy.get('http')
         _https = env_proxy.get('https')
         if _http:
@@ -76,13 +77,43 @@ class EzBrowser:
     def get_cookies_list(self):
         return self.driver.get_cookies()
 
-    def update_cookies(self, cookies, url=None, domain=None, reload=False):
+    @staticmethod
+    def ensure_single_cookie_dict(obj):
+        fields = {k: k for k in ('name', 'value', 'path', 'domain', 'secure', 'expiry', 'httpOnly')}
+        fields.update(expiry='expires')
+        src = vars(obj)
+        return {k: src[v] for k, v in fields.items() if v in src}
+
+    def update_cookies_dict(self, cookies_dict, **kwargs):
+        """`kwargs`: optional keys - "path", "domain", "secure", "expiry"."""
+        # if not kwargs:
+        #     self.cookies.add(cookies_dict)
+        #     return
+        for k, v in cookies_dict.items():
+            d = {'name': k, 'value': v, **kwargs}
+            self.driver.add_cookie(d)
+
+    def update_cookies_cookiejar(self, cookiejar, **kwargs):
+        """`kwargs`: optional keys - "path", "domain", "secure", "expiry"."""
+        for cookie in cookiejar:
+            d = self.ensure_single_cookie_dict(cookie)
+            d.update(**kwargs)
+            self.driver.add_cookie(d)
+
+    def update_cookies(self, cookies, url=None, reload=False, **kwargs):
         if url:
             self.visit(url)
-        self.cookies.add(cookies)
-        for c in self.get_cookies_list():
-            c['domain'] = domain
-            self.driver.add_cookie(c)
+
+        if isinstance(cookies, (cookiejar.CookieJar, offical_cookiejar.CookieJar)):
+            self.update_cookies_cookiejar(cookies, **kwargs)
+        elif isinstance(cookies, dict):
+            self.update_cookies_dict(cookies, **kwargs)
+        else:
+            call.BatchCall((
+                call.SimpleCall(self.update_cookies_cookiejar, **kwargs),
+                call.SimpleCall(self.update_cookies_dict, **kwargs),
+            )).first_result()
+
         if reload:
             self.reload()
 

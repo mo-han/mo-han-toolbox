@@ -119,18 +119,23 @@ class EzCookieJar(MozillaCookieJar, RequestsCookieJar):
             self.save(self.temp_vfname, ignore_discard=ignore_discard, ignore_expires=ignore_expires)
             return io.IOKit.read_exit(open(self.temp_vfname))
 
-    def get_header_string(self, *names, domain=None, path=None, header='Cookie: '):
-        return header + '; '.join(self.get_list(*names, joiner='=', domain=domain, path=path))
-
-    def get_list(self, *names, joiner='=', domain=None, path=None):
-        d = self.get_dict(domain=domain, path=path)
-        items = list(d.items())
+    def get_dict(self, *names, domain=None, path=None):
+        d = super(EzCookieJar, self).get_dict(domain=domain, path=path)
         if names:
-            items = [(k, v) for k, v in items if k in names]
-        if joiner:
-            return [f'{k}={v}' for k, v in items]
+            return {k: v for k, v in d.items() if k in names}
         else:
-            return items
+            return d
+
+    def get_header_string(self, *names, domain=None, path=None, header='Cookie: '):
+        return header + '; '.join([f'{k}={v}' for k, v in self.get_dict(*names, domain=domain, path=path).items()])
+
+    def select(self, *names):
+        new = EzCookieJar()
+        new.set_policy(self.get_policy())
+        for c in self:
+            if c.name in names:
+                new.set_cookie(c)
+        return new
 
     @staticmethod
     def convert_json_cookies_to_netscape_text(list_of_cookie_dict):

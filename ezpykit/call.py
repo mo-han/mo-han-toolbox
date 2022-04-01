@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 from queue import Queue, Empty
 
-from ezpykit.allinone import T, threading
+from ezpykit.metautil import T
+from ezpykit.stdlib import threading
 
 
 class CallTimeoutError(TimeoutError):
@@ -9,7 +10,7 @@ class CallTimeoutError(TimeoutError):
 
 
 class BatchCallExceptions(Exception):
-    """calls not ok stored in `self.args`"""
+    """failed calls stored in `self.args`"""
     pass
 
 
@@ -133,11 +134,11 @@ class BatchCall:
                 raise TypeError('calls item', (SimpleCall, T.Union[SimpleCall, T.Dict], type(x)))
 
     def first_result(self):
-        e = []
+        failed_calls = []
         for call in self.calls:
             call.run(quiet=True)
             if call.ok:
                 return call.result
             else:
-                e.append(call)
-        raise BatchCallExceptions(*e)
+                failed_calls.append(call)
+        raise BatchCallExceptions(*failed_calls)

@@ -44,7 +44,7 @@ class ExHentaiBrowser(EzBrowser):
     def set_cookies(self, source):
         cj = EzCookieJar()
         cj.smart_load(source, ignore_expires=True)
-        self.update_cookies(cj.get_dict(), url=self.home_url)
+        self.update_cookies_dict(cj.get_dict(), url=self.home_url)
 
     def visit_gallery(self, gallery):
         g = ensure_gallery(gallery)
