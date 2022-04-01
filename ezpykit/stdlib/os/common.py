@@ -18,6 +18,15 @@ path_isfile = _os.path.isfile
 path_isdir = _os.path.isdir
 
 
+def is_path(x):
+    try:
+        path_exists(x)
+    except TypeError:
+        return False
+    else:
+        return True
+
+
 def split_path_dir_stem_ext(fp, dir_ext=True) -> T.Tuple[str, str, str]:
     parent, base = split_path(fp)
     if not dir_ext and os.path.isdir(fp):
