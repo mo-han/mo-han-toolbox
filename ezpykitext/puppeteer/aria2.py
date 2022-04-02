@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from ezpykit.allinone import *
+from ezpykit.allinone import subprocess
 
 
 class Aria2CommandLineList(subprocess.CommandLineList):
@@ -44,6 +44,20 @@ class Aria2CommandLineList(subprocess.CommandLineList):
         self.add(quiet=enable)
         return self
 
-    def add_uri(self, uri):
-        self.add(uri)
+    def set_session(self, session_file, save_interval=None):
+        self.add(i=session_file, save_session=session_file)
+        if save_interval:
+            self.add(save_session_interval=save_interval)
+        return self
+
+    def enable_rpc(self, port=None, secret=None, listen_all=False, allow_origin_all=False):
+        self.add(enable_rpc=True)
+        if port:
+            self.add(rpc_listen_port=port)
+        if secret:
+            self.add(rpc_secret=secret)
+        if listen_all:
+            self.add(rpc_listen_all=listen_all)
+        if allow_origin_all:
+            self.add(rpc_allow_origin_all=allow_origin_all)
         return self
