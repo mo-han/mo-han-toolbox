@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
+import sys
 from subprocess import *
 
 from ezpykit.builtin import ezlist
 from ezpykit.metautil import T
 
 ___ref = [run]
+
+if sys.version_info < (3, 7):
+    DETACHED_PROCESS = 0x00000008
 
 
 class CommandLineList(ezlist):
@@ -15,7 +19,7 @@ class CommandLineList(ezlist):
         super().__init__()
         self.add(*args, **kwargs)
 
-    def copy(self):
+    def copy(self: T.VT) -> T.VT:
         new = self.__class__(self)
         return new
 
@@ -66,3 +70,10 @@ class CommandLineList(ezlist):
         else:
             opt_name = '-' + key
         return opt_name, value
+
+    def popen(self, **kwargs):
+        return Popen(self, **kwargs)
+
+
+def popen_daemon_nt(*args, **kwargs):
+    return Popen(*args, creationflags=DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP, **kwargs)
