@@ -12,11 +12,15 @@ if sys.version_info < (3, 7):
 
 
 class CommandLineList(ezlist):
+    which = None
     enable_option_multi_value = False
     enable_option_equal_sign = False
+    
 
     def __init__(self, *args, **kwargs):
         super().__init__()
+        if self.which:
+            self.add(self.which)
         self.add(*args, **kwargs)
 
     def copy(self: T.VT) -> T.VT:
@@ -63,8 +67,7 @@ class CommandLineList(ezlist):
             self.add_option(*self._kwarg_to_option(k, v))
         return self
 
-    @staticmethod
-    def _kwarg_to_option(key, value):
+    def _kwarg_to_option(self, key, value):
         if len(key) > 1:
             opt_name = '--' + '-'.join(key.split('_'))
         else:

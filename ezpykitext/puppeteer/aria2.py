@@ -3,8 +3,7 @@ from ezpykit.allinone import subprocess
 
 
 class Aria2CommandLineList(subprocess.CommandLineList):
-    def __init__(self, which='aria2c', *args, **kwargs):
-        super().__init__(which, *args, **kwargs)
+    which = 'aria2c'
 
     def _kwarg_to_option(self, key, value):
         k, v = super()._kwarg_to_option(key, value)
@@ -13,36 +12,28 @@ class Aria2CommandLineList(subprocess.CommandLineList):
         return k, v
 
     def force_sequential(self, enable=True):
-        self.add(force_sequence=enable)
-        return self
+        return self.add(force_sequence=enable)
 
     def set_split(self, num=10, size='1M'):
-        self.add(s=num, x=num, k=size)
-        return self
+        return self.add(s=num, x=num, k=size)
 
     def load_cookies_file(self, fp):
-        self.add(load_cookies=fp)
-        return self
+        return self.add(load_cookies=fp)
 
     def disable_async_dns(self):
-        self.add(async_dns=False)
-        return self
+        return self.add(async_dns=False)
 
     def set_dir(self, dp):
-        self.add(d=dp)
-        return self
+        return self.add(d=dp)
 
     def set_filename(self, fn):
-        self.add(o=fn)
-        return self
+        return self.add(o=fn)
 
     def disable_auto_rename(self):
-        self.add(auto_file_renaming=False)
-        return self
+        return self.add(auto_file_renaming=False)
 
     def set_quiet(self, enable=True):
-        self.add(quiet=enable)
-        return self
+        return self.add(quiet=enable)
 
     def set_session(self, session_file, save_interval=None):
         self.add(i=session_file, save_session=session_file)
