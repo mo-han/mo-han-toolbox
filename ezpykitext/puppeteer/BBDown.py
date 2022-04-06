@@ -5,13 +5,7 @@ from ezpykitext.webclient import *
 
 class BBDownCommandLineList(subprocess.CommandLineList):
     which = 'BBDown'
-
-    def _kwarg_to_option(self, key, value):
-        if '_' in key:
-            opt_name = '--' + '-'.join(key.split('_'))
-        else:
-            opt_name = '-' + key
-        return opt_name, value
+    enable_short_option_for_word = True
 
     def set_cookies(self, source):
         cj = cookies.EzCookieJar()

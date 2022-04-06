@@ -13,9 +13,9 @@ if sys.version_info < (3, 7):
 
 class CommandLineList(ezlist):
     which = None
-    enable_option_multi_value = False
-    enable_option_equal_sign = False
-    
+    enable_option_with_multi_value = False
+    enable_option_with_equal_sign = False
+    enable_short_option_for_word = False
 
     def __init__(self, *args, **kwargs):
         super().__init__()
@@ -44,7 +44,7 @@ class CommandLineList(ezlist):
             self.append(name)
             self.append(value)
         elif isinstance(value, T.Iterable):
-            if self.enable_option_multi_value:
+            if self.enable_option_with_multi_value:
                 self.add(name, *value)
             else:
                 for v in value:
@@ -53,7 +53,7 @@ class CommandLineList(ezlist):
             self.append(name)
         elif value is None or value is False:
             pass
-        elif self.enable_option_equal_sign:
+        elif self.enable_option_with_equal_sign:
             self.append(f'{name}={value}')
         else:
             self.append(name)
@@ -68,7 +68,8 @@ class CommandLineList(ezlist):
         return self
 
     def _kwarg_to_option(self, key, value):
-        if len(key) > 1:
+        if (self.enable_short_option_for_word and '_' in key) or (
+                not self.enable_short_option_for_word and len(key)) > 1:
             opt_name = '--' + '-'.join(key.split('_'))
         else:
             opt_name = '-' + key
