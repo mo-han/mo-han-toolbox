@@ -67,6 +67,17 @@ def file_is_video(filepath):
     return False
 
 
+def file_is_audio(filepath):
+    guess = filetype.guess(filepath)
+    # ext = os.path.splitext(filepath)[-1]
+    if guess and 'audio' in guess.mime:
+        return True
+    guess = mimetypes.guess_type(filepath)[0]
+    if guess and 'audio' in guess:
+        return True
+    return False
+
+
 def filext_from_codec_name(x) -> str:
     d = CODEC_NAME_TO_FILEXT_TABLE
     if isinstance(x, str):
@@ -449,9 +460,14 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     if 'smartblur' in keywords:
         vf_list.append('smartblur')
 
+    output_ext = None
     for kw in keywords:
         if kw[0] + kw[-1] in ('vk', 'vM') and kw[1:-1].isdecimal():
             ffmpeg_args.add(b__v=kw[1:])
+        elif kw == 'novid':
+            ffmpeg_args.add(vn=True)
+        elif kw[0] == '.' and '.' not in kw[1:]:
+            output_ext = kw
         elif kw[:3] == 'crf':
             crf = kw[3:]
         elif kw[0] + kw[-1] == 'ak' and kw[1:-1].isdecimal():
@@ -545,13 +561,15 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     lp.l()
     if not os.path.isfile(filepath):
         logger.info(f'# skip non-file\n  {filepath}')
-    if not file_is_video(filepath):
-        logger.info(f'# skip non-video\n  {filepath}')
+    if not file_is_video(filepath) and not file_is_audio(filepath):
+        logger.info(f'# skip non-video-audio\n  {filepath}')
         return
 
     input_ft = EnclosedFilenameTagsSet(filepath)
     origin_ft = EnclosedFilenameTagsSet(filepath).tag('origin')
     output_ft = EnclosedFilenameTagsSet(filepath).untag('crf', 'origin')
+    if output_ext:
+        output_ft.extension = output_ext
     if crf is not None:
         output_ft.tag(crf=crf)
     if not redo and 'origin' in input_ft.tags:
