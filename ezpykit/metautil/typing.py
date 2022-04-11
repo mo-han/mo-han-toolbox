@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 from typing import *
-from typing import IO, BinaryIO, TextIO  # necessary!
+from typing import IO, BinaryIO, TextIO, Match  # necessary!
 
-___ref = IO, BinaryIO, TextIO
+___ref = [IO, BinaryIO, TextIO, Match]
 
 T = TypeVar('T')  # Any type.
 KT = TypeVar('KT')  # Key type.

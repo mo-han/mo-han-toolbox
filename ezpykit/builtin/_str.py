@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import unicodedata
 
-from ezpykit.metautil import decofac_add_method_to_class, typing as T
+from ezpykit.metautil import decofac_add_method_to_class, T
 
 CR = '\r'
 LF = '\n'
@@ -72,9 +72,12 @@ class ezstr(str):
 
     remove_accent_chars = remove_accent_chars_via_join
 
-    def is_hex(self: str):
+    def is_hex(self):
+        return self.is_int(16)
+
+    def is_int(self, base=10):
         try:
-            int(self, 16)
+            int(self, base)
             return True
         except ValueError:
             return False
