@@ -5,24 +5,41 @@ from types import MethodType
 from ezpykit.metautil import typing as T
 
 
-class ManagePropertiesAttribute:
+def hashable_args_kwargs_tuple(*args, **kwargs):
+    return tuple(args), tuple(kwargs.items())
+
+
+class VoidDuck:
+    """a void, versatile, useless and quiet duck, call in any way, return nothing, raise nothing"""
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __get_self(self, *args, **kwargs):
+        return self
+
+    __call__ = __getattr__ = __getitem__ = __setattr__ = __setitem__ = __get_self
+
+    def __bool__(self):
+        return False
+
+
+class PropertiesWrapper:
     attr_name = '__user_properties__'
-    instances = {}
+    cached_instances = {}
 
     def __init__(self, obj):
-        has_dict = self._obj_has_dict = hasattr(obj, '__dict__')
-        if has_dict:
-            d = getattr(obj, self.attr_name, None)
-            if not isinstance(d, dict):
-                setattr(obj, self.attr_name, {})
-            else:
-                self._dict = {}
-            self._obj = obj
+        d = getattr(obj, self.attr_name, None)
+        if not isinstance(d, dict):
+            setattr(obj, self.attr_name, {})
+        else:
+            self._dict = {}
+        self._obj = obj
 
     @classmethod
     @lru_cache()
-    def get_instance(cls, obj):
-        instances = cls.instances
+    def new(cls, obj) -> T.Union['PropertiesWrapper', dict]:
+        instances = cls.cached_instances
         if obj in instances:
             return instances[obj]
         else:
@@ -48,16 +65,17 @@ class ManagePropertiesAttribute:
         self.prop[key] = value
 
 
-class AttachInstanceMethods:
+class AttachMethodsToObject:
     class Util:
         @classmethod
-        def deco_enable_method(cls, func):
-            ManagePropertiesAttribute.get_instance(func)['enabled'] = True
-            return func
+        def deco_enable_method(cls, f):
+            PropertiesWrapper.new(f)['enabled'] = True
+            return f
 
     @classmethod
-    def attach(cls: T.T, instance: T.VT) -> T.Union[T.VT, T.T]:
+    def attach(cls: T.T, obj: T.VT) -> T.Union[T.VT, T.T]:
+        cls: AttachMethodsToObject
         for m in cls.__dict__.values():
-            if callable(m) and ManagePropertiesAttribute.get_instance(m).get('enabled'):
-                setattr(instance, m.__name__, MethodType(m, instance))
-        return instance
+            if callable(m) and PropertiesWrapper.new(m).get('enabled'):
+                setattr(obj, m.__name__, MethodType(m, obj))
+        return obj

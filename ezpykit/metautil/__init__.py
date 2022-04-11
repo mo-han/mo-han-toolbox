@@ -5,7 +5,7 @@ from functools import wraps
 
 from ezpykit.metautil import typing
 from ezpykit.metautil.objutil import *
-from ezpykit.metautil.singleton import deco_singleton, SingletonMetaClass
+from ezpykit.metautil.singleton import *
 from ezpykit.metautil.timer import ctx_minimum_duration
 
 T = typing
@@ -108,22 +108,6 @@ def install_module(name):
     import os
     if os.system(f'pip install {name}'):
         raise ImportError('failed to install', name)
-
-
-class VoidDuck:
-    """a void, versatile, useless and quiet duck, call in any way, return nothing, raise nothing"""
-
-    def __init__(self, *args, **kwargs):
-        pass
-
-    def __getattr__(self, item):
-        return self
-
-    def __call__(self, *args, **kwargs):
-        return self
-
-    def __bool__(self):
-        return False
 
 
 def hasattr_batch(obj, names):
