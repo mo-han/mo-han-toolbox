@@ -19,9 +19,20 @@ class CommandLineList(ezlist):
 
     def __init__(self, *args, **kwargs):
         super().__init__()
-        if self.which:
+        if self.which and not args:
             self.add(self.which)
         self.add(*args, **kwargs)
+
+    def set_which(self, which):
+        if self.which and self.first == self.which:
+            self.which = which
+            self.first = which
+        else:
+            if self.which:
+                self.which = which
+            if self.first:
+                self.first = which
+        return self
 
     def copy(self: T.VT) -> T.VT:
         new = self.__class__(self)
@@ -75,7 +86,7 @@ class CommandLineList(ezlist):
             opt_name = '-' + key
         return opt_name, value
 
-    def popen(self, **kwargs):
+    def popen(self, **kwargs) -> Popen:
         return Popen(self, **kwargs)
 
 

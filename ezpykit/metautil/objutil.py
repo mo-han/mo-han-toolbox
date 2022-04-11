@@ -15,13 +15,35 @@ class VoidDuck:
     def __init__(self, *args, **kwargs):
         pass
 
-    def __get_self(self, *args, **kwargs):
+    def _get_self(self, *args, **kwargs):
         return self
 
-    __call__ = __getattr__ = __getitem__ = __setattr__ = __setitem__ = __get_self
+    __call__ = __getattr__ = __getitem__ = __setattr__ = __setitem__ = _get_self
 
     def __bool__(self):
         return False
+
+
+class DummyObject:
+    def __init__(self, _ref_obj=None, **settings):
+        self._settings = settings
+        self._ref_obj = _ref_obj
+
+    def _get_sth(self, name):
+        return self._settings[name]
+
+    def __getattr__(self, item):
+        if item in self._settings:
+            def f(*args, **kwargs):
+                return self._get_sth(item)
+
+            f.__name__ = item
+            self.__dict__[item] = f
+            return f
+        elif self._ref_obj:
+            return getattr(self._ref_obj, item)
+        else:
+            raise AttributeError(item)
 
 
 class PropertiesWrapper:
