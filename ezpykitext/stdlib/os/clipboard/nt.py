@@ -4,7 +4,7 @@ import io
 
 from ezpykit.allinone import *
 from ezpykit.builtin import *
-from ezpykitext.stdlib.os.clipboard.common import ClipboardABC
+from ezpykitext.stdlib.os.clipboard.common import ClipboardABC, ClipboardError
 from ezpykitext.stdlib.os.clipboard.nt_win32cb_html import HTMLClipboardMixin
 
 with ctx_ensure_module('win32clipboard', 'pywin32'):
@@ -100,15 +100,17 @@ class Clipboard(ClipboardABC, HTMLClipboardMixin):
     def _get(self, cf):
         return win32clipboard.GetClipboardData(cf)
 
-    def get(self, cf=win32clipboard.CF_UNICODETEXT):
+    def get(self, cf=win32clipboard.CF_UNICODETEXT, return_none=False):
         cf = self.ensure_format(cf)
         if self.has_format(cf):
             return self._get(cf)
+        elif return_none:
+            return None
         else:
-            raise
+            raise ClipboardError('has no format:', cf)
 
     def get_path(self, exist_only=True) -> list:
-        paths = self.get(win32clipboard.CF_HDROP)
+        paths = self.get(win32clipboard.CF_HDROP, return_none=True)
         if paths:
             if exist_only:
                 return [p for p in paths if os.path.exists(p)]
