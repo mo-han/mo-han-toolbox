@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 import os
-from functools import wraps
 from contextlib import contextmanager
+from functools import wraps
 
 from ezpykit.metautil import typing
+from ezpykit.metautil.objutil import *
 from ezpykit.metautil.singleton import deco_singleton, SingletonMetaClass
 from ezpykit.metautil.timer import ctx_minimum_duration
 
