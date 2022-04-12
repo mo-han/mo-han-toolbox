@@ -2,7 +2,8 @@
 import json
 
 from ezpykit.allinone import io, os, ezlist, ezstr, ensure_str
-from ezpykit.stdlib.http.cookiejar import MozillaCookieJar, LoadError
+from ezpykit.stdlib.http.cookiejar import MozillaCookieJar, LoadError, CookieJar
+from http.cookiejar import CookieJar as InstalledCookieJar
 
 try:
     import requests.cookies as ___
@@ -45,6 +46,10 @@ class SingleCookieDict(dict):
 class EzCookieJar(MozillaCookieJar, RequestsCookieJar):
     temp_vfname = f'virtualfile:///EzCookieJar.temp.txt'
     max_vfsize = 1024 * 1024 * 16
+
+    @classmethod
+    def is_cookiejar(cls, x):
+        return isinstance(x, (InstalledCookieJar, CookieJar))
 
     def smart_load(self, source, ignore_discard=False, ignore_expires=False):
         common_kwargs = dict(ignore_discard=ignore_discard, ignore_expires=ignore_expires)
@@ -129,7 +134,7 @@ class EzCookieJar(MozillaCookieJar, RequestsCookieJar):
             lines.append(SingleCookieDict(d).get_netscape_line())
         return '\n'.join(lines)
 
-    def get_dict(self, *names, domain=None, path=None):
+    def sel_dict(self, *names, domain=None, path=None):
         d = super(EzCookieJar, self).get_dict(domain=domain, path=path)
         if names:
             return {k: v for k, v in d.items() if k in names}
@@ -137,7 +142,7 @@ class EzCookieJar(MozillaCookieJar, RequestsCookieJar):
             return d
 
     def get_header_string(self, *names, domain=None, path=None, header='Cookie: '):
-        return header + '; '.join([f'{k}={v}' for k, v in self.get_dict(*names, domain=domain, path=path).items()])
+        return header + '; '.join([f'{k}={v}' for k, v in self.sel_dict(*names, domain=domain, path=path).items()])
 
     def select(self, *names):
         new = EzCookieJar()
@@ -146,3 +151,11 @@ class EzCookieJar(MozillaCookieJar, RequestsCookieJar):
             if c.name in names:
                 new.set_cookie(c)
         return new
+
+
+def get_cookies_dict(source):
+    if EzCookieJar.is_cookiejar(source):
+        return EzCookieJar.get_dict(source)
+    cj = EzCookieJar()
+    cj.smart_load(source, ignore_expires=True, ignore_discard=True)
+    return cj.get_dict()
