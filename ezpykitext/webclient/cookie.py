@@ -68,6 +68,7 @@ class EzCookieJar(MozillaCookieJar, RequestsCookieJar):
                     self.load_string(source)
                 except ValueError:
                     raise ValueError('failed to load', source)
+        return self
 
     def load_string(self, source, **kwargs):
         if os.is_path(source) and os.path_isfile(source):
@@ -129,7 +130,7 @@ class EzCookieJar(MozillaCookieJar, RequestsCookieJar):
             lines.append(SingleCookieDict(d).get_netscape_line())
         return '\n'.join(lines)
 
-    def sel_dict(self, *names, domain=None, path=None):
+    def choose_dict(self, *names, domain=None, path=None):
         d = super(EzCookieJar, self).get_dict(domain=domain, path=path)
         if names:
             return {k: v for k, v in d.items() if k in names}
@@ -137,7 +138,7 @@ class EzCookieJar(MozillaCookieJar, RequestsCookieJar):
             return d
 
     def get_header_string(self, *names, domain=None, path=None, header='Cookie: '):
-        return header + '; '.join([f'{k}={v}' for k, v in self.sel_dict(*names, domain=domain, path=path).items()])
+        return header + '; '.join([f'{k}={v}' for k, v in self.choose_dict(*names, domain=domain, path=path).items()])
 
     def select(self, *names):
         new = EzCookieJar()

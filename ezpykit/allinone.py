@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import functools
 import getpass
 import pathlib
 import platform
@@ -14,7 +15,7 @@ from ezpykit.builtin import *
 from ezpykit.metautil import *
 from ezpykit.stdlib import *
 
-___ref = [pathlib, queue, ezstr, deco_singleton, T, os, call, config]
+___ref = [pathlib, queue, ezstr, deco_singleton, T, os, call, config, functools]
 ___ref.extend([])
 
 sleep = time.sleep

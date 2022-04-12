@@ -15,7 +15,7 @@ import you_get.util.strings
 from lxml import html
 
 import ezpykitext.sites.bilibili.webapi
-import ezpykitext.webclient.headers
+import ezpykitext.webclient.header
 from mylib import web_client
 from mylib.__deprecated__ import concat_videos, merge_m4s
 from mylib._misc import safe_print, safe_basename
@@ -28,8 +28,8 @@ from mylib.ext.tricks import str2range, seq_call_return
 from mylib.ext.tui import LinePrinter
 from ezpykitext.sites.bilibili import webapi
 
-API_HEADERS_HANDLER: ezpykitext.webclient.headers.EzHttpHeaders = ezpykitext.webclient.headers.EzHttpHeaders().user_agent(
-    ezpykitext.webclient.headers.UserAgentExamples.GOOGLE_CHROME_WINDOWS)
+API_HEADERS_HANDLER: ezpykitext.webclient.header.EzHttpHeaders = ezpykitext.webclient.header.EzHttpHeaders().user_agent(
+    ezpykitext.webclient.header.UserAgentExamples.GOOGLE_CHROME_WINDOWS)
 
 BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'
 BILIBILI_EPISODE_URL_PREFIX = 'https://www.bilibili.com/bangumi/play/'
@@ -259,7 +259,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
 
     def __init__(self, *args, cookies: str or dict = None, qn_max=116, qn_want=None):
         super().__init__(*args)
-        self.simple_api = api.BilibiliWebAPISimple()
+        self.simple_api = api.BilibiliWebAPI()
         self.do_not_write_any_file = False
         self.cookie = None
         if cookies:

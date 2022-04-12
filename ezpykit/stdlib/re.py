@@ -3,6 +3,7 @@ from re import *
 from re import __doc__
 
 from ezpykit.metautil import T, DummyObject
+from ezpykit.builtin import ezdict
 
 ___ref = [__doc__]
 
@@ -50,3 +51,25 @@ class MatchWrapper:
 
     def __repr__(self):
         return f'{self.__class__.__name__} of {self.match!r}'
+
+    def groups_dict(self, *names, **names_with_default):
+        r = {}
+        i = 0
+        r[i] = self.group(i)
+        for g in self.groups():
+            i += 1
+            r[i] = g
+        r.update(self.groupdict())
+        if names or names_with_default:
+            r = ezdict.choose(r, *names, **names_with_default)
+        return r
+
+
+class BatchMatchWrapper:
+    def __init__(self, *matches: T.Match):
+        self.matches = matches
+
+    def first(self):
+        for m in self.matches:
+            if m:
+                return MatchWrapper(m)

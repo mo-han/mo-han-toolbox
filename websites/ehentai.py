@@ -6,7 +6,7 @@ import requests
 
 from ezpykit.allinone import *
 from ezpykitext.webclient.browser import EzBrowser
-from ezpykitext.webclient.cookies import EzCookieJar
+from ezpykitext.webclient.cookie import EzCookieJar
 from ezpykitext.webclient.lxml_html import *
 
 
@@ -44,7 +44,7 @@ class ExHentaiBrowser(EzBrowser):
     def set_cookies(self, source):
         cj = EzCookieJar()
         cj.smart_load(source, ignore_expires=True)
-        self.update_cookies_dict(cj.sel_dict(), url=self.home_url)
+        self.update_cookies_dict(cj.choose_dict(), url=self.home_url)
 
     def visit_gallery(self, gallery):
         g = ensure_gallery(gallery)
@@ -64,7 +64,7 @@ class EHentaiAPI:
             else:
                 cj = EzCookieJar()
                 cj.smart_load(cookies, ignore_expires=True)
-                cookies = cj.sel_dict()
+                cookies = cj.choose_dict()
             self.session.cookies.update(cookies)
 
     @lru_cache()

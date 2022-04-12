@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
-import datetime
+import functools
+import re
 
-import ezpykitext.webclient.headers
-from mylib.ext import http_headers
-from mylib.easy import *
+from ezpykit.allinone import *
+from ezpykitext.webclient import *
 
 BILIBILI_HOME_PAGE_URL = 'https://www.bilibili.com'
-
-common_headers = http_headers.HTTPHeadersBuilder().user_agent(
-    ezpykitext.webclient.headers.UserAgentExamples.GOOGLE_CHROME_WINDOWS).referer(BILIBILI_HOME_PAGE_URL).origin(
-    BILIBILI_HOME_PAGE_URL).headers
+BILIBILI_HEADERS = header.EzHttpHeaders().ua(header.UserAgentExamples.GOOGLE_CHROME_WINDOWS)
+BILIBILI_HEADERS.referer(BILIBILI_HOME_PAGE_URL).origin(BILIBILI_HOME_PAGE_URL)
+BILIBILI_SHORT_HOME_URL = 'https://b23.tv'
 
 
 class BilibiliWebAPIError(Exception):
@@ -23,6 +22,13 @@ class BilibiliWebAPIError(Exception):
     def __str__(self):
         return f'[Code {self.code}] {self.message}'
 
+    @classmethod
+    def check_response(cls, r: requests.Response):
+        d = r.json()
+        code = d['code']
+        if code != 0:
+            raise cls(code, d['message'])
+
 
 def check_response_json(x: dict):
     code = x['code']
@@ -30,16 +36,43 @@ def check_response_json(x: dict):
         raise BilibiliWebAPIError(code, x['message'])
 
 
-class BilibiliWebAPISimple:
+class BilibiliWebAPI:
     class Const:
         REPLY_SORT_RECENT = 0
         REPLY_SORT_POPULAR = 2
 
-    def __init__(self, cookies: dict = None, cache_request: bool = False):
-        self.cookies = cookies
+    def __init__(self, cookies=None, cache_request: bool = False):
+        if cookie.EzCookieJar.is_cookiejar(cookies):
+            self.cookies = cookie.EzCookieJar.get_dict(cookies)
+        elif cookies:
+            self.cookies = cookie.EzCookieJar().smart_load(cookies, ignore_discard=True, ignore_expires=True).get_dict()
+        else:
+            self.cookies = {}
         self.cache_request = cache_request
 
-    @functools.lru_cache(maxsize=None)
+    @functools.lru_cache()
+    def clarify_uri(self, uri: str):
+        if uri.startswith(BILIBILI_SHORT_HOME_URL):
+            r = requests.get(uri)
+            uri = r.url
+        return uri
+
+    @functools.lru_cache()
+    def uri2vid(self, uri: str):
+        uri = self.clarify_uri(uri)
+        r = re.BatchMatchWrapper(
+            re.search(r'(av|AV)(?P<aid>\d+)', uri),
+            re.search(r'(?P<bvid>BV[\da-zA-Z]{10})', uri),
+            re.search(r'(?P<epid>(ep|EP)\d+)', uri),
+            re.search(r'(?P<ssid>(ss|SS)\d+)', uri),
+        ).first().groups_dict('aid', 'bvid', 'epid', 'ssid')
+        if 'aid' not in r and 'bvid' in r:
+            r['aid'] = self.bvid2aid(r['bvid'])
+        if 'aid' in r:
+            r['aid'] = int(r['aid'])
+        return r
+
+    @functools.lru_cache()
     def vid2aid(self, x):
         if isinstance(x, int):
             return x
@@ -54,7 +87,7 @@ class BilibiliWebAPISimple:
                 raise ValueError('invalid video ID')
         raise TypeError('invalid video ID type')
 
-    @functools.lru_cache(maxsize=None)
+    @functools.lru_cache()
     def vid2bvid(self, x):
         if isinstance(x, str):
             if re.fullmatch(r'BV[\da-zA-Z]10', x):
@@ -66,18 +99,18 @@ class BilibiliWebAPISimple:
             return self.aid2bvid(x)
         raise TypeError('invalid video ID type')
 
-    @functools.lru_cache(maxsize=None)
+    @functools.lru_cache()
     def aid2bvid(self, aid):
         j = self.get_archive_stat_of_web_interface(aid=aid)
         return j['bvid']
 
-    @functools.lru_cache(maxsize=None)
+    @functools.lru_cache()
     def bvid2aid(self, bvid):
         j = self.get_archive_stat_of_web_interface(bvid=bvid)
         return j['aid']
 
     def _request_json(self, url, **params):
-        r = http_headers.requests.get(url, params=params, headers=common_headers, cookies=self.cookies)
+        r = requests.get(url, params=params, headers=BILIBILI_HEADERS, cookies=self.cookies)
         j = r.json()
         check_response_json(j)
         try:
@@ -85,7 +118,7 @@ class BilibiliWebAPISimple:
         except KeyError:
             return j['result']
 
-    @functools.lru_cache(maxsize=None)
+    @functools.lru_cache()
     def _request_json_cached(self, url, **params):
         return self._request_json(url, **params)
 

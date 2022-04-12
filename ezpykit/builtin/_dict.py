@@ -101,6 +101,15 @@ class ezdict(dict):
     def difference(self, d):
         return ezdict([(k, v) for k, v in self.items() if (k, v) not in d.items()])
 
+    def choose(self, *keys, **keys_with_default):
+        r = ezdict()
+        for k in keys:
+            if k in self:
+                r[k] = self[k]
+        for k, v in keys_with_default.items():
+            r[k] = self.get(k, v)
+        return r
+
 
 def temp_test():
     import sys

@@ -2,10 +2,10 @@
 from urllib.parse import *
 
 
-def tolerant_urlparse(url: str):
+def tolerant_urlparse(url: str, default_prefix='scheme://'):
     r = urlparse(url)
     if not r.scheme and not r.netloc:
-        r = urlparse('scheme://' + url)
+        r = urlparse(default_prefix + url)
     return r
 
 

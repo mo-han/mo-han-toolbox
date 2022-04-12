@@ -24,7 +24,7 @@ def get_netscape_cookies(src, dst, verbose=False):
     lg = logging.get_logger(__name__, get_netscape_cookies.__name__)
     src = get_from_source(src)
     lg.info(colored(str(src), 'grey', 'on_white', ['bold']))
-    cj = cookies.EzCookieJar()
+    cj = cookie.EzCookieJar()
     cj_kw = dict(ignore_expires=True, ignore_discard=True)
     cj.smart_load(src, **cj_kw)
     r = cj.get_netscape_text(**cj_kw)
