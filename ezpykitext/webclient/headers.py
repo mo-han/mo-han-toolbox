@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
-from ezpykit.allinone import os
 
-try:
-    import requests.cookies as ___
-except ImportError:
-    if os.system('pip install requests'):
-        raise ImportError('failed to install', 'requests')
+from ezpykit.allinone import ctx_ensure_module
 
-from requests.structures import CaseInsensitiveDict
+with ctx_ensure_module('requests'):
+    from requests.structures import CaseInsensitiveDict
 
 
 class UserAgentExamples:
@@ -26,9 +22,46 @@ class UserAgentExamples:
     LYNX = 'Lynx'
 
 
-class EzHeaders(CaseInsensitiveDict):
-    def set_user_agent(self, ua=UserAgentExamples.MOZILLA_FIREFOX_WINDOWS):
-        self['User-Agent'] = ua
+class EzHttpHeaders(CaseInsensitiveDict):
+    _field_aliases = {'ua': 'user_agent'}
+
+    def _name_to_field(self, x: str):
+        x = self._field_aliases.get(x) or x
+        return x.replace('_', '-').title()
+
+    def _set_sth(self, field: str, value):
+        field = self._name_to_field(field)
+        self[field] = value
         return self
 
-    set_ua = set_user_agent
+    def _get_sth(self, field: str, *args):  # do not remove `*args`
+        return self.get(self._name_to_field(field))
+
+    def _del_sth(self, field: str, *args):  # do not remove `*args`
+        try:
+            del self[self._name_to_field(field)]
+        except KeyError:
+            pass
+        return self
+
+    def __getattr__(self, name: str):
+        field = self._name_to_field(name)
+
+        def _get_set_del(value=None):
+            """if value given, set item to value; if value is None, get item; if value is ... or False, del item."""
+            if value is None:
+                func = self._get_sth
+            elif value in (..., False):
+                func = self._del_sth
+            else:
+                func = self._set_sth
+            return func(field, value)
+
+        _get_set_del.__name__ = name
+        _get_set_del.__doc__ = f'''\
+        get or set or del the "{field}" field.
+        if value given, set item to value;
+        if value is None, get item;
+        if value is ... or False, del item.'''
+        self.__dict__[name] = _get_set_del
+        return _get_set_del

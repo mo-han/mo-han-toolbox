@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 import json
-
-from ezpykit.allinone import io, os, ezlist, ezstr, ensure_str
-from ezpykit.stdlib.http.cookiejar import MozillaCookieJar, LoadError, CookieJar
 from http.cookiejar import CookieJar as InstalledCookieJar
 
-try:
-    import requests.cookies as ___
-except ImportError:
-    if os.system('pip install requests'):
-        raise ImportError('failed to install', 'requests')
+from ezpykit.allinone import io, os, ezlist, ezstr, ctx_ensure_module
+from ezpykit.stdlib.http.cookiejar import MozillaCookieJar, LoadError, CookieJar
 
-from requests.cookies import RequestsCookieJar
+with ctx_ensure_module('requests'):
+    from requests.cookies import RequestsCookieJar
 
 ___ref = RequestsCookieJar
 

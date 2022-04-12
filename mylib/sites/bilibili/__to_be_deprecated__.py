@@ -14,6 +14,7 @@ import requests
 import you_get.util.strings
 from lxml import html
 
+import ezpykitext.sites.bilibili.webapi
 import ezpykitext.webclient.headers
 from mylib import web_client
 from mylib.__deprecated__ import concat_videos, merge_m4s
@@ -22,12 +23,12 @@ from mylib.easy import python_module_from_source_code
 from mylib.ext import fstk
 from mylib.ext import http_headers
 from mylib.ext.ostk import ensure_sigint_signal
-from mylib.ext.text import regex_find, ellipt_end, ellipt_middle
+from mylib.ext.text import regex_find, ellipt_middle
 from mylib.ext.tricks import str2range, seq_call_return
 from mylib.ext.tui import LinePrinter
-from mylib.sites.bilibili import api
+from ezpykitext.sites.bilibili import webapi
 
-API_HEADERS_HANDLER: http_headers.HTTPHeadersBuilder = http_headers.HTTPHeadersBuilder().user_agent(
+API_HEADERS_HANDLER: ezpykitext.webclient.headers.EzHttpHeaders = ezpykitext.webclient.headers.EzHttpHeaders().user_agent(
     ezpykitext.webclient.headers.UserAgentExamples.GOOGLE_CHROME_WINDOWS)
 
 BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'
