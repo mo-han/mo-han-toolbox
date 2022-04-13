@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import functools
 import re
 
 from ezpykit.allinone import *
