@@ -50,6 +50,25 @@ class BilibiliWebAPI:
             self.cookies = {}
         self.cache_request = cache_request
 
+    def _request_json(self, url, **params):
+        r = requests.get(url, params=params, headers=BILIBILI_HEADERS, cookies=self.cookies)
+        j = r.json()
+        check_response_json(j)
+        try:
+            return j['data']
+        except KeyError:
+            return j['result']
+
+    @functools.lru_cache()
+    def _request_json_cached(self, url, **params):
+        return self._request_json(url, **params)
+
+    def request_json(self, url: str, **params):
+        if self.cache_request:
+            return self._request_json_cached(url, **params)
+        else:
+            return self._request_json(url, **params)
+
     @functools.lru_cache()
     def clarify_uri(self, uri: str):
         if uri.startswith(BILIBILI_SHORT_HOME_URL):
@@ -58,19 +77,25 @@ class BilibiliWebAPI:
         return uri
 
     @functools.lru_cache()
-    def uri2vid(self, uri: str):
+    def parse_vid_dict(self, uri: str) -> T.Dict[str, T.Union[int, str]]:
         uri = self.clarify_uri(uri)
         r = re.BatchMatchWrapper(
             re.search(r'(av|AV)(?P<aid>\d+)', uri),
             re.search(r'(?P<bvid>BV[\da-zA-Z]{10})', uri),
             re.search(r'(?P<epid>(ep|EP)\d+)', uri),
             re.search(r'(?P<ssid>(ss|SS)\d+)', uri),
-        ).first().groups_dict('aid', 'bvid', 'epid', 'ssid')
+        ).first_match().groups_dict('aid', 'bvid', 'epid', 'ssid')
         if 'aid' not in r and 'bvid' in r:
             r['aid'] = self.bvid2aid(r['bvid'])
         if 'aid' in r:
             r['aid'] = int(r['aid'])
         return r
+
+    def get_tags(self, name_only=True, **params):
+        j = self.request_json('https://api.bilibili.com/x/tag/archive/tags', **params)
+        if not name_only:
+            return j
+        return [d['tag_name'] for d in j]
 
     @functools.lru_cache()
     def vid2aid(self, x):
@@ -109,25 +134,6 @@ class BilibiliWebAPI:
         j = self.get_archive_stat_of_web_interface(bvid=bvid)
         return j['aid']
 
-    def _request_json(self, url, **params):
-        r = requests.get(url, params=params, headers=BILIBILI_HEADERS, cookies=self.cookies)
-        j = r.json()
-        check_response_json(j)
-        try:
-            return j['data']
-        except KeyError:
-            return j['result']
-
-    @functools.lru_cache()
-    def _request_json_cached(self, url, **params):
-        return self._request_json(url, **params)
-
-    def request_json(self, url: str, **params):
-        if self.cache_request:
-            return self._request_json_cached(url, **params)
-        else:
-            return self._request_json(url, **params)
-
     def get_view_of_web_interface(self, **params):
         return self.request_json('https://api.bilibili.com/x/web-interface/view', **params)
 
@@ -139,12 +145,6 @@ class BilibiliWebAPI:
 
     def get_archive_desc_of_web_interface(self, **params):
         return self.request_json('https://api.bilibili.com/x/web-interface/archive/desc', **params)
-
-    def get_tags(self, simple=True, **params):
-        j = self.request_json('https://api.bilibili.com/x/tag/archive/tags', **params)
-        if not simple:
-            return j
-        return [d['tag_name'] for d in j]
 
     def get_parts(self, **params):
         return self.request_json('https://api.bilibili.com/x/player/pagelist', **params)

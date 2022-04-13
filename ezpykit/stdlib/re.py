@@ -69,7 +69,7 @@ class BatchMatchWrapper:
     def __init__(self, *matches: T.Match):
         self.matches = matches
 
-    def first(self):
+    def first_match(self):
         for m in self.matches:
             if m:
                 return MatchWrapper(m)
