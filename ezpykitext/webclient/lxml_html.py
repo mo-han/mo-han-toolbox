@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
-from lxml.html import *
-from lxml.html import HtmlElement, InputElement, TextareaElement
-from ezpykit.metautil import hasattr_batch
+from ezpykit.metautil import hasattr_batch, ctx_ensure_module
+
+with ctx_ensure_module('lxml'):
+    from lxml.html import *
+    from lxml.html import HtmlElement, InputElement, TextareaElement
+
+with ctx_ensure_module('cssselect'):
+    pass
 
 __ref = Element, InputElement, TextareaElement
 
