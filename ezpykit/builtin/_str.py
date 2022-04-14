@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-import unicodedata
 import itertools
+import unicodedata
 
 from ezpykit.metautil import decofac_add_method_to_class, T
 
@@ -111,9 +111,17 @@ class StrKit:
 
     @staticmethod
     def to_range(s: str, default_end=None, default_start=1, enable_negative=False):
-        groups = []
+        ranges = []
         for e in s.split(','):
-            a, *b = e.split('-', maxsplit=1)
+            if enable_negative:
+                import re
+                m = re.match(r'^\s*(?P<a>-?\s*\d+)?\s*-?\s*(?P<b>-?\s*\d+)?\s*$', e)
+                a = m.group('a') or ''
+                b = m.group('b')
+                b = [b] if b else []
+            else:
+                a, *b = e.split('-', maxsplit=1)
+
             try:
                 a = int(a)
             except ValueError:
@@ -128,8 +136,8 @@ class StrKit:
                     if default_end is None:
                         raise ValueError('invalid end in', e)
                     b = default_end
-            groups.append(range(a, b + 1))
-        return itertools.chain(*groups)
+            ranges.append(range(a, b + 1))
+        return itertools.chain(*ranges)
 
 
 if hasattr(ezstr, 'removeprefix'):
