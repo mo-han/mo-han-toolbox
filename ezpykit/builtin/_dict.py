@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import collections.abc
 from functools import reduce
+from ezpykit.metautil import T
 
 _Type_Mapping = collections.abc.Mapping
 
@@ -71,7 +72,7 @@ class ezdict(dict):
         except KeyError:
             return default
 
-    def setdefault(self, key, default=None):
+    def setdefault(self, key, default: T.T = None) -> T.T:
         if not self._key_is_list(key):
             return super().setdefault(key, default)
         try:
@@ -101,14 +102,30 @@ class ezdict(dict):
     def difference(self, d):
         return ezdict([(k, v) for k, v in self.items() if (k, v) not in d.items()])
 
-    def choose(self, *keys, **keys_with_default):
-        r = ezdict()
+    def pick(self, *keys, **keys_with_default):
+        r = self.__class__()
         for k in keys:
             if k in self:
                 r[k] = self[k]
         for k, v in keys_with_default.items():
             r[k] = self.get(k, v)
         return r
+
+    def remove(self, *keys):
+        for k in keys:
+            try:
+                del self[k]
+            except KeyError:
+                pass
+
+    def reserve(self, *keys):
+        self_keys = list(self.keys())
+        for k in self_keys:
+            if k not in keys:
+                del self[k]
+
+    def rekey(self, old_key, new_key):
+        self[new_key] = self.pop(old_key)
 
 
 def temp_test():

@@ -76,52 +76,91 @@ class BilibiliWebAPI:
         return uri
 
     @functools.lru_cache()
-    def parse_vid_dict(self, uri: str) -> T.Dict[str, T.Union[int, str]]:
-        uri = self.clarify_uri(uri)
-        r = re.BatchMatchWrapper(
-            re.search(r'(av|AV)(?P<aid>\d+)', uri),
-            re.search(r'(?P<bvid>BV[\da-zA-Z]{10})', uri),
-            re.search(r'(?P<epid>(ep|EP)\d+)', uri),
-            re.search(r'(?P<ssid>(ss|SS)\d+)', uri),
-        ).first_match().groups_dict('aid', 'bvid', 'epid', 'ssid')
+    def _parse_vid_dict_cached(self, uri):
+        return self._parse_vid_dict(uri)
+
+    def _parse_vid_dict(self, uri):
+        if not uri:
+            return {}
+        if isinstance(uri, int) and uri > 0:
+            return dict(aid=uri, bvid=self.aid2bvid(uri))
+        if isinstance(uri, dict):
+            r = uri
+        elif isinstance(uri, str):
+            uri = self.clarify_uri(uri)
+            r = re.BatchMatchWrapper(
+                re.search(r'(av|AV)(?P<aid>\d+)', uri),
+                re.search(r'(?P<bvid>BV[\da-zA-Z]{10})', uri),
+                re.search(r'(?P<epid>(ep|EP)\d+)', uri),
+                re.search(r'(?P<ssid>(ss|SS)\d+)', uri),
+            ).first_match().groups_dict('aid', 'bvid', 'epid', 'ssid')
+        else:
+            r = {}
         if 'aid' not in r and 'bvid' in r:
             r['aid'] = self.bvid2aid(r['bvid'])
         if 'aid' in r:
             r['aid'] = int(r['aid'])
         return r
 
-    def get_tags(self, name_only=True, **params):
-        j = self.request_json('https://api.bilibili.com/x/tag/archive/tags', **params)
+    def parse_vid_dict(self, uri) -> T.Dict[str, T.Union[int, str]]:
+        try:
+            hash(uri)
+        except TypeError:
+            return self._parse_vid_dict(uri)
+        else:
+            return self._parse_vid_dict_cached(uri)
+
+    def get_tags(self, video_uri, name_only=True, **params):
+        d = self.parse_vid_dict(video_uri)
+        d.update(params)
+        j = self.request_json('https://api.bilibili.com/x/tag/archive/tags', **d)
         if not name_only:
             return j
         return [d['tag_name'] for d in j]
 
-    @functools.lru_cache()
-    def vid2aid(self, x):
-        if isinstance(x, int):
-            return x
-        if isinstance(x, str):
-            if re.fullmatch(r'(av|AV)\d+', x):
-                return int(x[2:])
-            if re.fullmatch(r'BV[\da-zA-Z]{10}', x):
-                return self.bvid2aid(x)
-            try:
-                return int(x)
-            except ValueError:
-                raise ValueError('invalid video ID')
-        raise TypeError('invalid video ID type')
+    def get_replies(self, video_uri, page_num: int = 1, sort=Const.REPLY_SORT_POPULAR, text=False, excerpt=True):
+        if text:
+            excerpt = True
+        aid = self.parse_vid_dict(video_uri)['aid']
+        j = self.request_json('https://api.bilibili.com/x/v2/reply',
+                              oid=aid, pn=page_num, type=1, sort=sort, jsonp='jsonp')
+        if not excerpt:
+            return j
+        r = []
+        for reply in j['replies']:
+            this = self._excerpt_single_reply(reply)
+            children = [self._excerpt_single_reply(i) for i in reply.get('replies') or []]
+            r.append((this, children))
+        if not text:
+            return r
+        return self._convert_excerpted_replies_to_text(r, in_lines=text == 'lines')
 
-    @functools.lru_cache()
-    def vid2bvid(self, x):
-        if isinstance(x, str):
-            if re.fullmatch(r'BV[\da-zA-Z]10', x):
-                return x
-            if re.fullmatch(r'(av|AV)\d+', x):
-                return self.aid2bvid(int(x[2:]))
-            raise ValueError('invalid video ID')
-        if isinstance(x, int):
-            return self.aid2bvid(x)
-        raise TypeError('invalid video ID type')
+    @staticmethod
+    def _excerpt_single_reply(x: dict):
+        return dict(who=(x['member']['uname']), what=(x['content']['message']),
+                    when=datetime.datetime.fromtimestamp(x['ctime']).isoformat())
+
+    def _convert_excerpted_replies_to_text(self,
+                                           replies: T.List[T.Tuple[T.Dict[str, str], T.List[T.Dict[str, str]]]],
+                                           in_lines=False):
+        lines = []
+        for reply, children in replies:
+            lines.extend(self._convert_excerpted_reply_to_lines(reply))
+            for child_reply in children:
+                lines.extend(self._convert_excerpted_reply_to_lines(child_reply, indent=4))
+        if in_lines:
+            return lines
+        return '\n'.join(lines)
+
+    @staticmethod
+    def _convert_excerpted_reply_to_lines(reply, indent=0):
+        prefix = ' ' * indent
+        return [
+            f"{prefix}{reply['who']}",
+            f"{prefix}{reply['when'].replace('T', ' ')}",
+            *(f'{prefix}{line}' for line in reply["what"].splitlines()),
+            prefix,
+        ]
 
     @functools.lru_cache()
     def aid2bvid(self, aid):
@@ -132,6 +171,8 @@ class BilibiliWebAPI:
     def bvid2aid(self, bvid):
         j = self.get_archive_stat_of_web_interface(bvid=bvid)
         return j['aid']
+
+    # ------------------------------------------------------------------------------------------------------------------
 
     def get_view_of_web_interface(self, **params):
         return self.request_json('https://api.bilibili.com/x/web-interface/view', **params)
@@ -163,40 +204,3 @@ class BilibiliWebAPI:
     def get_streams(self, vid, **params):
         # https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/video/videostream_url.md
         ...
-
-    @staticmethod
-    def excerpt_single_reply(x: dict):
-        return dict(who=(x['member']['uname']), what=(x['content']['message']),
-                    when=datetime.datetime.fromtimestamp(x['ctime']).isoformat())
-
-    def get_replies(self, vid, page_num: int = 1, sort=Const.REPLY_SORT_POPULAR, simple=True):
-        aid = self.vid2aid(vid)
-        j = self.request_json('https://api.bilibili.com/x/v2/reply',
-                              **dict(oid=aid, pn=page_num, type=1, sort=sort, jsonp='jsonp'))
-        if not simple:
-            return j
-
-        r = []
-        for reply in j['replies']:
-            this = self.excerpt_single_reply(reply)
-            children = [self.excerpt_single_reply(i) for i in reply.get('replies') or []]
-            r.append((this, children))
-        return r
-
-    @staticmethod
-    def convert_simple_replies_to_text(simple_replies: T.List[T.Tuple[T.Dict[str, str], T.List[T.Dict[str, str]]]],
-                                       in_lines=False):
-        lines = []
-        for reply, children in simple_replies:
-            lines.append(f"[{reply['when'].replace('T', ' ')}] {reply['who']}")
-            lines.extend(f'{line}' for line in reply["what"].splitlines())
-            lines.append('')
-            for child_reply in children:
-                lines.append(f"    [{child_reply['when'].replace('T', ' ')}] {child_reply['who']}")
-                lines.extend(f"    {line}" for line in child_reply['what'].splitlines())
-                lines.append('')
-        if in_lines:
-            return lines
-        return '\n'.join(lines)
-
-    rpl2txt = convert_simple_replies_to_text

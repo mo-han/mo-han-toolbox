@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import functools
 import getpass
-import itertools
+import json
 import pathlib
 import platform
 import queue
@@ -16,7 +16,7 @@ from ezpykit.builtin import *
 from ezpykit.metautil import *
 from ezpykit.stdlib import *
 
-___ref = [pathlib, queue, ezstr, deco_singleton, T, os, call, config, functools, itertools]
+___ref = [pathlib, queue, ezstr, deco_singleton, T, os, call, config, functools, json]
 ___ref.extend([])
 
 sleep = time.sleep

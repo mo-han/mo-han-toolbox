@@ -20,17 +20,17 @@ class ezlist(list, T.Generic[T.T]):
     @property
     def next(self):
         self.current_index += 1
-        _len = len(self)
-        if self.current_index >= _len:
-            self.current_index -= len
+        total = len(self)
+        if self.current_index >= total:
+            self.current_index -= total
         return self.current
 
     @property
     def previous(self):
         self.current_index -= 1
-        _len = len(self)
-        if self.current_index <= - _len:
-            self.current_index += _len * 2
+        total = len(self)
+        if self.current_index <= - total:
+            self.current_index += total * 2
         return self.current
 
     def append_dedup(self, x, reindex=False):

@@ -37,6 +37,10 @@ class MatchWrapper:
     def __init__(self, m: T.Match):
         self.match = m or self.DUMMY_MATCH
 
+    @property
+    def named_groups(self):
+        return self.match.groupdict()
+
     def __getattr__(self, item):
         return getattr(self.match, item)
 
@@ -61,7 +65,7 @@ class MatchWrapper:
             r[i] = g
         r.update(self.groupdict())
         if names or names_with_default:
-            r = ezdict.choose(r, *names, **names_with_default)
+            r = ezdict.pick(r, *names, **names_with_default)
         return r
 
 
