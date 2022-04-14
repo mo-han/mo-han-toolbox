@@ -14,7 +14,6 @@ import requests
 import you_get.util.strings
 from lxml import html
 
-import ezpykitext.sites.bilibili.webapi
 import ezpykitext.webclient.header
 from mylib import web_client
 from mylib.__deprecated__ import concat_videos, merge_m4s
@@ -259,7 +258,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
 
     def __init__(self, *args, cookies: str or dict = None, qn_max=116, qn_want=None):
         super().__init__(*args)
-        self.simple_api = api.BilibiliWebAPI()
+        self.webapi = webapi.BilibiliWebAPI()
         self.do_not_write_any_file = False
         self.cookie = None
         if cookies:
@@ -295,7 +294,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         else:
             raise TypeError("'{}' is not cookies file path or single-line cookie str or cookies dict".format(cookies))
         self.cookie = cookie_str
-        self.simple_api.cookies = http_headers.parse_cookie_str(cookie_str)
+        self.webapi.cookies = http_headers.parse_cookie_str(cookie_str)
 
     def bilibili_headers(self, referer=None, cookie=None):
         if not cookie:
@@ -377,7 +376,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
             _, h = self.html
             # canonical = h.xpath('//link[@rel="canonical"]')[0].attrib['href']
             # av_id = re.search(r'/(av\d+)/', canonical).group(1)
-            av_id = f'av{self.simple_api.bvid2aid(the_vid)}'
+            av_id = f'av{self.webapi.bvid2aid(the_vid)}'
             id_str = f'{the_vid} {av_id}'
         elif the_vid.startswith('ep'):
             self.ensure_html_updated()
