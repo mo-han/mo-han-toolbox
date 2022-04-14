@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import unicodedata
+import itertools
 
 from ezpykit.metautil import decofac_add_method_to_class, T
 
@@ -101,12 +102,34 @@ class StrKit:
         return '\n'.join(lines_l)
 
     @staticmethod
-    def percentage(x, ndigits: int = 1):
+    def to_percent(x, ndigits: int = 1):
         if not isinstance(ndigits, int):
             raise TypeError('ndigits', int, type(ndigits))
         if ndigits < 0:
             raise ValueError('ndigits should be a natural number', ndigits)
         return f'{x:.{ndigits}%}'
+
+    @staticmethod
+    def to_range(s: str, default_end=None, default_start=1, enable_negative=False):
+        groups = []
+        for e in s.split(','):
+            a, *b = e.split('-', maxsplit=1)
+            try:
+                a = int(a)
+            except ValueError:
+                a = default_start
+            if not b:
+                b = a
+            else:
+                b = b[0]
+                try:
+                    b = int(b)
+                except ValueError:
+                    if default_end is None:
+                        raise ValueError('invalid end in', e)
+                    b = default_end
+            groups.append(range(a, b + 1))
+        return itertools.chain(*groups)
 
 
 if hasattr(ezstr, 'removeprefix'):
