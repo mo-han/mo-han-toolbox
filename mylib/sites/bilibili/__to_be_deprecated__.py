@@ -57,17 +57,17 @@ def code_modify_you_get_bilibili(x: str):
     # `x`是输入的源代码字符串，就也是原版模块的源代码
     # 对其进行替换，在要替换的代码的上下文中，截取特征明显的一段，然后直接replace
 
-    # 下面这段是添加4K视频的支持，若当前版本缺少4K视频流元数据， 其实就是在原来的字典开头加了一项
+    # add format into `stream_types`
     x = x.replace('''
     stream_types = [
-        {'id': 'flv_p60', 'quality': 116, 'audio_quality': 30280,
-         'container': 'FLV', 'video_resolution': '1080p', 'desc': '高清 1080P60'},
+        {'id': 'hdflv2_8k', 'quality': 127, 'audio_quality': 30280,
+         'container': 'FLV', 'video_resolution': '4320p', 'desc': '超高清 8K'},
+        {'id': 'hdflv2', 'quality': 125, 'audio_quality': 30280,
+         'container': 'FLV', 'video_resolution': '3840p', 'desc': '真彩 HDR'},
 ''', '''
     stream_types = [
-        {'id': 'hdflv2_4k', 'quality': 120, 'audio_quality': 30280,
-         'container': 'FLV', 'video_resolution': '2160p', 'desc': '超清 4K'},
-        {'id': 'flv_p60', 'quality': 116, 'audio_quality': 30280,
-         'container': 'FLV', 'video_resolution': '1080p', 'desc': '高清 1080P60'},
+        {'id': 'hdflv2', 'quality': 125, 'audio_quality': 30280,
+         'container': 'FLV', 'video_resolution': '3840p', 'desc': '真彩 HDR'},
 ''')
     # 下面也是跟4K相关的判断代码
     # B站视频流用不同数字ID标定不同的格式码率，120是4K，112则是大会员的1080P+（即较高码率的1080P30）
