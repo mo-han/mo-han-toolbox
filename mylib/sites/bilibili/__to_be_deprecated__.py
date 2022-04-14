@@ -56,18 +56,6 @@ def code_modify_you_get_bilibili(x: str):
     # `x`是输入的源代码字符串，就也是原版模块的源代码
     # 对其进行替换，在要替换的代码的上下文中，截取特征明显的一段，然后直接replace
 
-    # add format into `stream_types`
-    x = x.replace('''
-    stream_types = [
-        {'id': 'hdflv2_8k', 'quality': 127, 'audio_quality': 30280,
-         'container': 'FLV', 'video_resolution': '4320p', 'desc': '超高清 8K'},
-        {'id': 'hdflv2', 'quality': 125, 'audio_quality': 30280,
-         'container': 'FLV', 'video_resolution': '3840p', 'desc': '真彩 HDR'},
-''', '''
-    stream_types = [
-        {'id': 'hdflv2', 'quality': 125, 'audio_quality': 30280,
-         'container': 'FLV', 'video_resolution': '3840p', 'desc': '真彩 HDR'},
-''')
     # 下面也是跟4K相关的判断代码
     # B站视频流用不同数字ID标定不同的格式码率，120是4K，112则是大会员的1080P+（即较高码率的1080P30）
     # （116是大会员1080P60，从实际效果来看，无需对116作判断）
@@ -254,6 +242,34 @@ def bilibili_url_from_vid(vid: str) -> str:
 # 但是对`del_unwanted_dash_streams`的调用却是在被继承的`Bilibili`（的修改版）中进行的
 # noinspection PyUnresolvedReferences
 class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
+    stream_types = [
+        {'id': 'hdflv2_8k', 'quality': 127, 'audio_quality': 30280,
+         'container': 'FLV', 'video_resolution': '4320p', 'desc': '超高清 8K'},
+        {'id': 'hdflv2', 'quality': 125, 'audio_quality': 30280,
+         'container': 'FLV', 'video_resolution': '3840p', 'desc': '真彩 HDR'},
+        {'id': 'hdflv2_4k', 'quality': 120, 'audio_quality': 30280,
+         'container': 'FLV', 'video_resolution': '2160p', 'desc': '超清 4K'},
+        {'id': 'flv_p60', 'quality': 116, 'audio_quality': 30280,
+         'container': 'FLV', 'video_resolution': '1080p', 'desc': '高清 1080P60'},
+        {'id': 'hdflv2', 'quality': 112, 'audio_quality': 30280,
+         'container': 'FLV', 'video_resolution': '1080p', 'desc': '高清 1080P+'},
+        {'id': 'flv', 'quality': 80, 'audio_quality': 30280,
+         'container': 'FLV', 'video_resolution': '1080p', 'desc': '高清 1080P'},
+        {'id': 'flv720_p60', 'quality': 74, 'audio_quality': 30280,
+         'container': 'FLV', 'video_resolution': '720p', 'desc': '高清 720P60'},
+        {'id': 'flv720', 'quality': 64, 'audio_quality': 30280,
+         'container': 'FLV', 'video_resolution': '720p', 'desc': '高清 720P'},
+        {'id': 'hdmp4', 'quality': 48, 'audio_quality': 30280,
+         'container': 'MP4', 'video_resolution': '720p', 'desc': '高清 720P (MP4)'},
+        {'id': 'flv480', 'quality': 32, 'audio_quality': 30280,
+         'container': 'FLV', 'video_resolution': '480p', 'desc': '清晰 480P'},
+        {'id': 'flv360', 'quality': 16, 'audio_quality': 30216,
+         'container': 'FLV', 'video_resolution': '360p', 'desc': '流畅 360P'},
+        # 'quality': 15?
+        {'id': 'mp4', 'quality': 0},
+
+        {'id': 'jpg', 'quality': 0},
+    ]
     url: str
 
     def __init__(self, *args, cookies: str or dict = None, qn_max=116, qn_want=None):
