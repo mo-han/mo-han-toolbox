@@ -32,6 +32,7 @@ class BBDownCommandLineList(subprocess.CommandLineList):
 
 
 class BBDownInfo(ezdict):
+    reserved_keys = 'P', 'aid', 'bvid', 'tname', 'title', 'desc', 'owner', 'staff'
     ended = False
     sections: ezlist[str]
     KEY_RUNTIME = 'runtime'
@@ -61,14 +62,9 @@ class BBDownInfo(ezdict):
         sections.current_index = -1
         callee = self.start
         while not self.ended:
-            if isinstance(callee, tuple):
-                callee_ = callee[0]
-                args = callee[1:]
-                __logger__.debug((callee_.__name__, args))
-                callee = callee_(*args)
-            else:
-                __logger__.debug(callee.__name__)
-                callee = callee()
+            callee, args, kwargs = call.unpack_callee_args_kwargs(callee)
+            __logger__.debug((callee.__name__, args, kwargs))
+            callee = callee(*args, **kwargs)
         return self.postprocess()
 
     def postprocess(self):
@@ -76,10 +72,11 @@ class BBDownInfo(ezdict):
         for page_d in pages:
             p = page_d['page']
             d = ezdict.pick(page_d, 'part', 'cid')
-            ezdict.rekey(d, 'part', 'title')
+            ezdict.rename(d, 'part', 'title')
             self[['P', p]].update(d)
         self.remove(self.KEY_RUNTIME)
-        # self.reserve('P', 'aid', 'bvid', 'tname', 'title', 'desc', 'owner', 'staff')
+        if self.reserved_keys:
+            self.reserve(*self.reserved_keys)
         return self
 
     def start(self):
@@ -111,27 +108,25 @@ class BBDownInfo(ezdict):
         s = self.sections.next
         if re.match(r'共计\d+条视频流', s):
             k = ['P', p, 'video']
-            streams = self.setdefault(k, [])
             for l in s.splitlines():
-                m = re.search(r'\d+\. \[(.+)] \[(.+)] \[(.+)] \[(.+)] \[(.+)] \[(.+)]', l)
+                m = re.search(r'(\d+)\. \[(.+)] \[(.+)] \[(.+)] \[(.+)] \[(.+)] \[(.+)]', l)
                 if not m:
                     continue
-                name, hxw, codec, fps, bitrate, size = m.groups()
+                index, name, hxw, codec, fps, bitrate, size = m.groups()
                 height, width = hxw.split('x')
                 d = dict(name=name, codec=codec, height=height, width=width, fps=fps, bitrate=bitrate, size=size)
-                streams.append(d)
+                self[[*k, index]] = d
             return self.s_p, p
         if re.match(r'共计\d+条音频流', s):
             k = ['P', p, 'audio']
-            streams = self.setdefault(k, [])
             for l in s.splitlines():
-                m = re.search(r'\d+\. \[(.+)] \[(.+)] \[(.+)]', l)
+                m = re.search(r'(\d+)\. \[(.+)] \[(.+)] \[(.+)]', l)
                 if not m:
                     continue
-                codec, bitrate, size = m.groups()
+                index, codec, bitrate, size = m.groups()
                 d = dict(codec=codec, bitrate=bitrate, size=size)
-                streams.append(d)
-            return self.s_section
+                self[[*k, index]] = d
+                return self.s_section
         return self.s_p, p
 
     def s_web_response(self, url):
@@ -155,11 +150,19 @@ class BBDownWrapper:
         if cookie_source:
             self.cmd_temp.set_cookies(cookie_source)
 
+    @property
+    def cmd(self):
+        return self.cmd_temp.copy()
+
     def get_info(self, uri):
-        cmd = self.cmd_temp.copy().enable_debug().add(info=True).add_uri(uri)
+        cmd = self.cmd.enable_debug().add(info=True).add_uri(uri)
         p = cmd.popen(stdout=subprocess.PIPE, universal_newlines=True)
         output = p.stdout.read()
         p.wait()
         if p.returncode:
             raise subprocess.CalledProcessError(p.returncode, p.args, f'ERROR: {output.splitlines()[-1]}')
         return BBDownInfo().parse(ezlist(map(str.strip, re.split(r'\[[\d -:.]+] - ', output))))
+
+    def dl_single(self, uri, p, video_stream_index, audio_stream_index):
+        cmd = self.cmd.add(uri, ia=True, p=p)
+        return cmd.run(input=f'{video_stream_index}\n{audio_stream_index}\n', universal_newlines=True)

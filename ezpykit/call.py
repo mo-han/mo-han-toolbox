@@ -3,6 +3,47 @@ from queue import Queue, Empty
 
 from ezpykit.metautil import T
 from ezpykit.stdlib import threading
+from ezpykit.builtin import ezdict
+
+ACCEPTABLE_NAMES_FOR_CALLEE = 'callee', 'target', 'callable', 'function', 'func'
+
+
+def unpack_callee_args_kwargs(x, *args, **kwargs):
+    if isinstance(x, dict):
+        callee = ezdict.get_until(x, *ACCEPTABLE_NAMES_FOR_CALLEE)
+        if not callee:
+            raise ValueError('no callee in the dict, expect keys: ', ACCEPTABLE_NAMES_FOR_CALLEE)
+        x_args = x.get('args', ())
+        x_kwargs = x.get('kwargs', {})
+    elif isinstance(x, (tuple, list)):
+        n = len(x)
+        if n == 1:
+            callee = x[0]
+            x_args, x_kwargs = (), {}
+        elif n == 2:
+            callee, x_args = x
+            x_kwargs = {}
+            if not isinstance(x_args, (tuple, list)):
+                x_args = (x_args,)
+        elif n == 3:
+            callee, x_args, x_kwargs = x
+            if not (isinstance(x_args, (tuple, list)) and isinstance(x_kwargs, dict)):
+                callee, *x_args = x
+                x_kwargs = {}
+        elif n > 3:
+            callee, *x_args = x
+            x_kwargs = {}
+        else:
+            raise ValueError('empty', x)
+    elif callable(x):
+        return x, args, kwargs
+    elif hasattr(x, '__dict__'):
+        return unpack_callee_args_kwargs(vars(), *args, **kwargs)
+    else:
+        raise TypeError('unsupported call pack', x)
+    if not callable(callee):
+        raise TypeError('not callable', callee)
+    return callee, (*x_args, *args), {**x_kwargs, **kwargs}
 
 
 class CallTimeoutError(TimeoutError):

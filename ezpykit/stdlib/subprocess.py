@@ -89,6 +89,9 @@ class CommandLineList(ezlist):
     def popen(self, **kwargs) -> Popen:
         return Popen(self, **kwargs)
 
+    def run(self, **kwargs):
+        return run(self, **kwargs)
+
 
 def popen_daemon_nt(*args, **kwargs):
     return Popen(*args, creationflags=DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP, **kwargs)

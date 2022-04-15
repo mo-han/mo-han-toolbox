@@ -81,14 +81,6 @@ class ezdict(dict):
             self._setitem_by_list_key(key, default)
             return default
 
-    def batch_get(self, *args, **kwargs):
-        r = ezdict()
-        for a in args:
-            r[a] = self.get(a, None)
-        for k, d in kwargs:
-            r[k] = self.get(k, d)
-        return r
-
     def intersection(self, *d):
         return reduce(lambda x, y: ezdict([(k, v) for k, v in x.items() if (k, v) in y.items()]),
                       [self, *d])
@@ -124,8 +116,14 @@ class ezdict(dict):
             if k not in keys:
                 del self[k]
 
-    def rekey(self, old_key, new_key):
+    def rename(self, old_key, new_key):
         self[new_key] = self.pop(old_key)
+
+    def get_until(self: dict, *key, default=None):
+        for k in key:
+            if k in self:
+                return self[k]
+        return default
 
 
 def temp_test():
@@ -151,7 +149,7 @@ def temp_test():
     recursive_update_dict(d, {2: 22, 1: {4: 4444, 3: {6: 666666}}}, ezdict)
     print(d, type(d[[1, 3]]))
     print(d.get([1, 3, 5]))
-    print(d.batch_get([2, 22], [1, 3, 5], 3))
+    print(d.pick([2, 22], [1, 3, 5], 3))
 
 
 if __name__ == '__main__':
