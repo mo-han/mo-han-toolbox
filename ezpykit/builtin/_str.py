@@ -4,6 +4,18 @@ import unicodedata
 
 from ezpykit.metautil import decofac_add_method_to_class, T
 
+EXTENDED_INVALID_CHARS_MAP = {
+    '<': '﹤',  # U+FE64 (small less-than sign)
+    '>': '﹥',  # U+FE65 (small greater-than sign)
+    ':': '꞉',  # U+A789 (modifier letter colon, sometimes used in Windows filenames)
+    '"': '″',  # U+2033 (DOUBLE PRIME)
+    '/': '⧸',  # U+29F8 (big solidus, permitted in Windows file and folder names）
+    '\\': '⧹',  # U+29F9 (big reverse solidus)
+    '|': '￨',  # U+FFE8 (half-width forms light vertical)
+    '?': '？',  # U+FF1F (full-width question mark)
+    '*': '∗',  # U+2217 (asterisk operator)
+}
+
 CR = '\r'
 LF = '\n'
 CRLF = '\r\n'
@@ -82,6 +94,25 @@ class ezstr(str):
             return True
         except ValueError:
             return False
+
+    def to_sanitized_path(self: str, repl=None, *, unescape_html=True, decode_url=True) -> str:
+        s = self
+        if unescape_html:
+            from html import unescape
+            s = unescape(s)
+        if decode_url:
+            from urllib.parse import unquote
+            s = unquote(s)
+        if repl:
+            if isinstance(repl, tuple):
+                r = s.translate(str.maketrans(*repl))
+            elif isinstance(repl, dict):
+                r = s.translate(str.maketrans(repl))
+            else:
+                raise TypeError('repl', (tuple, dict), type(repl))
+        else:
+            r = s.translate(str.maketrans(EXTENDED_INVALID_CHARS_MAP))
+        return r
 
 
 class StrKit:

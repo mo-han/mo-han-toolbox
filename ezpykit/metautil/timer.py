@@ -4,7 +4,7 @@ from contextlib import contextmanager
 
 
 @contextmanager
-def ctx_minimum_duration(t):
+def ctx_ensure_min_time_duration(t):
     t0 = perf_counter()
     yield
     td = perf_counter() - t0

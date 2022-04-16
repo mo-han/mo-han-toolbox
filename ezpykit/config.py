@@ -32,6 +32,15 @@ class ConfigABC(ABC):
     def keys_sequence_of_search(self, key) -> list:
         ...
 
+    @staticmethod
+    def auto_convert(s: str):
+        for f in (int, float):
+            try:
+                return f(s)
+            except ValueError:
+                continue
+        return s
+
 
 class EnVarConfig(ConfigABC):
     sep = '_'
@@ -63,15 +72,6 @@ class EnVarConfig(ConfigABC):
             raise TypeError('key', (list, str), type(key))
         return keys
 
-    @staticmethod
-    def auto_convert(s: str):
-        for f in (int, float):
-            try:
-                return f(s)
-            except ValueError:
-                continue
-        return s
-
     def get_proxy(self):
         def _to_dict(proxy_value):
             r = tolerant_urlparse(proxy_value)
@@ -91,8 +91,8 @@ class DictConfig(ConfigABC):
     data: ezdict
 
     def set_data(self, x):
-        if not isinstance(x, T.Mapping):
-            raise TypeError('x', T.Mapping, type(x))
+        # if not isinstance(x, T.Mapping):
+        #     raise TypeError('x', T.Mapping, type(x))
         self.data = ezdict(x)
         return self
 

@@ -7,10 +7,8 @@ class ezlist(list, T.Generic[T.T]):
 
     def to_dict(self):
         d = {}
-        i = 0
-        for e in self:
+        for i, e in enumerate(self):
             d[i] = e
-            i += 1
         return d
 
     @property
@@ -80,7 +78,7 @@ class ezlist(list, T.Generic[T.T]):
     def last(self, value):
         self[-1] = value
 
-    def ichunks(self: T.Iterable[T.T], n):
+    def iter_chunks(self: T.Iterable[T.T], n):
         r = []
         for e in self:
             r.append(e)

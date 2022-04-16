@@ -2,6 +2,7 @@
 import functools
 import getpass
 import json
+import operator
 import pathlib
 import platform
 import queue
@@ -16,7 +17,7 @@ from ezpykit.builtin import *
 from ezpykit.metautil import *
 from ezpykit.stdlib import *
 
-___ref = [pathlib, queue, ezstr, deco_singleton, T, os, call, config, functools, json]
+___ref = [pathlib, queue, ezstr, deco_singleton, T, os, call, config, functools, json, operator]
 ___ref.extend([])
 
 sleep = time.sleep

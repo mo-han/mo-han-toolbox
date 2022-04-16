@@ -3,6 +3,7 @@ import re
 
 from ezpykit.allinone import *
 from ezpykitext.webclient import *
+from ezpykitext.sites import bilibili
 
 BILIBILI_HOME_PAGE_URL = 'https://www.bilibili.com'
 BILIBILI_HEADERS = header.EzHttpHeaders().ua(header.UserAgentExamples.GOOGLE_CHROME_WINDOWS)
@@ -41,13 +42,16 @@ class BilibiliWebAPI:
         REPLY_SORT_POPULAR = 2
 
     def __init__(self, cookies=None, cache_request: bool = False):
+        self.cookies = {}
+        self.set_cookies(cookies)
+        self.cache_request = cache_request
+
+    def set_cookies(self, cookies):
         if cookie.EzCookieJar.is_cookiejar(cookies):
             self.cookies = cookie.EzCookieJar.get_dict(cookies)
         elif cookies:
             self.cookies = cookie.EzCookieJar().smart_load(cookies, ignore_discard=True, ignore_expires=True).get_dict()
-        else:
-            self.cookies = {}
-        self.cache_request = cache_request
+        return self
 
     def _request_json(self, url, **params):
         r = requests.get(url, params=params, headers=BILIBILI_HEADERS, cookies=self.cookies)
@@ -79,20 +83,20 @@ class BilibiliWebAPI:
     def _parse_vid_dict_cached(self, uri):
         return self._parse_vid_dict(uri)
 
-    def _parse_vid_dict(self, uri):
-        if not uri:
+    def _parse_vid_dict(self, video_source):
+        if not video_source:
             return {}
-        if isinstance(uri, int) and uri > 0:
-            return dict(aid=uri, bvid=self.aid2bvid(uri))
-        if isinstance(uri, dict):
-            r = uri
-        elif isinstance(uri, str):
-            uri = self.clarify_uri(uri)
+        if isinstance(video_source, int) and video_source > 0:
+            return dict(aid=video_source, bvid=self.aid2bvid(video_source))
+        if isinstance(video_source, dict):
+            r = video_source
+        elif isinstance(video_source, str):
+            video_source = self.clarify_uri(video_source)
             r = re.BatchMatchWrapper(
-                re.search(r'(av|AV)(?P<aid>\d+)', uri),
-                re.search(r'(?P<bvid>BV[\da-zA-Z]{10})', uri),
-                re.search(r'(?P<epid>(ep|EP)\d+)', uri),
-                re.search(r'(?P<ssid>(ss|SS)\d+)', uri),
+                re.search(r'(av|AV)(?P<aid>\d+)', video_source),
+                re.search(r'(?P<bvid>BV[\da-zA-Z]{10})', video_source),
+                re.search(r'(?P<epid>(ep|EP)\d+)', video_source),
+                re.search(r'(?P<ssid>(ss|SS)\d+)', video_source),
             ).first_match().groups_dict('aid', 'bvid', 'epid', 'ssid')
         else:
             r = {}
@@ -102,26 +106,26 @@ class BilibiliWebAPI:
             r['aid'] = int(r['aid'])
         return r
 
-    def parse_vid_dict(self, uri) -> T.Dict[str, T.Union[int, str]]:
+    def parse_vid_dict(self, video_source) -> T.Dict[str, T.Union[int, str]]:
         try:
-            hash(uri)
+            hash(video_source)
         except TypeError:
-            return self._parse_vid_dict(uri)
+            return self._parse_vid_dict(video_source)
         else:
-            return self._parse_vid_dict_cached(uri)
+            return self._parse_vid_dict_cached(video_source)
 
-    def get_tags(self, video_uri, name_only=True, **params):
-        d = self.parse_vid_dict(video_uri)
+    def get_tags(self, video_source, name_only=True, **params):
+        d = self.parse_vid_dict(video_source)
         d.update(params)
         j = self.request_json('https://api.bilibili.com/x/tag/archive/tags', **d)
         if not name_only:
             return j
         return [d['tag_name'] for d in j]
 
-    def get_replies(self, video_uri, page_num: int = 1, sort=Const.REPLY_SORT_POPULAR, text=False, excerpt=True):
+    def get_replies(self, video_source, page_num: int = 1, sort=Const.REPLY_SORT_POPULAR, text=False, excerpt=True):
         if text:
             excerpt = True
-        aid = self.parse_vid_dict(video_uri)['aid']
+        aid = self.parse_vid_dict(video_source)['aid']
         j = self.request_json('https://api.bilibili.com/x/v2/reply',
                               oid=aid, pn=page_num, type=1, sort=sort, jsonp='jsonp')
         if not excerpt:

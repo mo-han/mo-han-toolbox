@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from ezpykit.metautil import typing
 from ezpykit.metautil.objutil import *
 from ezpykit.metautil.singleton import *
-from ezpykit.metautil.timer import ctx_minimum_duration
+from ezpykit.metautil.timer import ctx_ensure_min_time_duration
 
 T = typing
 
@@ -129,3 +129,16 @@ def ctx_ensure_module(name, install_name=None):
 
 def is_iterable_but_not_string(x, string_types=(str, bytes, bytearray)):
     return isinstance(x, T.Iterable) and not isinstance(x, string_types)
+
+
+def sorted_with_equal_groups(_iterable, equal_key=None, sort_key=None, reverse=False):
+    sl = sorted(_iterable, key=sort_key, reverse=reverse)
+    old_e = sl.pop(0)
+    equal_key = equal_key or (lambda x,y: x==y)
+    r = [[old_e]]
+    for e in sl:
+        if not equal_key(e, old_e):
+            r.append([])
+        r[-1].append(e)
+        old_e = e
+    return r

@@ -84,8 +84,10 @@ def move_to___a(src, dst, overwrite=False, follow_symlinks=False):
                     raise FileExistsError(os.join_path(dst, f))
     elif r == 'file to file':
         move(src, dst)
-    elif r.startswith('end '):
-        os.makedirs(os.get_dirname(dst), exist_ok=True)
+    elif r.startswith('new '):
+        dst_dir = os.get_dirname(dst)
+        if dst_dir:
+            os.makedirs(dst_dir, exist_ok=True)
         move(src, dst)
     else:
         raise NotImplementedError(r)

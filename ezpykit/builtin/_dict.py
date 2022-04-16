@@ -103,6 +103,15 @@ class ezdict(dict):
             r[k] = self.get(k, v)
         return r
 
+    def pick_to_list(self, *keys, **keys_with_default):
+        r = []
+        for k in keys:
+            if k in self:
+                r.append(self[k])
+        for k, v in keys_with_default.items():
+            r.append(self.get(k, v))
+        return r
+
     def remove(self, *keys):
         for k in keys:
             try:

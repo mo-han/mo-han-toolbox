@@ -1,15 +1,37 @@
 #!/usr/bin/env python3
-import json
 import re
 import urllib.parse
 
 from ezpykit.allinone import *
+from ezpykitext.sites import bilibili
 from ezpykitext.webclient import *
 
 rm_suffix = ezstr.removesuffix
 rm_prefix = ezstr.removeprefix
 
 __logger__ = logging.get_logger(__name__)
+
+
+class BBDownVideoStreamQualityLevel(tuple):
+    RESOLUTION_ORDER = ezlist.to_dict(['360', '480', '720', '1080', '4K', '8K'])
+    SVIP_KEYWORD = ['高帧率', '高码率', 'svip']
+
+    def __new__(cls, stream_dict_or_name):
+        bitrate_level = 0
+        if isinstance(stream_dict_or_name, dict):
+            name = stream_dict_or_name['name']
+        else:
+            name = stream_dict_or_name
+        for k, v in cls.RESOLUTION_ORDER.items():
+            if v.lower() in name.lower():
+                resolution_level = k
+                break
+        else:
+            raise ValueError('invalid video quality name', name)
+        for k in cls.SVIP_KEYWORD:
+            if k in name:
+                bitrate_level += 1
+        return super().__new__(cls, (resolution_level, bitrate_level))
 
 
 class BBDownCommandLineList(subprocess.CommandLineList):
@@ -32,14 +54,22 @@ class BBDownCommandLineList(subprocess.CommandLineList):
 
 
 class BBDownInfo(ezdict):
-    reserved_keys = 'P', 'aid', 'bvid', 'tname', 'title', 'desc', 'owner', 'staff'
-    ended = False
+    aux_api: bilibili.webapi.BilibiliWebAPI
+    vid: dict
+    reserved_keys = 'P', 'aid', 'bvid', 'tname', 'title', 'desc', 'owner', 'staff', 'avid'
+    stopped = False
     sections: ezlist[str]
     KEY_RUNTIME = 'runtime'
     HEAD_APP_DIR = 'AppDirectory: '
     HEAD_RUNTIME_PARAMS = '运行参数：'
     HEAD_WEB_REQUEST = '获取网页内容：'
     HEAD_WEB_RESPONSE = 'Response: '
+
+    def __getattr__(self, item):
+        if item in self:
+            return self[item]
+        else:
+            raise AttributeError(item)
 
     @property
     def owner(self):
@@ -50,33 +80,95 @@ class BBDownInfo(ezdict):
         return [i['name'] for i in self.get('staff', ())]
 
     @property
+    def tags(self):
+        return self.aux_api.get_tags(self.vid)
+
+    @property
+    def replies_text(self):
+        return self.aux_api.get_replies(self.vid, text=True)
+
+    @property
+    def info_file_text(self):
+        return '\n---\n'.join((self['desc'], '  '.join(self.tags), self.replies_text))
+
+    @property
+    def creator_text(self):
+        if self.staff:
+            n = len(self.staff)
+            if n > 1:
+                cl = [self.staff[0], f'等{n}位']
+            else:
+                cl = [self.staff[0]]
+        else:
+            cl = [self.owner]
+        return ' '.join(cl)
+
+    @property
+    def vid_text(self):
+        return ' '.join(self.pick_to_list('bvid', 'avid'))
+
+    @property
+    def preferred_filename(self):
+        return ezstr.to_sanitized_path(f"{self['title']} [bilibili {self.vid_text}][{self.creator_text}]")
+
+    def preferred_filename_with_p(self, p):
+        fp = ezstr.to_sanitized_path(f"{self.preferred_filename} P{p}. {self[['P', p, 'title']]}")
+        return ezstr.ellipt_end(fp, 200, encoding='utf8')
+
+    @property
     def p_num(self):
         return len(self['P'])
 
-    def end(self):
-        self.ended = True
+    @property
+    def is_multi_p(self):
+        return self.p_num > 1
 
-    def parse(self, sections: ezlist):
-        self.ended = False
+    def write_info_file(self, fp=None):
+        fp = f'{fp or self.preferred_filename}.info'
+        io.IOKit.write_exit(open(fp, 'w', encoding='utf-8-sig'), self.info_file_text)
+
+    def find_preferred_video_stream(self, p, max_video_quality: BBDownVideoStreamQualityLevel):
+        p = int(p)
+        preferred_codecs_order = ['HEVC', 'AVC']
+        streams_l = filter(lambda x: BBDownVideoStreamQualityLevel(x) <= max_video_quality,
+                           self[['P', p, 'video']].values())
+        streams_ll = sorted_with_equal_groups(streams_l, reverse=True, sort_key=BBDownVideoStreamQualityLevel,
+                                              equal_key=lambda x, y: x['name'] == y['name'])
+        best_streams_l = streams_ll[0]
+        for preferred_codec in preferred_codecs_order:
+            for s in best_streams_l:
+                if s['codec'] == preferred_codec:
+                    return s
+        return best_streams_l[0]
+
+    def stop(self):
+        self.stopped = True
+
+    def parse(self, sections: ezlist, aux_api: bilibili.webapi.BilibiliWebAPI):
+        self.aux_api = aux_api
+        self.stopped = False
         self.sections = sections
         sections.current_index = -1
         callee = self.start
-        while not self.ended:
+        while not self.stopped:
             callee, args, kwargs = call.unpack_callee_args_kwargs(callee)
             __logger__.debug((callee.__name__, args, kwargs))
             callee = callee(*args, **kwargs)
         return self.postprocess()
 
-    def postprocess(self):
+    def postprocess(self, debug=False):
+        self.vid = self.aux_api.parse_vid_dict(self.pick('aid', 'bvid'))
+        self['avid'] = f'av{self["aid"]}'
         pages = self['pages']
         for page_d in pages:
             p = page_d['page']
             d = ezdict.pick(page_d, 'part', 'cid')
             ezdict.rename(d, 'part', 'title')
             self[['P', p]].update(d)
-        self.remove(self.KEY_RUNTIME)
-        if self.reserved_keys:
-            self.reserve(*self.reserved_keys)
+        if not debug:
+            self.remove(self.KEY_RUNTIME)
+            if self.reserved_keys:
+                self.reserve(*self.reserved_keys)
         return self
 
     def start(self):
@@ -101,8 +193,13 @@ class BBDownInfo(ezdict):
         if p:
             return self.s_p, int(p)
         if s == '任务完成':
-            return self.end
+            return self.stop
         return self.s_section
+
+    @staticmethod
+    def _split_bitrate(s: str):
+        value, unit = s.split()
+        return int(value), unit
 
     def s_p(self, p):
         s = self.sections.next
@@ -114,7 +211,10 @@ class BBDownInfo(ezdict):
                     continue
                 index, name, hxw, codec, fps, bitrate, size = m.groups()
                 height, width = hxw.split('x')
-                d = dict(name=name, codec=codec, height=height, width=width, fps=fps, bitrate=bitrate, size=size)
+                index = int(index)
+                bitrate = self._split_bitrate(bitrate)
+                _locals = locals()
+                d = {k: _locals[k] for k in ('index', 'name', 'codec', 'height', 'width', 'fps', 'bitrate', 'size')}
                 self[[*k, index]] = d
             return self.s_p, p
         if re.match(r'共计\d+条音频流', s):
@@ -124,7 +224,10 @@ class BBDownInfo(ezdict):
                 if not m:
                     continue
                 index, codec, bitrate, size = m.groups()
-                d = dict(codec=codec, bitrate=bitrate, size=size)
+                index = int(index)
+                bitrate = self._split_bitrate(bitrate)
+                _locals = locals()
+                d = {k: _locals[k] for k in ('index', 'codec', 'bitrate', 'size')}
                 self[[*k, index]] = d
                 return self.s_section
         return self.s_p, p
@@ -144,10 +247,13 @@ class BBDownInfo(ezdict):
 
 class BBDownWrapper:
     def __init__(self, cookie_source=None, which=None):
+        self.logger = logging.get_logger(__name__, self.__class__.__name__)
+        self.aux_api = bilibili.webapi.BilibiliWebAPI()
         self.cmd_temp = BBDownCommandLineList()
         if which:
             self.cmd_temp.set_which(which)
         if cookie_source:
+            self.aux_api.set_cookies(cookie_source)
             self.cmd_temp.set_cookies(cookie_source)
 
     @property
@@ -155,14 +261,41 @@ class BBDownWrapper:
         return self.cmd_temp.copy()
 
     def get_info(self, uri):
+        uri = self.aux_api.clarify_uri(uri)
         cmd = self.cmd.enable_debug().add(info=True).add_uri(uri)
         p = cmd.popen(stdout=subprocess.PIPE, universal_newlines=True)
         output = p.stdout.read()
         p.wait()
         if p.returncode:
             raise subprocess.CalledProcessError(p.returncode, p.args, f'ERROR: {output.splitlines()[-1]}')
-        return BBDownInfo().parse(ezlist(map(str.strip, re.split(r'\[[\d -:.]+] - ', output))))
+        return BBDownInfo().parse(ezlist(map(str.strip, re.split(r'\[[\d -:.]+] - ', output))), self.aux_api)
 
-    def dl_single(self, uri, p, video_stream_index, audio_stream_index):
-        cmd = self.cmd.add(uri, ia=True, p=p)
+    def _dl_single(self, uri, p, video_stream_index, audio_stream_index):
+        cmd = self.cmd.add(uri, ia=True, p=p, dd=True, use_aria2c=True)
         return cmd.run(input=f'{video_stream_index}\n{audio_stream_index}\n', universal_newlines=True)
+
+    def dl_single(self, uri, p, video_stream_index, audio_stream_index, filename):
+        expected_files_ext = {'.mp4': '.mp4', '.ass': '.danmaku-ass', '.xml': '.xml'}
+        with tempfile.TemporaryDirectory(prefix=self.__class__.__name__ + '-') as dp:
+            with os.ctx_pushd(dp):
+                while True:
+                    self._dl_single(uri, p, video_stream_index, audio_stream_index)
+                    expected_filenames = list(filter(lambda x: os.split_ext(x)[1] in expected_files_ext, os.listdir()))
+                    if len(expected_filenames) == 3:
+                        break
+            expected_filenames = [os.join_path(dp, i) for i in expected_filenames]
+            for fp in expected_filenames:
+                new_fp = filename + expected_files_ext[os.split_ext(fp)[1]]
+                shutil.move_to(fp, new_fp, overwrite=True, follow_symlinks=True)
+                self.logger.info(f'{fp} -> {new_fp}')
+
+    def dl_preferred(self, video_info: BBDownInfo, p_list=None,
+                     max_video_quality=BBDownVideoStreamQualityLevel('1080svip')):
+        p_list = p_list or range(1, video_info.p_num + 1)
+        uri = video_info.pick_to_list('bvid', 'avid')[0]
+        for p in p_list:
+            asi = 0
+            vsi = video_info.find_preferred_video_stream(p, max_video_quality)['index']
+            fn = video_info.preferred_filename if video_info.p_num == 1 else video_info.preferred_filename_with_p(p)
+            self.dl_single(uri, p, vsi, asi, fn)
+        video_info.write_info_file()

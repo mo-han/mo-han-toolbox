@@ -105,7 +105,7 @@ class EHentaiAPI:
 
     @staticmethod
     def post_request_official_api(json_data: dict):
-        with ctx_minimum_duration(1):
+        with ctx_ensure_min_time_duration(1):
             r = requests.post('https://api.e-hentai.org/api.php', json=json_data)
             r.raise_for_status()
             return r.json()
@@ -128,7 +128,7 @@ class EHentaiAPI:
         return data
 
     def iget_meta(self, galleries):
-        for group in ezlist.ichunks((EHentaiGallery(x) for x in galleries), 25):
+        for group in ezlist.iter_chunks((EHentaiGallery(x) for x in galleries), 25):
             gid_token_group = [[g.gid, g.token] for g in group]
             j = self.post_request_official_api(dict(method='gdata', namespace=1, gidlist=gid_token_group))
             if 'error' in j:
