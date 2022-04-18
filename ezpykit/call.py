@@ -10,7 +10,7 @@ ACCEPTABLE_NAMES_FOR_CALLEE = 'callee', 'target', 'callable', 'function', 'func'
 
 def unpack_callee_args_kwargs(x, *args, **kwargs):
     if isinstance(x, dict):
-        callee = ezdict.get_until(x, *ACCEPTABLE_NAMES_FOR_CALLEE)
+        callee = ezdict.get_first(x, *ACCEPTABLE_NAMES_FOR_CALLEE)
         if not callee:
             raise ValueError('no callee in the dict, expect keys: ', ACCEPTABLE_NAMES_FOR_CALLEE)
         x_args = x.get('args', ())

@@ -128,7 +128,7 @@ class ezdict(dict):
     def rename(self, old_key, new_key):
         self[new_key] = self.pop(old_key)
 
-    def get_until(self: dict, *key, default=None):
+    def get_first(self: dict, *key, default=None):
         for k in key:
             if k in self:
                 return self[k]
