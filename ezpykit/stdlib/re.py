@@ -2,8 +2,8 @@
 from re import *
 from re import __doc__
 
-from ezpykit.metautil import T, DummyObject
 from ezpykit.builtin import ezdict
+from ezpykit.metautil import T, DummyObject
 
 ___ref = [__doc__]
 
@@ -34,8 +34,9 @@ def simple_replace(s, pattern: str, repl: str, *, use_regex=False, ignore_case=F
 class MatchWrapper:
     DUMMY_MATCH = DummyObject(match('', ''), group=None)
 
-    def __init__(self, m: T.Match):
+    def __init__(self, m: T.Match, types: T.Iterable[type] = ()):
         self.match = m or self.DUMMY_MATCH
+        self.type = types
 
     @property
     def named_groups(self):

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import collections.abc
 from functools import reduce
+
 from ezpykit.metautil import T
 
 _Type_Mapping = collections.abc.Mapping

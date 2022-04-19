@@ -134,7 +134,7 @@ def is_iterable_but_not_string(x, string_types=(str, bytes, bytearray)):
 def sorted_with_equal_groups(_iterable, equal_key=None, sort_key=None, reverse=False):
     sl = sorted(_iterable, key=sort_key, reverse=reverse)
     old_e = sl.pop(0)
-    equal_key = equal_key or (lambda x,y: x==y)
+    equal_key = equal_key or (lambda x, y: x == y)
     r = [[old_e]]
     for e in sl:
         if not equal_key(e, old_e):
@@ -142,3 +142,17 @@ def sorted_with_equal_groups(_iterable, equal_key=None, sort_key=None, reverse=F
         r[-1].append(e)
         old_e = e
     return r
+
+
+class TypeConverter:
+    def __init__(self, *type_, ignore_exceptions=(Exception,)):
+        self.types = type_
+        self.ignore_exceptions = ignore_exceptions
+
+    def convert(self, x):
+        for t in self.types:
+            try:
+                return t(x)
+            except self.ignore_exceptions:
+                pass
+        return x

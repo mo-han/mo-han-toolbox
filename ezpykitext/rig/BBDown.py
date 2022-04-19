@@ -123,10 +123,6 @@ class BBDownInfo(ezdict):
     def is_multi_p(self):
         return self.p_count > 1
 
-    def write_info_file(self, fp=None):
-        fp = f'{fp or self.preferred_filename}.info'
-        io.IOKit.write_exit(open(fp, 'w', encoding='utf-8-sig'), self.info_file_text)
-
     def find_preferred_video_stream(self, p, max_video_quality: str):
         p = int(p)
         preferred_codecs_order = ['HEVC', 'AVC']
@@ -261,7 +257,11 @@ class BBDownWrapper:
     def cmd(self):
         return self.cmd_temp.copy()
 
-    def get_info(self, uri):
+    def get_video_info(self, uri):
+        try:
+            uri = f'av{int(uri)}'
+        except ValueError:
+            pass
         uri = self.aux_api.clarify_uri(uri)
         cmd = self.cmd.enable_debug().add(info=True).add_uri(uri)
         p = cmd.popen(stdout=subprocess.PIPE, universal_newlines=True)
@@ -288,10 +288,15 @@ class BBDownWrapper:
             for fp in expected_filenames:
                 new_fp = filename + expected_files_ext[os.split_ext(fp)[1]]
                 shutil.move_to(fp, new_fp, overwrite=True, follow_symlinks=True)
-                self.logger.info(f'{fp} -> {new_fp}')
+                self.logger.info(f'{new_fp} <- {fp}')
 
-    def dl_preferred(self, video_info: BBDownInfo, p_range=None,
-                     max_video_quality='1080svip'):
+    def dl_info(self, video_info: BBDownInfo):
+        fp = video_info.preferred_filename + '.info'
+        io.IOKit.write_exit(open(fp, 'w', encoding='utf-8-sig'), video_info.info_file_text)
+        self.logger.info(fp)
+
+    def dl(self, video_info: BBDownInfo, p_range=None,
+           max_video_quality='1080svip'):
         if isinstance(p_range, str):
             p_range = StrKit.to_range(p_range, video_info.p_count)
         p_range = p_range or range(1, video_info.p_count + 1)
@@ -301,4 +306,4 @@ class BBDownWrapper:
             vsi = video_info.find_preferred_video_stream(p, max_video_quality)['index']
             fn = video_info.preferred_filename if video_info.p_count == 1 else video_info.preferred_filename_with_p(p)
             self.dl_single(uri, p, vsi, asi, fn)
-        video_info.write_info_file()
+        self.dl_info(video_info)

@@ -98,12 +98,12 @@ class BilibiliWebAPI:
                 re.search(r'(?P<epid>(ep|EP)\d+)', video_source),
                 re.search(r'(?P<ssid>(ss|SS)\d+)', video_source),
             ).first_match().groups_dict('aid', 'bvid', 'epid', 'ssid')
+            c = TypeConverter(int)
+            r = {k: c.convert(v) for k, v in r.items()}
         else:
             r = {}
         if 'aid' not in r and 'bvid' in r:
             r['aid'] = self.bvid2aid(r['bvid'])
-        if 'aid' in r:
-            r['aid'] = int(r['aid'])
         return r
 
     def parse_vid_dict(self, video_source) -> T.Dict[str, T.Union[int, str]]:
