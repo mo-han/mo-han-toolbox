@@ -56,7 +56,7 @@ class BBDownCommandLineList(subprocess.CommandLineList):
 class BBDownInfo(ezdict):
     aux_api: bilibili.webapi.BilibiliWebAPI
     vid: dict
-    reserved_keys = 'P', 'aid', 'bvid', 'tname', 'title', 'desc', 'owner', 'staff', 'avid'
+    reserved_keys = 'p', 'aid', 'bvid', 'tname', 'title', 'desc', 'owner', 'staff', 'avid'
     stopped = False
     sections: ezlist[str]
     KEY_RUNTIME = 'runtime'
@@ -112,26 +112,27 @@ class BBDownInfo(ezdict):
         return ezstr.to_sanitized_path(f"{self['title']} [bilibili {self.vid_text}][{self.creator_text}]")
 
     def preferred_filename_with_p(self, p):
-        fp = ezstr.to_sanitized_path(f"{self.preferred_filename} P{p}. {self[['P', p, 'title']]}")
+        fp = ezstr.to_sanitized_path(f"{self.preferred_filename} P{p}. {self[['p', p, 'title']]}")
         return ezstr.ellipt_end(fp, 200, encoding='utf8')
 
     @property
-    def p_num(self):
-        return len(self['P'])
+    def p_count(self):
+        return len(self['p'])
 
     @property
     def is_multi_p(self):
-        return self.p_num > 1
+        return self.p_count > 1
 
     def write_info_file(self, fp=None):
         fp = f'{fp or self.preferred_filename}.info'
         io.IOKit.write_exit(open(fp, 'w', encoding='utf-8-sig'), self.info_file_text)
 
-    def find_preferred_video_stream(self, p, max_video_quality: BBDownVideoStreamQualityLevel):
+    def find_preferred_video_stream(self, p, max_video_quality: str):
         p = int(p)
         preferred_codecs_order = ['HEVC', 'AVC']
-        streams_l = filter(lambda x: BBDownVideoStreamQualityLevel(x) <= max_video_quality,
-                           self[['P', p, 'video']].values())
+        max_video_quality_level = BBDownVideoStreamQualityLevel(max_video_quality)
+        streams_l = filter(lambda x: BBDownVideoStreamQualityLevel(x) <= max_video_quality_level,
+                           self[['p', p, 'video']].values())
         streams_ll = sorted_with_equal_groups(streams_l, reverse=True, sort_key=BBDownVideoStreamQualityLevel,
                                               equal_key=lambda x, y: x['name'] == y['name'])
         best_streams_l = streams_ll[0]
@@ -164,7 +165,7 @@ class BBDownInfo(ezdict):
             p = page_d['page']
             d = ezdict.pick(page_d, 'part', 'cid')
             ezdict.rename(d, 'part', 'title')
-            self[['P', p]].update(d)
+            self[['p', p]].update(d)
         if not debug:
             self.remove(self.KEY_RUNTIME)
             if self.reserved_keys:
@@ -204,7 +205,7 @@ class BBDownInfo(ezdict):
     def s_p(self, p):
         s = self.sections.next
         if re.match(r'共计\d+条视频流', s):
-            k = ['P', p, 'video']
+            k = ['p', p, 'video']
             for l in s.splitlines():
                 m = re.search(r'(\d+)\. \[(.+)] \[(.+)] \[(.+)] \[(.+)] \[(.+)] \[(.+)]', l)
                 if not m:
@@ -218,7 +219,7 @@ class BBDownInfo(ezdict):
                 self[[*k, index]] = d
             return self.s_p, p
         if re.match(r'共计\d+条音频流', s):
-            k = ['P', p, 'audio']
+            k = ['p', p, 'audio']
             for l in s.splitlines():
                 m = re.search(r'(\d+)\. \[(.+)] \[(.+)] \[(.+)]', l)
                 if not m:
@@ -289,13 +290,15 @@ class BBDownWrapper:
                 shutil.move_to(fp, new_fp, overwrite=True, follow_symlinks=True)
                 self.logger.info(f'{fp} -> {new_fp}')
 
-    def dl_preferred(self, video_info: BBDownInfo, p_list=None,
-                     max_video_quality=BBDownVideoStreamQualityLevel('1080svip')):
-        p_list = p_list or range(1, video_info.p_num + 1)
+    def dl_preferred(self, video_info: BBDownInfo, p_range=None,
+                     max_video_quality='1080svip'):
+        if isinstance(p_range, str):
+            p_range = StrKit.to_range(p_range, video_info.p_count)
+        p_range = p_range or range(1, video_info.p_count + 1)
         uri = video_info.pick_to_list('bvid', 'avid')[0]
-        for p in p_list:
+        for p in p_range:
             asi = 0
             vsi = video_info.find_preferred_video_stream(p, max_video_quality)['index']
-            fn = video_info.preferred_filename if video_info.p_num == 1 else video_info.preferred_filename_with_p(p)
+            fn = video_info.preferred_filename if video_info.p_count == 1 else video_info.preferred_filename_with_p(p)
             self.dl_single(uri, p, vsi, asi, fn)
         video_info.write_info_file()
