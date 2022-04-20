@@ -326,8 +326,8 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
             {'target': lambda: h.xpath('//meta[@property="og:title"]')[0].attrib['content']},
             {'target': lambda: h.xpath('//title')[0].text},
         ), common_exception=IndexError)
-        s += ' ' + self.get_vid_label() + self.get_author_label()
         s = str_remove_suffix(s.strip(), '_哔哩哔哩_bilibili')
+        s += ' ' + self.get_vid_label() + self.get_author_label()
         return s
 
     def write_info_file(self, fp: str = None):
