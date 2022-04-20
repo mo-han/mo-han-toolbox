@@ -18,7 +18,7 @@ import ezpykitext.webclient.header
 from mylib import web_client
 from mylib.__deprecated__ import concat_videos, merge_m4s
 from mylib._misc import safe_print, safe_basename
-from mylib.easy import python_module_from_source_code
+from mylib.easy import python_module_from_source_code, str_remove_suffix
 from mylib.ext import fstk
 from mylib.ext import http_headers
 from mylib.ext.ostk import ensure_sigint_signal
@@ -321,13 +321,14 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     def get_title(self):
         self.ensure_html_updated()
         _, h = self.html
-        t = seq_call_return((
+        s = seq_call_return((
             {'target': lambda: h.xpath('//*[@class="video-title"]')[0].attrib['title']},
             {'target': lambda: h.xpath('//meta[@property="og:title"]')[0].attrib['content']},
             {'target': lambda: h.xpath('//title')[0].text},
         ), common_exception=IndexError)
-        t += ' ' + self.get_vid_label() + self.get_author_label()
-        return t
+        s += ' ' + self.get_vid_label() + self.get_author_label()
+        s = str_remove_suffix(s.strip(), '_哔哩哔哩_bilibili')
+        return s
 
     def write_info_file(self, fp: str = None):
         if self.do_not_write_any_file:
