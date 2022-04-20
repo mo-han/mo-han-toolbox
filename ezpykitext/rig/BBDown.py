@@ -297,6 +297,8 @@ class BBDownWrapper:
 
     def dl(self, video_info: BBDownInfo, p_range=None,
            max_video_quality='1080svip'):
+        if not isinstance(video_info, BBDownInfo):
+            video_info = BBDownInfo(video_info)
         if isinstance(p_range, str):
             p_range = StrKit.to_range(p_range, video_info.p_count)
         p_range = p_range or range(1, video_info.p_count + 1)
