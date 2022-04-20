@@ -1,0 +1,3 @@
+pyreadline
+python-vxi11
+pyinstaller<4
