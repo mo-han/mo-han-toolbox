@@ -300,7 +300,7 @@ class BBDownWrapper:
         if not isinstance(video_info, BBDownInfo):
             video_info = BBDownInfo(video_info)
         if isinstance(p_range, str):
-            p_range = StrKit.to_range(p_range, video_info.p_count)
+            p_range = StrKit.to_range(p_range, default_end=video_info.p_count)
         p_range = p_range or range(1, video_info.p_count + 1)
         uri = video_info.pick_to_list('bvid', 'avid')[0]
         for p in p_range:
