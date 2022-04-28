@@ -242,34 +242,7 @@ def bilibili_url_from_vid(vid: str) -> str:
 # 但是对`del_unwanted_dash_streams`的调用却是在被继承的`Bilibili`（的修改版）中进行的
 # noinspection PyUnresolvedReferences
 class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
-    stream_types = [
-        {'id': 'hdflv2_8k', 'quality': 127, 'audio_quality': 30280,
-         'container': 'FLV', 'video_resolution': '4320p', 'desc': '超高清 8K'},
-        {'id': 'hdflv2', 'quality': 125, 'audio_quality': 30280,
-         'container': 'FLV', 'video_resolution': '3840p', 'desc': '真彩 HDR'},
-        {'id': 'hdflv2_4k', 'quality': 120, 'audio_quality': 30280,
-         'container': 'FLV', 'video_resolution': '2160p', 'desc': '超清 4K'},
-        {'id': 'flv_p60', 'quality': 116, 'audio_quality': 30280,
-         'container': 'FLV', 'video_resolution': '1080p', 'desc': '高清 1080P60'},
-        {'id': 'hdflv2', 'quality': 112, 'audio_quality': 30280,
-         'container': 'FLV', 'video_resolution': '1080p', 'desc': '高清 1080P+'},
-        {'id': 'flv', 'quality': 80, 'audio_quality': 30280,
-         'container': 'FLV', 'video_resolution': '1080p', 'desc': '高清 1080P'},
-        {'id': 'flv720_p60', 'quality': 74, 'audio_quality': 30280,
-         'container': 'FLV', 'video_resolution': '720p', 'desc': '高清 720P60'},
-        {'id': 'flv720', 'quality': 64, 'audio_quality': 30280,
-         'container': 'FLV', 'video_resolution': '720p', 'desc': '高清 720P'},
-        {'id': 'hdmp4', 'quality': 48, 'audio_quality': 30280,
-         'container': 'MP4', 'video_resolution': '720p', 'desc': '高清 720P (MP4)'},
-        {'id': 'flv480', 'quality': 32, 'audio_quality': 30280,
-         'container': 'FLV', 'video_resolution': '480p', 'desc': '清晰 480P'},
-        {'id': 'flv360', 'quality': 16, 'audio_quality': 30216,
-         'container': 'FLV', 'video_resolution': '360p', 'desc': '流畅 360P'},
-        # 'quality': 15?
-        {'id': 'mp4', 'quality': 0},
-
-        {'id': 'jpg', 'quality': 0},
-    ]
+    # stream_types =
     url: str
 
     def __init__(self, *args, cookies: str or dict = None, qn_max=116, qn_want=None):
