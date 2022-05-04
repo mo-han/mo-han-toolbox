@@ -128,7 +128,8 @@ def per_site(site_args: T.List[str]):
     elif 'chan.sankakucomplex.com' in url:
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
-            'filename="{category} {date!S:.10} {id} {md5} {tag_string_character!S:L64/(various)/} '
+            'filename="{category} {date!S:.10} {id} {md5} '
+            '{tag_string_character!S:L64/(various)/} '
             '@{tag_string_artist!S:L80/(various)/}.{extension}"',
         ]
         args = [
