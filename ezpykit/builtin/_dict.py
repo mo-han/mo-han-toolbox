@@ -135,6 +135,28 @@ class ezdict(dict):
                 return self[k]
         return default
 
+    def convert_keys(self, *old_key_and_new_key_pairs):
+        for old, new in old_key_and_new_key_pairs:
+            if old not in self:
+                continue
+            if isinstance(new, type):
+                self[new(old)] = self[old]
+                del self[old]
+            elif isinstance(new, object):
+                self[new] = self[old]
+                del self[old]
+        return self
+
+    def convert_values(self, *key_and_new_value_pairs):
+        for k, nv in key_and_new_value_pairs:
+            if k not in self:
+                continue
+            if isinstance(nv, type):
+                self[k] = nv(self[k])
+            elif isinstance(nv, object):
+                self[k] = nv
+        return self
+
 
 def temp_test():
     import sys
