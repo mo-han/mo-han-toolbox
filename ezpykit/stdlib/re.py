@@ -7,6 +7,9 @@ from ezpykit.metautil import T, DummyObject
 
 ___ref = [__doc__]
 
+Match = type(match('', ''))
+Pattern = type(compile(''))
+
 
 def find_words(s: str, allow_mix_non_word_chars='\''):
     if allow_mix_non_word_chars is True:
@@ -71,10 +74,13 @@ class MatchWrapper:
 
 
 class BatchMatchWrapper:
-    def __init__(self, *matches: T.Match):
-        self.matches = matches
+    def __init__(self, *pattern_or_match, string=None):
+        self.sequence = pattern_or_match
+        self.string = string
 
     def first_match(self):
-        for m in self.matches:
-            if m:
-                return MatchWrapper(m)
+        for x in self.sequence:
+            if isinstance(x, Pattern):
+                x = x.match(self.string)
+            if isinstance(x, Match):
+                return MatchWrapper(x)
