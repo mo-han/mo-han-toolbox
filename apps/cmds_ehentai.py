@@ -26,27 +26,28 @@ def ehviewer_downloads_to_images(ex=False, cookies=None, favcat=None):
     metadata_fn = '.ehviewer'
     api = EHentaiAPI(ex=ex, cookies=cookies)
     for p in iter_path(None):
-        if os.path_isdir(p):
-            with os.ctx_pushd(p):
-                if not os.path_isfile(metadata_fn):
-                    continue
-                with open(metadata_fn) as f:
-                    lines = [e.strip() for e in f.readlines()]
-                if not lines or lines[0] != 'VERSION2':
-                    continue
-                print(f'+ {p}')
-                gid = lines[2]
-                gtoken = lines[3]
-                ehvimg = os.join_path('..', '..', 'ehviewer-image')
-                os.makedirs(ehvimg, exist_ok=True)
-                for f in set(os.listdir()) - {'.thumb', metadata_fn}:
-                    new = f'{gid}-{gtoken}-{f}'
-                    dst = os.join_path(ehvimg, new)
-                    shutil.move(f, dst)
-                    print(f'* {f} -> {dst}')
-                if favcat:
-                    api.set_fav((gid, gtoken), favcat)
-                    print(f'* /g/{gid}/{gtoken} -> favorite {favcat}')
+        if not os.path_isdir(p):
+            continue
+        with os.ctx_pushd(p):
+            if not os.path_isfile(metadata_fn):
+                continue
+            with open(metadata_fn) as f:
+                lines = [e.strip() for e in f.readlines()]
+            if not lines or lines[0] != 'VERSION2':
+                continue
+            print(f'+ {p}')
+            gid = lines[2]
+            gtoken = lines[3]
+            ehvimg = os.join_path('..', '..', 'ehviewer-image')
+            os.makedirs(ehvimg, exist_ok=True)
+            for f in set(os.listdir()) - {'.thumb', metadata_fn}:
+                new = f'{gid}-{gtoken}-{f}'
+                dst = os.join_path(ehvimg, new)
+                shutil.move(f, dst)
+                print(f'* {f} -> {dst}')
+            if favcat:
+                api.set_fav((gid, gtoken), favcat)
+                print(f'* /g/{gid}/{gtoken} -> favorite {favcat}')
 
 
 @apr.sub(apr.rpl_dot, aliases=['mvfav'])

@@ -86,7 +86,7 @@ class ezstr(str):
     remove_accent_chars = remove_accent_chars_via_join
 
     def is_hex(self):
-        return self.is_int(16)
+        return ezstr.is_int(self, 16)
 
     def is_int(self, base=10):
         try:
