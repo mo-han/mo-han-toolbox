@@ -129,8 +129,9 @@ def per_site(site_args: T.List[str]):
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
             'filename="{category} {date!S:.10} {id} {md5} '
-            '{tag_string_character!S:L64/(various)/} '
-            '@{tag_string_artist!S:L80/(various)/}.{extension}"',
+            '{tag_string_copyright!S:L64/(...)/} '
+            '{tag_string_character!S:L64/(...)/} '
+            '@{tag_string_artist!S:L64/(...)/}.{extension}"',
         ]
         args = [
             *GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
