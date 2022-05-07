@@ -55,7 +55,7 @@ def make_options_list(options_dict: dict):
 
 
 def new_gallery_dl_cmd(*args, **kwargs):
-    cmd = GLDLCLIArgs('gallery-dl', R=3, c=conf_path,
+    cmd = GLDLCLIArgs('gallery-dl', R=-1, c=conf_path,
                       o=f'base-directory={base_dir}', )
     return cmd
 
