@@ -13,7 +13,7 @@ import mylib.easy.io
 import mylib.ext.tricks
 from mylib.__deprecated__ import fs_find_iter
 from mylib.easy import *
-from mylib.easy.filename_tags import EnclosedFilenameTagsSet
+from mylib.easy.filename_tags import EnclosedFilenameTags
 from mylib.easy.logging import ez_get_logger, LOG_FMT_MESSAGE_ONLY
 from mylib.ext import fstk, tui, ostk
 
@@ -565,9 +565,9 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
         logger.info(f'# skip non-video-audio\n  {filepath}')
         return
 
-    input_ft = EnclosedFilenameTagsSet(filepath)
-    origin_ft = EnclosedFilenameTagsSet(filepath).tag('origin')
-    output_ft = EnclosedFilenameTagsSet(filepath).untag('crf', 'origin')
+    input_ft = EnclosedFilenameTags(filepath)
+    origin_ft = EnclosedFilenameTags(filepath).tag('origin')
+    output_ft = EnclosedFilenameTags(filepath).untag('crf', 'origin')
     if output_ext:
         output_ft.extension = output_ext
     if crf is not None:
@@ -632,7 +632,7 @@ def parse_kw_opt_str(kw: str):
 
 
 def guess_video_crf(src, codec, *, redo=False, work_dir=None, auto_clean=True):
-    tf = EnclosedFilenameTagsSet(src)
+    tf = EnclosedFilenameTags(src)
     if not redo and 'crf' in tf.keys:
         return float(tf.tags_dict['crf'])
     c = FFmpegSegmentsContainer(src, work_dir=work_dir, log_lvl='WARNING')

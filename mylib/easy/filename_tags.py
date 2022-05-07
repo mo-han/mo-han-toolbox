@@ -4,7 +4,7 @@ from abc import ABC
 from mylib.easy import *
 
 
-class FilenameTagsSetABC(ABC):
+class FilenameTagsABC(ABC):
     def __init__(self):
         self.tags_set = set()
         self.tags_dict = dict()
@@ -71,7 +71,7 @@ class FilenameTagsSetABC(ABC):
         return self
 
 
-class EnclosedFilenameTagsSet(FilenameTagsSetABC):
+class EnclosedFilenameTags(FilenameTagsABC):
     def __init__(self, path: str, *, preamble='.', begin='[', end=']', sep=' '):
         super().__init__()
         self.config = dict(preamble=repr(preamble), begin=repr(begin), end=repr(end), sep=repr(sep))
@@ -92,7 +92,7 @@ class EnclosedFilenameTagsSet(FilenameTagsSetABC):
         self.extension = ext
         try:
             before_tags, the_tags, after_tags = re.split(fr'({tags_pattern})', body, maxsplit=1)
-            print(before_tags, the_tags, after_tags)
+            # print(before_tags, the_tags, after_tags)
             tags_s = str(the_tags[len(self.preamble) + len(self.begin):-len(self.end)]).strip()
             tags_l = tags_s.split(sep) if tags_s else []
         except ValueError:
