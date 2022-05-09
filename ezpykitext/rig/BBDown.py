@@ -35,7 +35,7 @@ class BBDownVideoStreamQualityLevel(tuple):
 
 
 class BBDownCommandLineList(subprocess.CommandLineList):
-    which = 'BBDown'
+    exec = 'BBDown'
     enable_short_option_for_word = True
 
     def set_cookies(self, source):

@@ -3,7 +3,7 @@ from ezpykit.allinone import subprocess
 
 
 class Aria2CommandLineList(subprocess.CommandLineList):
-    which = 'aria2c'
+    exec = 'aria2c'
 
     def _kwarg_to_option(self, key, value):
         k, v = super()._kwarg_to_option(key, value)

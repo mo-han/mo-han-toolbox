@@ -12,24 +12,24 @@ if sys.version_info < (3, 7):
 
 
 class CommandLineList(ezlist):
-    which = None
+    exec = None
     enable_option_with_multi_value = False
     enable_option_with_equal_sign = False
     enable_short_option_for_word = False
 
     def __init__(self, *args, **kwargs):
         super().__init__()
-        if self.which and not args:
-            self.add(self.which)
+        if self.exec and not args:
+            self.add(self.exec)
         self.add(*args, **kwargs)
 
     def set_which(self, which):
-        if self.which and self.first == self.which:
-            self.which = which
+        if self.exec and self.first == self.exec:
+            self.exec = which
             self.first = which
         else:
-            if self.which:
-                self.which = which
+            if self.exec:
+                self.exec = which
             if self.first:
                 self.first = which
         return self
