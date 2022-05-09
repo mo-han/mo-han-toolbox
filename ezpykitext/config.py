@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from ezpykit.config import *
+from ezpykit.wip.config import *
 from ezpykit.allinone import *
 import codecs
 

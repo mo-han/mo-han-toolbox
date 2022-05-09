@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from urllib.parse import urlparse
 
 from ezpykit.builtin import ensure_str
-from ezpykit.call import SimpleCall
+from ezpykit.wip.call import SimpleCall
 
 
 class ClipboardError(Exception):

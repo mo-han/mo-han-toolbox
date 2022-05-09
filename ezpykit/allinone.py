@@ -11,8 +11,7 @@ import sys
 import tempfile
 import time
 
-from ezpykit import call
-from ezpykit import config
+from ezpykit.wip import call, config
 from ezpykit.builtin import *
 from ezpykit.metautil import *
 from ezpykit.stdlib import *

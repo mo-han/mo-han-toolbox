@@ -2,7 +2,8 @@
 from functools import lru_cache
 from http import cookiejar as offical_cookiejar
 
-from ezpykit.allinone import install_module, T, call, config
+from ezpykit.allinone import install_module, T
+from ezpykit.wip import call, config
 from ezpykit.stdlib.http import cookiejar
 from ezpykit.stdlib.urllib.parse import tolerant_urlparse
 
