@@ -28,8 +28,9 @@ def styled(text, stylesheet=None):
         if x.startswith('on'):
             on_colors.append(x)
             bg = x[2:].strip('-_')
-            if bg in COLORS.keys():
-                kwargs['on_color'] = bg
+            on_color = f'on_{bg}'
+            if on_color in HIGHLIGHTS.keys():
+                kwargs['on_color'] = on_color
             else:
                 __logger__.warning(f'ignore invalid background color: {bg}')
 
@@ -42,8 +43,9 @@ def styled(text, stylesheet=None):
     possible_colors = [e for e in ss if e not in attributes and e not in on_colors]
     for c in possible_colors:
         if c in COLORS.keys():
-            kwargs['on_color'] = c
+            kwargs['color'] = c
         else:
             __logger__.warning(f'ignore invalid color: {c}')
 
+    __logger__.debug(kwargs)
     return colored(text, **kwargs)
