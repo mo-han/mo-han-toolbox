@@ -108,12 +108,14 @@ class EnclosedFilenameTags(FilenameTagsABC):
             else:
                 self.tags_set.add(t)
 
-    def tagged_path(self):
+    def tagged_path(self, extension=None):
+        ext = extension if extension is not None else self.extension
         tags_l = sorted(self.tags)
         if tags_l:
-            return f'{self.before_tags}{self.preamble}{self.begin}{self.sep.join(tags_l)}{self.end}{self.after_tags}{self.extension}'
+            return f'{self.before_tags}{self.preamble}{self.begin}{self.sep.join(tags_l)}{self.end}{self.after_tags}{ext}'
         else:
-            return f'{self.before_tags}{self.after_tags}{self.extension}'
+            return f'{self.before_tags}{self.after_tags}{ext}'
 
-    def untagged_path(self):
-        return f'{self.before_tags}{self.after_tags}{self.extension}'
+    def untagged_path(self, extension=None):
+        ext = extension if extension is not None else self.extension
+        return f'{self.before_tags}{self.after_tags}{ext}'

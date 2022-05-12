@@ -182,13 +182,6 @@ def write_json_file(file, data, *, indent=None, utf8: bool = True, **kwargs):
         json.dump(data, jf, indent=indent, ensure_ascii=not utf8, **kwargs)
 
 
-def touch(filepath):
-    try:
-        os.utime(filepath)
-    except OSError:
-        open(filepath, 'a').close()
-
-
 def x_rename(src_path: str, dst_name_or_path: str = None, dst_ext: str = None, *,
              move_to_dir: str = None, stay_in_src_dir: bool = True, append_src_ext: bool = True) -> str:
     src_root, src_basename = os.path.split(src_path)

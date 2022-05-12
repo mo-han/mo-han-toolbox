@@ -111,3 +111,10 @@ def ensure_chdir(dest):
     if not os.path.isdir(dest):
         os.makedirs(dest, exist_ok=True)
     os.chdir(dest)
+
+
+def touch(filepath):
+    try:
+        os.utime(filepath)
+    except OSError:
+        open(filepath, 'a').close()

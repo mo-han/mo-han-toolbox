@@ -761,7 +761,7 @@ class FFmpegSegmentsContainer:
                 fstk.x_rename(f, prefix + fn, append_src_ext=False)
                 break
             else:
-                fstk.touch(prefix + fn)
+                ezpykit.stdlib.os.common.touch(prefix + fn)
             fstk.write_json_file(self.input_json, self.input_data, indent=4)
 
     def read_filename(self):
@@ -1107,7 +1107,7 @@ class FFmpegSegmentsContainer:
         if self.file_has_lock(filepath) or self.file_has_done(filepath):
             return
         else:
-            fstk.touch(filepath + self.suffix_lock)
+            ezpykit.stdlib.os.common.touch(filepath + self.suffix_lock)
 
     def file_tag_unlock(self, filepath):
         if self.file_has_lock(filepath):
@@ -1121,7 +1121,7 @@ class FFmpegSegmentsContainer:
                           stay_in_src_dir=False, append_src_ext=False)
 
     def file_tag_delete(self, filepath):
-        fstk.touch(filepath + self.suffix_delete)
+        ezpykit.stdlib.os.common.touch(filepath + self.suffix_delete)
 
     def convert_one_segment(self, stream_id, segment_file, overwrite=False) -> dict:
         segment_path_no_prefix = os.path.join(stream_id, segment_file)
@@ -1220,7 +1220,7 @@ class FFmpegSegmentsContainer:
                         os.remove(o_seg + self.suffix_done)
                     elif self.file_has_lock(o_seg):
                         self.logger.info('request delete locked segment {}'.format(o_seg))
-                        fstk.touch(o_seg + self.suffix_delete)
+                        ezpykit.stdlib.os.common.touch(o_seg + self.suffix_delete)
                     else:
                         self.logger.info('delete stub segment{}'.format(o_seg))
                         os.remove(o_seg)
