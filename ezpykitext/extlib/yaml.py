@@ -17,4 +17,6 @@ class YAMLFile:
         return load_method(open(self.filepath, encoding=encoding or self.default_encoding))
 
     def dump(self, data, dump_method=safe_dump, encoding=None):
+        if issubclass(type(data), dict):
+            data = dict(data)
         return dump_method(data, open(self.filepath, 'w', encoding=encoding or self.default_encoding))

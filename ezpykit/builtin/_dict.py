@@ -55,15 +55,15 @@ class ezdict(dict):
             self._setitem_by_list_key(key, value)
 
     def _setitem_by_list_key(self, key: list, value):
-        i = self
+        d = self
         for k in key[:-1]:
             try:
-                i = i[k]
+                d = d[k]
             except KeyError:
-                new = self.__class__()
-                i[k] = new
-                i = new
-        i[key[-1]] = value
+                new = {}
+                d[k] = new
+                d = new
+        d[key[-1]] = value
 
     def get(self, key, default=None):
         if not self._key_is_list(key):
