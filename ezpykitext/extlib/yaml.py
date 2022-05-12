@@ -13,10 +13,10 @@ class YAMLFile:
         if auto_create_file and not os.path_isfile(fp):
             os.touch(fp)
 
-    def load(self, load_method=safe_load, encoding=None):
-        return load_method(open(self.filepath, encoding=encoding or self.default_encoding))
+    def load(self, load_method=safe_load, encoding=None, **kwargs):
+        return load_method(open(self.filepath, encoding=encoding or self.default_encoding), **kwargs)
 
-    def dump(self, data, dump_method=safe_dump, encoding=None):
+    def dump(self, data, dump_method=safe_dump, encoding=None, **kwargs):
         if issubclass(type(data), dict):
             data = dict(data)
-        return dump_method(data, open(self.filepath, 'w', encoding=encoding or self.default_encoding))
+        return dump_method(data, open(self.filepath, 'w', encoding=encoding or self.default_encoding), **kwargs)

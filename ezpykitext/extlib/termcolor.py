@@ -47,5 +47,8 @@ def styled(text, stylesheet=None):
         else:
             __logger__.warning(f'ignore invalid color: {c}')
 
-    __logger__.debug(kwargs)
-    return colored(text, **kwargs)
+    try:
+        return colored(text, **kwargs)
+    except Exception:
+        __logger__.error(f'{text}, {kwargs}')
+        raise
