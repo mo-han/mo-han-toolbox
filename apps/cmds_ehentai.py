@@ -22,8 +22,9 @@ def main():
 @apr.opt('f', 'favcat')
 @apr.map(ex='exhentai', cookies='cookies', favcat='favcat')
 def ehviewer_downloads_to_images(ex=False, cookies=None, favcat=None):
-    "convert images downloaded via EhViewer, into images named as <gid>-<gtoken>-%%d08.jpg, like saving images in EhViewer."
+    """sort gallery images downloaded by EhViewer into <gid>-<gtoken>-%%d08.jpg, like how EhViewer saves images."""
     metadata_fn = '.ehviewer'
+    ignored_files = {'.thumb', metadata_fn}
     api = EHentaiAPI(ex=ex, cookies=cookies)
     for p in iter_path(None):
         if not os.path_isdir(p):
@@ -38,16 +39,19 @@ def ehviewer_downloads_to_images(ex=False, cookies=None, favcat=None):
             print(f'+ {p}')
             gid = lines[2]
             gtoken = lines[3]
-            ehvimg = os.join_path('..', '..', 'ehviewer-image')
+            ehvimg = os.join_path('..', 'image')
             os.makedirs(ehvimg, exist_ok=True)
-            for f in set(os.listdir()) - {'.thumb', metadata_fn}:
+            for f in set(os.listdir()) - ignored_files:
                 new = f'{gid}-{gtoken}-{f}'
                 dst = os.join_path(ehvimg, new)
                 shutil.move(f, dst)
-                print(f'* {f} -> {dst}')
+                print(f'* {f} -> {dst}', end='\r')
             if favcat:
                 api.set_fav((gid, gtoken), favcat)
-                print(f'* /g/{gid}/{gtoken} -> favorite {favcat}')
+                print(f'\n* /g/{gid}/{gtoken} -> favorite {favcat}')
+        if set(os.listdir(p)) == ignored_files:
+            shutil.rmtree(p)
+            print(f'- {p}')
 
 
 @apr.sub(apr.rpl_dot, aliases=['mvfav'])
