@@ -538,8 +538,13 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     elif 'nvenc' in keywords and codec in ('a', 'h'):
         tags.append('nvenc')
         codec += 'nv'
-        ffmpeg_args.add(c__v=codecs_d[codec], preset__v='p7', tune__v='hq', rc__v='vbr', cq__v=crf)
-        if crf:
+        ffmpeg_args.add(c__v=codecs_d[codec], cq=crf)
+        # ffmpeg_args.add(preset='slow')
+        ffmpeg_args.add(preset='p5')
+        # ffmpeg_args.add(rc__v='vbr_hq')
+        ffmpeg_args.add(tune='hq', rc__v='vbr')
+        # ffmpeg_args.add(bf=4, b_ref_mode=1, nonref_p=1)
+        if crf is not None:
             ffmpeg_args.add(b__v=0)
     else:
         ffmpeg_args.add(vcodec=codecs_d[codec], crf=crf)
