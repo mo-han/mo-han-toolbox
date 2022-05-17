@@ -16,7 +16,10 @@ class YAMLFile:
     def load(self, load_method=safe_load, encoding=None, **kwargs):
         return load_method(open(self.filepath, encoding=encoding or self.default_encoding), **kwargs)
 
-    def dump(self, data, dump_method=safe_dump, encoding=None, **kwargs):
+    def dump(self, data, dump_method=safe_dump, encoding=None, allow_unicode=True, **kwargs):
         if issubclass(type(data), dict):
             data = dict(data)
-        return dump_method(data, open(self.filepath, 'w', encoding=encoding or self.default_encoding), **kwargs)
+        return dump_method(
+            data, open(self.filepath, 'w', encoding=encoding or self.default_encoding),
+            allow_unicode=allow_unicode, **kwargs
+        )
