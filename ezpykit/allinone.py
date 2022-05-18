@@ -10,13 +10,14 @@ import signal
 import sys
 import tempfile
 import time
+import contextlib
 
 from ezpykit.wip import call, config
 from ezpykit.builtin import *
 from ezpykit.metautil import *
 from ezpykit.stdlib import *
 
-___ref = [pathlib, queue, ezstr, deco_singleton, T, os, call, config, functools, json, operator]
+___ref = [pathlib, queue, ezstr, deco_singleton, T, os, call, config, functools, json, operator, contextlib]
 ___ref.extend([])
 
 sleep = time.sleep
