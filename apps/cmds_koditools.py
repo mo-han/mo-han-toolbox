@@ -52,7 +52,7 @@ class KodiNfo:
         return [f'{int(s.text):d}x{int(e.text):02d}' for s, e in itertools.chain(
             zip(findall('season'), findall('episode')),
             zip(findall('displayseason'), findall('displayepisode')),
-        )]
+        ) if '-1' not in (s.text, e.text)]
 
     def _rename(self, old, new):
         if new == old:
