@@ -2,7 +2,6 @@
 from re import *
 from re import __doc__
 
-from ezpykit.builtin import ezdict
 from ezpykit.metautil import T, DummyObject
 
 ___ref = [__doc__]
@@ -60,16 +59,42 @@ class MatchWrapper:
     def __repr__(self):
         return f'{self.__class__.__name__} of {self.match!r}'
 
-    def groups_dict(self, *names, **names_with_default):
-        r = {}
-        i = 0
-        r[i] = self.group(i)
-        for g in self.groups():
-            i += 1
-            r[i] = g
+    def all_groups(self):
+        r = {i: g for i, g in enumerate(self.groups(), start=1)}
+        r[0] = self.group(0),
         r.update(self.groupdict())
-        if names or names_with_default:
-            r = ezdict.pick(r, *names, **names_with_default)
+        return r
+
+    def pick(self, *index_or_names, **names_with_default):
+        r = {}
+        for i in index_or_names:
+            try:
+                r[i] = self.group(i)
+            except IndexError:
+                pass
+        gd = self.groupdict()
+        for n, d in names_with_default.items():
+            if n in gd:
+                r[n] = gd[n]
+            else:
+                r[n] = d
+        return r
+
+    def pick_existing(self, *index_or_names, **names_with_default):
+        r = {}
+        for i in index_or_names:
+            try:
+                v = self.group(i)
+                if v is not None:
+                    r[i] = self.group(i)
+            except IndexError:
+                pass
+        gd = self.groupdict()
+        for n, d in names_with_default.items():
+            if n in gd and gd[n] is not None:
+                r[n] = gd[n]
+            else:
+                r[n] = d
         return r
 
 
