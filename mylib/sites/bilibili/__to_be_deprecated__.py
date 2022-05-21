@@ -159,7 +159,7 @@ def code_modify_you_get_extractor(x: str):
 
 
 def new_legitimize(text: str, os=...):
-    m = re.match(r'(.+)( \[bilibili .+)')
+    m = re.match(r'(.+)( \[bilibili .+)', text)
     if m:
         title, suffix = m.groups()
         title = ellipt_end(fstk.sanitize(title, fstk.POTENTIAL_INVALID_CHARS_MAP), 240, encoding='utf8')
