@@ -3,7 +3,6 @@ import re
 
 from ezpykit.allinone import *
 from ezpykitext.webclient import *
-from ezpykitext.sites import bilibili
 
 BILIBILI_HOME_PAGE_URL = 'https://www.bilibili.com'
 BILIBILI_HEADERS = header.EzHttpHeaders().ua(header.UserAgentExamples.GOOGLE_CHROME_WINDOWS)

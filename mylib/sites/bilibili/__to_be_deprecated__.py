@@ -22,10 +22,10 @@ from mylib.easy import python_module_from_source_code, str_remove_suffix
 from mylib.ext import fstk
 from mylib.ext import http_headers
 from mylib.ext.ostk import ensure_sigint_signal
-from mylib.ext.text import regex_find, ellipt_middle, ellipt_end
+from mylib.ext.text import regex_find, ellipt_end
 from mylib.ext.tricks import str2range, seq_call_return
 from mylib.ext.tui import LinePrinter
-from ezpykitext.sites.bilibili import webapi
+from websites.bilibili import webapi
 
 API_HEADERS_HANDLER: ezpykitext.webclient.header.EzHttpHeaders = ezpykitext.webclient.header.EzHttpHeaders().user_agent(
     ezpykitext.webclient.header.UserAgentExamples.GOOGLE_CHROME_WINDOWS)
@@ -321,6 +321,16 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
             f.write(self.get_desc())
             f.write('\n---\n')
             f.write(str(self.get_tags()))
+            f.write('\n---\n')
+            f.write(self.get_reply())
+
+    def get_reply(self):
+        try:
+            from websites.bilibili.webapi import BilibiliWebAPI
+            return BilibiliWebAPI().get_replies(text=True)
+        except Exception as e:
+            print(f'! {e}: {e!r}')
+            return ''
 
     def get_desc(self):
         self.ensure_html_updated()
