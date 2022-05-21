@@ -322,7 +322,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
             f.write('\n---\n')
             f.write(str(self.get_tags()))
             f.write('\n---\n')
-            f.write(self.get_reply())
+            f.write(self.get_reply(self.url))
 
     def get_reply(self):
         try:
