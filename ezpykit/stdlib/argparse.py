@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import re
 from argparse import *
-
+from ezpykit.stdlib import logging
 from ezpykit.metautil import AttrName, ObjectWrapper, T
 from ezpykit.metautil.singleton import SingletonMetaClass
+
+__logger__ = logging.get_logger(__name__)
 
 
 class CompactHelpFormatterWithDefaults(ArgumentDefaultsHelpFormatter):
@@ -70,7 +72,9 @@ class ArgumentParserWrapper:
 
     def parse(self, *args, catch_unknown_args=False, **kwargs):
         parse = self.parse_known_args if catch_unknown_args else self.parse_args
-        return parse(*args, **kwargs)
+        r = parse(*args, **kwargs)
+        __logger__.debug(r)
+        return r
 
     def run_target(self):
         """call target"""
