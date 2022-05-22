@@ -315,13 +315,14 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         fp = you_get_filename(fp)
         print(fp)
         with open(fp, 'w', encoding='utf-8-sig') as f:
+            separator = '\n\n---\n\n'
             # f.write('#encoding=utf8\n\n')
             f.write(self.url)
-            f.write('\n---\n')
+            f.write(separator)
             f.write(self.get_desc())
-            f.write('\n---\n')
+            f.write(separator)
             f.write(str(self.get_tags()))
-            f.write('\n---\n')
+            f.write(separator)
             f.write(self.get_reply())
 
     def get_reply(self):
