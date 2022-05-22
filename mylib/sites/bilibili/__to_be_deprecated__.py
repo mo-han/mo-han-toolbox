@@ -322,12 +322,12 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
             f.write('\n---\n')
             f.write(str(self.get_tags()))
             f.write('\n---\n')
-            f.write(self.get_reply(self.url))
+            f.write(self.get_reply())
 
     def get_reply(self):
         try:
             from websites.bilibili.webapi import BilibiliWebAPI
-            return BilibiliWebAPI().get_replies(text=True)
+            return BilibiliWebAPI().get_replies(self.url, text=True)
         except Exception as e:
             print(f'! {e}: {e!r}')
             return ''
