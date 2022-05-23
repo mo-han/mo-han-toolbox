@@ -2,11 +2,14 @@
 
 from ezpykit.allinone import *
 from ezpykitext.stdlib import os
+from ezpykitext.extlib import termcolor
 
 __logger__ = logging.getLogger(__name__)
 
 
-def iter_path(source=None, clipboard_as_default=True, exist_first=True, use_pipe=True, recursive_glob=True):
+def iter_path(source=None, clipboard_as_default=True,
+              exist_first=True, raise_not_found=True,
+              use_pipe=True, recursive_glob=True):
     if clipboard_as_default and not source:
         yield from os.clpb.get_path()
         return
@@ -33,11 +36,19 @@ def iter_path(source=None, clipboard_as_default=True, exist_first=True, use_pipe
                 s = str(s)
             if s.startswith('glob://'):
                 yield from glob.iglob_url(s, recursive=recursive_glob)
-            if exist_first and os.path_exists(s):
-                yield s
+            if exist_first:
+                if os.path_exists(s):
+                    yield s
+                elif raise_not_found:
+                    raise FileNotFoundError(s)
             else:
-                __logger__.debug('default iglob')
-                yield from glob.iglob(s, recursive=recursive_glob)
+                __logger__.debug('default iglob', s)
+                ig = glob.iglob(s, recursive=recursive_glob)
+                try:
+                    yield next(ig)
+                except StopIteration:
+                    raise FileNotFoundError(s)
+                yield from ig
 
 
 def get_from_source(source=None, clipboard_as_default=True, use_pipe=True, read_file=False):

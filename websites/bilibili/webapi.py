@@ -3,7 +3,6 @@ import re
 
 from ezpykit.allinone import *
 from ezpykitext.webclient import *
-from ezpykitext.sites import bilibili
 
 BILIBILI_HOME_PAGE_URL = 'https://www.bilibili.com'
 BILIBILI_HEADERS = header.EzHttpHeaders().ua(header.UserAgentExamples.GOOGLE_CHROME_WINDOWS)
@@ -97,7 +96,7 @@ class BilibiliWebAPI:
                 re.search(r'(?P<bvid>BV[\da-zA-Z]{10})', video_source),
                 re.search(r'(?P<epid>(ep|EP)\d+)', video_source),
                 re.search(r'(?P<ssid>(ss|SS)\d+)', video_source),
-            ).first_match().groups_dict('aid', 'bvid', 'epid', 'ssid')
+            ).first_match().pick_existing('aid', 'bvid', 'epid', 'ssid')
             c = TypeConverter(int)
             r = {k: c.convert(v) for k, v in r.items()}
         else:

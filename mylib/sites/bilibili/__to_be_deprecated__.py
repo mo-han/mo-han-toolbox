@@ -22,10 +22,10 @@ from mylib.easy import python_module_from_source_code, str_remove_suffix
 from mylib.ext import fstk
 from mylib.ext import http_headers
 from mylib.ext.ostk import ensure_sigint_signal
-from mylib.ext.text import regex_find, ellipt_middle
+from mylib.ext.text import regex_find, ellipt_end
 from mylib.ext.tricks import str2range, seq_call_return
 from mylib.ext.tui import LinePrinter
-from ezpykitext.sites.bilibili import webapi
+from websites.bilibili import webapi
 
 API_HEADERS_HANDLER: ezpykitext.webclient.header.EzHttpHeaders = ezpykitext.webclient.header.EzHttpHeaders().user_agent(
     ezpykitext.webclient.header.UserAgentExamples.GOOGLE_CHROME_WINDOWS)
@@ -81,24 +81,23 @@ def code_modify_you_get_bilibili(x: str):
     # 下面这段修改了下载文件名的格式，原版是视频标题+选集子标题
     # 在视频标题+选集子标题的基础上，插入了一些有用的元信息：[av号][BV号][上传者用户名]
     x = x.replace('''
-            # set video title
-            self.title = initial_state['videoData']['title']
-            # refine title for a specific part, if it is a multi-part video
-            p = int(match1(self.url, r'[\?&]p=(\d+)') or match1(self.url, r'/index_(\d+)') or
-                    '1')  # use URL to decide p-number, not initial_state['p']
-            if pn > 1:
-                part = initial_state['videoData']['pages'][p - 1]['part']
-                self.title = '%s (P%s. %s)' % (self.title, p, part)
+                # set video title
+                self.title = initial_state['videoData']['title']
+                # refine title for a specific part, if it is a multi-part video
+                p = int(match1(self.url, r'[\?&]p=(\d+)') or match1(self.url, r'/index_(\d+)') or
+                        '1')  # use URL to decide p-number, not initial_state['p']
+                if pn > 1:
+                    part = initial_state['videoData']['pages'][p - 1]['part']
+                    self.title = '%s (P%s. %s)' % (self.title, p, part)
 ''', '''
-            # set video title
-            self.title = initial_state['videoData']['title']
-            self.title += ' ' + self.get_vid_label() + self.get_author_label()
-            # refine title for a specific part, if it is a multi-part video
-            p = int(match1(self.url, r'[\?&]p=(\d+)') or match1(self.url, r'/index_(\d+)') or
-                    '1')  # use URL to decide p-number, not initial_state['p']
-            if pn > 1:
-                part = initial_state['videoData']['pages'][p - 1]['part']
-                self.title = '%s P%s. %s' % (self.title, p, part)
+                print('*'*32, 'NEW TITLE FORMAT', '*'*32)
+                self.title = initial_state['videoData']['title']
+                self.title += ' ' + self.get_vid_label() + self.get_author_label()
+                p = int(match1(self.url, r'[\?&]p=(\d+)') or match1(self.url, r'/index_(\d+)') or
+                        '1')  # use URL to decide p-number, not initial_state['p']
+                if pn > 1:
+                    part = initial_state['videoData']['pages'][p - 1]['part']
+                    self.title = '%s P%s. %s' % (self.title, p, part)
 ''')
     # 下面这段是个重点，修改的是原版中`you_get.extractors.bilibili.Bilibili.prepare_by_url`这个方法函数
     # 原版you-get对相当多的B站视频无法获取大会员的1080P+、1080P60等格式
@@ -160,7 +159,12 @@ def code_modify_you_get_extractor(x: str):
 
 
 def new_legitimize(text: str, os=...):
-    return ellipt_middle(fstk.sanitize(text, fstk.POTENTIAL_INVALID_CHARS_MAP), 200, encoding='utf8').lstrip('.')
+    m = re.match(r'(.+)( \[bilibili .+)', text)
+    if m:
+        title, suffix = m.groups()
+        title = ellipt_end(fstk.sanitize(title, fstk.POTENTIAL_INVALID_CHARS_MAP), 240, encoding='utf8')
+        text = title + suffix
+    return ellipt_end(fstk.sanitize(text, fstk.POTENTIAL_INVALID_CHARS_MAP), 240, encoding='utf8').lstrip('.')
 
 
 you_get.extractor = python_module_from_source_code('you_get.extractor', code_modify_you_get_extractor)
@@ -300,6 +304,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
             {'target': lambda: h.xpath('//title')[0].text},
         ), common_exception=IndexError)
         s = str_remove_suffix(s.strip(), '_哔哩哔哩_bilibili')
+        s = re.sub(r'_哔哩哔哩bilibili_[^_]+$', '', s)
         s += ' ' + self.get_vid_label() + self.get_author_label()
         return s
 
@@ -310,12 +315,23 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         fp = you_get_filename(fp)
         print(fp)
         with open(fp, 'w', encoding='utf-8-sig') as f:
+            separator = '\n\n---\n\n'
             # f.write('#encoding=utf8\n\n')
             f.write(self.url)
-            f.write('\n---\n')
+            f.write(separator)
             f.write(self.get_desc())
-            f.write('\n---\n')
+            f.write(separator)
             f.write(str(self.get_tags()))
+            f.write(separator)
+            f.write(self.get_reply())
+
+    def get_reply(self):
+        try:
+            from websites.bilibili.webapi import BilibiliWebAPI
+            return BilibiliWebAPI().get_replies(self.url, text=True)
+        except Exception as e:
+            print(f'! {e}: {e!r}')
+            return ''
 
     def get_desc(self):
         self.ensure_html_updated()
