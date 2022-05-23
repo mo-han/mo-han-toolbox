@@ -1,20 +1,18 @@
 # coding=utf8
 
 import cmd
-import inspect
 import signal
 import sys
-from ast import literal_eval
-from pprint import pformat
 from socket import timeout as SocketTimeout
 from socketserver import ThreadingTCPServer, StreamRequestHandler
-from typing import Callable
+from urllib.parse import urlparse
 
 import vxi11  # pip install -U python-vxi11
 from serial import Serial, SerialException
 
 S_VXI11 = 'vxi11'
-STR_SERIAL = 'serial'
+S_SERIAL = 'serial'
+S_YOKOGAWA_ETHERNET_LEGACY = 'yokogawa ethernet legacy'
 # PROMPT_LEFT_ARROW = '←'
 PROMPT_LEFT_ARROW = '<-'
 
@@ -28,6 +26,13 @@ class EmptyTimeout(Exception):
 def win32_ctrl_c():
     if sys.platform == 'win32':
         signal.signal(signal.SIGINT, signal.SIG_DFL)  # %ERRORLEVEL% = '-1073741510'
+
+
+def tolerant_urlparse(url: str, default_prefix='scheme://'):
+    if '://' not in url:
+        url = default_prefix + url
+    r = urlparse(url)
+    return r
 
 
 def str2eval(x: str):
@@ -59,18 +64,75 @@ def pp_return(x):
 
 class LinkWrapper:
     def __init__(self, link):
-        self.__dict__['_link'] = self._link = link
+        # self.__dict__['_link'] = self._link = link
+        self._link = link
 
-    @property
-    def members(self):
-        return {k: v.__doc__ if isinstance(v, Callable) else v for k, v in inspect.getmembers(self._link) if
-                k[:2] + k[-2:] != '____' and not isinstance(v, Callable) or k in ('__class__',)}
+    # @property
+    # def members(self):
+    #     return {k: v.__doc__ if isinstance(v, Callable) else v for k, v in inspect.getmembers(self._link) if
+    #             k[:2] + k[-2:] != '____' and not isinstance(v, Callable) or k in ('__class__',)}
+    #
+    # def __setattr__(self, key, value):
+    #     setattr(self._link, key, value)
+    #
+    # def __getattr__(self, key):
+    #     return getattr(self._link, key)
 
-    def __setattr__(self, key, value):
-        setattr(self._link, key, value)
 
-    def __getattr__(self, key):
-        return getattr(self._link, key)
+class YokogawaEthernetLegacyWrapper(LinkWrapper):
+    def __init__(self, address):
+        from socket import socket, AF_INET, SOCK_STREAM
+        s = socket(AF_INET, SOCK_STREAM)
+        super().__init__(s)
+        u = tolerant_urlparse(address, 'tcp://')
+        self.hostname = u.hostname
+        self.port = u.port or 10001
+        self.username = u.username or 'anonymous'
+        self.password = u.password or ''
+        s.connect((self.hostname, self.port))
+        self.wait('username:')
+        self.write(self.username)
+        self.wait('')
+        self.wait('password:')
+        self.write(self.password)
+        self.wait('')
+        msg = self.read()
+        if not msg.endswith('is ready.'):
+            raise ConnectionRefusedError(msg)
+
+    def wait(self, s: str):
+        while True:
+            if self.read() == s:
+                break
+
+    def read(self):
+        head = self._link.recv(4)
+        len(head) == 4 and head[:2] == b'\x80\x00' and ...
+        n = int.from_bytes(head[2:], 'big')
+        body = self._link.recv(n).decode() if n else ''
+        return body.strip('\n')
+
+    def write(self, s: str):
+        body = s.encode()
+        head = b'\x80\x00' + len(body).to_bytes(2, 'big')
+        b = head + body
+        self._link.send(b)
+
+    def ask(self, s: str):
+        self.write(s)
+        return self.read()
+
+    def timeout(self, timeout=None):
+        if timeout is not None:
+            self._link.settimeout(timeout)
+        return self._link.gettimeout()
+
+    def __str__(self):
+        return f'YOKOGAWA Ethernet (Legacy): ' \
+               f'URL=tcp://{self.hostname}:{self.port}, ' \
+               f'username={self.username}, ' \
+               f'password={self.password}, ' \
+               f'socket={self._link}'
 
 
 class SerialLinkWrapper(LinkWrapper):
@@ -92,6 +154,11 @@ class SerialLinkWrapper(LinkWrapper):
         self.write(s)
         return self.read()
 
+    def timeout(self, timeout=None):
+        if timeout is not None:
+            self._link.timeout = timeout
+        return self._link.timeout
+
     def __str__(self):
         return f'{self._link.port}: {self._link}'
 
@@ -103,19 +170,23 @@ class VXI11LinkWrapper(LinkWrapper):
         self.read = inst.read
         self.write = inst.write
 
+    def timeout(self, timeout=None):
+        if timeout is not None:
+            self._link.timeout = timeout
+        return self._link.timeout
+
     def __str__(self):
         return f'{self._link.host}: {self._link}'
 
 
 class SCPIShell(cmd.Cmd):
-    intro = f'communicate with a remote instrument via SCPI commands\n'
+    # intro = f'communicate with a remote instrument via SCPI commands\n'
     default_conn_type = 'VXI-11'
-    default_timeout = 5
+    default_timeout = None
 
     def __init__(self, address: str = None, conn_type: str = None, timeout: float = None):
         self.address = address
         self.conn_type = conn_type or self.default_conn_type
-        self.timeout = timeout or self.default_timeout
         self.link = None
         self.ask = None
         self.read = None
@@ -162,7 +233,7 @@ class SCPIShell(cmd.Cmd):
         self.do_help('')
         if not self.connected:
             address = input('Connect to: ')
-            conn_type_list = ('VXI-11', 'Serial')
+            conn_type_list = ('VXI-11', 'Serial', 'Yokogawa Ethernet Legacy')
             conn_type_default = conn_type_list[0]
             conn_type_choose_str_list = []
             for i in range(len(conn_type_list)):
@@ -175,10 +246,8 @@ class SCPIShell(cmd.Cmd):
                 conn_type = conn_type_default
             else:
                 conn_type = conn_type_list[int(choose) - 1]
-            timeout = input('Connection timeout in seconds (default=10): ').strip()
+            timeout = input('Connection timeout in seconds (default=None): ').strip()
             if timeout == '':
-                timeout = 10
-            elif timeout in ('none', 'None'):
                 timeout = None
             else:
                 timeout = float(timeout)
@@ -195,43 +264,52 @@ class SCPIShell(cmd.Cmd):
         return p_return(self.send_scpi(command))
 
     def send_scpi(self, command):
-        if '?' in command:
+        if command.endswith('?'):
             return self.ask(command)
         else:
             self.write(command)
 
-    def link_config(self, key=None, value=None):
-        if key is None:
-            return self.link
-        if value is None:
-            return getattr(self.link, key)
-        else:
-            setattr(self.link, key, value)
+    # def link_config(self, key=None, value=None):
+    #     if key is None:
+    #         return self.link
+    #     if value is None:
+    #         return getattr(self.link, key)
+    #     else:
+    #         setattr(self.link, key, value)
+    #
+    # def do_link_config(self, line):
+    #     """get or set attribution of underlying link:
+    #     attr <key_name>
+    #     attr <key_name> <new_value>
+    #     """
+    #     args = line.split(maxsplit=1)
+    #     if not args:
+    #         return f"{self.link_config()}\n{self.link_config('members')}"
+    #     elif len(args) == 1:
+    #         key = args[0]
+    #         value = self.link_config(key)
+    #         if key == 'members':
+    #             return pformat(value)
+    #         else:
+    #             return value
+    #     else:
+    #         self.link_config(args[0], literal_eval(args[-1]))
 
-    def do_link_config(self, line):
-        """get or set attribution of underlying link:
-        attr <key_name>
-        attr <key_name> <new_value>
-        """
-        args = line.split(maxsplit=1)
-        if not args:
-            return f"{self.link_config()}\n{self.link_config('members')}"
-        elif len(args) == 1:
-            key = args[0]
-            value = self.link_config(key)
-            if key == 'members':
-                return pformat(value)
-            else:
-                return value
-        else:
-            self.link_config(args[0], literal_eval(args[-1]))
+    def do_timeout(self, line):
+        from ast import literal_eval
+        try:
+            timeout = literal_eval(line)
+        except (SyntaxError, ValueError):
+            timeout = None
+        try:
+            return p_return(self.link.timeout(timeout))
+        except Exception as e:
+            print(f'! {e} <{e!r}>')
 
     def connect(self, address=None, conn_type=None, timeout=None):
         self.address = address = address or self.address
         self.conn_type = conn_type = conn_type or self.conn_type
-        timeout = timeout or self.timeout
-        timeout = float(timeout)
-        self.timeout = timeout
+        timeout = timeout or self.default_timeout
         conn_type_lower = conn_type.lower()
         if conn_type_lower.startswith('vxi'):
             inst = vxi11.Instrument(address)
@@ -241,7 +319,7 @@ class SCPIShell(cmd.Cmd):
             self.write = self.link.write
             self.read = self.link.read
             self.connected = True
-        elif conn_type_lower.startswith(STR_SERIAL):
+        elif conn_type_lower.startswith(S_SERIAL):
             if address.total(':'):
                 port, setting = address.split(':', maxsplit=1)
                 if setting.total(','):
@@ -259,6 +337,14 @@ class SCPIShell(cmd.Cmd):
             self.write = self.link.write
             self.read = self.link.read
             self.connected = True
+        elif conn_type_lower.startswith(S_YOKOGAWA_ETHERNET_LEGACY):
+            self.link = YokogawaEthernetLegacyWrapper(address)
+            self.ask = self.link.ask
+            self.write = self.link.ask
+            self.read = self.link.read
+            self.connected = True
+            if timeout:
+                self.link._link.settimeout(timeout)
         else:
             raise NotImplementedError(conn_type)
         return str(self.link)
