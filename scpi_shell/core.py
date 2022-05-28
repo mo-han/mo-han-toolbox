@@ -313,7 +313,8 @@ class SCPIShell(cmd.Cmd):
         conn_type_lower = conn_type.lower()
         if conn_type_lower.startswith('vxi'):
             inst = vxi11.Instrument(address)
-            inst.timeout = timeout
+            if timeout is not None:
+                inst.timeout = timeout
             self.link = VXI11LinkWrapper(inst)
             self.ask = self.link.ask
             self.write = self.link.write
