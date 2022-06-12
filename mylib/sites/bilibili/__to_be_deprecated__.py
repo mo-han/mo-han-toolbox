@@ -309,6 +309,8 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     #     return s
 
     def get_formatted_title(self, part_num_title_t=()):
+        if not hasattr(self, 'original_title'):
+            self.prepare()
         r = ellipt_end(self.original_title, 120, encoding='utf8') + ' ' + self.get_vid_label() + self.get_author_label()
         if part_num_title_t:
             part_num, part_title = part_num_title_t
