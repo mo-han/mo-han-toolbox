@@ -91,13 +91,13 @@ def code_modify_you_get_bilibili(x: str):
                     self.title = '%s (P%s. %s)' % (self.title, p, part)
 ''', '''
                 print('*'*32, 'NEW TITLE FORMAT', '*'*32)
-                self.title = initial_state['videoData']['title']
-                self.title += ' ' + self.get_vid_label() + self.get_author_label()
+                self.original_title = self.title = initial_state['videoData']['title']
+                self.title = self.get_formatted_title()
                 p = int(match1(self.url, r'[\?&]p=(\d+)') or match1(self.url, r'/index_(\d+)') or
                         '1')  # use URL to decide p-number, not initial_state['p']
                 if pn > 1:
                     part = initial_state['videoData']['pages'][p - 1]['part']
-                    self.title = '%s P%s. %s' % (self.title, p, part)
+                    self.title = self.get_formatted_title((p, part))
 ''')
     # 下面这段是个重点，修改的是原版中`you_get.extractors.bilibili.Bilibili.prepare_by_url`这个方法函数
     # 原版you-get对相当多的B站视频无法获取大会员的1080P+、1080P60等格式
@@ -162,9 +162,9 @@ def new_legitimize(text: str, os=...):
     m = re.match(r'(.+)( \[bilibili .+)', text)
     if m:
         title, suffix = m.groups()
-        title = ellipt_end(fstk.sanitize(title, fstk.POTENTIAL_INVALID_CHARS_MAP), 240, encoding='utf8')
+        title = ellipt_end(fstk.sanitize(title, fstk.POTENTIAL_INVALID_CHARS_MAP), 230, encoding='utf8')
         text = title + suffix
-    return ellipt_end(fstk.sanitize(text, fstk.POTENTIAL_INVALID_CHARS_MAP), 240, encoding='utf8').lstrip('.')
+    return ellipt_end(fstk.sanitize(text, fstk.POTENTIAL_INVALID_CHARS_MAP), 230, encoding='utf8').lstrip('.')
 
 
 you_get.extractor = python_module_from_source_code('you_get.extractor', code_modify_you_get_extractor)
@@ -295,28 +295,39 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         headers = super().bilibili_headers(referer=referer, cookie=cookie)
         return headers
 
-    def get_title(self):
-        self.ensure_html_updated()
-        _, h = self.html
-        s = seq_call_return((
-            {'target': lambda: h.xpath('//*[@class="video-title"]')[0].attrib['title']},
-            {'target': lambda: h.xpath('//meta[@property="og:title"]')[0].attrib['content']},
-            {'target': lambda: h.xpath('//title')[0].text},
-        ), common_exception=IndexError)
-        s = str_remove_suffix(s.strip(), '_哔哩哔哩_bilibili')
-        s = re.sub(r'_哔哩哔哩bilibili_[^_]+$', '', s)
-        s += ' ' + self.get_vid_label() + self.get_author_label()
-        return s
+    # def get_title(self):
+    #     self.ensure_html_updated()
+    #     _, h = self.html
+    #     s = seq_call_return((
+    #         {'target': lambda: h.xpath('//*[@class="video-title"]')[0].attrib['title']},
+    #         {'target': lambda: h.xpath('//meta[@property="og:title"]')[0].attrib['content']},
+    #         {'target': lambda: h.xpath('//title')[0].text},
+    #     ), common_exception=IndexError)
+    #     s = str_remove_suffix(s.strip(), '_哔哩哔哩_bilibili')
+    #     s = re.sub(r'_哔哩哔哩bilibili_[^_]+$', '', s)
+    #     s += ' ' + self.get_vid_label() + self.get_author_label()
+    #     return s
+
+    def get_formatted_title(self, part_num_title_t=()):
+        if not hasattr(self, 'original_title'):
+            self.prepare()
+        r = ellipt_end(self.original_title, 120, encoding='utf8') + ' ' + self.get_vid_label() + self.get_author_label()
+        if part_num_title_t:
+            part_num, part_title = part_num_title_t
+            r += f' P.{part_num} {part_title}'
+        return r
 
     def write_info_file(self, fp: str = None):
         if self.do_not_write_any_file:
             return
-        fp = fp or self.get_title() + '.info'
+        fp = fp or self.get_formatted_title() + '.info'
         fp = you_get_filename(fp)
         print(fp)
         with open(fp, 'w', encoding='utf-8-sig') as f:
             separator = '\n\n---\n\n'
             # f.write('#encoding=utf8\n\n')
+            f.write(self.get_formatted_title())
+            f.write(separator)
             f.write(self.url)
             f.write(separator)
             f.write(self.get_desc())
