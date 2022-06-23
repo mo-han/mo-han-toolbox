@@ -57,19 +57,10 @@ class Contractor(LoggerMixin):
     def do_exhaust(self, what, *args, **kwargs):
         e = Failure(self.do_exhaust, what, *args, **kwargs)
         rl = [*self._iter_do_self(e, what, *args, **kwargs), *self._iter_do_children(e, what, *args, **kwargs)]
-        if rl:
-            return rl
-        else:
-            raise e
+        return rl, e
 
-    def get(self, config: dict, contractor_method, *args, **kwargs):
+    def get(self, default, what, *args, **kwargs):
         try:
-            return contractor_method(*args, **kwargs)
-        except Exception as e:
-            k = type(e)
-            if k in config:
-                v = config[k]
-                self.__logger__.debug(f'default for {k}: {v}')
-                return v
-            else:
-                raise
+            return self.do(what, *args, **kwargs)
+        except (Failure, Abortion):
+            return default
