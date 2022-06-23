@@ -118,8 +118,10 @@ class YokogawaEthernetLegacyWrapper(LinkWrapper):
         t = Stopwatch().start()
         while size:
             n = recv_into(buffer[-size:])
+            if not n:
+                raise ConnectionError('tcp socket remote peer disconnect')
             size -= n
-        __logger__.info(('exact size', len(buffer), f'{t.stop():.6f}s'))
+        __logger__.debug(('exact size', len(buffer), f'{t.stop():.6f}s'))
         return buffer
 
     def _read_0x80(self, head):
