@@ -54,11 +54,6 @@ class Contractor(LoggerMixin):
             return r
         raise e
 
-    def do_exhaust(self, what, *args, **kwargs):
-        e = Failure(self.do_exhaust, what, *args, **kwargs)
-        rl = [*self._iter_do_self(e, what, *args, **kwargs), *self._iter_do_children(e, what, *args, **kwargs)]
-        return rl, e
-
     def get(self, default, what, *args, **kwargs):
         try:
             return self.do(what, *args, **kwargs)
