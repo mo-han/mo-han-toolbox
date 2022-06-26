@@ -27,6 +27,10 @@ def is_path(x):
         return True
 
 
+def get_stem(p):
+    return split_ext(get_basename(p))[0]
+
+
 def split_path_dir_stem_ext(fp, dir_ext=True) -> T.Tuple[str, str, str]:
     parent, base = split_path(fp)
     if not dir_ext and os.path.isdir(fp):

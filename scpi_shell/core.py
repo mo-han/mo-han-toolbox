@@ -1,6 +1,6 @@
 # coding=utf8
-
 import cmd
+import logging
 import signal
 import sys
 from socket import timeout as SocketTimeout
@@ -10,6 +10,8 @@ from urllib.parse import urlparse
 import vxi11  # pip install -U python-vxi11
 from serial import Serial, SerialException
 
+from ezpykit.metautil import Stopwatch
+
 S_VXI11 = 'vxi11'
 S_SERIAL = 'serial'
 S_YOKOGAWA_ETHERNET_LEGACY = 'yokogawa ethernet legacy'
@@ -17,6 +19,8 @@ S_YOKOGAWA_ETHERNET_LEGACY = 'yokogawa ethernet legacy'
 PROMPT_LEFT_ARROW = '<-'
 
 Vxi11Exception = vxi11.vxi11.Vxi11Exception
+
+__logger__ = logging.getLogger(__name__)
 
 
 class EmptyTimeout(Exception):
@@ -80,6 +84,9 @@ class LinkWrapper:
 
 
 class YokogawaEthernetLegacyWrapper(LinkWrapper):
+    HEAD_MAX_SIZE = b'\x00\x04\x00\x00'
+    MAX_SIZE = int.from_bytes(HEAD_MAX_SIZE, 'big')
+
     def __init__(self, address):
         from socket import socket, AF_INET, SOCK_STREAM
         s = socket(AF_INET, SOCK_STREAM)
@@ -105,18 +112,73 @@ class YokogawaEthernetLegacyWrapper(LinkWrapper):
             if self.read() == s:
                 break
 
+    def _read_exact_size(self, size: int):
+        recv_into = self._link.recv_into
+        buffer = memoryview(bytearray(size))
+        t = Stopwatch().start()
+        while size:
+            n = recv_into(buffer[-size:])
+            if not n:
+                raise ConnectionError('tcp socket remote peer disconnect')
+            size -= n
+        __logger__.debug(('exact size', len(buffer), f'{t.stop():.6f}s'))
+        return buffer
+
+    def _read_0x80(self, head):
+        n = int.from_bytes(head[1:], 'big')
+        body = self._read_exact_size(n)
+        return body
+
+    def read_binary(self):
+        head = self._read_exact_size(4)
+        if head[:1] == b'\x80':
+            return self._read_0x80(head)
+        body = bytearray()
+        while head == self.HEAD_MAX_SIZE:
+            body.extend(self._read_exact_size(self.MAX_SIZE))
+            head = self._read_exact_size(4)
+        if head[:1] == b'\x80':
+            body.extend(self._read_0x80(head))
+            return memoryview(body)
+        else:
+            raise ValueError('unknown head', bytes(head))
+
+    def read_block_data(self):
+        bv = self.read_binary()
+        if bv[-1:] != b'\n':
+            raise ValueError('no <RMT> at end', bytes(bv[-16:]))
+        bv = bv[:-1]
+        if bv[:1] == b'#':
+            digits_n = int(bv[1:2])
+            digits_stop_i = 2 + digits_n
+            n = int(bv[2:digits_stop_i])
+            r = bv[digits_stop_i:]
+            if len(r) != n:
+                raise ValueError('data length not match', str(bv[:digits_stop_i], 'ascii'), len(r))
+        elif bv[:2] == b'"#':  # left quote
+            digits_n = int(bv[2:3])
+            digits_stop_i = 3 + digits_n + 1  # right quote
+            n = int(bv[3:digits_stop_i])
+            r = bv[digits_stop_i:]
+            if len(r) != n:
+                raise ValueError('data length not match', str(bv[:digits_stop_i], 'ascii'), len(r))
+        else:
+            raise ValueError('invalid format for block data, missing #N head')
+        return r
+
     def read(self):
-        head = self._link.recv(4)
-        len(head) == 4 and head[:2] == b'\x80\x00' and ...
-        n = int.from_bytes(head[2:], 'big')
-        body = self._link.recv(n).decode() if n else ''
-        return body.strip('\n')
+        b = self.read_binary()
+        try:
+            s = str(b, 'ascii').strip()
+        except UnicodeDecodeError as e:
+            i = e.start
+            s = f'UnicodeDecodeError at {i}: {bytes(b[i - 16:i])} | {bytes(b[i:i + 1])} | {bytes(b[i + 1:i + 17])}'
+        return s
 
     def write(self, s: str):
-        body = s.encode()
-        head = b'\x80\x00' + len(body).to_bytes(2, 'big')
-        b = head + body
-        self._link.send(b)
+        b = s.encode()
+        head = b'\x80\x00' + len(b).to_bytes(2, 'big')
+        self._link.send(head + b)
 
     def ask(self, s: str):
         self.write(s)
@@ -319,7 +381,6 @@ class SCPIShell(cmd.Cmd):
             self.ask = self.link.ask
             self.write = self.link.write
             self.read = self.link.read
-            self.connected = True
         elif conn_type_lower.startswith(S_SERIAL):
             if address.total(':'):
                 port, setting = address.split(':', maxsplit=1)
@@ -337,17 +398,16 @@ class SCPIShell(cmd.Cmd):
             self.ask = self.link.ask
             self.write = self.link.write
             self.read = self.link.read
-            self.connected = True
         elif conn_type_lower.startswith(S_YOKOGAWA_ETHERNET_LEGACY):
             self.link = YokogawaEthernetLegacyWrapper(address)
             self.ask = self.link.ask
             self.write = self.link.ask
             self.read = self.link.read
-            self.connected = True
             if timeout:
                 self.link._link.settimeout(timeout)
         else:
             raise NotImplementedError(conn_type)
+        self.connected = True
         return str(self.link)
 
     def do_connect(self, line=None):

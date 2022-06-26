@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from ezpykit.metautil import typing
 from ezpykit.metautil.objutil import *
 from ezpykit.metautil.singleton import *
-from ezpykit.metautil.timer import ctx_ensure_min_time_duration
+from ezpykit.metautil.timer import *
 
 T = typing
 
