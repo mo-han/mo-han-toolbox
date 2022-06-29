@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 import re
 from argparse import *
-from ezpykit.stdlib import logging
+
 from ezpykit.metautil import AttrName, ObjectWrapper, T
 from ezpykit.metautil.singleton import SingletonMetaClass
+from ezpykit.stdlib import logging
 
 __logger__ = logging.get_logger(__name__)
 
@@ -33,7 +34,7 @@ class ArgumentParserWrapper:
         self.target_call_config = {}
         self.namespace: T.Optional[Namespace] = None
         self.extra: T.List[str] = []
-        self.last_target = None
+        self.latest_target = None
         self.option_names = ['-h', '--help']
         self.rpl_dot = self.rpl_()
 
@@ -79,9 +80,9 @@ class ArgumentParserWrapper:
     def run_target(self):
         """call target"""
         try:
-            self.last_target = target = self.namespace.__target__
+            self.latest_target = target = self.namespace.__target__
         except AttributeError:
-            self.last_target = None
+            self.latest_target = None
             return
         if target in self.target_call_config:
             t_args, t_kwargs = self.target_call_config[target]
@@ -99,7 +100,7 @@ class ArgumentParserWrapper:
         else:
             return getattr(self.namespace, x)
 
-    def super_command(self):
+    def decofac_root_parser(self):
         """factory decorator for the whole parser"""
 
         def deco(target):
@@ -110,7 +111,7 @@ class ArgumentParserWrapper:
 
         return deco
 
-    def sub_command(self, namer=None, aliases=(), **kwargs):
+    def decofac_sub_command_parser(self, namer=None, aliases=(), **kwargs):
         """factory decorator to add sub command, put this decorator on top"""
         aliases = list(aliases)
         if self.subparsers is None:
@@ -172,7 +173,11 @@ class ArgumentParserWrapper:
 
     def _deco_factory_add_sth(self, sth_name, *args, **kwargs):
         def deco(target):
-            self.arguments_config.setdefault(target, []).insert(0, (f'add_{sth_name}', args, kwargs))
+            method_name = f'add_{sth_name}'
+            if isinstance(target, ArgumentParser):
+                getattr(target, method_name)(*args, **kwargs)
+            else:
+                self.arguments_config.setdefault(target, []).insert(0, (method_name, args, kwargs))
             return target
 
         return deco
@@ -196,8 +201,8 @@ class ArgumentParserWrapper:
     true = flag
     false = flag_reverse
     grp = argument_group
-    root = super_command
-    sub = sub_command
+    root = decofac_root_parser
+    sub = decofac_sub_command_parser
     map = map_args_to_target_params
     run = run_target
     obj = ObjectWrapper

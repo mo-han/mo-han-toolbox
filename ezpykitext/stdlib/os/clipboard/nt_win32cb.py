@@ -4,7 +4,7 @@ import functools
 import random
 import time
 
-import win32clipboard
+from ezpykitext.extlib.win32clipboard import *
 
 
 @contextlib.contextmanager
@@ -12,7 +12,7 @@ def ctx_open_win32clipboard():
     is_opened = False
     while not is_opened:
         try:
-            win32clipboard.OpenClipboard(0)
+            OpenClipboard(0)
         except Exception as e:
             n = e.winerror
             if n == 5:
@@ -25,7 +25,7 @@ def ctx_open_win32clipboard():
             yield
             is_opened = True
         finally:
-            win32clipboard.CloseClipboard()
+            CloseClipboard()
 
 
 def deco_ctx_open_win32clipboard(target):

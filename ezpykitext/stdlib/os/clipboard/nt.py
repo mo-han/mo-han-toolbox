@@ -6,10 +6,7 @@ from ezpykit.allinone import *
 from ezpykit.builtin import *
 from ezpykitext.stdlib.os.clipboard.common import ClipboardABC, ClipboardError
 from ezpykitext.stdlib.os.clipboard.nt_win32cb_html import HTMLClipboardMixin
-
-with ctx_ensure_module('win32clipboard', 'pywin32'):
-    import pywintypes
-    import win32clipboard
+from ezpykitext.extlib.win32clipboard import *
 
 
 @deco_singleton
@@ -23,8 +20,8 @@ class Clipboard(ClipboardABC, HTMLClipboardMixin):
     def __init__(self):
         self.delay = 0
         try:
-            win32clipboard.CloseClipboard()
-        except pywintypes.error:
+            CloseClipboard()
+        except error:
             pass
         finally:
             self.__opened = False
@@ -52,7 +49,7 @@ class Clipboard(ClipboardABC, HTMLClipboardMixin):
             try:
                 win32clipboard.OpenClipboard()
                 self.__opened = True
-            except pywintypes.error:
+            except error:
                 raise self.OpenError
 
     def close(self):

@@ -1,10 +1,38 @@
 #!/usr/bin/env python3
+import sys
 
 from ezpykit.allinone import *
+from ezpykitext.extlib import termcolor, yaml
 from ezpykitext.stdlib import os
-from ezpykitext.extlib import termcolor
+
+___ref = termcolor
 
 __logger__ = logging.getLogger(__name__)
+
+
+def setup_argv(filename):
+    if len(sys.argv) > 1:
+        __logger__.debug('sys.argv already set')
+        return
+    if not os.path_isfile(filename):
+        return
+    ext = os.split_ext(filename)[1].lower()
+    if ext in ('.yaml', '.yml'):
+        from ezpykitext.extlib import yaml
+        d = yaml.YAMLFile(filename).load()
+        arguments = ezdict.find(d, ('arguments', 'args', 'argv[1:]', 'argv'))
+        arguments_type = type(arguments)
+        if not arguments:
+            return
+        if isinstance(arguments, str):
+            import shlex
+            arguments = shlex.split(arguments)
+        if isinstance(arguments, list):
+            sys.argv[1:] = arguments
+            __logger__.info((filename, sys.argv))
+            return
+        else:
+            __logger__.warning('unexpected type of "arguments" from yaml', arguments_type)
 
 
 def iter_path(source=None, clipboard_as_default=True,

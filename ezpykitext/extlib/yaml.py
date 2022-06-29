@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from ezpykit.allinone import *
+from ezpykit.allinone import ctx_ensure_module, os
 
 with ctx_ensure_module('yaml', 'PyYAML'):
     from yaml import *

@@ -105,13 +105,19 @@ class ezdict(dict):
         return r
 
     def pick_to_list(self, *keys, **keys_with_default):
-        r = []
+        rl = []
         for k in keys:
             if k in self:
-                r.append(self[k])
+                rl.append(self[k])
         for k, v in keys_with_default.items():
-            r.append(self.get(k, v))
-        return r
+            rl.append(self.get(k, v))
+        return rl
+
+    def find(self, keys, default=None):
+        for k in keys:
+            if k in self:
+                return self[k]
+        return default
 
     def remove(self, *keys):
         for k in keys:

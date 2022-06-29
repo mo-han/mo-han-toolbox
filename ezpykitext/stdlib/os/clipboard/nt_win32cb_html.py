@@ -2,9 +2,8 @@
 # modified from file `HTMLClipboard.py`
 import re
 
-import win32clipboard
-
-from ezpykit.allinone import deco_ctx_with_self
+from ezpykit.metautil import deco_ctx_with_self
+from ezpykitext.extlib.win32clipboard import *
 
 
 class HTMLClipboardMixin:
@@ -53,14 +52,14 @@ class HTMLClipboardMixin:
 
     def _get_cf_html(self):
         if self.CF_HTML is None:
-            self.CF_HTML = win32clipboard.RegisterClipboardFormat('HTML Format')
+            self.CF_HTML = RegisterClipboardFormat('HTML Format')
         return self.CF_HTML
 
     @deco_ctx_with_self
     def _get_available_formats(self):
         formats = []
         while True:
-            cf = win32clipboard.EnumClipboardFormats()
+            cf = EnumClipboardFormats()
             if cf == 0:
                 break
             formats.append(cf)
@@ -71,7 +70,7 @@ class HTMLClipboardMixin:
 
     @deco_ctx_with_self
     def _read_html(self):
-        src = win32clipboard.GetClipboardData(self._get_cf_html())
+        src = GetClipboardData(self._get_cf_html())
         src = src.decode('u8')
         matches = self.MARKER_BLOCK_EX_RE.match(src)
         if matches:
@@ -111,7 +110,7 @@ class HTMLClipboardMixin:
 
     @deco_ctx_with_self
     def _write_html(self, html, fragment_start, fragment_end, selection_start, selection_end, source_url=__file__):
-        win32clipboard.EmptyClipboard()
+        EmptyClipboard()
         prefix_dummy = self.MARKER_BLOCK_OUTPUT % (0, 0, 0, 0, 0, 0, source_url)
         prefix_len = len(prefix_dummy)
         prefix = self.MARKER_BLOCK_OUTPUT % (prefix_len, len(html) + prefix_len,
@@ -120,4 +119,4 @@ class HTMLClipboardMixin:
                                              source_url)
         src = (prefix + html)
         src = src.encode('u8')
-        win32clipboard.SetClipboardData(self._get_cf_html(), src)
+        SetClipboardData(self._get_cf_html(), src)
