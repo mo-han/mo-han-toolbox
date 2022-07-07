@@ -24,3 +24,5 @@ python36.dll
 *.egg-info
 scpi_shell/extra_old.py
 scpi_shell/more-items.txt
+dotnetkit/**/*.cache
+dotnetkit/**/TemporaryGeneratedFile_*
