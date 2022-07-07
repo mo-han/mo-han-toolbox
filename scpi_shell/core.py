@@ -157,9 +157,9 @@ class YokogawaEthernetLegacyWrapper(LinkWrapper):
                 raise ValueError('data length not match', str(bv[:digits_stop_i], 'ascii'), len(r))
         elif bv[:2] == b'"#':  # left quote
             digits_n = int(bv[2:3])
-            digits_stop_i = 3 + digits_n + 1  # right quote
+            digits_stop_i = 3 + digits_n
             n = int(bv[3:digits_stop_i])
-            r = bv[digits_stop_i:]
+            r = bv[digits_stop_i + 1:]  # skip right quote
             if len(r) != n:
                 raise ValueError('data length not match', str(bv[:digits_stop_i], 'ascii'), len(r))
         else:
