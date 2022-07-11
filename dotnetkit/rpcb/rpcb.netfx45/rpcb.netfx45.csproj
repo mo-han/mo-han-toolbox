@@ -32,6 +32,9 @@
         <WarningLevel>4</WarningLevel>
     </PropertyGroup>
     <ItemGroup>
+        <Reference Include="NNanomsg, Version=0.5.2.0, Culture=neutral, processorArchitecture=MSIL">
+          <HintPath>..\packages\NNanomsg.0.5.2\lib\net40\NNanomsg.dll</HintPath>
+        </Reference>
         <Reference Include="System" />
         <Reference Include="System.Core" />
         <Reference Include="System.Data" />
@@ -39,6 +42,15 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="Properties\AssemblyInfo.cs" />
+    </ItemGroup>
+    <ItemGroup>
+      <Content Include="x64\libnanomsg.so" />
+      <Content Include="x64\nanomsg.dll" />
+      <Content Include="x86\libnanomsg.so" />
+      <Content Include="x86\nanomsg.dll" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Include="packages.config" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
