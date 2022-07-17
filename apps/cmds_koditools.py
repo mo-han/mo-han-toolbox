@@ -94,7 +94,7 @@ class KodiNfo:
 
     @staticmethod
     def basename_maker_clear_season_x_episode(basename, *args):
-        return re.sub(r'(\d+x\d+[\s]?)|([\s]?\d+x\d+)', '', basename)
+        return re.sub(r'(\d+x\d+\s?)|(\s?\d+x\d+)', '', basename)
 
     @classmethod
     def map_instances(cls, filepaths):
