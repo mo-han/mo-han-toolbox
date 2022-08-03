@@ -441,6 +441,14 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     }
     tags = []
 
+    lp = tui.LinePrinter()
+    lp.l()
+    if not os.path.isfile(filepath):
+        logger.info(f'# skip non-file\n  {filepath}')
+    if not file_is_video(filepath) and not file_is_audio(filepath):
+        logger.info(f'# skip non-video-audio\n  {filepath}')
+        return
+
     ft = filetype.guess(filepath)
     if ft and ft.mime == 'image/vnd.adobe.photoshop':
         ff.convert([filepath], filepath + '.png')
@@ -561,14 +569,6 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     cut_points = cut_points or []
     start = cut_points[0] if cut_points else 0
     end = cut_points[1] if len(cut_points) >= 2 else 0
-
-    lp = tui.LinePrinter()
-    lp.l()
-    if not os.path.isfile(filepath):
-        logger.info(f'# skip non-file\n  {filepath}')
-    if not file_is_video(filepath) and not file_is_audio(filepath):
-        logger.info(f'# skip non-video-audio\n  {filepath}')
-        return
 
     input_ft = EnclosedFilenameTags(filepath)
     origin_ft = EnclosedFilenameTags(filepath).tag('origin')
