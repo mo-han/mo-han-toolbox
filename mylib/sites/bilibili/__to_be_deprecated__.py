@@ -81,23 +81,12 @@ def code_modify_you_get_bilibili(x: str):
     # 下面这段修改了下载文件名的格式，原版是视频标题+选集子标题
     # 在视频标题+选集子标题的基础上，插入了一些有用的元信息：[av号][BV号][上传者用户名]
     x = x.replace('''
-                # set video title
-                self.title = initial_state['videoData']['title']
-                # refine title for a specific part, if it is a multi-part video
-                p = int(match1(self.url, r'[\?&]p=(\d+)') or match1(self.url, r'/index_(\d+)') or
-                        '1')  # use URL to decide p-number, not initial_state['p']
                 if pn > 1:
                     part = initial_state['videoData']['pages'][p - 1]['part']
-                    self.title = '%s (P%s. %s)' % (self.title, p, part)
 ''', '''
-                print('*'*32, 'NEW TITLE FORMAT', '*'*32)
-                self.original_title = self.title = initial_state['videoData']['title']
-                self.title = self.get_formatted_title()
-                p = int(match1(self.url, r'[\?&]p=(\d+)') or match1(self.url, r'/index_(\d+)') or
-                        '1')  # use URL to decide p-number, not initial_state['p']
                 if pn > 1:
                     part = initial_state['videoData']['pages'][p - 1]['part']
-                    self.title = self.get_formatted_title((p, part))
+                    self.part_title = self._make_the_title_in_my_flavor((p, part))
 ''')
     # 下面这段是个重点，修改的是原版中`you_get.extractors.bilibili.Bilibili.prepare_by_url`这个方法函数
     # 原版you-get对相当多的B站视频无法获取大会员的1080P+、1080P60等格式
@@ -259,22 +248,31 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         self.qn_max = qn_max
         self.qn_want = qn_want
         # noinspection PyTypeChecker
-        self.html: Tuple[str, web_client.HTMLElementTree] = (None, None)
+        self.cache_url_html: Tuple[str, web_client.HTMLElementTree] = (None, None)
+
+    def _make_the_title_in_my_flavor(self, part_num_title_t=()):
+        r = ellipt_end(self.the_title, 120, encoding='utf8') + ' ' + self.get_vid_label() + self.get_author_label()
+        if part_num_title_t:
+            part_num, part_title = part_num_title_t
+            r += f' P.{part_num} {part_title}'
+        return r
+
+    def prepare(self, **kwargs):
+        self.video_url = self.url
+        self.html_etree = web_client.get_html_element_tree(self.video_url, headers=self.bilibili_headers())
+        super().prepare(**kwargs)
+        self.origin_title = self.title
+        if hasattr(self, 'part_title'):
+            self.title_without_parts = self.title
+            self.title = self.part_title
+        else:
+            self.title_without_parts = self.title = self._make_the_title_in_my_flavor()
 
     # B站视频的音频流分不同档次，选择中档128kbps就足够了，也可以选择最高音质
     # 低档30216码率偏低，30232约128kbps，30280可能是320kbps也可能是128kbps，貌似跟4K有关，尚不确定
     def set_audio_qn(self, qn):
         for d in self.stream_types:
             d['audio_quality'] = qn
-
-    # 更新视频页面的HTML文档（超长字符串）
-    def ensure_html_updated(self):
-        url, doc = self.html
-        if url != self.url:
-            url = self.url
-            headers = self.bilibili_headers()
-            doc = web_client.get_html_element_tree(url, headers=headers)
-            self.html = url, doc
 
     # 设置cookies，大会员用得着
     # `cookie_str_from_dict`和`cookie_str_from_dict`这两个函数另有定义
@@ -295,73 +293,54 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         headers = super().bilibili_headers(referer=referer, cookie=cookie)
         return headers
 
-    # def get_title(self):
-    #     self.ensure_html_updated()
-    #     _, h = self.html
-    #     s = seq_call_return((
-    #         {'target': lambda: h.xpath('//*[@class="video-title"]')[0].attrib['title']},
-    #         {'target': lambda: h.xpath('//meta[@property="og:title"]')[0].attrib['content']},
-    #         {'target': lambda: h.xpath('//title')[0].text},
-    #     ), common_exception=IndexError)
-    #     s = str_remove_suffix(s.strip(), '_哔哩哔哩_bilibili')
-    #     s = re.sub(r'_哔哩哔哩bilibili_[^_]+$', '', s)
-    #     s += ' ' + self.get_vid_label() + self.get_author_label()
-    #     return s
-
-    def get_formatted_title(self, part_num_title_t=()):
-        if not hasattr(self, 'original_title'):
+    @property
+    def the_title(self):
+        try:
+            title = self.title
+        except AttributeError:
             self.prepare()
-        r = ellipt_end(self.original_title, 120, encoding='utf8') + ' ' + self.get_vid_label() + self.get_author_label()
-        if part_num_title_t:
-            part_num, part_title = part_num_title_t
-            r += f' P.{part_num} {part_title}'
-        return r
+            title = self.title
+        return title
 
     def write_info_file(self, fp: str = None):
         if self.do_not_write_any_file:
             return
-        fp = fp or self.get_formatted_title() + '.info'
+        fp = fp or self.title_without_parts + '.info'
         fp = you_get_filename(fp)
         print(fp)
+        desc = self.get_desc()
+        tags = str(self.get_tags())
+        reply = self.get_reply()
         with open(fp, 'w', encoding='utf-8-sig') as f:
             separator = '\n\n---\n\n'
-            # f.write('#encoding=utf8\n\n')
-            f.write(self.get_formatted_title())
-            f.write(separator)
-            f.write(self.url)
-            f.write(separator)
-            f.write(self.get_desc())
-            f.write(separator)
-            f.write(str(self.get_tags()))
-            f.write(separator)
-            f.write(self.get_reply())
+            paragraphs = [self.title_without_parts, self.video_url, desc, tags, reply]
+            f.write(separator.join(paragraphs))
 
     def get_reply(self):
         try:
             from websites.bilibili.webapi import BilibiliWebAPI
-            return BilibiliWebAPI().get_replies(self.url, text=True)
+            return BilibiliWebAPI().get_replies(self.video_url, text=True)
         except Exception as e:
             print(f'! {e}: {e!r}')
             return ''
 
     def get_desc(self):
-        self.ensure_html_updated()
-        _, h = self.html
+        h = self.html_etree
         desc = seq_call_return((
             {'target': lambda: h.xpath('//div[@id="v_desc"]')[0].text_content()},
             {'target': lambda: h.xpath('//meta[@name="description"]')[0].attrib['content']},
             {'target': lambda: h.cssselect('.video-desc')[0].text},
+            {'target': lambda: h.cssselect('.media-desc.webkit-ellipsis')[0].text},
         ))
         return desc
 
     def get_tags(self):
-        self.ensure_html_updated()
-        _, h = self.html
+        h = self.html_etree
         return [e.text_content().strip() for e in h.xpath('//*[@class="tag-link"]')]
 
     # 从URL和HTML获取av号BV号
-    def get_vid(self):
-        url = self.url
+    def get_vid(self, url=None):
+        url = url or self.video_url
         for m in [
             re.search(r'/(bv\w{10})', url, flags=re.I),
             re.search(r'/(av\d+)', url),
@@ -377,27 +356,25 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
             vid = ''
         return vid
 
-    def get_real_url(self):
-        vid = self.get_vid()
+    def get_real_url(self, url=None):
+        vid = self.get_vid(url)
         if vid[:2] in ('ep', 'ss',):
             prefix = BILIBILI_EPISODE_URL_PREFIX
         else:
             prefix = BILIBILI_VIDEO_URL_PREFIX
         return prefix + vid
 
-    # [bilibili <BV_id> <av_id>]
     def get_vid_label(self):
+        # [bilibili <BV_id> <av_id>]
         the_vid = self.get_vid()
         if the_vid.startswith('BV'):
-            self.ensure_html_updated()
-            _, h = self.html
+            h = self.html_etree
             # canonical = h.xpath('//link[@rel="canonical"]')[0].attrib['href']
             # av_id = re.search(r'/(av\d+)/', canonical).group(1)
             av_id = f'av{self.webapi.bvid2aid(the_vid)}'
             id_str = f'{the_vid} {av_id}'
         elif the_vid.startswith('ep'):
-            self.ensure_html_updated()
-            _, h = self.html
+            h = self.html_etree
             og_url = h.xpath('//meta[@property="og:url"]')[0].attrib['content']
             ss_id = re.search(r'/play/(ss\d+)', og_url).group(1)
             id_str = f'{the_vid} {ss_id}'
@@ -407,8 +384,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
 
     # 上传者（UP主）用户名
     def get_author(self):
-        self.ensure_html_updated()
-        _, h = self.html
+        h = self.html_etree
         return seq_call_return([
             {'target': lambda: h.xpath('//meta[@name="author"]')[0].attrib['content']},
             {'target': lambda: h.cssselect('.staff-multi .info-name')[0].text},
@@ -444,6 +420,13 @@ def download_bilibili_video(url: str or int,
         output = '.'
     if '://' not in url:
         url = bilibili_url_from_vid(vid_to_bvid_via_web_api(find_bilibili_vid(url) or url))
+    if (url.startswith('https://b23.tv/BV') and len(url) == 22) or (
+            url.startswith('https://b23.tv/') and url[15:17] not in ('BV', 'ss', 'ep', 'av')):
+        r = requests.get(url)
+        if r.ok:
+            url = r.url.split('?', maxsplit=1)[0]
+    b.url = url = b.get_real_url(url)
+    lp.print(b.url)
 
     if info:
         dl_kwargs = {'info_only': True}
@@ -454,16 +437,7 @@ def download_bilibili_video(url: str or int,
     if moderate_audio:
         b.set_audio_qn(30232)
 
-    if (url.startswith('https://b23.tv/BV') and len(url) == 22) or (
-            url.startswith('https://b23.tv/') and url[15:17] not in ('BV', 'ss', 'ep', 'av')):
-        r = requests.get(url)
-        if r.ok:
-            url = r.url.split('?', maxsplit=1)[0]
-    b.url = url
-    b.url = url = b.get_real_url()
-    lp.print(url)
     lp.l(shorter=1)
-    b.write_info_file()
     if playlist:
         b.download_playlist_by_url(url, **dl_kwargs)
     else:
@@ -478,6 +452,7 @@ def download_bilibili_video(url: str or int,
                 b.download_by_url(url, **dl_kwargs)
         else:
             b.download_by_url(url, **dl_kwargs)
+    b.write_info_file()
 
 
 def jijidown_rename_alpha(path: str, part_num=True):

@@ -52,7 +52,7 @@ class BilibiliWebAPI:
             self.cookies = cookie.EzCookieJar().smart_load(cookies, ignore_discard=True, ignore_expires=True).get_dict()
         return self
 
-    def _request_json(self, url, **params):
+    def _request_json(self, url, **params) -> dict:
         r = requests.get(url, params=params, headers=BILIBILI_HEADERS, cookies=self.cookies)
         j = r.json()
         check_response_json(j)
@@ -94,15 +94,18 @@ class BilibiliWebAPI:
             r = re.BatchMatchWrapper(
                 re.search(r'(av|AV)(?P<aid>\d+)', video_source),
                 re.search(r'(?P<bvid>BV[\da-zA-Z]{10})', video_source),
-                re.search(r'(?P<epid>(ep|EP)\d+)', video_source),
-                re.search(r'(?P<ssid>(ss|SS)\d+)', video_source),
-            ).first_match().pick_existing('aid', 'bvid', 'epid', 'ssid')
+                re.search(r'(ep|EP)(?P<ep_id>\d+)', video_source),
+                re.search(r'(ss|SS)(?P<season_id>\d+)', video_source),
+            ).first_match().pick_existing('aid', 'bvid', 'ep_id', 'season_id')
             c = TypeConverter(int)
             r = {k: c.convert(v) for k, v in r.items()}
         else:
             r = {}
-        if 'aid' not in r and 'bvid' in r:
-            r['aid'] = self.bvid2aid(r['bvid'])
+        if 'aid' not in r:
+            if 'bvid' in r:
+                r['aid'] = self.bvid2aid(r['bvid'])
+            if 'ep_id' in r:
+                r['aid'] = self.get_episodes_info_web_season(**r)['this_episode']['aid']
         return r
 
     def parse_vid_dict(self, video_source) -> T.Dict[str, T.Union[int, str]]:
@@ -193,6 +196,18 @@ class BilibiliWebAPI:
         return self.request_json('https://api.bilibili.com/x/player/pagelist', **params)
 
     get_page_list = get_parts
+
+    def get_episodes_info_web_season(self, **params):
+        """剧集 bangumi web端 epid ssid
+        :param params: ep_id, season_id
+        """
+        r = self.request_json('https://api.bilibili.com/pgc/view/web/season', **params)
+        if 'ep_id' in params:
+            for e in r['episodes']:
+                if e['id'] == params['ep_id']:
+                    r['this_episode'] = e
+                    break
+        return r
 
     def get_play_url_pgc(self, **params):
         return self.request_json('https://api.bilibili.com/pgc/player/web/playurl', **params)
