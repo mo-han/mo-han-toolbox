@@ -499,6 +499,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
             res_limit = '360p'
         elif kw in ('2ch', 'stereo'):
             ffmpeg_args.add(ac=2)
+            tags.append('2ch')
         elif kw == 'hevc':
             codec = 'h'
         elif kw in ('vp9', 'vpx', 'vp90', 'webm'):
@@ -508,6 +509,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
             tags.append(kw)
         elif kw == 'opus':
             ffmpeg_args.add(c__a='libopus')
+            tags.append(kw)
 
     if res_limit:
         w, h = get_width_height(filepath)
