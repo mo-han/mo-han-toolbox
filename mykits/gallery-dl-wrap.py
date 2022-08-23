@@ -86,7 +86,7 @@ def per_site(site_args: T.List[str]):
     elif 'twitter.com' in url:
         args = [*GLDLCLIArgs(o=['videos=true', 'retweets=false', 'content=true',
                                 'filename="{category} {date:%Y-%m-%d} {tweet_id}_p{num} {filename} '
-                                '{content!S:.64} @{author[name]}.{extension}"',
+                                '{content!S:.48} @{author[name]}.{extension}"',
                                 'directory=["{author[nick]} {category} @{author[name]}"]']),
                 *site_args, url]
     elif 'danbooru.donmai.us' in url:
