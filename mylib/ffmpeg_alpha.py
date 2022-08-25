@@ -487,6 +487,10 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
             ffmpeg_args.add(c__v='copy')
         elif kw == 'acopy':
             ffmpeg_args.add(c__a='copy')
+        elif kw == 'scopy':
+            ffmpeg_args.add(c__s='copy')
+        elif kw == 'all':
+            ffmpeg_args.add(map=0)
         elif kw == 'copy':
             ffmpeg_args.add(c='copy')
         elif kw in ('FHD', 'fhd'):
@@ -497,9 +501,9 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
             res_limit = 'qHD'
         elif kw.lower() == '360p':
             res_limit = '360p'
-        elif kw in ('2ch', 'stereo'):
-            ffmpeg_args.add(ac=2)
-            tags.append('2ch')
+        elif re.match(r'\dch', kw):
+            ffmpeg_args.add(ac=kw[:1])
+            tags.append(kw)
         elif kw == 'hevc':
             codec = 'h'
         elif kw in ('vp9', 'vpx', 'vp90', 'webm'):
