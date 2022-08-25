@@ -501,9 +501,11 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
             res_limit = 'qHD'
         elif kw.lower() == '360p':
             res_limit = '360p'
-        elif re.match(r'\dch', kw):
+        elif re.match(r'\dch$', kw):
             ffmpeg_args.add(ac=kw[:1])
             tags.append(kw)
+        elif re.match(r'copy\w\d+$', kw):
+            ffmpeg_args.add_kwarg(f'-c:{kw[4:5]}:{kw[5:]}', 'copy')
         elif kw == 'hevc':
             codec = 'h'
         elif kw in ('vp9', 'vpx', 'vp90', 'webm'):
