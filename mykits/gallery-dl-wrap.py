@@ -176,7 +176,7 @@ def per_site(site_args: T.List[str]):
                              o=['cookies-update=true', 'videos=true', 'tags=true', 'metadata=true',
                                 'directory=["{username} {category} {service} {user}"]',
                                 'filename="{category} {service} {date!S:.10} {id}_p{num} {filename} '
-                                '{title} @{username}.{extension}"', ]),
+                                '{title:.32} @{username}.{extension}"', ]),
                 *site_args, url]
     elif 'nhentai' in url:
         args = [*GLDLCLIArgs(o=make_options_list(dict(
