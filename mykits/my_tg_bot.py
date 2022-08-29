@@ -72,10 +72,17 @@ class MyAssistantBot(EasyBot):
                 self.__send_code_block__(update, echo)
                 return
             chat_id = update.message.chat_id
-            args_ll = [line2args(line) for line in update.message.text.splitlines()]
-            al0 = ''.join(args_ll[0])
-            if al0 in ('@360p', '@480p'):
-                args_ll = [args_l + ['-f', f'[height<=?{al0[1:-1]}]'] for args_l in args_ll[1:]]
+            msg_lines = update.message.text.splitlines()
+            args_ll = [line2args(line) for line in msg_lines]
+            line0 = msg_lines[0].strip()
+            if line0 in (f'@{h}p' for h in (360, 480, 720, 1080)):
+                new_args_ll = []
+                for args_l in args_ll[1:]:
+                    if 'pornhub.com' in args_l[0]:
+                        new_args_ll.append(args_l + ['-f', line0[1:]])
+                    else:
+                        new_args_ll.append(args_l + ['f', f'[height<=?{line0[1:-1]}]'])
+                args_ll = new_args_ll
             tasks = [EasyBotTaskData(target=self._ytdl_internal.__name__, args=args_l, chat_to=chat_id)
                      for args_l in args_ll]
             self.__save_tasks__(tasks, chat_id)
