@@ -79,7 +79,7 @@ class MyAssistantBot(EasyBot):
                 new_args_ll = []
                 for args_l in args_ll[1:]:
                     if 'pornhub.com' in args_l[0]:
-                        new_args_ll.append(args_l + ['-f', line0[1:]])
+                        new_args_ll.append(args_l + ['-f', f'[format_id!*=hls][height<=?{line0[1:-1]}]'])
                     else:
                         new_args_ll.append(args_l + ['f', f'[height<=?{line0[1:-1]}]'])
                 args_ll = new_args_ll
