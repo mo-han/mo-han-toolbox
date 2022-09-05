@@ -57,7 +57,11 @@ class KodiTvShowNfo:
         dirname, stem, ext = os.split_path_dir_stem_ext(fp)
         if ext.lower() != '.nfo':
             raise self.InvalidNfoFile('not a .nfo file', fp)
-        self.xml_etree = ElementTree.parse(fp)
+        try:
+            self.xml_etree = ElementTree.parse(fp)
+        except ElementTree.ParseError:
+            __logger__.error(f'! {fp}')
+            raise 
         self.dirname = dirname
         self.stem = stem
         self.ext = ext
@@ -95,7 +99,7 @@ class KodiTvShowNfo:
         return int(self.xml_etree.getroot().find('displayseason').text)
 
     def save_nfo(self):
-        self.xml_etree.write(self.filename)
+        self.xml_etree.write(self.filename, encoding='UTF-8', xml_declaration=True)
 
     def set_nfo(self, new_nfo_basename):
         with os.ctx_pushd(self.dirname):
@@ -228,15 +232,16 @@ def sxe(method, verbose, dryrun):
 @ap.arg('season', type=int, help='default season number')
 @ap.arg('episode', type=int, default=11, nargs='?', help='default episode number')
 @ap.opt('v', 'verbose', action='count', default=0)
-@ap.map(season='season', episode='episode', verbose='verbose')
-def make_tvshow_nfo(season, episode, verbose):
+@ap.true('w', 'overwrite')
+@ap.map(season='season', episode='episode', verbose='verbose', overwrite='overwrite')
+def make_tvshow_nfo(season, episode, verbose, overwrite):
     """create nfo and set season & episode"""
     logging.init_root(logging.FMT_MESSAGE_ONLY)
     if verbose >= 2:
         logging.set_root_level('DEBUG')
     elif verbose:
         logging.set_root_level('INFO')
-    nfo_fpl = [KodiTvShowNfo.new_nfo_file(os.split_ext(e)[0] + '.nfo') for e in iter_path()]
+    nfo_fpl = [KodiTvShowNfo.new_nfo_file(os.split_ext(e)[0] + '.nfo', overwrite=overwrite) for e in iter_path()]
     for x in KodiTvShowNfo.map_instances(nfo_fpl):
         if (x.season, x.episode) >= (1, 1):
             __logger__.info(f'# season & episode set already: {x.filename}')
