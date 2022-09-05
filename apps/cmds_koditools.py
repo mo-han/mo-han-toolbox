@@ -61,7 +61,7 @@ class KodiTvShowNfo:
             self.xml_etree = ElementTree.parse(fp)
         except ElementTree.ParseError:
             __logger__.error(f'! {fp}')
-            raise 
+            raise
         self.dirname = dirname
         self.stem = stem
         self.ext = ext

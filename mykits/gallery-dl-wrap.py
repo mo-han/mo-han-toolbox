@@ -165,6 +165,17 @@ def per_site(site_args: T.List[str]):
                          o=[*options, 'directory=["{search_tags} {category}"]']),
             *site_args, url
         ]
+        if site_args:
+            pq_arg, *site_args = site_args
+            if pq_arg.startswith('pq'):
+                num = int(pq_arg[2:])
+                tags_s = url.split('/?tags=', maxsplit=1)[-1].strip()
+                gldl_args = GLDLCLIArgs(cookies=get_cookies_path('sankaku.idol'),
+                                        o=[*options, f'directory=["{tags_s} {{category}} {pq_arg}"]'])
+                args = MultiList([
+                    [*gldl_args, *site_args, '--range', f'-{num}', url + ' order:popular'],
+                    [*gldl_args, *site_args, '--range', f'-{num}', url + ' order:quality'],
+                ])
     elif 'newgrounds.com' in url:
         args = [*GLDLCLIArgs(o=['cookies-update=true', 'videos=true', 'tags=true',
                                 'directory=["{user} {category}"]',
