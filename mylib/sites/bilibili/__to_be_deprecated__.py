@@ -80,12 +80,14 @@ def code_modify_you_get_bilibili(x: str):
 ''')
     # 下面这段修改了下载文件名的格式，原版是视频标题+选集子标题
     # 在视频标题+选集子标题的基础上，插入了一些有用的元信息：[av号][BV号][上传者用户名]
+    # bookmark: title manipulation
     x = x.replace('''
                 if pn > 1:
                     part = initial_state['videoData']['pages'][p - 1]['part']
 ''', '''
                 if pn > 1:
                     part = initial_state['videoData']['pages'][p - 1]['part']
+                    self.main_title = self._make_the_title_in_my_flavor()
                     self.part_title = self._make_the_title_in_my_flavor((p, part))
 ''')
     # 下面这段是个重点，修改的是原版中`you_get.extractors.bilibili.Bilibili.prepare_by_url`这个方法函数
@@ -263,10 +265,9 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         super().prepare(**kwargs)
         self.origin_title = self.title
         if hasattr(self, 'part_title'):
-            self.title_without_parts = self.title
             self.title = self.part_title
         else:
-            self.title_without_parts = self.title = self._make_the_title_in_my_flavor()
+            self.main_title = self.title = self._make_the_title_in_my_flavor()
 
     # B站视频的音频流分不同档次，选择中档128kbps就足够了，也可以选择最高音质
     # 低档30216码率偏低，30232约128kbps，30280可能是320kbps也可能是128kbps，貌似跟4K有关，尚不确定
@@ -302,7 +303,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     def write_info_file(self, fp: str = None):
         if self.do_not_write_any_file:
             return
-        fp = fp or self.the_title + '.info'
+        fp = fp or self.main_title + '.info'
         fp = you_get_filename(fp)
         print(fp)
         desc = self.get_desc()
