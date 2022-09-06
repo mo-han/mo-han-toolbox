@@ -305,7 +305,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     def write_info_file(self, fp: str = None):
         if self.do_not_write_any_file:
             return
-        fp = fp or self.title + '.info'
+        fp = fp or self.the_title + '.info'
         fp = you_get_filename(fp)
         print(fp)
         desc = self.get_desc()
