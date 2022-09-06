@@ -297,6 +297,8 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     def the_title(self):
         try:
             title = self.title
+            if not title:
+                raise AttributeError
         except AttributeError:
             self.prepare()
             title = self.title
