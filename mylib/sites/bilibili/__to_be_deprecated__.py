@@ -311,7 +311,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         reply = self.get_reply()
         with open(fp, 'w', encoding='utf-8-sig') as f:
             separator = '\n\n---\n\n'
-            paragraphs = [self.title_without_parts, self.video_url, desc, tags, reply]
+            paragraphs = [self.main_title, self.video_url, desc, tags, reply]
             f.write(separator.join(paragraphs))
 
     def get_reply(self):
