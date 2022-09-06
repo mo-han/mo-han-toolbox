@@ -295,14 +295,9 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
 
     @property
     def the_title(self):
-        try:
-            title = self.title
-            if not title:
-                raise AttributeError
-        except AttributeError:
+        if not hasattr(self, 'title') or not self.title:
             self.prepare()
-            title = self.title
-        return title
+        return self.title
 
     def write_info_file(self, fp: str = None):
         if self.do_not_write_any_file:
