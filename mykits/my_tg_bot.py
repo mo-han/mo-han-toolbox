@@ -81,7 +81,7 @@ class MyAssistantBot(EasyBot):
                     if 'pornhub.com' in args_l[0]:
                         new_args_ll.append(args_l + ['-f', f'[format_id!*=hls][height<=?{line0[1:-1]}]'])
                     else:
-                        new_args_ll.append(args_l + ['f', f'[height<=?{line0[1:-1]}]'])
+                        new_args_ll.append(args_l + ['-f', f'[height<=?{line0[1:-1]}]'])
                 args_ll = new_args_ll
             tasks = [EasyBotTaskData(target=self._ytdl_internal.__name__, args=args_l, chat_to=chat_id)
                      for args_l in args_ll]
