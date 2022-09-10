@@ -335,6 +335,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
             {'target': lambda: h.cssselect('[class^=video-desc]')[0].text_content()},
             {'target': lambda: h.cssselect('.video-desc')[0].text_content()},
             {'target': lambda: h.cssselect('.media-desc.webkit-ellipsis')[0].text_content()},
+            {'target': lambda : '(no desc)'}
         ))
         return desc
 
