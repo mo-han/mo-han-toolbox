@@ -203,7 +203,8 @@ def find_bilibili_vid(x: str or int) -> str or None:
 
 def api_web_interface_view(cookies: dict = None, **kwargs):
     url = 'https://api.bilibili.com/x/web-interface/view'
-    return requests.get(url, params=kwargs, headers=API_HEADERS_HANDLER.headers, cookies=cookies).json()
+    headers = API_HEADERS_HANDLER.headers
+    return requests.get(url, params=kwargs, headers=headers(), cookies=cookies).json()
 
 
 def vid_to_bvid_via_web_api(vid: str or int, cookies: dict = None) -> str or None:
