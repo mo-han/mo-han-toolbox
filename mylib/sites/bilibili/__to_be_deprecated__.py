@@ -87,7 +87,8 @@ def code_modify_you_get_bilibili(x: str):
 ''', '''
                 if pn > 1:
                     part = initial_state['videoData']['pages'][p - 1]['part']
-                    self.main_title = self._make_the_title_in_my_flavor()
+                    self.full_title = self._make_the_title_in_my_flavor(ellipt=False)
+                    self.file_title = self._make_the_title_in_my_flavor()
                     self.part_title = self._make_the_title_in_my_flavor((p, part))
 ''')
     # 下面这段是个重点，修改的是原版中`you_get.extractors.bilibili.Bilibili.prepare_by_url`这个方法函数
@@ -253,8 +254,12 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         # noinspection PyTypeChecker
         self.cache_url_html: Tuple[str, web_client.HTMLElementTree] = (None, None)
 
-    def _make_the_title_in_my_flavor(self, part_num_title_t=()):
-        r = ellipt_end(self.the_title, 120, encoding='utf8') + ' ' + self.get_vid_label() + self.get_author_label()
+    def _make_the_title_in_my_flavor(self, part_num_title_t=(), ellipt=120):
+        if ellipt:
+            r = ellipt_end(self.the_title, ellipt, encoding='utf8') +\
+                ' ' + self.get_vid_label() + self.get_author_label()
+        else:
+            r = self.the_title + ' ' + self.get_vid_label() + self.get_author_label()
         if part_num_title_t:
             part_num, part_title = part_num_title_t
             r += f' P.{part_num} {part_title}'
@@ -268,7 +273,8 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         if hasattr(self, 'part_title'):
             self.title = self.part_title
         else:
-            self.main_title = self.title = self._make_the_title_in_my_flavor()
+            self.file_title = self.title = self._make_the_title_in_my_flavor()
+            self.full_title = self._make_the_title_in_my_flavor(ellipt=False)
 
     # B站视频的音频流分不同档次，选择中档128kbps就足够了，也可以选择最高音质
     # 低档30216码率偏低，30232约128kbps，30280可能是320kbps也可能是128kbps，貌似跟4K有关，尚不确定
@@ -304,7 +310,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
     def write_info_file(self, fp: str = None):
         if self.do_not_write_any_file:
             return
-        fp = fp or self.main_title + '.info'
+        fp = fp or self.file_title + '.info'
         fp = you_get_filename(fp)
         print(fp)
         desc = self.get_desc()
@@ -314,7 +320,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
             separator = '\n---\n'
             paragraphs = [
                 re.sub(r'收起$', '', desc),
-                self.main_title + '\n' + re.split(r'\?p=\d+', self.video_url)[0],
+                self.file_title + '\n' + re.split(r'\?p=\d+', self.video_url)[0],
                 tags, reply
             ]
             f.write(separator.join(paragraphs))
@@ -335,7 +341,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
             {'target': lambda: h.cssselect('[class^=video-desc]')[0].text_content()},
             {'target': lambda: h.cssselect('.video-desc')[0].text_content()},
             {'target': lambda: h.cssselect('.media-desc.webkit-ellipsis')[0].text_content()},
-            {'target': lambda : '(no desc)'}
+            {'target': lambda: '(no desc)'}
         ))
         return desc
 
