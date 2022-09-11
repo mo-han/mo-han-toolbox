@@ -173,10 +173,10 @@ class KodiTvShowNfo:
         return r
 
     @classmethod
-    def new_nfo_file(cls, nfo_fp, overwrite=False):
+    def new(cls, nfo_fp, overwrite=False):
         if not overwrite and os.path_isfile(nfo_fp):
-            __logger__.debug(f'# skip existing NFO: {nfo_fp}')
-            return nfo_fp
+            __logger__.debug(f'# already existing NFO: {nfo_fp}')
+            return cls(nfo_fp)
         io.IOKit.write_exit(open(nfo_fp, 'w', encoding='utf8'), TV_SHOW_NFO_TEMPLATE)
         o = cls(nfo_fp)
         root = o.xml_etree.getroot()
@@ -184,7 +184,7 @@ class KodiTvShowNfo:
         root.find('title').text = o.stem
         o.save_nfo()
         __logger__.debug(f'+ {o.filename}')
-        return o.filename
+        return o
 
     def list_siblings(self):
         with os.ctx_pushd(self.dirname):
@@ -208,6 +208,36 @@ class KodiTvShowNfo:
             self.season, self.episode = default_season, default_episode
         self.save_nfo()
         return self.season, self.episode
+
+
+@ap.sub()
+@ap.opt('s', 'season', type=int, required=True)
+@ap.opt('e', 'episode', type=StrKit.to_range, required=True)
+@ap.map(season='season', episode_range='episode')
+def nfo_sxe(season, episode_range: T.Iterator):
+    """create kodi format tvshow nfo, setup season & episode, and rename all"""
+    logging.init_root(logging.FMT_MESSAGE_ONLY)
+    logging.set_root_level('DEBUG')
+    Config.dryrun = False
+
+    season_num = season
+    last_episode_num = 0
+    for p in iter_path():
+        if not os.path_isfile(p):
+            continue
+        nfo_fp = os.split_ext(p)[0] + '.nfo'
+        nfo = KodiTvShowNfo.new(nfo_fp)
+        nfo.rename_all(KodiTvShowNfo.basename_maker_clear_season_x_episode)
+
+        nfo.season = season_num
+        try:
+            episode_num = next(episode_range)
+        except StopIteration:
+            episode_num = last_episode_num + 1
+        nfo.episode = episode_num
+        last_episode_num = episode_num
+
+        nfo.rename_all(KodiTvShowNfo.basename_maker_add_season_x_episode)
 
 
 @ap.sub()
@@ -241,7 +271,7 @@ def make_tvshow_nfo(season, episode, verbose, overwrite):
         logging.set_root_level('DEBUG')
     elif verbose:
         logging.set_root_level('INFO')
-    nfo_fpl = [KodiTvShowNfo.new_nfo_file(os.split_ext(e)[0] + '.nfo', overwrite=overwrite) for e in iter_path()]
+    nfo_fpl = [KodiTvShowNfo.new(os.split_ext(e)[0] + '.nfo', overwrite=overwrite).filename for e in iter_path()]
     for x in KodiTvShowNfo.map_instances(nfo_fpl):
         if (x.season, x.episode) >= (1, 1):
             __logger__.info(f'# season & episode set already: {x.filename}')
