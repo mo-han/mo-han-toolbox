@@ -91,6 +91,14 @@ class KodiTvShowNfo:
         self.xml_etree.getroot().find('season').text = f'{value:d}'
 
     @property
+    def title(self):
+        return self.xml_etree.getroot().find('title').text
+
+    @title.setter
+    def title(self, value):
+        self.xml_etree.getroot().find('title').text = str(value)
+
+    @property
     def displayepisode(self):
         return int(self.xml_etree.getroot().find('displayepisode').text)
 
@@ -117,7 +125,7 @@ class KodiTvShowNfo:
 
     def get_all_season_x_episode_pattern(self):
         findall = self.xml_etree.getroot().findall
-        return [f'{int(s.text):d}x{int(e.text):02d}' for s, e in itertools.chain(
+        return [f's{int(s.text):d}e{int(e.text):02d}' for s, e in itertools.chain(
             zip(findall('season'), findall('episode')),
             zip(findall('displayseason'), findall('displayepisode')),
         ) if '-1' not in (s.text, e.text)]
@@ -156,13 +164,19 @@ class KodiTvShowNfo:
 
     @classmethod
     def basename_maker_add_season_x_episode(cls, basename, patterns):
-        cleared = cls.basename_maker_remove_season_x_episode(basename, patterns)
+        removed = cls.basename_maker_remove_season_x_episode(basename, patterns)
+        patterns_s = ' '.join(patterns)
+        return f'{patterns_s} {removed}'
+
+    @classmethod
+    def basename_maker_update_season_x_episode(cls, basename, patterns):
+        cleared = cls.basename_maker_clear_season_x_episode(basename)
         patterns_s = ' '.join(patterns)
         return f'{patterns_s} {cleared}'
 
     @staticmethod
     def basename_maker_clear_season_x_episode(basename, *args):
-        return re.sub(r'(\d+x\d+\s?)|(\s?\d+x\d+)', '', basename)
+        return re.sub(r'(\d+x\d+\s?)|(\s?\d+x\d+)|(^(s\d+e\d+ )*)', '', basename)
 
     @classmethod
     def map_instances(cls, filepaths):
@@ -227,7 +241,6 @@ def nfo_sxe(season, episode_range: T.Iterator):
             continue
         nfo_fp = os.split_ext(p)[0] + '.nfo'
         nfo = KodiTvShowNfo.new(nfo_fp)
-        nfo.rename_all(KodiTvShowNfo.basename_maker_clear_season_x_episode)
 
         nfo.season = season_num
         try:
@@ -235,13 +248,14 @@ def nfo_sxe(season, episode_range: T.Iterator):
         except StopIteration:
             episode_num = last_episode_num + 1
         nfo.episode = episode_num
+        nfo.save_nfo()
         last_episode_num = episode_num
 
-        nfo.rename_all(KodiTvShowNfo.basename_maker_add_season_x_episode)
+        nfo.rename_all(KodiTvShowNfo.basename_maker_update_season_x_episode)
 
 
 @ap.sub()
-@ap.arg('method', choices=('add', 'remove', 'clear',))
+@ap.arg('method', choices=('add', 'remove', 'clear', 'update'))
 @ap.opt('v', 'verbose', action='count', default=0)
 @ap.true('D', 'dryrun')
 @ap.map(method='method', verbose='verbose', dryrun='dryrun')
@@ -256,6 +270,16 @@ def sxe(method, verbose, dryrun):
     m = getattr(KodiTvShowNfo, f'basename_maker_{method}_season_x_episode')
     for x in KodiTvShowNfo.map_instances(iter_path()):
         x.rename_all(m)
+
+
+@ap.sub()
+def nfo_bili_info():
+    for nfo in KodiTvShowNfo.map_instances(iter_path()):
+        nfo.title = re.split(r' \[bilibili', nfo.title)[0]
+        info_fp = os.split_ext(nfo.filename)[0] + '.info'
+        if os.path_isfile(info_fp):
+            nfo.xml_etree.getroot().find('plot').text = io.IOKit.read_exit(open(info_fp, encoding='utf-8-sig'))
+        nfo.save_nfo()
 
 
 @ap.sub()
