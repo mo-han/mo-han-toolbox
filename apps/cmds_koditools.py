@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 from xml.etree import ElementTree
 
 from ezpykitext.appkit import *
@@ -280,6 +281,8 @@ def nfo_bili_info():
         if os.path_isfile(info_fp):
             nfo.xml_etree.getroot().find('plot').text = io.IOKit.read_exit(open(info_fp, encoding='utf-8-sig'))
         nfo.save_nfo()
+        if os.path_isfile(info_fp):
+            os.remove(info_fp)
 
 
 @ap.sub()
