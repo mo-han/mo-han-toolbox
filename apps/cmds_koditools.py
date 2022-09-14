@@ -125,11 +125,18 @@ class KodiTvShowNfo:
             return [f for f in os.listdir() if self._check_stem(f) and f != self.basename]
 
     def get_all_season_x_episode_pattern(self):
-        findall = self.xml_etree.getroot().findall
-        return [f's{int(s.text):d}e{int(e.text):02d}' for s, e in itertools.chain(
-            zip(findall('season'), findall('episode')),
-            zip(findall('displayseason'), findall('displayepisode')),
-        ) if '-1' not in (s.text, e.text)]
+        r = []
+        s = self.season
+        e = self.episode
+        ds = self.displayseason
+        de = self.displayepisode
+        if s >= 0 and e > 0:
+            r.append((s, e))
+        if ds >= 0 and de > 0:
+            r.append((ds, de))
+        elif de > 0 and s >= 0:
+            r.append((s, de))
+        return [f's{s}e{e:02d}' for s, e in r]
 
     def _rename(self, old, new):
         if new == old:
