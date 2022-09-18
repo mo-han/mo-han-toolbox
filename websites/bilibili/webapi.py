@@ -96,7 +96,7 @@ class BilibiliWebAPI:
                 re.search(r'(?P<bvid>BV[\da-zA-Z]{10})', video_source),
                 re.search(r'(ep|EP)(?P<ep_id>\d+)', video_source),
                 re.search(r'(ss|SS)(?P<season_id>\d+)', video_source),
-            ).first_match().pick_existing('aid', 'bvid', 'ep_id', 'season_id')
+            ).first_match().pick_existing_group_dict('aid', 'bvid', 'ep_id', 'season_id')
             c = TypeConverter(int)
             r = {k: c.convert(v) for k, v in r.items()}
         else:

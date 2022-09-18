@@ -52,6 +52,13 @@ class KodiTvShowNfo:
     class InvalidNfoFile(Exception):
         pass
 
+    @staticmethod
+    def sxe_str2tuple(s: str):
+        if not re.fullmatch(r'\d*x\d+'):
+            raise TypeError('SxE string, e.g. 2x03, x01')
+        s, e = ezdict.pick_to_list(re.MatchWrapper(re.match(r'(\d*)x(\d+)', s), [int]).all_groups(), )
+        return s, e
+
     def __init__(self, fp):
         if not os.path_isfile(fp):
             raise self.InvalidNfoFile('not a file', fp)
@@ -103,6 +110,10 @@ class KodiTvShowNfo:
     def displayepisode(self):
         return int(self.xml_etree.getroot().find('displayepisode').text)
 
+    @displayepisode.setter
+    def displayepisode(self, value):
+        self.xml_etree.getroot().find('displayepisode').text = f'{value:d}'
+
     @property
     def displayseason(self):
         return int(self.xml_etree.getroot().find('displayseason').text)
@@ -124,19 +135,19 @@ class KodiTvShowNfo:
         with os.ctx_pushd(self.dirname):
             return [f for f in os.listdir() if self._check_stem(f) and f != self.basename]
 
-    def get_all_season_x_episode_pattern(self):
-        r = []
+    def make_se_patterns(self, more_se_pairs: list = None):
+        se_pairs = more_se_pairs or []
         s = self.season
         e = self.episode
         ds = self.displayseason
         de = self.displayepisode
         if s >= 0 and e > 0:
-            r.append((s, e))
+            se_pairs.append((s, e))
         if ds >= 0 and de > 0:
-            r.append((ds, de))
+            se_pairs.append((ds, de))
         elif de > 0 and s >= 0:
-            r.append((s, de))
-        return [f's{s}e{e:02d}' for s, e in r]
+            se_pairs.append((s, de))
+        return [f's{s}e{e:02d}' for s, e in sorted(set(se_pairs))]
 
     def _rename(self, old, new):
         if new == old:
@@ -146,9 +157,9 @@ class KodiTvShowNfo:
                 Config.dryrun or os.renames(old, new)
                 __logger__.info(f'* {new} <- {old}')
 
-    def rename_all(self, new_basename_maker):
+    def rename_all(self, new_basename_maker, more_se_pairs=None):
         sidecar_files = self.get_sidecar_files_basename()
-        patterns = self.get_all_season_x_episode_pattern()
+        patterns = self.make_se_patterns(more_se_pairs)
         for old in sidecar_files:
             new = new_basename_maker(old, patterns)
             self._rename(old, new)
@@ -233,8 +244,8 @@ class KodiTvShowNfo:
 
 
 @ap.sub()
-@ap.opt('s', 'season', type=int, required=True)
-@ap.opt('e', 'episode', type=StrKit.to_range, required=True)
+@ap.arg('season', type=int)
+@ap.arg('episode', type=StrKit.to_range)
 @ap.map(season='season', episode_range='episode')
 def nfo_sxe(season, episode_range: T.Iterator):
     """create kodi format tvshow nfo, setup season & episode, and rename all"""
@@ -264,10 +275,11 @@ def nfo_sxe(season, episode_range: T.Iterator):
 
 @ap.sub()
 @ap.arg('method', choices=('add', 'remove', 'clear', 'update'))
+@ap.arg('SxE', nargs='*', type=KodiTvShowNfo.sxe_str2tuple)
 @ap.opt('v', 'verbose', action='count', default=0)
 @ap.true('D', 'dryrun')
-@ap.map(method='method', verbose='verbose', dryrun='dryrun')
-def sxe(method, verbose, dryrun):
+@ap.map(method='method', verbose='verbose', dryrun='dryrun', more_se_pairs='SxE')
+def sxe(method, verbose, dryrun, more_se_pairs):
     """handle SxE style episode numbering"""
     Config.dryrun = dryrun
     logging.init_root(logging.FMT_MESSAGE_ONLY)
@@ -277,7 +289,7 @@ def sxe(method, verbose, dryrun):
         logging.set_root_level('INFO')
     m = getattr(KodiTvShowNfo, f'basename_maker_{method}_season_x_episode')
     for x in KodiTvShowNfo.map_instances(iter_path()):
-        x.rename_all(m)
+        x.rename_all(m, more_se_pairs=more_se_pairs)
 
 
 @ap.sub()

@@ -67,13 +67,13 @@ class MatchWrapper:
     def __repr__(self):
         return f'{self.__class__.__name__} of {self.match!r}'
 
-    def all_groups(self):
+    def group_dict(self):
         r = {i: self.convert_type(gv) for i, gv in enumerate(self.groups(), start=1)}
         r[0] = self.convert_type(self.group(0)),
         r.update({k: self.convert_type(v) for k, v in self.groupdict().items()})
         return r
 
-    def pick(self, *index_or_names, **names_with_default):
+    def pick_group_dict(self, *index_or_names, **names_with_default):
         r = {}
         for i in index_or_names:
             try:
@@ -88,7 +88,7 @@ class MatchWrapper:
                 r[n] = self.convert_type(d)
         return r
 
-    def pick_existing(self, *index_or_names, **names_with_default):
+    def pick_existing_group_dict(self, *index_or_names, **names_with_default):
         r = {}
         for i in index_or_names:
             try:
