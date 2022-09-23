@@ -544,6 +544,9 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     elif 'worst' in keywords:
         codec = 'h'
         crf = crf or 31
+    elif 'bottom' in keywords:
+        codec = 'h'
+        crf = crf or 34
 
     codec_tag = CODEC_TAGS_DICT[f'{codec}']
     if 'qsv' in keywords and codec in ('a', 'h'):

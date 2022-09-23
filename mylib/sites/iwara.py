@@ -124,8 +124,9 @@ class IwaraImagePage:
         scheme = urlparse(self.url).scheme
         photos = []
         for i in h.cssselect('img'):
-            img_url = i.attrib['src']
-            if '/large/public/photos/' in img_url:
+            a = i.getparent()
+            img_url = a.attrib['href']
+            if '/files/photos/' in img_url:
                 photos.append(urlunparse(urlparse(img_url)._replace(scheme=scheme)))
         d[['resource', 'photos']] = photos
 

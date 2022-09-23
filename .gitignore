@@ -26,3 +26,4 @@ scpi_shell/extra_old.py
 scpi_shell/more-items.txt
 dotnetkit/**/*.cache
 dotnetkit/**/TemporaryGeneratedFile_*
+iwara images
