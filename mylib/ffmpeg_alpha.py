@@ -544,7 +544,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     elif 'worst' in keywords:
         codec = 'h'
         crf = crf or 31
-    elif 'bottom' in keywords:
+    elif 'worster' in keywords:
         codec = 'h'
         crf = crf or 34
 
