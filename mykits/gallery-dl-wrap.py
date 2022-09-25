@@ -242,7 +242,7 @@ def args2url(args):
         url = f'https://kemono.party/{pop_tag_from_args(args)}'
     else:
         url = first
-    if url.startswith('https://twitter.com/') and not url.endswith('/media'):
+    if url.startswith('https://twitter.com/') and '/status/' not in url and not url.endswith('/media'):
         url += '/media'
     url = url.replace('chan.sankakucomplex.com/cn/', 'chan.sankakucomplex.com/')
     return url
