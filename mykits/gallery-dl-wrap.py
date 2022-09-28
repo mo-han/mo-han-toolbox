@@ -104,7 +104,7 @@ def per_site(site_args: T.List[str]):
                'directory=["{search_tags} {category}"]',
                'filename="{category} {date!S:.10} {id} {md5} '
                '{tags_character!S:L80/___/} '
-               '©{tags_copyright!S:L40/___/} '
+               '${tags_copyright!S:L40/___/} '
                '@{tags_artist!S:L40/___/}'
                '.{extension}"', ]
         ),
@@ -133,7 +133,7 @@ def per_site(site_args: T.List[str]):
             'cookies-update=true', 'videos=true', 'tags=true',
             'filename="{category} {date!S:.10} {id} {md5} '
             '{tag_string_character!S:L80/___/} '
-            '©{tag_string_copyright!S:L40/___/} '
+            '${tag_string_copyright!S:L40/___/} '
             '@{tag_string_artist!S:L40/___/}'
             '.{extension}"',
         ]
@@ -157,8 +157,10 @@ def per_site(site_args: T.List[str]):
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
             'filename="{category} {created_at!S:.10} {id} {md5} '
-            '©{tags_photo_set!S:L80/___/} '
-            '@{tags_idol!S:L80/___/}.{extension}"',
+            '{tags_photo_set!S:L40/___/} '
+            '${tags_copyright!S:L40/___/} '
+            '@{tags_idol!S:L80/___/}'
+            '.{extension}"',
         ]
         args = [
             *GLDLCLIArgs(cookies=get_cookies_path('sankaku.idol'),
