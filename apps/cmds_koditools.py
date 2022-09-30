@@ -54,9 +54,11 @@ class KodiTvShowNfo:
 
     @staticmethod
     def sxe_str2tuple(s: str):
-        if not re.fullmatch(r'\d*x\d+'):
+        if not re.fullmatch(r'\d*x\d+', s):
             raise TypeError('SxE string, e.g. 2x03, x01')
-        s, e = ezdict.pick_to_list(re.MatchWrapper(re.match(r'(\d*)x(\d+)', s), [int]).all_groups(), )
+        s, e = ezdict.pick_to_list(re.MatchWrapper(re.match(r'(\d*)x(\d+)', s), [int]).group_dict(), 1, 2)
+        if s == '':
+            s = -1
         return s, e
 
     def __init__(self, fp):
@@ -136,11 +138,11 @@ class KodiTvShowNfo:
             return [f for f in os.listdir() if self._check_stem(f) and f != self.basename]
 
     def make_se_patterns(self, more_se_pairs: list = None):
-        se_pairs = more_se_pairs or []
         s = self.season
         e = self.episode
         ds = self.displayseason
         de = self.displayepisode
+        se_pairs = [(_s if _s > -1 else s, _e) for _s, _e in more_se_pairs or []]
         if s >= 0 and e > 0:
             se_pairs.append((s, e))
         if ds >= 0 and de > 0:
