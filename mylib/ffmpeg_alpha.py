@@ -484,7 +484,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
             ffmpeg_args.add(r=kw[3:])
             tags.append(kw)
         elif kw == 'vcopy':
-            ffmpeg_args.add(c__v='copy')
+            ffmpeg_args.add(c__V='copy')
         elif kw == 'acopy':
             ffmpeg_args.add(c__a='copy')
         elif kw == 'scopy':
@@ -557,11 +557,11 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     elif 'nvenc' in keywords and codec in ('a', 'h'):
         tags.append('nvenc')
         codec += 'nv'
-        ffmpeg_args.add(c__v=codecs_d[codec], cq=crf)
+        ffmpeg_args.add(c__V=codecs_d[codec], cq=crf)
         # ffmpeg_args.add(preset='slow')
         ffmpeg_args.add(preset='p5')
-        # ffmpeg_args.add(rc__v='vbr_hq')
-        ffmpeg_args.add(tune='hq', rc__v='vbr')
+        # ffmpeg_args.add(rc__V='vbr_hq')
+        ffmpeg_args.add(tune='hq', rc__V='vbr')
         # ffmpeg_args.add(bf=4, b_ref_mode=1, nonref_p=1)
         if crf is not None:
             ffmpeg_args.add(b__v=0)
@@ -638,9 +638,9 @@ def parse_kw_opt_str(kw: str):
     if kw[:3] == 'crf' and kw[3:].isdecimal():
         return FFmpegArgsList(crf=float(kw[3:]))
     if kw == 'hevc':
-        return FFmpegArgsList(c__v='hevc')
+        return FFmpegArgsList(c__V='hevc')
     if f'{kw[:1]}{kw[-1:]}'.lower() in ('vk', 'vm') and kw[1:-1].isdecimal():
-        return FFmpegArgsList(b__v=0 if kw[1:-1] == '0' else kw[1:])
+        return FFmpegArgsList(b__V=0 if kw[1:-1] == '0' else kw[1:])
     if f'{kw[:1]}{kw[-1:]}'.lower() in ('ak', 'am') and kw[1:-1].isdecimal():
         return FFmpegArgsList(b__a=0 if kw[1:-1] == '0' else kw[1:])
     if kw == '10bit':
@@ -1010,7 +1010,7 @@ class FFmpegSegmentsContainer:
         video_args.add(threads=4, vcodec='libvpx-vp9')
         vf = self.vf_res_scale_down(res_limit, vf)
         if not constrained_quality:
-            video_args.add(b__v=0)
+            video_args.add(b__V=0)
         video_args.add(crf=crf, vf=vf, **kwargs)
         conf[S_ORIGINAL]['video_args'] = video_args
         self.config(**conf[S_ORIGINAL])
