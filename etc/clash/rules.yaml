@@ -12,6 +12,7 @@ rule-set-name:
   - lancidr
   - cncidr
   - app-direct
+
 rules:
   - RULE-SET,applications,DIRECT
   - DOMAIN,clash.razord.top,DIRECT
