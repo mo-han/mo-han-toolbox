@@ -24,7 +24,7 @@ rules:
   - MATCH,PROXY
 
 proxy-providers:
-
+  aiboboxx/clashfree:
 
 rule-providers:
   reject:
