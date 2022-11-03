@@ -41,17 +41,17 @@ rule-providers:
     path: ./ruleset/icloud.yaml
     interval: 86400
 
-
-
-
-
-
-  googleincn-notrecommended:
+  google-:
     type: http
     behavior: domain
     url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/google.txt"
     path: ./ruleset/google.yaml
     interval: 86400
+
+
+
+
+
 
   gfw:
     type: http
