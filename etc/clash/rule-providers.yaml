@@ -20,6 +20,15 @@ rule-providers:
     path: ./ruleset/reject.yaml
     interval: 86400
 
+  private:
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/private.txt"
+    path: ./ruleset/private.yaml
+    interval: 86400
+
+
+
   icloud:
     type: http
     behavior: domain
@@ -39,13 +48,6 @@ rule-providers:
     behavior: domain
     url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/google.txt"
     path: ./ruleset/google.yaml
-    interval: 86400
-
-  private:
-    type: http
-    behavior: domain
-    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/private.txt"
-    path: ./ruleset/private.yaml
     interval: 86400
 
   gfw:
