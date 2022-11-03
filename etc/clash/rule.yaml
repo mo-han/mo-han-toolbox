@@ -1,4 +1,5 @@
 rules:
+  - RULE-SET,apps_direct,DIRECT
   - DOMAIN,clash.razord.top,DIRECT
   - DOMAIN,yacd.haishan.me,DIRECT
   - RULE-SET,private,DIRECT
@@ -11,9 +12,8 @@ rules:
   - RULE-SET,tld-not-cn,PROXY
 
   - RULE-SET,direct,DIRECT
-  - RULE-SET,lancidr,DIRECT
   - RULE-SET,cncidr,DIRECT
-  - RULE-SET,app_direct,DIRECT
+  - RULE-SET,lancidr,DIRECT
   - RULE-SET,icloud,DIRECT
   - RULE-SET,apple_china,DIRECT
   - GEOIP,LAN,DIRECT
@@ -113,7 +113,7 @@ rule-providers:
     path: ./ruleset/lancidr.yaml
     interval: 86400
 
-  app_direct:
+  apps_direct:
     type: http
     behavior: classical
     url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/applications.txt"
