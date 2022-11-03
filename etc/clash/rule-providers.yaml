@@ -34,17 +34,17 @@ rule-providers:
     path: ./ruleset/apple.yaml
     interval: 86400
 
-
-
-
-
-
   icloud:
     type: http
     behavior: domain
     url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/icloud.txt"
     path: ./ruleset/icloud.yaml
     interval: 86400
+
+
+
+
+
 
   googleincn-notrecommended:
     type: http
