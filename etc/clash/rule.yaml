@@ -3,17 +3,19 @@ rules:
 
   - RULE-SET,proxy,PROXY
   - RULE-SET,gfwlist,PROXY
+  - RULE-SET,greatfire,PROXY
   - RULE-SET,telegramcidr,PROXY
+  - RULE-SET,tld-not-cn,PROXY
 
   - RULE-SET,direct,DIRECT
   - RULE-SET,private,DIRECT
-  - RULE-SET,icloud,DIRECT
-  - RULE-SET,app_direct,DIRECT
-  - DOMAIN,clash.razord.top,DIRECT
-  - DOMAIN,yacd.haishan.me,DIRECT
-  - RULE-SET,apple_china,DIRECT
   - RULE-SET,lancidr,DIRECT
   - RULE-SET,cncidr,DIRECT
+  - RULE-SET,app_direct,DIRECT
+  - RULE-SET,icloud,DIRECT
+  - RULE-SET,apple_china,DIRECT
+  - DOMAIN,clash.razord.top,DIRECT
+  - DOMAIN,yacd.haishan.me,DIRECT
   - GEOIP,LAN,DIRECT
   - GEOIP,CN,DIRECT
 
