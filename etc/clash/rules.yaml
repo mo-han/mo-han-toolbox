@@ -5,7 +5,8 @@ rule-set-name:
   - private
   - apple
   - icloud
-  - google-
+  - google-direct
+  - 
 rules:
   - RULE-SET,applications,DIRECT
   - DOMAIN,clash.razord.top,DIRECT
