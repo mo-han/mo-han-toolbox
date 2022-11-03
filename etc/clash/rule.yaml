@@ -5,8 +5,7 @@ rules:
   - RULE-SET,private,DIRECT
   - RULE-SET,reject,REJECT
   - RULE-SET,icloud,DIRECT
-  - RULE-SET,apple,DIRECT
-  - RULE-SET,google,DIRECT
+  - RULE-SET,apple_china,DIRECT
   - RULE-SET,proxy,PROXY
   - RULE-SET,direct,DIRECT
   - RULE-SET,lancidr,DIRECT
@@ -31,14 +30,14 @@ rule-providers:
     path: ./ruleset/icloud.yaml
     interval: 86400
 
-  apple-china:
+  apple_china:
     type: http
     behavior: domain
     url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/apple.txt"
     path: ./ruleset/apple.yaml
     interval: 86400
 
-  google-accessible-in-china-but-not-recommended:
+  google_accessible_in_china_but_not_recommended:
     type: http
     behavior: domain
     url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/google.txt"
@@ -108,7 +107,7 @@ rule-providers:
     path: ./ruleset/lancidr.yaml
     interval: 86400
 
-  app-direct:
+  app_direct:
     type: http
     behavior: classical
     url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/applications.txt"
