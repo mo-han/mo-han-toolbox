@@ -1,18 +1,21 @@
 rules:
+  - RULE-SET,reject,REJECT
+
+  - RULE-SET,proxy,PROXY
+  - RULE-SET,telegramcidr,PROXY
+
+  - RULE-SET,direct,DIRECT
+  - RULE-SET,icloud,DIRECT
   - RULE-SET,app_direct,DIRECT
   - DOMAIN,clash.razord.top,DIRECT
   - DOMAIN,yacd.haishan.me,DIRECT
   - RULE-SET,private,DIRECT
-  - RULE-SET,reject,REJECT
-  - RULE-SET,icloud,DIRECT
   - RULE-SET,apple_china,DIRECT
-  - RULE-SET,proxy,PROXY
-  - RULE-SET,direct,DIRECT
   - RULE-SET,lancidr,DIRECT
   - RULE-SET,cncidr,DIRECT
-  - RULE-SET,telegramcidr,PROXY
   - GEOIP,LAN,DIRECT
   - GEOIP,CN,DIRECT
+
   - MATCH,PROXY
 
 rule-providers:
