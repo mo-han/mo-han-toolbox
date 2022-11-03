@@ -1,6 +1,6 @@
 rule-set-name:
-  - reject
-  -   
+  - direct
+  - 
 rules:
   - RULE-SET,applications,DIRECT
   - DOMAIN,clash.razord.top,DIRECT
