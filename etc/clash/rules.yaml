@@ -3,7 +3,9 @@ rule-set-name:
   - proxy
   - reject
   - private
-  - 
+  - apple
+  - icloud
+  
 rules:
   - RULE-SET,applications,DIRECT
   - DOMAIN,clash.razord.top,DIRECT
