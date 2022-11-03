@@ -1,7 +1,9 @@
 rule-set-name:
   - direct
   - proxy
-  - reje
+  - reject
+  - private
+  - 
 rules:
   - RULE-SET,applications,DIRECT
   - DOMAIN,clash.razord.top,DIRECT
