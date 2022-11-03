@@ -8,7 +8,8 @@ rule-set-name:
   - google-direct
   - gfwlist
   - greatfire
-  
+  - tld-no-cn
+  - 
 rules:
   - RULE-SET,applications,DIRECT
   - DOMAIN,clash.razord.top,DIRECT
