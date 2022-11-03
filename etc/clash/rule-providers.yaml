@@ -20,7 +20,7 @@ rule-providers:
     path: ./ruleset/apple.yaml
     interval: 86400
 
-  googleincn-not:
+  googleincn-notrecom:
     type: http
     behavior: domain
     url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/google.txt"
