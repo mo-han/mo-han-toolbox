@@ -9,7 +9,8 @@ rule-set-name:
   - gfwlist
   - greatfire
   - tld-no-cn
-  - 
+  - lancidr
+  
 rules:
   - RULE-SET,applications,DIRECT
   - DOMAIN,clash.razord.top,DIRECT
