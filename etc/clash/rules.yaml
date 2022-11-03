@@ -10,7 +10,8 @@ rule-set-name:
   - greatfire
   - tld-no-cn
   - lancidr
-  
+  - cncidr
+  - app
 rules:
   - RULE-SET,applications,DIRECT
   - DOMAIN,clash.razord.top,DIRECT
