@@ -1,6 +1,7 @@
 rules:
   - DOMAIN,clash.razord.top,DIRECT
   - DOMAIN,yacd.haishan.me,DIRECT
+  - RULE-SET,private,DIRECT
   - RULE-SET,reject,REJECT
 
   - RULE-SET,proxy,PROXY
@@ -10,7 +11,6 @@ rules:
   - RULE-SET,tld-not-cn,PROXY
 
   - RULE-SET,direct,DIRECT
-  - RULE-SET,private,DIRECT
   - RULE-SET,lancidr,DIRECT
   - RULE-SET,cncidr,DIRECT
   - RULE-SET,app_direct,DIRECT
