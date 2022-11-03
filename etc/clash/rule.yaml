@@ -26,9 +26,9 @@ rules:
 proxy-providers:
   aiboboxx/clashfree:
     type: http
-    url: "url"
+    url: "https://raw.githubusercontent.com/aiboboxx/clashfree/main/clash.yml"
     interval: 3600
-    path: ./provider1.yaml
+    path: ./aiboboxx/clashfree.yaml
     health-check:
       enable: true
       interval: 600
