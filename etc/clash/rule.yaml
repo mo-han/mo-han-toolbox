@@ -1,5 +1,6 @@
 rules:
-  - RULE-SET,my_direct,DIRECT
+  - RULE-SET,custom_proxy,PROXY
+  - RULE-SET,custom_direct,DIRECT
   - RULE-SET,apps_direct,DIRECT
   - DOMAIN,clash.razord.top,DIRECT
   - DOMAIN,yacd.haishan.me,DIRECT
