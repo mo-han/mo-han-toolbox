@@ -1,0 +1,17 @@
+rules:
+  - RULE-SET,applications,DIRECT
+  - DOMAIN,clash.razord.top,DIRECT
+  - DOMAIN,yacd.haishan.me,DIRECT
+  - RULE-SET,private,DIRECT
+  - RULE-SET,reject,REJECT
+  - RULE-SET,icloud,DIRECT
+  - RULE-SET,apple,DIRECT
+  - RULE-SET,google,DIRECT
+  - RULE-SET,proxy,PROXY
+  - RULE-SET,direct,DIRECT
+  - RULE-SET,lancidr,DIRECT
+  - RULE-SET,cncidr,DIRECT
+  - RULE-SET,telegramcidr,PROXY
+  - GEOIP,LAN,DIRECT
+  - GEOIP,CN,DIRECT
+  - MATCH,PROXY
