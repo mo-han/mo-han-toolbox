@@ -1,20 +1,5 @@
-rule-set-name:
-  - direct
-  - proxy
-  - reject
-  - private
-  - apple
-  - icloud
-  - google-direct
-  - gfwlist
-  - greatfire
-  - tld-no-cn
-  - lancidr
-  - cncidr
-  - app-direct
-
 rules:
-  - RULE-SET,applications,DIRECT
+  - RULE-SET,app-direct,DIRECT
   - DOMAIN,clash.razord.top,DIRECT
   - DOMAIN,yacd.haishan.me,DIRECT
   - RULE-SET,private,DIRECT
