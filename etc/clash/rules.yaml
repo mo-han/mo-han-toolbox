@@ -6,7 +6,7 @@ rule-set-name:
   - apple
   - icloud
   - google-direct
-  - gfw
+  - gfwlist
   - 
 rules:
   - RULE-SET,applications,DIRECT
