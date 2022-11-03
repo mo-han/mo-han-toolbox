@@ -23,6 +23,9 @@ rules:
 
   - MATCH,PROXY
 
+proxy-providers:
+
+
 rule-providers:
   reject:
     type: http
