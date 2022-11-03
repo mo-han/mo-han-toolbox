@@ -1,4 +1,5 @@
 rules:
+
   - RULE-SET,apps_direct,DIRECT
   - DOMAIN,clash.razord.top,DIRECT
   - DOMAIN,yacd.haishan.me,DIRECT
@@ -16,8 +17,8 @@ rules:
   - RULE-SET,lancidr,DIRECT
   - RULE-SET,icloud,DIRECT
   - RULE-SET,apple_china,DIRECT
-  - GEOIP,CN,DIRECT
   - GEOIP,LAN,DIRECT
+  - GEOIP,CN,DIRECT
 
   - MATCH,PROXY
 
