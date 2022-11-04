@@ -4,11 +4,11 @@ proxy-providers:
     url: "https://raw.githubusercontent.com/aiboboxx/clashfree/main/clash.yml"
     interval: 3600
     path: ./proxy-provider/aiboboxx/clashfree.yaml
-    health-check:
-      enable: true
-      interval: 600
-      # lazy: true
-      url: http://www.gstatic.com/generate_204
+    # health-check:
+    #   enable: true
+    #   interval: 600
+    #   # lazy: true
+    #   url: http://www.gstatic.com/generate_204
 
 proxy-groups:
   - name: PROXY
