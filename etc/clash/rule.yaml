@@ -34,6 +34,7 @@ rule-providers:
     type: http
     behavior: domain
     # url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/reject.txt"
+    url: https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/reject.txt
     path: ./ruleset/reject.yaml
     interval: 86400
 
@@ -41,6 +42,7 @@ rule-providers:
     type: http
     behavior: domain
     # url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/icloud.txt"
+    url: 
     path: ./ruleset/icloud.yaml
     interval: 86400
 
