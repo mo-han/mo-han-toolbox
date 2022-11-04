@@ -76,6 +76,7 @@ rule-providers:
     type: http
     behavior: domain
     # url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/google.txt"
+    url: https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/google.txt
     path: ./ruleset/google.yaml
     interval: 86400
   gfwlist:
