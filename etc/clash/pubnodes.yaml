@@ -1,0 +1,57 @@
+proxy-providers:
+  aiboboxx/clashfree:
+    type: http
+    url: https://raw.githubusercontent.com/aiboboxx/clashfree/main/clash.yml
+    interval: 21600
+    path: ./proxy-provider/aiboboxx/clashfree.yaml
+    health-check:
+      enable: true
+      interval: 60
+      lazy: true
+      url: http://www.gstatic.com/generate_204
+  Pawdroid/Free-servers@api.dler.io/sub:
+    type: http
+    # https://9527521.xyz/pubconfig/2tD4xMbQTo9zwpYN
+    url: https://api.dler.io/sub?target=clash&new_name=true&url=https%3A%2F%2F9527521.xyz%2Fpubconfig%2F2tD4xMbQTo9zwpYN&insert=true&config=https%3A%2F%2Fraw.githubusercontent.com%2FACL4SSR%2FACL4SSR%2Fmaster%2FClash%2Fconfig%2FACL4SSR_Online.ini&append_type=true&emoji=true&list=true&tfo=false&scv=false&fdn=true&sort=true&udp=true&surge.doh=true
+    interval: 21600
+    path: ./proxy-provider/Pawdroid/Free-servers.yaml
+    health-check:
+      enable: true
+      interval: 60
+      lazy: true
+      url: http://www.gstatic.com/generate_204
+  freefq/free@api.dler.io/sub:
+    type: http
+    # freefq/free
+    url: https://api.dler.io/sub?target=clash&new_name=true&url=https%3A%2F%2Fgithub.com%2Ffreefq%2Ffree%2Fraw%2Fmaster%2Fv2&insert=true&config=https%3A%2F%2Fraw.githubusercontent.com%2FACL4SSR%2FACL4SSR%2Fmaster%2FClash%2Fconfig%2FACL4SSR_Online.ini&append_type=true&emoji=true&list=true&tfo=false&scv=false&fdn=true&sort=true&udp=true&surge.doh=true
+    interval: 21600
+    path: ./proxy-provider/freefq/free.yaml
+    health-check:
+      enable: true
+      interval: 60
+      lazy: true
+      url: http://www.gstatic.com/generate_204
+
+proxy-groups:
+  - name: PROXY
+    type: select
+    proxies:
+      - DIRECT
+      - 共享节点聚合
+      - 共享节点聚合 (auto)
+  - name: 共享节点聚合 (auto)
+    type: url-test
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+    tolerance: 300
+    use:
+      - aiboboxx/clashfree
+      - Pawdroid/Free-servers@api.dler.io/sub
+      - freefq/free@api.dler.io/sub
+  - name: 共享节点聚合
+    type: select
+    url: http://www.gstatic.com/generate_204
+    use:
+      - aiboboxx/clashfree
+      - Pawdroid/Free-servers@api.dler.io/sub
+      - freefq/free@api.dler.io/sub
