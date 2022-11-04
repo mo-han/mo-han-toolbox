@@ -16,13 +16,16 @@ proxy-groups:
     proxies:
       - aiboboxx/clashfree
   - name: aiboboxx/clashfree (auto)
+    use:
+      - aiboboxx/clashfree
     type: url-test
-    use:
-      - aiboboxx/clashfree
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+    tolerance: 250
   - name: aiboboxx/clashfree
-    type: select
     use:
       - aiboboxx/clashfree
+    type: select
 
 rule-providers:
   reject:
