@@ -132,6 +132,7 @@ rule-providers:
     type: http
     behavior: classical
     # url: "https://cdn.jsdelivr.net/gh/mo-han/mo-han-toolbox/etc/clash/custom_direct.yaml"
+    url: https://github.com/mo-han/mo-han-toolbox/raw/master/etc/clash/custom_direct.yaml
     path: ./ruleset/custom_direct.yaml
     interval: 86400
   custom_proxy:
