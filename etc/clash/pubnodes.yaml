@@ -22,7 +22,7 @@ proxy-providers:
       url: http://www.gstatic.com/generate_204
   freefq/free@api.dler.io/sub:
     type: http
-    # https://github.com/freefq/free/raw/master/v2
+    # https://raw.githubusercontent.com/freefq/free/master/v2
     url: https://api.dler.io/sub?target=clash&new_name=true&url=https%3A%2F%2Fgithub.com%2Ffreefq%2Ffree%2Fraw%2Fmaster%2Fv2&insert=true&config=https%3A%2F%2Fraw.githubusercontent.com%2FACL4SSR%2FACL4SSR%2Fmaster%2FClash%2Fconfig%2FACL4SSR_Online.ini&append_type=true&emoji=true&list=true&tfo=false&scv=false&fdn=true&sort=true&udp=true&surge.doh=true
     interval: 21600
     path: ./proxy-provider/freefq/free.yaml
