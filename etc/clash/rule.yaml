@@ -6,8 +6,8 @@ proxy-providers:
     path: ./proxy-provider/aiboboxx/clashfree.yaml
     health-check:
       enable: true
-      interval: 300
-      # lazy: true
+      interval: 60
+      lazy: true
       url: http://www.gstatic.com/generate_204
 
 proxy-groups:
