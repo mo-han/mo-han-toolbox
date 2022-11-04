@@ -85,7 +85,8 @@ class MyAssistantBot(EasyBot):
                 new_args_ll = []
                 for args_l in args_ll[1:]:
                     if 'pornhub.com' in args_l[0]:
-                        new_args_ll.append(args_l + ['-f', f'[format_id!*=hls][height<=?{line0[1:-1]}]'])
+                        new_args_ll.append(
+                            args_l + ['-f', f'[format_id!*=hls][height<=?{line0[1:-1]}]/[height<=?{line0[1:-1]}]'])
                     else:
                         new_args_ll.append(args_l + ['-f', f'[height<=?{line0[1:-1]}]'])
                 args_ll = new_args_ll
@@ -99,7 +100,7 @@ class MyAssistantBot(EasyBot):
         args = [re.sub(r'\[(ph[\da-f]{13})]', r'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in args]
         args_s = ' '.join([shlex.quote(a) for a in args])
         retry_frozen = ytdl_retry_frozen
-        if any(map(lambda s: s in args[0], ('youtu.be', 'youtube.com'))):
+        if any(map(lambda s: s in args[0], ('youtu.be', 'youtube.com',))):
             retry_frozen = yt_dlp_retry_frozen
         try:
             p, out, err = retry_frozen(*args)
