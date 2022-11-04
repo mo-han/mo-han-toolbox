@@ -69,6 +69,7 @@ rule-providers:
     type: http
     behavior: domain
     # url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/icloud.txt"
+    url: https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/icloud.txt
     url:
     path: ./ruleset/icloud.yaml
     interval: 86400
