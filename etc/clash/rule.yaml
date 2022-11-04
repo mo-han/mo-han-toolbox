@@ -1,7 +1,7 @@
 proxy-providers:
   aiboboxx/clashfree:
     type: http
-    url: "https://raw.githubusercontent.com/aiboboxx/clashfree/main/clash.yml"
+    url: https://raw.githubusercontent.com/aiboboxx/clashfree/main/clash.yml
     interval: 86400
     path: ./proxy-provider/aiboboxx/clashfree.yaml
     health-check:
