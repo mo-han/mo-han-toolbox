@@ -28,6 +28,7 @@ proxy-groups:
     use:
       - aiboboxx/clashfree
     type: select
+    url: http://www.gstatic.com/generate_204
 
 rule-providers:
   direct:
