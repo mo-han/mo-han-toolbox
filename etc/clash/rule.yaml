@@ -139,6 +139,7 @@ rule-providers:
     type: http
     behavior: classical
     # url: "https://cdn.jsdelivr.net/gh/mo-han/mo-han-toolbox/etc/clash/custom_proxy.yaml"
+    url: https://github.com/mo-han/mo-han-toolbox/raw/master/etc/clash/custom_proxy.yaml
     path: ./ruleset/custom_proxy.yaml
     interval: 86400
 
