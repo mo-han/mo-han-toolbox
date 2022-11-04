@@ -75,13 +75,13 @@ rule-providers:
     url: 
     path: ./ruleset/icloud.yaml
     interval: 86400
-
   google_accessible_in_china_but_not_recommended:
     type: http
     behavior: domain
     # url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/google.txt"
     path: ./ruleset/google.yaml
     interval: 86400
+
 
   gfwlist:
     type: http
