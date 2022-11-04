@@ -1,28 +1,3 @@
-rules:
-  - RULE-SET,custom_proxy,PROXY
-  - RULE-SET,custom_direct,DIRECT
-  - RULE-SET,apps_direct,DIRECT
-  - DOMAIN,clash.razord.top,DIRECT
-  - DOMAIN,yacd.haishan.me,DIRECT
-  - RULE-SET,private,DIRECT
-  - RULE-SET,reject,REJECT
-
-  - RULE-SET,proxy,PROXY
-  - RULE-SET,gfwlist,PROXY
-  - RULE-SET,greatfire,PROXY
-  - RULE-SET,telegramcidr,PROXY
-  - RULE-SET,tld-not-cn,PROXY
-
-  - RULE-SET,direct,DIRECT
-  - RULE-SET,cncidr,DIRECT
-  - RULE-SET,lancidr,DIRECT
-  - RULE-SET,icloud,DIRECT
-  - RULE-SET,apple_china,DIRECT
-  - GEOIP,LAN,DIRECT
-  - GEOIP,CN,DIRECT
-
-  - MATCH,PROXY
-
 proxy-providers:
   aiboboxx/clashfree:
     type: http
@@ -34,6 +9,16 @@ proxy-providers:
       interval: 600
       # lazy: true
       url: http://www.gstatic.com/generate_204
+
+proxy-groups:
+  - name: PROXY
+    type: select
+    proxies:
+      - aiboboxx/clashfree
+  - name: aiboboxx/clashfree
+    type: url-test
+    use:
+      - aiboboxx/clashfree
 
 rule-providers:
   reject:
@@ -148,3 +133,27 @@ rule-providers:
     path: ./ruleset/custom_proxy.yaml
     interval: 86400
 
+rules:
+  - RULE-SET,custom_proxy,PROXY
+  - RULE-SET,custom_direct,DIRECT
+  - RULE-SET,apps_direct,DIRECT
+  - DOMAIN,clash.razord.top,DIRECT
+  - DOMAIN,yacd.haishan.me,DIRECT
+  - RULE-SET,private,DIRECT
+  - RULE-SET,reject,REJECT
+
+  - RULE-SET,proxy,PROXY
+  - RULE-SET,gfwlist,PROXY
+  - RULE-SET,greatfire,PROXY
+  - RULE-SET,telegramcidr,PROXY
+  - RULE-SET,tld-not-cn,PROXY
+
+  - RULE-SET,direct,DIRECT
+  - RULE-SET,cncidr,DIRECT
+  - RULE-SET,lancidr,DIRECT
+  - RULE-SET,icloud,DIRECT
+  - RULE-SET,apple_china,DIRECT
+  - GEOIP,LAN,DIRECT
+  - GEOIP,CN,DIRECT
+
+  - MATCH,PROXY
