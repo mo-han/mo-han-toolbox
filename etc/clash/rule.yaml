@@ -60,6 +60,13 @@ rule-providers:
     # url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/private.txt"
     path: ./ruleset/private.yaml
     interval: 86400
+  apple_china:
+    type: http
+    behavior: domain
+    # url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/apple.txt"
+    path: ./ruleset/apple.yaml
+    interval: 86400
+
 
   icloud:
     type: http
@@ -67,13 +74,6 @@ rule-providers:
     # url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/icloud.txt"
     url: 
     path: ./ruleset/icloud.yaml
-    interval: 86400
-
-  apple_china:
-    type: http
-    behavior: domain
-    # url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/apple.txt"
-    path: ./ruleset/apple.yaml
     interval: 86400
 
   google_accessible_in_china_but_not_recommended:
