@@ -14,6 +14,7 @@ proxy-groups:
   - name: PROXY
     type: select
     proxies:
+      - DIRECT
       - aiboboxx/clashfree
       - aiboboxx/clashfree (auto)
   - name: aiboboxx/clashfree (auto)
