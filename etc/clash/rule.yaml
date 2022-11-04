@@ -111,6 +111,7 @@ rule-providers:
     type: http
     behavior: ipcidr
     # url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/lancidr.txt"
+    url: https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/lancidr.txt
     path: ./ruleset/lancidr.yaml
     interval: 86400
   cncidr:
