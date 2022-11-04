@@ -18,17 +18,17 @@ proxy-groups:
       - aiboboxx/clashfree
       - aiboboxx/clashfree (auto)
   - name: aiboboxx/clashfree (auto)
-    use:
-      - aiboboxx/clashfree
     type: url-test
     url: http://www.gstatic.com/generate_204
     interval: 300
     tolerance: 300
-  - name: aiboboxx/clashfree
     use:
       - aiboboxx/clashfree
+  - name: aiboboxx/clashfree
     type: select
     url: http://www.gstatic.com/generate_204
+    use:
+      - aiboboxx/clashfree
 
 rule-providers:
   direct:
