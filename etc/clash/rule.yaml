@@ -2,6 +2,15 @@ proxy-groups:
 - name: SELECT
   type: select
   proxies: []
+- name: URL-TEST
+  type: url-test
+  proxies: []
+- name: FALLBACK
+  type: fallback
+  proxies: []
+- name: PROXY
+  type: select
+  proxies: [DIRECT, SELECT, URL-TEST, FALLBACK]
 
 
 rule-providers:
