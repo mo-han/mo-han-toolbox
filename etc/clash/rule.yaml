@@ -1,3 +1,6 @@
+proxy-groups:
+
+
 rule-providers:
   direct:
     type: http
