@@ -4,13 +4,13 @@ proxy-groups:
     proxies: [SELECT, URL-TEST, FALLBACK, DIRECT]
   - name: SELECT
     type: select
-    proxies: []
+    use: []
   - name: URL-TEST
     type: url-test
-    proxies: []
+    use: []
   - name: FALLBACK
     type: fallback
-    proxies: []
+    use: []
 
 rule-providers:
   direct:
