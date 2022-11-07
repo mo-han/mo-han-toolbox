@@ -1,6 +1,6 @@
 proxy-groups:
-- SELECT
-  
+- name: SELECT
+
 
 rule-providers:
   direct:
