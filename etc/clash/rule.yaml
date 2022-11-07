@@ -10,7 +10,7 @@ proxy-groups:
   proxies: []
 - name: PROXY
   type: select
-  proxies: [DIRECT, SELECT, URL-TEST, FALLBACK]
+  proxies: [DIRECT, SELECT, URL-TEST, FAL]
 
 
 rule-providers:
