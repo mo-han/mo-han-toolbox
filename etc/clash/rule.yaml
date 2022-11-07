@@ -4,7 +4,6 @@ proxy-groups:
     proxies: [SELECT, URL-TEST, FALLBACK, DIRECT]
   - name: SELECT
     type: select
-    url: 'http://www.gstatic.com/generate_204'
     use: []
   - name: URL-TEST
     type: url-test
