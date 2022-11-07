@@ -1,5 +1,6 @@
 proxy-groups:
-
+- SELECT
+  
 
 rule-providers:
   direct:
