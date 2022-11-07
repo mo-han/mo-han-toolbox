@@ -1,5 +1,7 @@
 proxy-groups:
 - name: SELECT
+  type: select
+  
 
 
 rule-providers:
