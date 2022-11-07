@@ -5,6 +5,7 @@ proxy-groups:
   - name: SELECT
     type: select
     use: []
+    tolerance: 150
     url: 'http://www.gstatic.com/generate_204'
     interval: 60
   - name: URL-TEST
