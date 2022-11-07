@@ -4,15 +4,18 @@ proxy-groups:
     proxies: [SELECT, URL-TEST, FALLBACK, DIRECT]
   - name: SELECT
     type: select
-    use: []
-    tolerance: 150
     url: 'http://www.gstatic.com/generate_204'
-    interval: 60
+    use: []
   - name: URL-TEST
     type: url-test
+    url: 'http://www.gstatic.com/generate_204'
+    interval: 60
+    tolerance: 150
     use: []
   - name: FALLBACK
     type: fallback
+    url: 'http://www.gstatic.com/generate_204'
+    interval: 60
     use: []
 
 rule-providers:
