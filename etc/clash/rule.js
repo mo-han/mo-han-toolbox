@@ -33,17 +33,19 @@ function main(config) {
       proxies: [],
     },
   ];
-  config[proxy_groups_key].filter(group => group.name !== 'PROXY').forEach(group => {
-    if (proxy_providers_key in config) {
-      Object.keys(config[proxy_providers_key]).forEach(provider_name => {
-        group.use.push(provider_name);
-      });
-    }
-    if (proxies_key in config) {
-      config[proxies_key].forEach(proxy => {
-        group.proxies.push(proxy.name);
-      });
-    }
-  });
+  config[proxy_groups_key]
+    .filter((group) => group.name !== "PROXY")
+    .forEach((group) => {
+      if (proxy_providers_key in config) {
+        Object.keys(config[proxy_providers_key]).forEach((provider_name) => {
+          group.use.push(provider_name);
+        });
+      }
+      if (proxies_key in config) {
+        config[proxies_key].forEach((proxy) => {
+          group.proxies.push(proxy.name);
+        });
+      }
+    });
   return config;
 }
