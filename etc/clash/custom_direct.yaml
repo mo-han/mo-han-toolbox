@@ -1,3 +1,4 @@
 payload:
   - DOMAIN-SUFFIX,hath.network
   - DOMAIN-SUFFIX,mozilla.org
+  - DOMAIN-SUFFIX,mozilla.com
