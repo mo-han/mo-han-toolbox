@@ -32,7 +32,7 @@ rule-providers:
     behavior: domain
     # url: https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/apple.txt
     url: https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/apple.txt
-    path: ./ruleset/apple.yaml
+    path: ./ruleset/apple_china.yaml
     interval: 86400
   icloud:
     type: http
