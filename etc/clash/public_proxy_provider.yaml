@@ -1,7 +1,7 @@
 proxy-providers:
   aiboboxx/clashfree:
     type: http
-    url: https://raw.githubusercontent.com/aiboboxx/clashfree/main/clash.yml
+    # https://raw.githubusercontent.com/aiboboxx/clashfree/main/clash.yml
     url: https://api.dler.io/sub?target=clash&new_name=true&url=https%3A%2F%2Fraw.githubusercontent.com%2Faiboboxx%2Fclashfree%2Fmain%2Fclash.yml&insert=false&config=https%3A%2F%2Fraw.githubusercontent.com%2FACL4SSR%2FACL4SSR%2Fmaster%2FClash%2Fconfig%2FACL4SSR_Online.ini&exclude=%E6%9B%B4%E5%A4%9A%E5%85%8D%E8%B4%B9%E9%AB%98%E9%80%9Fv2ray%E3%80%81clash%E8%8A%82%E7%82%B9&emoji=true&list=true&tfo=false&scv=false&fdn=false&sort=false
     interval: 21600
     path: ./proxy-provider/aiboboxx-clashfree.yaml
