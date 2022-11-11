@@ -98,28 +98,50 @@ def per_site(site_args: T.List[str]):
                                 '{extension}"', ]),
                 *site_args, url]
     elif 'gelbooru.com' in url:
-        args = [*GLDLCLIArgs(
-            cookies=get_cookies_path('gelbooru'),
-            o=['cookies-update=true', 'videos=true', 'tags=true',
-               'directory=["{search_tags} {category}"]',
-               'filename="{category} {date!S:.10} {id} {md5} '
-               '{tags_character!S:L80/___/} '
-               '${tags_copyright!S:L40/___/} '
-               '@{tags_artist!S:L40/___/}'
-               '.{extension}"', ]
-        ),
-                *site_args, url]
+        options = [
+            'cookies-update=true', 'videos=true', 'tags=true',
+            'filename="{category} {date!S:.10} {id} {md5} '
+            '{tags_character!S:L80/___/} '
+            '${tags_copyright!S:L40/___/} '
+            '@{tags_artist!S:L80/___/}'
+            '.{extension}"',
+        ]
+        args = [
+            *GLDLCLIArgs(o=[*options, 'directory=["{search_tags} {category}"]']),
+            *site_args, url
+        ]
+        if site_args:
+            pq_arg, *site_args = site_args
+            if pq_arg.startswith('pq'):
+                num = int(pq_arg[2:])
+                tags_s = url.split('/?tags=', maxsplit=1)[-1].strip()
+                gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} {pq_arg}"]'])
+                args = MultiList([
+                    [*gldl_args, *site_args, '--range', f'-{num}', url + ' sort:score'],
+                ])
+
     elif 'realbooru.com' in url:
-        args = [*GLDLCLIArgs(
-            # cookies=get_cookies_path('realbooru'),
-            o=[
-                'cookies-update=true', 'videos=true', 'tags=true',
-                'directory=["{search_tags} {category}"]',
-                'filename="{category} {date!S:.10} {id} {md5} '
-                '{search_tags!S:.80}.{extension}"'
-            ]
-        ),
-                *site_args, url]
+        options = [
+            'cookies-update=true', 'videos=true', 'tags=true',
+            'filename="{category} {date!S:.10} {id} {md5} '
+            '${tags_copyright!S:L40/___/} '
+            '@{tags_model!S:L80/___/} '
+            '.{extension}"',
+        ]
+        args = [
+            *GLDLCLIArgs(o=[*options, 'directory=["{search_tags} {category}"]']),
+            *site_args, url
+        ]
+        if site_args:
+            pq_arg, *site_args = site_args
+            if pq_arg.startswith('pq'):
+                num = int(pq_arg[2:])
+                tags_s = url.split('/?tags=', maxsplit=1)[-1].strip()
+                gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} {pq_arg}"]'])
+                args = MultiList([
+                    [*gldl_args, *site_args, '--range', f'-{num}', url + ' sort:score'],
+                ])
+
     elif 'rule34.xxx' in url:
         args = [*GLDLCLIArgs(
             o=['cookies-update=true', 'videos=true', 'tags=true',
@@ -222,11 +244,19 @@ def args2url(args):
         url = f'https://twitter.com/{args.pop(0).lstrip("@")}/media'
     elif first == 'danbooru':
         url = f'https://danbooru.donmai.us/posts?tags={pop_tag_from_args(args)}'
-    elif first == 'gelbooru':
-        url = f'https://gelbooru.com/index.php?page=post&s=list&tags={pop_tag_from_args(args)}'
-    elif first == 'realbooru':
-        url = f'https://realbooru.com/index.php?page=post&s=list&tags={pop_tag_from_args(args)}'
-    elif first == 'sankaku':
+    elif first in ('gelbooru', 'gel'):
+        x = pop_tag_from_args(args)
+        if x.isdigit():
+            url = f'https://gelbooru.com/index.php?page=post&s=view&id={x}'
+        else:
+            url = f'https://gelbooru.com/index.php?page=post&s=list&tags={x}'
+    elif first in ('realbooru', 'real'):
+        x = pop_tag_from_args(args)
+        if x.isdigit():
+            url = f'https://realbooru.com/index.php?page=post&s=view&id={x}'
+        else:
+            url = f'https://realbooru.com/index.php?page=post&s=list&tags={x}'
+    elif first in ('sankaku', 'chan'):
         x = pop_tag_from_args(args)
         if x.isdigit():
             url = f'https://chan.sankakucomplex.com/post/show/{x}'
