@@ -114,7 +114,7 @@ def per_site(site_args: T.List[str]):
             pq_arg, *site_args = site_args
             if pq_arg.startswith('pq'):
                 num = int(pq_arg[2:])
-                tags_s = url.split('/?tags=', maxsplit=1)[-1].strip()
+                tags_s = url.split('&tags=', maxsplit=1)[-1].strip()
                 gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} {pq_arg}"]'])
                 args = MultiList([
                     [*gldl_args, *site_args, '--range', f'-{num}', url + ' sort:score'],
@@ -136,7 +136,7 @@ def per_site(site_args: T.List[str]):
             pq_arg, *site_args = site_args
             if pq_arg.startswith('pq'):
                 num = int(pq_arg[2:])
-                tags_s = url.split('/?tags=', maxsplit=1)[-1].strip()
+                tags_s = url.split('&tags=', maxsplit=1)[-1].strip()
                 gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} {pq_arg}"]'])
                 args = MultiList([
                     [*gldl_args, *site_args, '--range', f'-{num}', url + ' sort:score'],
