@@ -24,8 +24,12 @@ def ocr(image=None, lang=None, verbose=False):
     from PIL.ImageGrab import grabclipboard
     from mylib.wrapper.tesseract_ocr import TesseractOCRCLIWrapper
     import yaml
-    config = yaml.safe_load(open(os.path.splitext(__file__)[0] + '.yml').read())[ocr.__name__]['tesseract']
-    tess = TesseractOCRCLIWrapper(config['bin'])
+    config = yaml.safe_load(open(os.path.join(
+        os.path.expanduser('~'),
+        '.config',
+        os.path.splitext(os.path.split(__file__)[1])[0] + '.yaml'
+    )).read())[ocr.__name__]['tesseract']
+    tess = TesseractOCRCLIWrapper(config['which'])
     if verbose:
         tess.logger.setLevel('DEBUG')
         tess.logger.set_all_handlers_format('# %(message)s')
