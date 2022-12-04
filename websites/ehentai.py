@@ -127,7 +127,7 @@ class EHentaiAPI:
         data['tags'] = all_tags_d
         return data
 
-    def iget_meta(self, galleries):
+    def get_metadata_iter(self, galleries):
         for group in ezlist.iter_chunks((EHentaiGallery(x) for x in galleries), 25):
             gid_token_group = [[g.gid, g.token] for g in group]
             j = self.post_request_official_api(dict(method='gdata', namespace=1, gidlist=gid_token_group))
