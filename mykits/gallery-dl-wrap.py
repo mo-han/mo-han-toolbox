@@ -200,6 +200,15 @@ def per_site(site_args: T.List[str]):
                     [*gldl_args, *site_args, '--range', f'-{num}', url + ' order:popular'],
                     [*gldl_args, *site_args, '--range', f'-{num}', url + ' order:quality'],
                 ])
+    elif 'luscious.net' in url:
+        args = [
+            *GLDLCLIArgs(o=[
+                'videos=true', 'tags=true',
+                'directory=["{album[title]} {category} {album[id]}"]',
+                'filename="{category} {album[title]} {album[id]} {id}.{extension}"',
+            ]),
+            *site_args, url
+        ]
     elif 'newgrounds.com' in url:
         args = [*GLDLCLIArgs(o=['cookies-update=true', 'videos=true', 'tags=true',
                                 'directory=["{user} {category}"]',
@@ -272,6 +281,13 @@ def args2url(args):
         url = f'https://{pop_tag_from_args(args)}.newgrounds.com/art'
     elif first in ('kemono', 'kemonoparty', 'kemono.party'):
         url = f'https://kemono.party/{pop_tag_from_args(args)}'
+    elif first in ('luscious', 'lus'):
+        x = pop_tag_from_args(args)
+        if re.match(r'\d+ \d+', x):
+            a, b = x.split()
+            url = f'https://www.luscious.net/pictures/album/{a}/id/{b}'
+        else:
+            url = f'https://www.luscious.net/albums/{x}'
     else:
         url = first
     if url.startswith('https://twitter.com/') and '/status/' not in url and not url.endswith('/media'):
