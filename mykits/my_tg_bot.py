@@ -38,7 +38,7 @@ def line2args(line: str) -> T.List[str]:
     return args
 
 
-ytdl_regex_pattern = re.compile(r'youtube|youtu\.be|iwara|pornhub|\[ph[\da-f]{13}]|kissjav|xvideos|spankbang')
+ytdl_regex_pattern = re.compile(r'youtube|youtu\.be|iwara|pornhub|\[ph[\da-f]{13}]|kissjav|xvideos|spankbang|redgifs')
 bldl_regex_pattern = re.compile(r'(/|^)BV[\da-zA-Z]{10}|(/|^)av\d+|(/|^)ep\d+|(/|^)ss\d+|^https://b23.tv/.+')
 
 
@@ -100,7 +100,7 @@ class MyAssistantBot(EasyBot):
         args = [re.sub(r'\[(ph[\da-f]{13})]', r'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in args]
         args_s = ' '.join([shlex.quote(a) for a in args])
         retry_frozen = ytdl_retry_frozen
-        if any(map(lambda s: s in args[0], ('youtu.be', 'youtube.com',))):
+        if any(map(lambda s: s in args[0], ('youtu.be', 'youtube.com', 'redgifs.com'))):
             retry_frozen = yt_dlp_retry_frozen
         try:
             p, out, err = retry_frozen(*args)
