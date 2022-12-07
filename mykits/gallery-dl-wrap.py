@@ -205,7 +205,7 @@ def per_site(site_args: T.List[str]):
             *GLDLCLIArgs(o=[
                 'videos=true', 'tags=true',
                 'directory=["{album[title]} {category} {subcategory} {album[id]} {album[description]:.100}"]',
-                'filename="{category} {subcategory} {album[id]} {id}.{extension}"',
+                'filename="{category} {subcategory} {album[id]} {album[title]} {id}.{extension}"',
             ]),
             *site_args, url
         ]
