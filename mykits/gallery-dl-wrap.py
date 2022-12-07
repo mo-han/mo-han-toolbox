@@ -215,13 +215,19 @@ def per_site(site_args: T.List[str]):
                                 'filename="{category} {date!S:.10} {index} '
                                 '{title} @{artist!S:L80/(various)/}.{extension}"', ]),
                 *site_args, url]
-    elif 'kemono.party' in url:
-        args = [*GLDLCLIArgs(cookies=get_cookies_path('kemonoparty'),
-                             o=['cookies-update=true', 'videos=true', 'tags=true', 'metadata=true',
-                                'directory=["{username} {category} {service} {user}"]',
-                                'filename="{category} {service} {date!S:.10} {id}_p{num} {filename} '
-                                '{title:.32} @{username}.{extension}"', ]),
-                *site_args, url]
+    elif 'kemono.party' in url or 'coomer.party' in url:
+        args = [
+            *GLDLCLIArgs(
+                o=[
+                    'cookies-update=true', 'videos=true', 'tags=true', 'metadata=true',
+                    'directory=["{username} {category} {service} {user}"]',
+                    'filename="{category} {service} {date!S:.10} {id}_p{num} {filename} '
+                    '{title:.32} @{username}.{extension}"',
+                ],
+                filter="extension not in ('psd', 'clip')",
+            ),
+            *site_args, url
+        ]
     elif 'nhentai' in url:
         args = [*GLDLCLIArgs(o=make_options_list(dict(
             directory=['{title} [{category} {gallery_id}]'],
@@ -281,6 +287,8 @@ def args2url(args):
         url = f'https://{pop_tag_from_args(args)}.newgrounds.com/art'
     elif first in ('kemono', 'kemonoparty', 'kemono.party'):
         url = f'https://kemono.party/{pop_tag_from_args(args)}'
+    elif first in ('coomer', 'coomerparty', 'coomer.party'):
+        url = f'https://coomer.party/{pop_tag_from_args(args)}'
     elif first in ('luscious', 'lus'):
         x = pop_tag_from_args(args)
         if re.match(r'\d+ \d+', x):
