@@ -209,6 +209,15 @@ def per_site(site_args: T.List[str]):
             ]),
             *site_args, url
         ]
+    elif 'reddit.com' in url:
+        args = [
+            *GLDLCLIArgs(o=[
+                'videos=true', 'tags=true',
+                'directory=["{category} {subreddit}"]',
+                'filename="{category} {date!S:.10} {subreddit} {id} {title}.{extension}"',
+            ]),
+            *site_args, url
+        ]
     elif 'newgrounds.com' in url:
         args = [*GLDLCLIArgs(o=['cookies-update=true', 'videos=true', 'tags=true',
                                 'directory=["{user} {category}"]',
