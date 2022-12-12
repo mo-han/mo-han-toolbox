@@ -20,7 +20,7 @@ def setup_argv(filename):
     if ext in ('.yaml', '.yml'):
         from ezpykitext.extlib import yaml
         d = yaml.YAMLFile(filename).load()
-        arguments = ezdict.find(d, ('arguments', 'args', 'argv[1:]', 'argv'))
+        arguments = ezdict.get_first(d, 'arguments', 'args', 'argv[1:]', 'argv')
         arguments_type = type(arguments)
         if not arguments:
             return

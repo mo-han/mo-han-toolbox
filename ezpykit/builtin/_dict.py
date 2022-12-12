@@ -7,7 +7,8 @@ from ezpykit.metautil import T
 _Type_Mapping = collections.abc.Mapping
 
 
-def recursive_update_dict(d: dict, m: collections.abc.Mapping, factory_class=dict):
+def recursive_update_dict(d: dict, m: collections.abc.Mapping, factory_class=None):
+    factory_class = factory_class or type(d)
     for k, v in m.items():
         if isinstance(v, _Type_Mapping):
             d[k] = recursive_update_dict(d.get(k, factory_class()), v)
@@ -82,21 +83,14 @@ class ezdict(dict):
             self._setitem_by_list_key(key, default)
             return default
 
-    def intersection(self, *d):
-        return reduce(lambda x, y: ezdict([(k, v) for k, v in x.items() if (k, v) in y.items()]),
-                      [self, *d])
-
-    def union(self, *d):
-        r = ezdict()
-        for i in [self, *d]:
-            recursive_update_dict(r, i)
-        return r
-
-    def difference(self, d):
-        return ezdict([(k, v) for k, v in self.items() if (k, v) not in d.items()])
+    def get_first(self: dict, *key, default=None):
+        for k in key:
+            if k in self:
+                return self[k]
+        return default
 
     def pick(self, *keys, **keys_with_default):
-        r = self.__class__()
+        r = ezdict()
         for k in keys:
             if k in self:
                 r[k] = self[k]
@@ -112,56 +106,6 @@ class ezdict(dict):
         for k, v in keys_with_default.items():
             rl.append(self.get(k, v))
         return rl
-
-    def find(self, keys, default=None):
-        for k in keys:
-            if k in self:
-                return self[k]
-        return default
-
-    def remove(self, *keys):
-        for k in keys:
-            try:
-                del self[k]
-            except KeyError:
-                pass
-
-    def reserve(self, *keys):
-        self_keys = list(self.keys())
-        for k in self_keys:
-            if k not in keys:
-                del self[k]
-
-    def rename(self, old_key, new_key):
-        self[new_key] = self.pop(old_key)
-
-    def get_first(self: dict, *key, default=None):
-        for k in key:
-            if k in self:
-                return self[k]
-        return default
-
-    def convert_keys(self, *old_key_and_new_key_pairs):
-        for old, new in old_key_and_new_key_pairs:
-            if old not in self:
-                continue
-            if isinstance(new, type):
-                self[new(old)] = self[old]
-                del self[old]
-            elif isinstance(new, object):
-                self[new] = self[old]
-                del self[old]
-        return self
-
-    def convert_values(self, *key_and_new_value_pairs):
-        for k, nv in key_and_new_value_pairs:
-            if k not in self:
-                continue
-            if isinstance(nv, type):
-                self[k] = nv(self[k])
-            elif isinstance(nv, object):
-                self[k] = nv
-        return self
 
 
 def temp_test():

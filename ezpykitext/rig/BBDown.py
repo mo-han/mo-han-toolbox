@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import re
 import urllib.parse
+from contextlib import suppress
 
 from ezpykit.allinone import *
 from ezpykitext.webclient import *
+from websites import bilibili
 
 rm_suffix = ezstr.removesuffix
 rm_prefix = ezstr.removeprefix
@@ -53,9 +55,9 @@ class BBDownCommandLineList(subprocess.CommandLineList):
 
 
 class BBDownInfo(ezdict):
-    aux_api: websites.bilibili.webapi.BilibiliWebAPI
+    aux_api: bilibili.webapi.BilibiliWebAPI
     vid: dict
-    reserved_keys = 'p', 'aid', 'bvid', 'tname', 'title', 'desc', 'owner', 'staff', 'avid'
+    reserved_keys = {'p', 'aid', 'bvid', 'tname', 'title', 'desc', 'owner', 'staff', 'avid'}
     stopped = False
     sections: ezlist[str]
     KEY_RUNTIME = 'runtime'
@@ -140,7 +142,7 @@ class BBDownInfo(ezdict):
     def stop(self):
         self.stopped = True
 
-    def parse(self, sections: ezlist, aux_api: websites.bilibili.webapi.BilibiliWebAPI):
+    def parse(self, sections: ezlist, aux_api: bilibili.webapi.BilibiliWebAPI):
         self.aux_api = aux_api
         self.stopped = False
         self.sections = sections
@@ -159,12 +161,13 @@ class BBDownInfo(ezdict):
         for page_d in pages:
             p = page_d['page']
             d = ezdict.pick(page_d, 'part', 'cid')
-            ezdict.rename(d, 'part', 'title')
+            with suppress(KeyError):
+                d['title'] = d.pop('part')
             self[['p', p]].update(d)
         if not debug:
-            self.remove(self.KEY_RUNTIME)
-            if self.reserved_keys:
-                self.reserve(*self.reserved_keys)
+            for key in {self.KEY_RUNTIME, *(self.keys() - self.reserved_keys)}:
+                with suppress(KeyError):
+                    del self[key]
         return self
 
     def start(self):
@@ -244,7 +247,7 @@ class BBDownInfo(ezdict):
 class BBDownWrapper:
     def __init__(self, cookie_source=None, which=None):
         self.logger = logging.get_logger(__name__, self.__class__.__name__)
-        self.aux_api = websites.bilibili.webapi.BilibiliWebAPI()
+        self.aux_api = bilibili.webapi.BilibiliWebAPI()
         self.cmd_temp = BBDownCommandLineList()
         if which:
             self.cmd_temp.set_which(which)
