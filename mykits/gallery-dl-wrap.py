@@ -209,15 +209,6 @@ def per_site(site_args: T.List[str]):
             ]),
             *site_args, url
         ]
-    elif 'reddit.com' in url:
-        args = [
-            *GLDLCLIArgs(o=[
-                'videos=true', 'tags=true',
-                'directory=["{category} {subreddit}"]',
-                'filename="{category} {date!S:.10} {subreddit} {id} #{title} @{author}.{extension}"',
-            ]),
-            *site_args, url
-        ]
     elif 'newgrounds.com' in url:
         args = [*GLDLCLIArgs(o=['cookies-update=true', 'videos=true', 'tags=true',
                                 'directory=["{user} {category}"]',
@@ -248,7 +239,7 @@ def per_site(site_args: T.List[str]):
             filename='{category} {date!S:.10} {index} {title} @{artist}.{extension}'
         ))), *site_args, url]
     else:
-        raise NotImplementedError(url)
+        args = [*GLDLCLIArgs(), *site_args, url]
 
     return args
 
