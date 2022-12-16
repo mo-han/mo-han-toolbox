@@ -33,7 +33,8 @@ API_HEADERS_HANDLER: ezpykitext.webclient.header.EzHttpHeaders = ezpykitext.webc
 BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'
 BILIBILI_EPISODE_URL_PREFIX = 'https://www.bilibili.com/bangumi/play/'
 BILIBILI_SHORT_URL_PREFIX = 'https://b23.tv/'
-QUALITY_DESC_PRIORITY = ['超清 4K', '高清 1080P60', '高清 1080P+', '高清 720P60', '高清 1080P', '高清 720P', '清晰 480P', '流畅 360P']
+QUALITY_DESC_PRIORITY = ['超清 4K', '高清 1080P60', '高清 1080P+', '高清 720P60', '高清 1080P', '高清 720P',
+                         '清晰 480P', '流畅 360P']
 
 
 def quality_desc_priority_index(quality_desc: str):
@@ -256,10 +257,10 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
 
     def _make_the_title_in_my_flavor(self, part_num_title_t=(), ellipt=120):
         if ellipt:
-            r = ellipt_end(self.the_title, ellipt, encoding='utf8') +\
-                ' ' + self.get_vid_label() + self.get_author_label()
+            r = ellipt_end(self.the_title, ellipt, encoding='utf8') + \
+                ' ' + self.get_vid_label() + ' ' + self.get_author_label()
         else:
-            r = self.the_title + ' ' + self.get_vid_label() + self.get_author_label()
+            r = self.the_title + ' ' + self.get_vid_label() + ' ' + self.get_author_label()
         if part_num_title_t:
             part_num, part_title = part_num_title_t
             r += f' P.{part_num} {part_title}'
@@ -391,7 +392,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
             id_str = f'{the_vid} {ss_id}'
         else:
             id_str = the_vid
-        return f'[bilibili {id_str}]'
+        return f'bilibili {id_str}'
 
     # 上传者（UP主）用户名
     def get_author(self):
