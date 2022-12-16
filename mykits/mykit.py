@@ -789,6 +789,12 @@ def url_from_clipboard():
     elif pattern in ('hc.fyi', 'hentai.cafe', 'hentaicafe'):
         p = r'https://hentai.cafe/hc.fyi/\d+'
         urls = regex_find(p, t, dedup=True)
+    elif pattern in ('redgifs', 'rg',):
+        p = r'https://www.redgifs.com/watch/\w+'
+        urls = regex_find(p, t, dedup=True)
+    elif pattern in ('lus', 'luscious'):
+        p = r'https://www.luscious.net/.+?/.+?/'
+        urls = regex_find(p, t, dedup=True)
     else:
         urls = regex_find(pattern, t, dedup=True)
     urls = '\r\n'.join(urls)
