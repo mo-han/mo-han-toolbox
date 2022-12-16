@@ -760,7 +760,7 @@ def url_from_clipboard():
     args = rtd.args
     pattern = args.pattern
     try:
-        t = os.clpb.get_html()
+        t = os.clpb.get_html() or os.clpb.get()
     except (AttributeError, TypeError):
         t = os.clpb.get()
     if not pattern:

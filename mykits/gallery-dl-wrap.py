@@ -200,6 +200,24 @@ def per_site(site_args: T.List[str]):
                     [*gldl_args, *site_args, '--range', f'-{num}', url + ' order:popular'],
                     [*gldl_args, *site_args, '--range', f'-{num}', url + ' order:quality'],
                 ])
+    elif 'reddit.com' in url:
+        gldl_args = GLDLCLIArgs()
+        args = [*gldl_args, *site_args, url]
+        if site_args:
+            pq_arg, *site_args = site_args
+            if pq_arg.startswith('pq'):
+                num = int(pq_arg[2:])
+                sort_types = ['hot', 'top/?t=all', 'gilded', 'best']
+                if any(s in url for s in sort_types):
+                    args = [*gldl_args, *site_args, '--range', f'-{num}', url]
+                else:
+                    args = MultiList([
+                        [
+                            *gldl_args, *site_args,
+                            '--range', f'-{num // 10 if sort == "hot" else num}',
+                            url.rstrip('/') + f'/{sort}'
+                        ] for sort in sort_types
+                    ])
     elif 'luscious.net' in url:
         args = [
             *GLDLCLIArgs(o=[
