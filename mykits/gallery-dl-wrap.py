@@ -201,7 +201,7 @@ def per_site(site_args: T.List[str]):
                     [*gldl_args, *site_args, '--range', f'-{num}', url + ' order:quality'],
                 ])
     elif 'reddit.com' in url:
-        gldl_args = GLDLCLIArgs()
+        gldl_args = GLDLCLIArgs(o='parent-skip=true')
         args = [*gldl_args, *site_args, url]
         if site_args:
             pq_arg, *site_args = site_args
@@ -215,6 +215,7 @@ def per_site(site_args: T.List[str]):
                         [
                             *gldl_args, *site_args,
                             '--range', f'-{num // 10 if sort == "hot" else num}',
+                            '--chapter-range', f'-{num // 10 if sort == "hot" else num}',
                             url.rstrip('/') + f'/{sort}'
                         ] for sort in sort_types
                     ])
@@ -223,7 +224,7 @@ def per_site(site_args: T.List[str]):
             *GLDLCLIArgs(o=[
                 'videos=true', 'tags=true',
                 'directory=["{album[title]} {category} {subcategory} {album[id]} {album[description]:.100}"]',
-                'filename="{category} {subcategory} {album[id]} {album[title]} {id}.{extension}"',
+                'filename="{category} {subcategory} {album[id]} {album[title]} {id} {title}.{extension}"',
             ]),
             *site_args, url
         ]
@@ -314,6 +315,8 @@ def args2url(args):
             url = f'https://www.luscious.net/pictures/album/{a}/id/{b}'
         else:
             url = f'https://www.luscious.net/albums/{x}'
+    elif first in ('reddit', ):
+        url = f'https://www.reddit.com/{pop_tag_from_args(args)}'
     else:
         url = first
     if url.startswith('https://twitter.com/') and '/status/' not in url and not url.endswith('/media'):
