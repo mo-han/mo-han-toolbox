@@ -796,7 +796,15 @@ def url_from_clipboard():
         p = r'https://www.luscious.net/.+?/.+?/'
         urls = regex_find(p, t, dedup=True)
     else:
-        urls = regex_find(pattern, t, dedup=True)
+        import lxml.html
+        href = lxml.html.fromstring(t).xpath('//a/@href')
+        if href:
+            urls = []
+            for link in href:
+                if link not in urls and re.search(pattern, link):
+                    urls.append(link)
+        else:
+            urls = regex_find(pattern, t, dedup=True)
     urls = '\r\n'.join(urls)
     os.clpb.clear()
     os.clpb.set(urls)
