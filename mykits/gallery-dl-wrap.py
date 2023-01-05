@@ -219,6 +219,17 @@ def per_site(site_args: T.List[str]):
                             url.rstrip('/') + f'/{sort}'
                         ] for sort in sort_types
                     ])
+    elif 'redgifs.com' in url:
+        gldl_args = GLDLCLIArgs()
+        args = [*gldl_args, *site_args, url]
+        if site_args:
+            pq_arg, *site_args = site_args
+            if pq_arg.startswith('pq'):
+                num = int(pq_arg[2:])
+                args = MultiList([
+                    [*gldl_args, *site_args, '--range', f'-{num}', url],
+                    [*gldl_args, *site_args, '--range', f'-{num}', url+'&order=best'],
+                ])
     elif 'luscious.net' in url:
         args = [
             *GLDLCLIArgs(o=[
@@ -317,6 +328,8 @@ def args2url(args):
             url = f'https://www.luscious.net/albums/{x}'
     elif first in ('reddit', ):
         url = f'https://www.reddit.com/{pop_tag_from_args(args)}'
+    elif first in ('redgifs',):
+        url = f'https://www.redgifs.com/browse?contentView=1&tags={pop_tag_from_args(args)}'
     else:
         url = first
     if url.startswith('https://twitter.com/') and '/status/' not in url and not url.endswith('/media'):
