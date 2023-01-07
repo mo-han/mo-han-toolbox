@@ -3,3 +3,4 @@ payload:
   - DOMAIN-SUFFIX,mozilla.org
   - DOMAIN-SUFFIX,mozilla.com
   - DOMAIN-SUFFIX,outlook.com
+    DOMAIN-SUFFIX,streamcontent.com
