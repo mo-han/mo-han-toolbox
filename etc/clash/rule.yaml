@@ -133,7 +133,7 @@ rules:
   - RULE-SET,apps,DIRECT
   - DOMAIN,clash.razord.top,DIRECT
   - DOMAIN,yacd.haishan.me,DIRECT
-  - RULE-SET,reject,REJECT
+  # - RULE-SET,reject,REJECT
   - RULE-SET,private,DIRECT
   - RULE-SET,cncidr,DIRECT
   - RULE-SET,lancidr,DIRECT
