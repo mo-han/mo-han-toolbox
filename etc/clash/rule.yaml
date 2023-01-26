@@ -118,14 +118,14 @@ rule-providers:
     # url: https://cdn.jsdelivr.net/gh/mo-han/mo-han-toolbox/etc/clash/custom_direct.yaml
     url: https://github.com/mo-han/mo-han-toolbox/raw/master/etc/clash/custom_direct.yaml
     path: ./ruleset/custom_direct.yaml
-    interval: 86400
+    interval: 3600
   custom_proxy:
     type: http
     behavior: classical
     # url: https://cdn.jsdelivr.net/gh/mo-han/mo-han-toolbox/etc/clash/custom_proxy.yaml
     url: https://github.com/mo-han/mo-han-toolbox/raw/master/etc/clash/custom_proxy.yaml
     path: ./ruleset/custom_proxy.yaml
-    interval: 86400
+    interval: 3600
 
 rules:
   - RULE-SET,custom_proxy,PROXY
@@ -133,7 +133,7 @@ rules:
   - RULE-SET,apps,DIRECT
   - DOMAIN,clash.razord.top,DIRECT
   - DOMAIN,yacd.haishan.me,DIRECT
-  # - RULE-SET,reject,REJECT
+  - RULE-SET,reject,REJECT
   - RULE-SET,private,DIRECT
   - RULE-SET,cncidr,DIRECT
   - RULE-SET,lancidr,DIRECT
