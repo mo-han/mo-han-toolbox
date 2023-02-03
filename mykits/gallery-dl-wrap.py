@@ -261,7 +261,7 @@ def per_site(site_args: T.List[str]):
         ]
     elif 'nhentai' in url:
         args = [*GLDLCLIArgs(o=make_options_list(dict(
-            directory=['{category', '{title} {category} {gallery_id}'],
+            directory=['{category}', '{title} {category} {gallery_id}'],
             filename='{filename}.{extension}'
         ))), *site_args, url]
     elif 'hentai-foundry' in url:
