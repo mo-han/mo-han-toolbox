@@ -106,7 +106,7 @@ class BBDownInfo(ezdict):
 
     @property
     def vid_text(self):
-        return ' '.join(self.pick_to_list('bvid', 'avid'))
+        return ' '.join(self.list_sub('bvid', 'avid'))
 
     @property
     def preferred_filename(self):
@@ -155,12 +155,12 @@ class BBDownInfo(ezdict):
         return self.postprocess()
 
     def postprocess(self, debug=False):
-        self.vid = self.aux_api.parse_vid_dict(self.pick('aid', 'bvid'))
+        self.vid = self.aux_api.parse_vid_dict(self.get_sub('aid', 'bvid'))
         self['avid'] = f'av{self["aid"]}'
         pages = self['pages']
         for page_d in pages:
             p = page_d['page']
-            d = ezdict.pick(page_d, 'part', 'cid')
+            d = ezdict.get_sub(page_d, 'part', 'cid')
             with suppress(KeyError):
                 d['title'] = d.pop('part')
             self[['p', p]].update(d)
@@ -304,7 +304,7 @@ class BBDownWrapper:
         if isinstance(p_range, str):
             p_range = StrKit.to_range(p_range, default_end=video_info.p_count)
         p_range = p_range or range(1, video_info.p_count + 1)
-        uri = video_info.pick_to_list('bvid', 'avid')[0]
+        uri = video_info.list_sub('bvid', 'avid')[0]
         for p in p_range:
             asi = 0
             vsi = video_info.find_preferred_video_stream(p, max_video_quality)['index']

@@ -27,3 +27,4 @@ scpi_shell/more-items.txt
 dotnetkit/**/*.cache
 dotnetkit/**/TemporaryGeneratedFile_*
 iwara images
+temp/
