@@ -74,13 +74,13 @@ def per_site(site_args: T.List[str]):
     if 'pixiv.net' in url:
         args = [*GLDLCLIArgs(ugoira_conv=True,
                              o=['cookies-update=true',
-                                'filename="{category} {date:%Y-%m-%d} {id}_p{num} {title} @{user[name]} .{extension}"',
+                                'filename="{category} {date:%Y-%m-%d} {id} {title} @{user[name]} {filename}.{extension}"',
                                 'directory=["{user[name]} {category} {user[id]}"]']),
                 *site_args, url]
     elif 'fanbox.cc' in url:
         args = [*GLDLCLIArgs(cookies=get_cookies_path('fanbox'),
                              o=['cookies-update=true', 'videos=true',
-                                'filename="{category} {date!S:.10} {id}_p{num} {title} @{creatorId} .{extension}"',
+                                'filename="{category} {date!S:.10} {id} {title} @{creatorId} {filename}.{extension}"',
                                 'directory=["{user[name]} {category} {user[userId]} {creatorId}"]']),
                 *site_args, url]
     elif 'twitter.com' in url:
@@ -252,8 +252,8 @@ def per_site(site_args: T.List[str]):
                 o=[
                     'cookies-update=true', 'videos=true', 'tags=true', 'metadata=true',
                     'directory=["{username} {category} {service} {user}"]',
-                    'filename="{category} {service} {date!S:.10} {id}_p{num} '
-                    '{title:.60} @{username} .{extension}"',
+                    'filename="{category} {service} {date!S:.10} {id} '
+                    '{title:.60} @{username} {filename}.{extension}"',
                 ],
                 filter="extension not in ('psd', 'clip')",
             ),
