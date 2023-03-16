@@ -1,8 +1,8 @@
 payload:
   - DOMAIN-SUFFIX,googleapis.cn
-gotbjbqvnxfkunugorzh.hath.network
-zeymhthzcuckefofbybo.hath.network
-dmpjnjw.ebphzvhpitfz.hath.network
-blwmstv.cpsfrwilqxia.hath.network
-btvspwxjexslwpogkyow.hath.network
-nwhhvsf.kjobljmxcfea.hath.network
+  - DOMAIN,gotbjbqvnxfkunugorzh.hath.network
+  - DOMAIN,zeymhthzcuckefofbybo.hath.network
+  - DOMAIN,dmpjnjw.ebphzvhpitfz.hath.network
+  - DOMAIN,blwmstv.cpsfrwilqxia.hath.network
+  - DOMAIN,btvspwxjexslwpogkyow.hath.network
+  - DOMAIN,nwhhvsf.kjobljmxcfea.hath.network
