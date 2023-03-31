@@ -31,6 +31,12 @@ def yt_dlp_retry_frozen(*args: str):
     return monitor_sub_process_tty_frozen(p, encoding='u8', timeout=60)
 
 
+@deco_factory_retry(exceptions=ProcessTTYFrozen, max_retries=-1)
+def phgif_retry_frozen(*args: str):
+    p = subprocess.Popen(['you-get.pornhub.gif.py', *args], stdout=subprocess.PIPE)
+    return monitor_sub_process_tty_frozen(p, encoding='u8', timeout=60)
+
+
 def line2args(line: str) -> T.List[str]:
     args = shlex.split(line.strip())
     if args[0] in '+-*!':
@@ -38,8 +44,9 @@ def line2args(line: str) -> T.List[str]:
     return args
 
 
-ytdl_regex_pattern = re.compile(r'youtube|youtu\.be|iwara|pornhub|\[ph[\da-f]{13}]|kissjav|xvideos|spankbang|redgifs')
+ytdl_regex_pattern = re.compile(r'youtube|youtu\.be|iwara|pornhub.com/view_video|\[ph[\da-f]{13}]|kissjav|xvideos|spankbang|redgifs')
 bldl_regex_pattern = re.compile(r'(/|^)BV[\da-zA-Z]{10}|(/|^)av\d+|(/|^)ep\d+|(/|^)ss\d+|^https://b23.tv/.+')
+phgif_regex_pattern = re.compile(r'pornhub.com/gif')
 
 
 class MyAssistantBot(EasyBot):
@@ -138,6 +145,39 @@ class MyAssistantBot(EasyBot):
         args_s = ' '.join([shlex.quote(a) for a in args])
         try:
             p, out, err = bldl_retry_frozen(*args)
+            if p.returncode:
+                echo = ''.join(
+                    [decode_fallback_locale(b).rsplit('\r', maxsplit=1)[-1] for b in out.readlines()[-5:]])
+                if self.__str_contain_abandon_errors__(echo):
+                    print(f' EXIT CODE: {p.returncode}')
+                    self.__send_code_block__(chat_id, f'- {args_s}\n{echo}')
+                    return EasyBotTaskResult(ok=True)
+                print(f' EXIT CODE: {p.returncode}')
+                self.__send_code_block__(chat_id, f'! {args_s}\n{echo}')
+                return EasyBotTaskResult(ok=False)
+            else:
+                echo = ''.join([s for s in [decode_fallback_locale(b) for b in out.readlines()] if '─┤' not in s])
+                self.__send_code_block__(chat_id, f'* {args_s}\n{echo}')
+            return EasyBotTaskResult(ok=True)
+        except Exception as e:
+            self.__send_code_block__(chat_id, f'! {args_s}\n{str(e)}\n{repr(e)}')
+            return EasyBotTaskResult(ok=False)
+
+    @deco_factory_bot_handler_method(MessageHandler, filters=Filters.regex(phgif_regex_pattern))
+    def _phgif(self, update, *args):
+        with self.__ctx_save__():
+            chat_id = update.message.chat_id
+            args_ll = [line2args(line) for line in update.message.text.splitlines()]
+            tasks = [EasyBotTaskData(target=self._phgif_internal.__name__, args=args_l, chat_to=chat_id)
+                     for args_l in args_ll]
+            self.__save_tasks__(tasks, chat_id)
+
+    def _phgif_internal(self, call_data: EasyBotTaskData):
+        args = call_data.args
+        chat_id = call_data.chat_to
+        args_s = ' '.join([shlex.quote(a) for a in args])
+        try:
+            p, out, err = phgif_retry_frozen(*args)
             if p.returncode:
                 echo = ''.join(
                     [decode_fallback_locale(b).rsplit('\r', maxsplit=1)[-1] for b in out.readlines()[-5:]])
