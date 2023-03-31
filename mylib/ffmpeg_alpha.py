@@ -420,7 +420,7 @@ def get_filter_str(filters):
 
 def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
                      overwrite=False, redo=False, ffmpeg_opts=(),
-                     verbose=0, dry_run=False,
+                     verbose=0, dry_run=False, force=False,
                      **kwargs):
     ff = FFmpegRunnerAlpha(overwrite=True, banner=False)
     if verbose > 1:
@@ -443,8 +443,21 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
 
     lp = tui.LinePrinter()
     lp.l()
+
     if not os.path.isfile(filepath):
         logger.info(f'# skip non-file\n  {filepath}')
+        return
+    if not force and '.hevc8b.' in filepath:
+        logger.info(f'#skip hevc8b file\n {filepath}')
+        return
+    if filepath[-8:] == '.gif.mp4':
+        logger.info(f'#skip gif mp4 file\n {filepath}')
+        return
+    yaml_sidecar_file = filepath + '.yaml'
+    if os.path.isfile(yaml_sidecar_file):
+        if not redo:
+            logger.info(f'# skip with sidecar yaml file\n {filepath}')
+            return
     if not file_is_video(filepath) and not file_is_audio(filepath):
         logger.info(f'# skip non-video-audio\n  {filepath}')
         return
@@ -520,11 +533,11 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     if res_limit:
         w, h = get_width_height(filepath)
         new_vf = get_vf_res_scale_down(w, h, res_limit, vf=vf_str)
-        ffmpeg_args.add(vf=new_vf)
+        ffmpeg_args.add(filter__V__0=new_vf)
         if new_vf != vf_str:
             tags.append(res_limit)
     else:
-        ffmpeg_args.add(vf=vf_str)
+        ffmpeg_args.add(filter__V__0=vf_str)
 
     if 'best' in keywords:
         codec = 'h'

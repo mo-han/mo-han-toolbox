@@ -518,12 +518,15 @@ def ffmpeg_func():
     redo_origin = args.redo_origin
     verbose = args.verbose
     dry_run = args.dry_run
+    force = args.force
     opts = args.opts
     if verbose:
         print(args)
     for filepath in mylib.__deprecated__.list_files(source, recursive=False):
-        kw_video_convert(filepath, keywords=keywords, vf=video_filters, cut_points=cut_points, dest=output_path,
-                         overwrite=overwrite, redo=redo_origin, verbose=verbose, dry_run=dry_run, ffmpeg_opts=opts)
+        kw_video_convert(
+            filepath, keywords=keywords, vf=video_filters, cut_points=cut_points, dest=output_path,
+            overwrite=overwrite, redo=redo_origin, verbose=verbose, dry_run=dry_run, force=force,
+            ffmpeg_opts=opts)
 
 
 ffmpeg = add_sub_parser('wrap.ffmpeg', ['ffmpeg', 'ff'], 'convert video file using ffmpeg')
@@ -535,6 +538,7 @@ ffmpeg.add_argument('-t', '--time-cut', dest='cut_points', metavar='ts', nargs='
 ffmpeg.add_argument('-o', '--output-path')
 ffmpeg.add_argument('-O', '--overwrite', action='store_true')
 ffmpeg.add_argument('-R', '--redo-origin', action='store_true')
+ffmpeg.add_argument('-F', '--force', action='store_true')
 ffmpeg.add_argument('-v', '--verbose', action='count', default=0)
 ffmpeg.add_argument('-D', '--dry-run', action='store_true')
 ffmpeg.add_argument('opts', nargs='*', help='ffmpeg options (insert -- before opts)')
