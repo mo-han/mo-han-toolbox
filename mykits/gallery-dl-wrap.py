@@ -121,7 +121,7 @@ def per_site(site_args: T.List[str]):
                     num = f'1-{num}'
                 tags_s = url.split('&tags=', maxsplit=1)[-1].strip()
                 # gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} {pq_arg}"]'])
-                gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}}"]'])
+                gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} pq"]'])
                 args = MultiList([
                     [*gldl_args, *site_args, '--range', num, url + ' sort:score'],
                 ])
@@ -146,7 +146,7 @@ def per_site(site_args: T.List[str]):
                     num = f'1-{num}'
                 tags_s = url.split('&tags=', maxsplit=1)[-1].strip()
                 # gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} {pq_arg}"]'])
-                gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}}"]'])
+                gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} pq"]'])
                 args = MultiList([
                     [*gldl_args, *site_args, '--range', num, url + ' sort:score'],
                 ])
@@ -181,7 +181,7 @@ def per_site(site_args: T.List[str]):
                     num = f'1-{num}'
                 tags_s = url.split('/?tags=', maxsplit=1)[-1].strip()
                 gldl_args = GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
-                                        o=[*options, f'directory=["{tags_s} {{category}}"]'])
+                                        o=[*options, f'directory=["{tags_s} {{category}} pq"]'])
                 # o=[*options, f'directory=["{tags_s} {{category}} {pq_arg}"]'])
                 args = MultiList([
                     [*gldl_args, *site_args, '--range', num, url + ' order:popular'],
@@ -209,7 +209,7 @@ def per_site(site_args: T.List[str]):
                     num = f'1-{num}'
                 tags_s = url.split('/?tags=', maxsplit=1)[-1].strip()
                 gldl_args = GLDLCLIArgs(cookies=get_cookies_path('sankaku.idol'),
-                                        o=[*options, f'directory=["{tags_s} {{category}}"]'])
+                                        o=[*options, f'directory=["{tags_s} {{category}} pq"]'])
                 # o=[*options, f'directory=["{tags_s} {{category}} {pq_arg}"]'])
                 args = MultiList([
                     [*gldl_args, *site_args, '--range', num, url + ' order:popular'],
