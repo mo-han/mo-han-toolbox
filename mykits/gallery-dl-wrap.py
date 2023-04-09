@@ -118,7 +118,8 @@ def per_site(site_args: T.List[str]):
             if pq_arg.startswith('pq'):
                 num = int(pq_arg[2:])
                 tags_s = url.split('&tags=', maxsplit=1)[-1].strip()
-                gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} {pq_arg}"]'])
+                # gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} {pq_arg}"]'])
+                gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}}"]'])
                 args = MultiList([
                     [*gldl_args, *site_args, '--range', f'-{num}', url + ' sort:score'],
                 ])
@@ -140,7 +141,8 @@ def per_site(site_args: T.List[str]):
             if pq_arg.startswith('pq'):
                 num = int(pq_arg[2:])
                 tags_s = url.split('&tags=', maxsplit=1)[-1].strip()
-                gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} {pq_arg}"]'])
+                # gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} {pq_arg}"]'])
+                gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}}"]'])
                 args = MultiList([
                     [*gldl_args, *site_args, '--range', f'-{num}', url + ' sort:score'],
                 ])
@@ -173,7 +175,8 @@ def per_site(site_args: T.List[str]):
                 num = int(pq_arg[2:])
                 tags_s = url.split('/?tags=', maxsplit=1)[-1].strip()
                 gldl_args = GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
-                                        o=[*options, f'directory=["{tags_s} {{category}} {pq_arg}"]'])
+                                        o=[*options, f'directory=["{tags_s} {{category}}"]'])
+                # o=[*options, f'directory=["{tags_s} {{category}} {pq_arg}"]'])
                 args = MultiList([
                     [*gldl_args, *site_args, '--range', f'-{num}', url + ' order:popular'],
                     [*gldl_args, *site_args, '--range', f'-{num}', url + ' order:quality'],
@@ -198,7 +201,8 @@ def per_site(site_args: T.List[str]):
                 num = int(pq_arg[2:])
                 tags_s = url.split('/?tags=', maxsplit=1)[-1].strip()
                 gldl_args = GLDLCLIArgs(cookies=get_cookies_path('sankaku.idol'),
-                                        o=[*options, f'directory=["{tags_s} {{category}} {pq_arg}"]'])
+                                        o=[*options, f'directory=["{tags_s} {{category}}"]'])
+                # o=[*options, f'directory=["{tags_s} {{category}} {pq_arg}"]'])
                 args = MultiList([
                     [*gldl_args, *site_args, '--range', f'-{num}', url + ' order:popular'],
                     [*gldl_args, *site_args, '--range', f'-{num}', url + ' order:quality'],
@@ -231,7 +235,7 @@ def per_site(site_args: T.List[str]):
                 num = int(pq_arg[2:])
                 args = MultiList([
                     [*gldl_args, *site_args, '--range', f'-{num}', url],
-                    [*gldl_args, *site_args, '--range', f'-{num}', url+'&order=best'],
+                    [*gldl_args, *site_args, '--range', f'-{num}', url + '&order=best'],
                 ])
     elif 'luscious.net' in url:
         args = [
@@ -329,7 +333,7 @@ def args2url(args):
             url = f'https://www.luscious.net/pictures/album/{a}/id/{b}'
         else:
             url = f'https://www.luscious.net/albums/{x}'
-    elif first in ('reddit', ):
+    elif first in ('reddit',):
         url = f'https://www.reddit.com/{pop_tag_from_args(args)}'
     elif first in ('redgifs',):
         url = f'https://www.redgifs.com/browse?contentView=1&tags={pop_tag_from_args(args)}'
