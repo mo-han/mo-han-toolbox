@@ -1,1 +1,1 @@
-# 
+# Config files of clash (a rule-based tunnel)
