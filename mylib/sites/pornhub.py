@@ -9,7 +9,7 @@ from mylib.web_client import get_html_element_tree
 
 def find_url_in_text(x: str) -> list:
     prefix = 'https://www.pornhub.com'
-    pattern = r'/view_video\.php\?viewkey=(?:ph[0-9a-f]+|\d+)'
+    pattern = r'/view_video\.php\?viewkey=(?:ph[0-9a-f]+|[0-9a-f]+)'
     return [prefix + e for e in text.regex_find(pattern, x, dedup=True)]
 
 
