@@ -14,7 +14,7 @@ its attribute is a str same as the name thereof
 
 ```python
 
-from ezpykit import AttrName
+from oldezpykit import AttrName
 
 an = AttrName()
 assert an.abc_xyz == 'abc_xyz'
@@ -37,7 +37,7 @@ features:
 ```python
 # test.py
 
-from ezpykit.stdlib.argparse import *
+from oldezpykit.stdlib.argparse import *
 
 apr = ArgumentParserWrapper()
 an = apr.an  # an.abc_xyz == 'abc_xyz'

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import re
 
-from ezpykit.allinone import *
-from ezpykitext.webclient import *
+from oldezpykit.allinone import *
+from oldezpykitext.webclient import *
 
 BILIBILI_HOME_PAGE_URL = 'https://www.bilibili.com'
 BILIBILI_HEADERS = header.EzHttpHeaders().ua(header.UserAgentExamples.GOOGLE_CHROME_WINDOWS)

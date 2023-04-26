@@ -16,7 +16,7 @@ import time
 from time import sleep
 
 from mylib.easy import io, T, logging, deco_factory_copy_signature, ExceptionWithKwargs, threading
-from ezpykit.metautil import VoidDuck
+from oldezpykit.metautil import VoidDuck
 
 
 class AttributeInflection:

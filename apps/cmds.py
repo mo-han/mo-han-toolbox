@@ -3,7 +3,7 @@ from functools import lru_cache
 
 import tabulate
 
-from ezpykit.allinone import *
+from oldezpykit.allinone import *
 from mylib.easy import python_module_from_filepath
 
 __dirname__, __stem__, __ext__ = os.split_path_dir_stem_ext(__file__)

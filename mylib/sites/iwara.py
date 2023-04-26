@@ -5,9 +5,9 @@ from urllib.parse import urlparse, urlunparse
 
 import youtube_dl.extractor.iwara as ytdl_iwara
 
-import ezpykit.stdlib.os.common
-from ezpykit.allinone import *
-from ezpykit.builtin import ezdict
+import oldezpykit.stdlib.os.common
+from oldezpykit.allinone import *
+from oldezpykit.builtin import ezdict
 from mylib import easy
 from mylib.easy import text, fstk
 from mylib.ext import html
@@ -26,7 +26,7 @@ def find_video_url_guess_path(s: str, ecchi=True) -> list:
 
 
 def find_video_url(s: str):
-    from ezpykit.builtin import ezlist
+    from oldezpykit.builtin import ezlist
     r = ezlist()
     for i in re.findall(r'https?://.*iwara.tv/videos/[0-9a-zA-Z]+', s):
         r.append_dedup(i)
@@ -36,7 +36,7 @@ def find_video_url(s: str):
 
 
 def find_image_url(s: str):
-    from ezpykit.builtin import ezlist
+    from oldezpykit.builtin import ezlist
     r = ezlist()
     for i in re.findall(r'https?://.*iwara.tv/images/[^">]+', s):
         r.append_dedup(i)
@@ -137,7 +137,7 @@ class IwaraImagePage:
         title = m['title']
         uploader = m['uploader_username']
         folder = fstk.sanitize_xu200(f'{title} [Iwara images][{uploader}]')
-        with ezpykit.stdlib.os.common.ctx_pushd(easy.path_join(root_dir, folder), ensure_dst=True):
+        with oldezpykit.stdlib.os.common.ctx_pushd(easy.path_join(root_dir, folder), ensure_dst=True):
             for url in self.data[['resource', 'photos']]:
                 r = urlparse(url)
                 fn = easy.path_basename(r.path)

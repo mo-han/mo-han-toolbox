@@ -10,19 +10,19 @@ from pprint import pprint
 
 from send2trash import send2trash
 
-import ezpykit.stdlib.shutil.__deprecated__
+import oldezpykit.stdlib.shutil.__deprecated__
 import mylib.__deprecated__
 import mylib.easy
 import mylib.ext.ostk
-from ezpykit.allinone import AttrName
+from oldezpykit.allinone import AttrName
 from mylib.__deprecated__ import fs_inplace_rename, fs_inplace_rename_regex, list_files, list_dirs
 from mylib.cli import arg_type_pow2, arg_type_range_factory, add_dry_run
 from mylib.easy import *
-from ezpykit.stdlib.argparse import CompactHelpFormatterWithDefaults
+from oldezpykit.stdlib.argparse import CompactHelpFormatterWithDefaults
 from mylib.ext.tricks import Attreebute, eval_or_str, deco_factory_exit_on_keyboard_interrupt
 from mylib.ext import fstk, tui
 from mylib.ext.fstk import make_path
-from ezpykit.stdlib.os import ctx_pushd
+from oldezpykit.stdlib.os import ctx_pushd
 from mylib.ext.ostk import clipboard, set_console_title
 
 rtd = Attreebute()  # runtime data
@@ -249,7 +249,7 @@ def tag_filter_files_func():
                     try:
                         send2trash(f)
                     except OSError:
-                        ezpykit.stdlib.shutil.__deprecated__.remove(f)
+                        oldezpykit.stdlib.shutil.__deprecated__.remove(f)
 
 
 tag_filter_files = add_sub_parser('tag.filter.files', [], 'filter files by tags and ext')
@@ -758,7 +758,7 @@ dukto_x.add_argument('ndrop_args', metavar='[--] arguments for ndrop', nargs=REM
 
 
 def url_from_clipboard():
-    from ezpykitext.stdlib import os
+    from oldezpykitext.stdlib import os
     from mylib.easy.text import regex_find
     from html import unescape
     args = rtd.args

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from pprint import pprint
 
-from ezpykit.allinone import *
+from oldezpykit.allinone import *
 
 locallib_env = os.get_dirname(__file__)
 locallib = os.get_dirname(locallib_env)

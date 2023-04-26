@@ -2,7 +2,7 @@
 # encoding=utf8
 import argparse
 
-from ezpykit.stdlib.argparse import CompactHelpFormatterWithDefaults
+from oldezpykit.stdlib.argparse import CompactHelpFormatterWithDefaults
 from mylib.math import int_is_power_of_2
 
 

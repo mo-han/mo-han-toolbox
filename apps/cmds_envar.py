@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from ezpykitext.appkit import *
-from ezpykitext.yaml import EzYAML
+from oldezpykitext.appkit import *
+from oldezpykitext.yaml import EzYAML
 
 ap = argparse.ArgumentParserWrapper()
 an = ap.an

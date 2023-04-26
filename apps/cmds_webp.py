@@ -10,8 +10,8 @@ import filetype
 from humanize import naturaldelta, naturalsize
 from send2trash import send2trash
 
-import ezpykit.stdlib.os.common
-import ezpykit.stdlib.shutil.__deprecated__
+import oldezpykit.stdlib.os.common
+import oldezpykit.stdlib.shutil.__deprecated__
 from mylib.easy import logging
 from mylib.ext.console_app import *
 from mylib.wrapper import cwebp
@@ -195,7 +195,7 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
         try:
             old_size = path_size(fp)
             auto_cvt(unzip_dir, recursive=True, clean=True, cbz=False, workers=workers, verbose=verbose)
-            ezpykit.stdlib.os.common.touch(path_join(unzip_dir, flag_filename_of_webp_converted))
+            oldezpykit.stdlib.os.common.touch(path_join(unzip_dir, flag_filename_of_webp_converted))
             new_zip = shutil.make_archive(unzip_dir, 'zip', unzip_dir, verbose=verbose)
             if ext_name:
                 new_zip = fstk.rename_file_ext(new_zip, ext_name)
@@ -222,7 +222,7 @@ def auto_cvt(src, recursive, clean, cbz, workers=None, trash_bin=False, verbose=
     """convert images to webp with auto-clean, auto-compress-to-cbz, adaptive-quality-scale"""
     workers = workers or os.cpu_count() - 1 or os.cpu_count()
     lgr = logging.ez_get_logger(auto_cvt.__name__, 'INFO' if verbose else 'ERROR', fmt=logging.LOG_FMT_MESSAGE_ONLY)
-    delete = send2trash if trash_bin else ezpykit.stdlib.shutil.__deprecated__.remove
+    delete = send2trash if trash_bin else oldezpykit.stdlib.shutil.__deprecated__.remove
 
     dirs, files = resolve_path_to_dirs_files(src)
     src = dirs + files

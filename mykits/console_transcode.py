@@ -2,7 +2,7 @@
 import codecs
 
 from mylib.ext.console_app import *
-from ezpykit.stdlib.threading import thread_factory
+from oldezpykit.stdlib.threading import thread_factory
 
 apr = ArgumentParserWrapper()
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from ezpykitext.appkit import *
+from oldezpykitext.appkit import *
 from mylib.ext.console_app import ConsolePrinter, fstk, split_path_dir_base_ext, join_path_dir_base_ext, PathSourceType, \
     resolve_path_to_dirs_files, Timer
 from mylib.sites import ehentai

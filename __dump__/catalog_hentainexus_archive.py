@@ -2,7 +2,7 @@ import webbrowser
 from functools import reduce
 
 import mylib.__deprecated__
-from ezpykit.stdlib.re import find_words
+from oldezpykit.stdlib.re import find_words
 from mylib.ext.fstk import *
 from mylib.ext.fstk import read_sqlite_dict_file
 from mylib.ext.ostk import clipboard as cb

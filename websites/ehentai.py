@@ -4,10 +4,10 @@ from functools import lru_cache
 
 import requests
 
-from ezpykit.allinone import *
-from ezpykitext.webclient.browser import EzBrowser
-from ezpykitext.webclient.cookie import EzCookieJar
-from ezpykitext.webclient.lxml_html import *
+from oldezpykit.allinone import *
+from oldezpykitext.webclient.browser import EzBrowser
+from oldezpykitext.webclient.cookie import EzCookieJar
+from oldezpykitext.webclient.lxml_html import *
 
 
 class EHentaiGallery(T.Generic[T.T]):
