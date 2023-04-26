@@ -130,15 +130,17 @@ rule-providers:
 rules:
   - RULE-SET,custom_proxy,PROXY
   - RULE-SET,custom_direct,DIRECT
-  - RULE-SET,apps,DIRECT
-  - DOMAIN,clash.razord.top,DIRECT
-  - DOMAIN,yacd.haishan.me,DIRECT
+
   - RULE-SET,reject,REJECT
+  - RULE-SET,apps,DIRECT
   - RULE-SET,private,DIRECT
   - RULE-SET,cncidr,DIRECT
   - RULE-SET,lancidr,DIRECT
   - GEOIP,LAN,DIRECT
   - GEOIP,CN,DIRECT
+  
+  - DOMAIN,clash.razord.top,DIRECT
+  - DOMAIN,yacd.haishan.me,DIRECT
   - RULE-SET,icloud,DIRECT
   - RULE-SET,apple_china,DIRECT
   - RULE-SET,direct,DIRECT
