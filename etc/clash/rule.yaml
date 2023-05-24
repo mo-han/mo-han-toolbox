@@ -134,7 +134,7 @@ rules:
   - RULE-SET,apps,DIRECT
   - RULE-SET,proxy,PROXY
   - RULE-SET,direct,DIRECT
-#  - RULE-SET,reject,REJECT
+  - RULE-SET,reject,REJECT
 
   - RULE-SET,telegramcidr,PROXY
   - RULE-SET,tld-not-cn,PROXY
