@@ -242,8 +242,8 @@ def per_site(site_args: T.List[str]):
             if pq_arg.startswith('pq'):
                 num = int(pq_arg[2:])
                 args = MultiList([
-                    [*gldl_args, *site_args, '--range', {num}, url],
-                    [*gldl_args, *site_args, '--range', {num}, url + '&order=best'],
+                    [*gldl_args, *site_args, f'--range', f'-{num}', url + '?order=trending'],
+                    [*gldl_args, *site_args, f'--range', f'-{num}', url + '?order=best'],
                 ])
     elif 'luscious.net' in url:
         args = [
@@ -344,7 +344,7 @@ def args2url(args):
     elif first in ('reddit',):
         url = f'https://www.reddit.com/{pop_tag_from_args(args)}'
     elif first in ('redgifs',):
-        url = f'https://www.redgifs.com/browse?contentView=1&tags={pop_tag_from_args(args)}'
+        url = f'https://www.redgifs.com/gifs/{pop_tag_from_args(args)}'
     else:
         url = first
     if url.startswith('https://twitter.com/') and '/status/' not in url and not url.endswith('/media'):
