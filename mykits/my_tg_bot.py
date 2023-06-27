@@ -44,7 +44,7 @@ def line2args(line: str) -> T.List[str]:
     return args
 
 
-ytdl_regex_pattern = re.compile(r'youtube|youtu\.be|iwara|pornhub.com/view_video|\[ph[\da-f]{13}]|kissjav|xvideos|spankbang|redgifs')
+ytdl_regex_pattern = re.compile(r'youtube|youtu\.be|iwara|pornhub.com/view_video|\[ph[\da-f]{13}]|kissjav|xvideos|spankbang|redgifs|xhamster')
 bldl_regex_pattern = re.compile(r'(/|^)BV[\da-zA-Z]{10}|(/|^)av\d+|(/|^)ep\d+|(/|^)ss\d+|^https://b23.tv/.+')
 phgif_regex_pattern = re.compile(r'pornhub.com/gif')
 
