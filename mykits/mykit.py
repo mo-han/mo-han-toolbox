@@ -321,6 +321,9 @@ def video_guess_crf_func():
     for path in path_l:
         tui_lp.l()
         tui_lp.p(path)
+        if path.endswith('.gif.mp4'):
+            print(f'# skip .gif.mp4 {path}')
+            continue
         try:
             tui_lp.p(guess_video_crf(src=path, codec=codec, work_dir=work_dir, redo=redo, auto_clean=auto_clean))
         except (KeyError, ZeroDivisionError) as e:
