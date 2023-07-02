@@ -96,7 +96,10 @@ def _sorted_path_of_hentai_at_home_downloaded_gallery(gallery_path, gallery_type
     _unknown_ = '(unknown)'
     _various_ = '(various)'
 
-    info = ehentai.parse_hentai_at_home_downloaded_gallery_info(gallery_path, gallery_type)
+    try:
+        info = ehentai.parse_hentai_at_home_downloaded_gallery_info(gallery_path, gallery_type)
+    except ValueError:
+        raise ValueError('galleryinfo error', gallery_path, gallery_type)
     if not info:
         return None
     title = info['title']
