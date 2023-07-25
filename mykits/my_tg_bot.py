@@ -107,7 +107,7 @@ class MyAssistantBot(EasyBot):
         args = [re.sub(r'\[(ph[\da-f]{13})]', r'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in args]
         args_s = ' '.join([shlex.quote(a) for a in args])
         retry_frozen = ytdl_retry_frozen
-        if any(map(lambda s: s in args[0], ('youtu.be', 'youtube.com', 'redgifs.com'))):
+        if any(map(lambda s: s in args[0], ('youtu.be', 'youtube.com', 'redgifs.com', 'xvideos.com', 'pornhub.com'))):
             retry_frozen = yt_dlp_retry_frozen
         try:
             p, out, err = retry_frozen(*args)
