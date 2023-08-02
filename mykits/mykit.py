@@ -326,7 +326,7 @@ def video_guess_crf_func():
             continue
         try:
             tui_lp.p(guess_video_crf(src=path, codec=codec, work_dir=work_dir, redo=redo, auto_clean=auto_clean))
-        except (KeyError, ZeroDivisionError) as e:
+        except (KeyError, ZeroDivisionError, IndexError) as e:
             tui_lp.p(f'! {repr(e)}')
             tui_lp.p(f'- {path}')
 
