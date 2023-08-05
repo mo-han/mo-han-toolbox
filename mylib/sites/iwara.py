@@ -35,14 +35,6 @@ def find_video_url(s: str):
     return find_video_url_guess_path(s)
 
 
-def find_image_url(s: str):
-    from oldezpykit.builtin import ezlist
-    r = ezlist()
-    for i in re.findall(r'https?://.*iwara.tv/images/[^">]+', s):
-        r.append_dedup(i)
-    return r
-
-
 # ytdl_iwara.InfoExtractor = youtube_dl_x.ytdl_common.InfoExtractor  # SEEMINGLY NO EFFECT
 
 
