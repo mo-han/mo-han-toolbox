@@ -168,7 +168,7 @@ def ehviewer_images_catalog(root_dir, *, dry_run: bool = False, db_json_path: st
 
             sub_folder = fstk.make_path(
                 fstk.sanitize_xu200(folder),
-                f'{fstk.sanitize_xu200(title)} {g.gid}-{g.token}'  # use title instead of core title
+                f'{fstk.sanitize_xu200(title)} {g.gid}-{g.token} ehvimg'  # use title instead of core title
             )
             parent, basename = os.path.split(f)
             no_ext, ext = os.path.splitext(basename)
