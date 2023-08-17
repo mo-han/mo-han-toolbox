@@ -328,8 +328,9 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
 
     def get_reply(self):
         try:
-            from websites.bilibili.webapi import BilibiliWebAPI
-            return BilibiliWebAPI().get_replies(self.video_url, text=True)
+            # from websites.bilibili.webapi import BilibiliWebAPI
+            # return BilibiliWebAPI().get_replies(self.video_url, text=True)
+            return self.webapi.get_replies(self.video_url, text=True)
         except Exception as e:
             print(f'! {e}: {e!r}')
             return ''
@@ -381,9 +382,9 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         the_vid = self.get_vid()
         if the_vid.startswith('BV'):
             h = self.html_etree
-            # canonical = h.xpath('//link[@rel="canonical"]')[0].attrib['href']
-            # av_id = re.search(r'/(av\d+)/', canonical).group(1)
-            av_id = f'av{self.webapi.bvid2aid(the_vid)}'
+            canonical = h.xpath('//link[@rel="canonical"]')[0].attrib['href']
+            av_id = re.search(r'/(av\d+)/', canonical).group(1)
+            # av_id = f'av{self.webapi.bvid2aid(the_vid)}'
             id_str = f'{the_vid} {av_id}'
         elif the_vid.startswith('ep'):
             h = self.html_etree
