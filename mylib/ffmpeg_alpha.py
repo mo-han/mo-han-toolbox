@@ -278,7 +278,7 @@ class FFmpegRunnerAlpha:
                 self.add_args(safe=0, protocol_whitelist='file', f='concat', i=file)
         else:
             input_count += 1
-            concat_list = '\n'.join(['file \'{}\''.format(e) for e in input_paths])
+            concat_list = '\n'.join(['file \'{}\''.format(e.replace("'", r"'\''")) for e in input_paths])  # ' -> '\''
             self.add_args(f='concat', safe=0, protocol_whitelist='file,pipe', i='-')
         if extra_inputs:
             input_count += len(extra_inputs)
@@ -295,6 +295,7 @@ class FFmpegRunnerAlpha:
         self.add_args(*output_args, **output_kwargs)
         self.add_args(output_path)
         if concat_list:
+            # print(concat_list)
             return self.proc_comm(concat_list.encode())
         else:
             return self.proc_run()
