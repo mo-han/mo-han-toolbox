@@ -294,7 +294,7 @@ def per_site(site_args: T.List[str]):
                     'cookies-update=true', 'videos=true', 'tags=true', 'metadata=true',
                     'directory=["{username} {category} {service} {user}"]',
                     'filename="{category} {service} {date!S:.10} {id} '
-                    '{title:.60} @{username} p{num} {filename}.{extension}"',
+                    '{title:.60} @{username} p{num} {filename:.40}.{extension}"',
                 ],
                 filter="extension not in ('psd', 'clip')",
             ),
