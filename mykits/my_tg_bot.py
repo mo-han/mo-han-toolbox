@@ -44,7 +44,7 @@ def line2args(line: str) -> T.List[str]:
     return args
 
 
-ytdl_regex_pattern = re.compile(r'youtube|youtu\.be|iwara|pornhub.com/view_video|\[ph[\da-f]{13}]|kissjav|xvideos|spankbang|redgifs|xhamster')
+ytdl_regex_pattern = re.compile(r'youtube|youtu\.be|iwara|pornhub.com/view_video|ph[\da-f]{13}|kissjav|xvideos|spankbang|redgifs|xhamster')
 bldl_regex_pattern = re.compile(r'(/|^)BV[\da-zA-Z]{10}|(/|^)av\d+|(/|^)ep\d+|(/|^)ss\d+|^https://b23.tv/.+')
 phgif_regex_pattern = re.compile(r'pornhub.com/gif')
 
@@ -91,11 +91,12 @@ class MyAssistantBot(EasyBot):
             if line0 in (f'@{h}p' for h in (360, 480, 720, 1080)):
                 new_args_ll = []
                 for args_l in args_ll[1:]:
-                    if 'pornhub.com' in args_l[0]:
-                        new_args_ll.append(
-                            args_l + ['-f', f'[format_id!*=hls][height<=?{line0[1:-1]}]/[height<=?{line0[1:-1]}]'])
-                    else:
-                        new_args_ll.append(args_l + ['-f', f'[height<=?{line0[1:-1]}]'])
+                    new_args_ll.append(args_l + ['-S', f'res:{line0[1:-1]}'])
+                    # if 'pornhub.com' in args_l[0]:
+                    #     new_args_ll.append(
+                    #         args_l + ['-f', f'[format_id!*=hls][height<=?{line0[1:-1]}]/[height<=?{line0[1:-1]}]'])
+                    # else:
+                    #     new_args_ll.append(args_l + ['-f', f'[height<=?{line0[1:-1]}]'])
                 args_ll = new_args_ll
             tasks = [EasyBotTaskData(target=self._ytdl_internal.__name__, args=args_l, chat_to=chat_id)
                      for args_l in args_ll]
@@ -104,11 +105,12 @@ class MyAssistantBot(EasyBot):
     def _ytdl_internal(self, call_data: EasyBotTaskData):
         args = call_data.args
         chat_to = call_data.chat_to
-        args = [re.sub(r'\[(ph[\da-f]{13})]', r'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in args]
+        args = [re.sub(r'(ph[\da-f]{13})', r'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in args]
         args_s = ' '.join([shlex.quote(a) for a in args])
-        retry_frozen = ytdl_retry_frozen
-        if any(map(lambda s: s in args[0], ('youtu.be', 'youtube.com', 'redgifs.com', 'xvideos.com', 'pornhub.com'))):
-            retry_frozen = yt_dlp_retry_frozen
+        retry_frozen = yt_dlp_retry_frozen
+        # retry_frozen = ytdl_retry_frozen
+        # if any(map(lambda s: s in args[0], ('youtu.be', 'youtube.com', 'redgifs.com', 'xvideos.com', 'pornhub.com'))):
+        #     retry_frozen = yt_dlp_retry_frozen
         try:
             p, out, err = retry_frozen(*args)
             echo = ''.join(
@@ -141,6 +143,9 @@ class MyAssistantBot(EasyBot):
 
     def _bldl_internal(self, call_data: EasyBotTaskData):
         args = call_data.args
+        arg0 = args[0].strip()
+        if not (arg0.startswith('https://') or arg0.startswith('-')):
+            args[0] = f'https://b23.tv/{arg0}'
         chat_id = call_data.chat_to
         args_s = ' '.join([shlex.quote(a) for a in args])
         try:
@@ -154,6 +159,11 @@ class MyAssistantBot(EasyBot):
                     return EasyBotTaskResult(ok=True)
                 print(f' EXIT CODE: {p.returncode}')
                 self.__send_code_block__(chat_id, f'! {args_s}\n{echo}')
+                if 'urllib.error.HTTPError: HTTP Error 412: Precondition Failed' in echo:
+                    ts = 60
+                    self.__send_code_block__(chat_id, f'# sleep {ts}s.')
+                    print(f'# sleep {ts}s.')
+                    sleep(ts)
                 return EasyBotTaskResult(ok=False)
             else:
                 echo = ''.join([s for s in [decode_fallback_locale(b) for b in out.readlines()] if '─┤' not in s])
