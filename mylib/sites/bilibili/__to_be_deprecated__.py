@@ -3,6 +3,7 @@ import json
 import os
 import re
 import shutil
+import time
 from glob import glob
 from http.cookiejar import MozillaCookieJar
 from typing import Tuple
@@ -14,7 +15,7 @@ import requests
 import you_get.util.strings
 from lxml import html
 
-import ezpykitext.webclient.header
+import oldezpykitext.webclient.header
 from mylib import web_client
 from mylib.__deprecated__ import concat_videos, merge_m4s
 from mylib._misc import safe_print, safe_basename
@@ -27,14 +28,13 @@ from mylib.ext.tricks import str2range, seq_call_return
 from mylib.ext.tui import LinePrinter
 from websites.bilibili import webapi
 
-API_HEADERS_HANDLER: ezpykitext.webclient.header.EzHttpHeaders = ezpykitext.webclient.header.EzHttpHeaders().user_agent(
-    ezpykitext.webclient.header.UserAgentExamples.GOOGLE_CHROME_WINDOWS)
-
 BILIBILI_VIDEO_URL_PREFIX = 'https://www.bilibili.com/video/'
 BILIBILI_EPISODE_URL_PREFIX = 'https://www.bilibili.com/bangumi/play/'
 BILIBILI_SHORT_URL_PREFIX = 'https://b23.tv/'
 QUALITY_DESC_PRIORITY = ['超清 4K', '高清 1080P60', '高清 1080P+', '高清 720P60', '高清 1080P', '高清 720P',
                          '清晰 480P', '流畅 360P']
+
+bilibili_webapi = webapi.BilibiliWebAPI(cache_request=True)
 
 
 def quality_desc_priority_index(quality_desc: str):
@@ -45,11 +45,11 @@ class BilibiliError(RuntimeError):
     pass
 
 
-def _tmp(avid, cid):
-    param = {'avid': avid, 'cid': cid, 'type': '', 'otype': 'json', 'fnver': 0, 'fnval': 16}
-    api_url = 'https://api.bilibili.com/x/player/playurl'
-    r = requests.get(api_url, param)
-    return r.json()
+# def _tmp(avid, cid):
+#     param = {'avid': avid, 'cid': cid, 'type': '', 'otype': 'json', 'fnver': 0, 'fnval': 16}
+#     api_url = 'https://api.bilibili.com/x/player/playurl'
+#     r = requests.get(api_url, param)
+#     return r.json()
 
 
 # 这个函数用于修改you-get的B站下载模块`you_get.extractors.bilibili`的源码
@@ -203,27 +203,9 @@ def find_bilibili_vid(x: str or int) -> str or None:
     return vid
 
 
-def api_web_interface_view(cookies: dict = None, **kwargs):
-    url = 'https://api.bilibili.com/x/web-interface/view'
-    headers = API_HEADERS_HANDLER.headers
-    return requests.get(url, params=kwargs, headers=headers(), cookies=cookies).json()
-
-
 def vid_to_bvid_via_web_api(vid: str or int, cookies: dict = None) -> str or None:
-    if isinstance(vid, str):
-        if vid[:2] in ('av', 'AV'):
-            aid = vid[2:]
-        else:
-            return vid
-    elif isinstance(vid, int):
-        aid = vid
-    else:
-        raise TypeError('avid must be str or int')
-    j = api_web_interface_view(aid=aid, cookies=cookies)
-    if j['code'] == 0 and j['data']:
-        return j['data']['bvid']
-    else:
-        raise BilibiliError(j)
+    bilibili_webapi.set_cookies(cookies)
+    return bilibili_webapi.parse_vid_dict(vid)['bvid']
 
 
 def bilibili_url_from_vid(vid: str) -> str:
@@ -245,7 +227,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
 
     def __init__(self, *args, cookies: str or dict = None, qn_max=116, qn_want=None):
         super().__init__(*args)
-        self.webapi = webapi.BilibiliWebAPI()
+        self.bilibili_webapi = bilibili_webapi
         self.do_not_write_any_file = False
         self.cookie = None
         if cookies:
@@ -294,7 +276,7 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         else:
             raise TypeError("'{}' is not cookies file path or single-line cookie str or cookies dict".format(cookies))
         self.cookie = cookie_str
-        self.webapi.cookies = http_headers.parse_cookie_str(cookie_str)
+        self.bilibili_webapi.cookies = http_headers.parse_cookie_str(cookie_str)
 
     def bilibili_headers(self, referer=None, cookie=None):
         if not cookie:
@@ -328,8 +310,9 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
 
     def get_reply(self):
         try:
-            from websites.bilibili.webapi import BilibiliWebAPI
-            return BilibiliWebAPI().get_replies(self.video_url, text=True)
+            # from websites.bilibili.webapi import BilibiliWebAPI
+            # return BilibiliWebAPI().get_replies(self.video_url, text=True)
+            return self.bilibili_webapi.get_replies(self.video_url, text=True)
         except Exception as e:
             print(f'! {e}: {e!r}')
             return ''
@@ -382,9 +365,10 @@ class YouGetBilibiliX(you_get.extractors.bilibili.Bilibili):
         if the_vid.startswith('BV'):
             h = self.html_etree
             # canonical = h.xpath('//link[@rel="canonical"]')[0].attrib['href']
-            # av_id = re.search(r'/(av\d+)/', canonical).group(1)
-            av_id = f'av{self.webapi.bvid2aid(the_vid)}'
-            id_str = f'{the_vid} {av_id}'
+            # av_id = re.search(r'/(av\d+)/', canonical).group(1)  # canonical 也变成BVID了
+            # time.sleep(8)  # [Code -799] 请求过于频繁，请稍后再试。但是没用~~~
+            # av_id = f'av{self.bilibili_webapi.bvid2aid(the_vid)}'
+            id_str = f'{the_vid}'
         elif the_vid.startswith('ep'):
             h = self.html_etree
             og_url = h.xpath('//meta[@property="og:url"]')[0].attrib['content']
@@ -434,9 +418,10 @@ def download_bilibili_video(url: str or int,
         url = bilibili_url_from_vid(vid_to_bvid_via_web_api(find_bilibili_vid(url) or url))
     if (url.startswith('https://b23.tv/BV') and len(url) == 22) or (
             url.startswith('https://b23.tv/') and url[15:17] not in ('BV', 'ss', 'ep', 'av')):
-        r = requests.get(url)
-        if r.ok:
-            url = r.url.split('?', maxsplit=1)[0]
+        url = bilibili_webapi.clarify_uri(url).split('?', maxsplit=1)[0]
+        # r = requests.get(url)
+        # if r.ok:
+        #     url = r.url.split('?', maxsplit=1)[0]
     b.url = url = b.get_real_url(url)
     lp.print(b.url)
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from mylib.easy import *
-from ezpykit.stdlib import argparse
+from oldezpykit.stdlib import argparse
 from mylib.ext import ostk
 
 apr = argparse.ArgumentParserWrapper()

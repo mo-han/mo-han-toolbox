@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from ezpykitext.appkit import *
+from oldezpykitext.appkit import *
 from mylib.ext.console_app import ConsolePrinter, fstk, split_path_dir_base_ext, join_path_dir_base_ext, PathSourceType, \
     resolve_path_to_dirs_files, Timer
 from mylib.sites import ehentai
@@ -96,7 +96,10 @@ def _sorted_path_of_hentai_at_home_downloaded_gallery(gallery_path, gallery_type
     _unknown_ = '(unknown)'
     _various_ = '(various)'
 
-    info = ehentai.parse_hentai_at_home_downloaded_gallery_info(gallery_path, gallery_type)
+    try:
+        info = ehentai.parse_hentai_at_home_downloaded_gallery_info(gallery_path, gallery_type)
+    except ValueError:
+        raise ValueError('galleryinfo error', gallery_path, gallery_type)
     if not info:
         return None
     title = info['title']

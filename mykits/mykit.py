@@ -10,19 +10,19 @@ from pprint import pprint
 
 from send2trash import send2trash
 
-import ezpykit.stdlib.shutil.__deprecated__
+import oldezpykit.stdlib.shutil.__deprecated__
 import mylib.__deprecated__
 import mylib.easy
 import mylib.ext.ostk
-from ezpykit.allinone import AttrName
+from oldezpykit.allinone import AttrName
 from mylib.__deprecated__ import fs_inplace_rename, fs_inplace_rename_regex, list_files, list_dirs
 from mylib.cli import arg_type_pow2, arg_type_range_factory, add_dry_run
 from mylib.easy import *
-from ezpykit.stdlib.argparse import CompactHelpFormatterWithDefaults
+from oldezpykit.stdlib.argparse import CompactHelpFormatterWithDefaults
 from mylib.ext.tricks import Attreebute, eval_or_str, deco_factory_exit_on_keyboard_interrupt
 from mylib.ext import fstk, tui
 from mylib.ext.fstk import make_path
-from ezpykit.stdlib.os import ctx_pushd
+from oldezpykit.stdlib.os import ctx_pushd
 from mylib.ext.ostk import clipboard, set_console_title
 
 rtd = Attreebute()  # runtime data
@@ -249,7 +249,7 @@ def tag_filter_files_func():
                     try:
                         send2trash(f)
                     except OSError:
-                        ezpykit.stdlib.shutil.__deprecated__.remove(f)
+                        oldezpykit.stdlib.shutil.__deprecated__.remove(f)
 
 
 tag_filter_files = add_sub_parser('tag.filter.files', [], 'filter files by tags and ext')
@@ -321,9 +321,12 @@ def video_guess_crf_func():
     for path in path_l:
         tui_lp.l()
         tui_lp.p(path)
+        if path.endswith('.gif.mp4'):
+            print(f'# skip .gif.mp4 {path}')
+            continue
         try:
             tui_lp.p(guess_video_crf(src=path, codec=codec, work_dir=work_dir, redo=redo, auto_clean=auto_clean))
-        except (KeyError, ZeroDivisionError) as e:
+        except (KeyError, ZeroDivisionError, IndexError) as e:
             tui_lp.p(f'! {repr(e)}')
             tui_lp.p(f'- {path}')
 
@@ -518,12 +521,15 @@ def ffmpeg_func():
     redo_origin = args.redo_origin
     verbose = args.verbose
     dry_run = args.dry_run
+    force = args.force
     opts = args.opts
     if verbose:
         print(args)
     for filepath in mylib.__deprecated__.list_files(source, recursive=False):
-        kw_video_convert(filepath, keywords=keywords, vf=video_filters, cut_points=cut_points, dest=output_path,
-                         overwrite=overwrite, redo=redo_origin, verbose=verbose, dry_run=dry_run, ffmpeg_opts=opts)
+        kw_video_convert(
+            filepath, keywords=keywords, vf=video_filters, cut_points=cut_points, dest=output_path,
+            overwrite=overwrite, redo=redo_origin, verbose=verbose, dry_run=dry_run, force=force,
+            ffmpeg_opts=opts)
 
 
 ffmpeg = add_sub_parser('wrap.ffmpeg', ['ffmpeg', 'ff'], 'convert video file using ffmpeg')
@@ -535,6 +541,7 @@ ffmpeg.add_argument('-t', '--time-cut', dest='cut_points', metavar='ts', nargs='
 ffmpeg.add_argument('-o', '--output-path')
 ffmpeg.add_argument('-O', '--overwrite', action='store_true')
 ffmpeg.add_argument('-R', '--redo-origin', action='store_true')
+ffmpeg.add_argument('-F', '--force', action='store_true')
 ffmpeg.add_argument('-v', '--verbose', action='count', default=0)
 ffmpeg.add_argument('-D', '--dry-run', action='store_true')
 ffmpeg.add_argument('opts', nargs='*', help='ffmpeg options (insert -- before opts)')
@@ -754,7 +761,7 @@ dukto_x.add_argument('ndrop_args', metavar='[--] arguments for ndrop', nargs=REM
 
 
 def url_from_clipboard():
-    from ezpykitext.stdlib import os
+    from oldezpykitext.stdlib import os
     from mylib.easy.text import regex_find
     from html import unescape
     args = rtd.args
@@ -774,9 +781,6 @@ def url_from_clipboard():
     elif pattern == 'iwara':
         from mylib.sites.iwara import find_video_url
         urls = find_video_url(t)
-    elif pattern == 'iwaraimage':
-        from mylib.sites.iwara import find_image_url
-        urls = find_image_url(t)
     elif pattern in ('pornhub', 'ph'):
         from mylib.sites.pornhub import find_url_in_text
         urls = find_url_in_text(t)

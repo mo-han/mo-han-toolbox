@@ -2,7 +2,7 @@
 import pywintypes
 import win32clipboard
 
-from ezpykit.allinone import deco_ctx_with_self
+from oldezpykit.allinone import deco_ctx_with_self
 from mylib.easy.ostk import *
 
 

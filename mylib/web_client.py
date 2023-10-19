@@ -12,7 +12,7 @@ import humanize
 import lxml.html
 import requests.utils
 
-import ezpykit.stdlib.os.common
+import oldezpykit.stdlib.os.common
 from mylib.easy import *
 from mylib.easy.io import SubscriptableFileIO
 from mylib.easy.logging import ez_get_logger, LOG_FMT_MESSAGE_ONLY
@@ -430,7 +430,7 @@ class DownloadPool(ThreadPoolExecutor):
 
     def download(self, url, filepath, retry, **kwargs_for_requests):
         tmpfile = filepath + self.tmpfile_suffix
-        ezpykit.stdlib.os.common.touch(tmpfile)
+        oldezpykit.stdlib.os.common.touch(tmpfile)
         for cnt, x in iter_factory_retry(retry)(self.request_data, url, tmpfile, **kwargs_for_requests):
             if isinstance(x, Exception):
                 self.logger.warning('! <{}> {}'.format(type(x).__name__, x))

@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 import vxi11  # pip install -U python-vxi11
 from serial import Serial, SerialException
 
-from ezpykit.metautil import Stopwatch
+from oldezpykit.metautil import Stopwatch
 
 S_VXI11 = 'vxi11'
 S_SERIAL = 'serial'

@@ -12,7 +12,7 @@ from telegram import ChatAction, Bot, Update, ParseMode, constants, Message
 from telegram.ext import Updater, Filters, CallbackContext
 from telegram.ext.filters import MergedFilter
 
-from ezpykit.allinone import AttrName
+from oldezpykit.allinone import AttrName
 from mylib.easy import logging
 from mylib.easy import ostk, text
 from .easy import *

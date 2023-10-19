@@ -6,7 +6,7 @@ import urllib.parse
 import zipfile
 from enum import Enum
 
-from ezpykit.allinone import re
+from oldezpykit.allinone import re
 from mylib.easy import *
 from mylib.easy import text
 

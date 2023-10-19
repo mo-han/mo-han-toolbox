@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-from ezpykitext.appkit import *
-from ezpykitext.extlib.termcolor import *
-from ezpykitext.webclient import *
+from oldezpykitext.appkit import *
+from oldezpykitext.extlib.termcolor import *
+from oldezpykitext.webclient import *
 
 apr = argparse.ArgumentParserWrapper()
 

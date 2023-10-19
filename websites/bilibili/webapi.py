@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import re
+import time
 
-from ezpykit.allinone import *
-from ezpykitext.webclient import *
+from oldezpykit.allinone import *
+from oldezpykitext.webclient import *
 
 BILIBILI_HOME_PAGE_URL = 'https://www.bilibili.com'
 BILIBILI_HEADERS = header.EzHttpHeaders().ua(header.UserAgentExamples.GOOGLE_CHROME_WINDOWS)
@@ -40,20 +41,33 @@ class BilibiliWebAPI:
         REPLY_SORT_RECENT = 0
         REPLY_SORT_POPULAR = 2
 
-    def __init__(self, cookies=None, cache_request: bool = False):
+    def __init__(self, cookies=None, cache_request: bool = False, request_interval=8):
         self.cookies = {}
         self.set_cookies(cookies)
         self.cache_request = cache_request
+        self.request_interval = request_interval
+        # self.last_request_time = time.time() - request_interval
+        self.last_request_time = time.time()
 
     def set_cookies(self, cookies):
-        if cookie.EzCookieJar.is_cookiejar(cookies):
+        if not cookies:
+            pass
+        elif isinstance(cookies, dict):
+            self.cookies = cookies
+        elif cookie.EzCookieJar.is_cookiejar(cookies):
             self.cookies = cookie.EzCookieJar.get_dict(cookies)
         elif cookies:
             self.cookies = cookie.EzCookieJar().smart_load(cookies, ignore_discard=True, ignore_expires=True).get_dict()
         return self
 
     def _request_json(self, url, **params) -> dict:
+        t = time.time()
+        t_delta = t - self.last_request_time
+        if t_delta < self.request_interval:
+            sleep(self.request_interval - t_delta)
+            # [Code -799] 请求过于频繁，请稍后再试
         r = requests.get(url, params=params, headers=BILIBILI_HEADERS, cookies=self.cookies)
+        self.last_request_time = time.time()
         j = r.json()
         check_response_json(j)
         try:

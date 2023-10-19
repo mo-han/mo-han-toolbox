@@ -2,7 +2,7 @@
 import os
 from xml.etree import ElementTree
 
-from ezpykitext.appkit import *
+from oldezpykitext.appkit import *
 
 __logger__ = logging.get_logger(__name__)
 ap = argparse.ArgumentParserWrapper()

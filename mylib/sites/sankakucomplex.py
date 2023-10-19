@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import ezpykit.stdlib.shutil.__deprecated__
+import oldezpykit.stdlib.shutil.__deprecated__
 from mylib.ext.console_app import *
 import hashlib
 
@@ -35,7 +35,7 @@ def remove_expired_link_files(src, verbose=False, print_dirname=False):
     dir_with_bad_files = {}
     for path in itertools.chain(dirs, files):
         for fp in find_bad_files_iter(fstk.find_iter('f', path, recursive=True)):
-            ezpykit.stdlib.shutil.__deprecated__.remove(fp)
+            oldezpykit.stdlib.shutil.__deprecated__.remove(fp)
             bad_files.append(fp)
             dp = path_dirname(fp)
             if dp not in dir_with_bad_files:

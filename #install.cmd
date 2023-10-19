@@ -13,10 +13,10 @@ xcopy /s /y mykits %dst%
 mkdir %dst%\i18n
 xcopy /s /y i18n %dst%\i18n
 
-mkdir %dst%\ezpykit
-xcopy /s /y ezpykit %dst%\ezpykit
-mkdir %dst%\ezpykitext
-xcopy /s /y ezpykitext %dst%\ezpykitext
+mkdir %dst%\oldezpykit
+xcopy /s /y oldezpykit %dst%\oldezpykit
+mkdir %dst%\oldezpykitext
+xcopy /s /y oldezpykitext %dst%\oldezpykitext
 mkdir %dst%\websites
 xcopy /s /y websites %dst%\websites
 mkdir %dst%\apps

@@ -25,7 +25,7 @@ rule-providers:
     type: http
     behavior: domain
     # url: https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/proxy.txt
-    proxy: https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/proxy.txt
+    url: https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/proxy.txt
     path: ./ruleset/proxy.yaml
     interval: 86400
   reject:
@@ -130,23 +130,24 @@ rule-providers:
 rules:
   - RULE-SET,custom_proxy,PROXY
   - RULE-SET,custom_direct,DIRECT
-  - RULE-SET,apps,DIRECT
-  - DOMAIN,clash.razord.top,DIRECT
-  - DOMAIN,yacd.haishan.me,DIRECT
-  - RULE-SET,reject,REJECT
-  - RULE-SET,private,DIRECT
-  - RULE-SET,cncidr,DIRECT
-  - RULE-SET,lancidr,DIRECT
-  - GEOIP,LAN,DIRECT
-  - GEOIP,CN,DIRECT
-  - RULE-SET,icloud,DIRECT
-  - RULE-SET,apple_china,DIRECT
-  - RULE-SET,direct,DIRECT
 
+  - RULE-SET,apps,DIRECT
   - RULE-SET,proxy,PROXY
-  - RULE-SET,gfwlist,PROXY
-  - RULE-SET,greatfire,PROXY
+  - RULE-SET,direct,DIRECT
+  - RULE-SET,reject,REJECT
+
   - RULE-SET,telegramcidr,PROXY
   - RULE-SET,tld-not-cn,PROXY
+  - RULE-SET,gfwlist,PROXY
+  - RULE-SET,greatfire,PROXY
+  - GEOIP,LAN,DIRECT
+  - GEOIP,CN,DIRECT
+  - DOMAIN,clash.razord.top,DIRECT
+  - DOMAIN,yacd.haishan.me,DIRECT
+  - RULE-SET,lancidr,DIRECT
+  - RULE-SET,private,DIRECT
+  - RULE-SET,cncidr,DIRECT
+  - RULE-SET,icloud,DIRECT
+  - RULE-SET,apple_china,DIRECT
 
   - MATCH,PROXY
