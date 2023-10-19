@@ -28,3 +28,4 @@ dotnetkit/**/*.cache
 dotnetkit/**/TemporaryGeneratedFile_*
 iwara images
 temp/
+wt3000波形采集临时工具.spec
