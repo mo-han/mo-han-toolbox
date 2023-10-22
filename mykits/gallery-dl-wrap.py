@@ -384,7 +384,7 @@ def args2url(args):
         url = first
     if url.startswith('https://twitter.com/') and '/status/' not in url and not url.endswith('/media'):
         url += '/media'
-    if url.startswith('https://reddit.com/') and '/s/' in url:
+    if 'reddit.com' in url and '/s/' in url:
         url = requests.get(url).url
     url = url.replace('chan.sankakucomplex.com/cn/', 'chan.sankakucomplex.com/')
     return url
