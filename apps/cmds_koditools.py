@@ -56,7 +56,7 @@ class KodiTvShowNfo:
     def sxe_str2tuple(s: str):
         if not re.fullmatch(r'\d*x\d+', s):
             raise TypeError('SxE string, e.g. 2x03, x01')
-        s, e = ezdict.pick_to_list(re.MatchWrapper(re.match(r'(\d*)x(\d+)', s), [int]).group_dict(), 1, 2)
+        s, e = ezdict.list_sub(re.MatchWrapper(re.match(r'(\d*)x(\d+)', s), [int]).group_dict(), 1, 2)
         if s == '':
             s = -1
         return s, e

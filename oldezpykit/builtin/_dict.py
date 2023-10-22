@@ -89,7 +89,7 @@ class ezdict(dict):
                 return self[k]
         return default
 
-    def pick(self, *keys, **keys_with_default):
+    def get_sub(self, *keys, **keys_with_default):
         r = ezdict()
         for k in keys:
             if k in self:
@@ -98,7 +98,7 @@ class ezdict(dict):
             r[k] = self.get(k, v)
         return r
 
-    def pick_to_list(self, *keys, **keys_with_default):
+    def list_sub(self, *keys, **keys_with_default):
         rl = []
         for k in keys:
             if k in self:
@@ -131,7 +131,7 @@ def temp_test():
     recursive_update_dict(d, {2: 22, 1: {4: 4444, 3: {6: 666666}}}, ezdict)
     print(d, type(d[[1, 3]]))
     print(d.get([1, 3, 5]))
-    print(d.pick([2, 22], [1, 3, 5], 3))
+    print(d.get_sub([2, 22], [1, 3, 5], 3))
 
 
 if __name__ == '__main__':

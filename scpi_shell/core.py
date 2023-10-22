@@ -14,7 +14,7 @@ from oldezpykit.metautil import Stopwatch
 
 S_VXI11 = 'vxi11'
 S_SERIAL = 'serial'
-S_YOKOGAWA_ETHERNET_LEGACY = 'yokogawa ethernet legacy'
+S_YOKOGAWA_ETHERNET_LEGACY = 'yokogawa-ethernet-legacy'
 # PROMPT_LEFT_ARROW = '←'
 PROMPT_LEFT_ARROW = '<-'
 
@@ -295,7 +295,7 @@ class SCPIShell(cmd.Cmd):
         self.do_help('')
         if not self.connected:
             address = input('Connect to: ')
-            conn_type_list = ('VXI-11', 'Serial', 'Yokogawa Ethernet Legacy')
+            conn_type_list = ('VXI-11', 'Serial', S_YOKOGAWA_ETHERNET_LEGACY)
             conn_type_default = conn_type_list[0]
             conn_type_choose_str_list = []
             for i in range(len(conn_type_list)):
@@ -445,7 +445,7 @@ class SCPIShell(cmd.Cmd):
 
     def tcprelay(self, host: str, port: int):
         callback = self.onecmd
-        welcome = f'vxi11cmd server, relay {host}:{port}, remote {self.address}.\r\n\r\n'.encode()
+        welcome = f'scpi relay server {host}:{port}, remote {self.address}.\r\n\r\n'.encode()
 
         class CmdServerHandler(StreamRequestHandler):
             def handle(self):
