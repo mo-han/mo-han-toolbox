@@ -105,7 +105,7 @@ class MyAssistantBot(EasyBot):
     def _ytdl_internal(self, call_data: EasyBotTaskData):
         args = call_data.args
         chat_to = call_data.chat_to
-        args = [re.sub(r'(ph[\da-f]{13})', r'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in args]
+        args = [re.sub(r'(^ph[\da-f]{13})', r'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in args]
         args_s = ' '.join([shlex.quote(a) for a in args])
         retry_frozen = yt_dlp_retry_frozen
         # retry_frozen = ytdl_retry_frozen
@@ -116,7 +116,7 @@ class MyAssistantBot(EasyBot):
             echo = ''.join(
                 [re.sub(r'.*\[download\]', '[download]', decode_fallback_locale(b).rsplit('\r', maxsplit=1)[-1]) for
                  b in
-                 out.readlines()[-10:]])
+                 out.readlines()[-16:]])
             if p.returncode:
                 if self.__str_contain_abandon_errors__(echo):
                     self.__send_code_block__(chat_to, f'- {args_s}\n{echo}')

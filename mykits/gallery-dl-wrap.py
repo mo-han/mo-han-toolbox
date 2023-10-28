@@ -289,7 +289,7 @@ def per_site(site_args: T.List[str]):
                                 'filename="{category} {date!S:.10} {index} '
                                 '{title} @{artist!S:L80/___/} .{extension}"', ]),
                 *site_args, url]
-    elif 'kemono.party' in url or 'coomer.party' in url:
+    elif 'kemono.' in url or 'coomer.' in url:
         args = [
             *GLDLCLIArgs(
                 o=[
