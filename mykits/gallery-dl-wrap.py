@@ -359,10 +359,10 @@ def args2url(args):
             url = f'https://idol.sankakucomplex.com/?tags={x}'
     elif first in ('ng', 'newgrounds'):
         url = f'https://{pop_tag_from_args(args)}.newgrounds.com/art'
-    elif first in ('kemono', 'kemonoparty', 'kemono.party'):
-        url = f'https://kemono.party/{pop_tag_from_args(args)}'
-    elif first in ('coomer', 'coomerparty', 'coomer.party'):
-        url = f'https://coomer.party/{pop_tag_from_args(args)}'
+    elif first in ('kemono', 'kemonoparty', 'kemono.su'):
+        url = f'https://kemono.su/{pop_tag_from_args(args)}'
+    elif first in ('coomer', 'coomerparty', 'coomer.su'):
+        url = f'https://coomer.su/{pop_tag_from_args(args)}'
     elif first in ('luscious', 'lus'):
         x = pop_tag_from_args(args)
         if re.match(r'\d+ \d+', x):
