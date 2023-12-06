@@ -16,6 +16,8 @@ from mylib.ext import fstk
 from mylib.ext.ostk import check_file_ext
 from mylib.ext.tricks import percentage
 
+Image.MAX_IMAGE_PIXELS = 268435456
+
 AHASH = 'ahash'
 DHASH = 'dhash'
 PHASH = 'phash'
