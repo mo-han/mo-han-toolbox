@@ -153,25 +153,28 @@ class MyAssistantBot(EasyBot):
         try:
             p, out, err = bldl_retry_frozen(*args)
             if p.returncode:
+                s_exit_code = f' [FAIL] EXIT CODE: {p.returncode}'
+                print(s_exit_code)
                 echo = ''.join(
                     [decode_fallback_locale(b).rsplit('\r', maxsplit=1)[-1] for b in out.readlines()[-5:]])
                 if self.__str_contain_abandon_errors__(echo):
-                    print(f' EXIT CODE: {p.returncode}')
-                    self.__send_code_block__(chat_id, f'- {args_s}\n{echo}')
+                    self.__send_code_block__(chat_id, f'- {args_s}\n{s_exit_code}\n{echo}')
                     return EasyBotTaskResult(ok=True)
-                print(f' EXIT CODE: {p.returncode}')
-                self.__send_code_block__(chat_id, f'! {args_s}\n{echo}')
-                if 'urllib.error.HTTPError: HTTP Error 412: Precondition Failed' in echo:
-                    ts = 60
-                    self.__send_code_block__(chat_id, f'# sleep {ts}s.')
-                    print(f'# sleep {ts}s.')
-                    sleep(ts)
+                self.__send_code_block__(chat_id, f'! {args_s}\n{s_exit_code}\n{echo}')
+                # if 'urllib.error.HTTPError: HTTP Error 412: Precondition Failed' in echo:
+                #     ts = 60
+                #     self.__send_code_block__(chat_id, f'# sleep {ts}s.')
+                #     print(f'# sleep {ts}s.')
+                #     sleep(ts)
                 return EasyBotTaskResult(ok=False)
             else:
                 echo = ''.join([s for s in [decode_fallback_locale(b) for b in out.readlines()] if '─┤' not in s])
+                print(' [OK]')
                 self.__send_code_block__(chat_id, f'* {args_s}\n{echo}')
             return EasyBotTaskResult(ok=True)
         except Exception as e:
+            print(' [ERROR]')
+            self.__send_traceback__(chat_id)
             self.__send_code_block__(chat_id, f'! {args_s}\n{str(e)}\n{repr(e)}')
             return EasyBotTaskResult(ok=False)
 
