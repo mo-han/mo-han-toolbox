@@ -196,7 +196,7 @@ class EasyBot(logging.EzLoggingMixin):
     __send_md__ = __send_markdown__
 
     def __send_code_block__(self, send_to, code_text):
-        for ct in text.split_by_new_line_with_max_length(code_text, 1024):
+        for ct in text.split_by_new_line_with_max_length(code_text, 512):
             self.__send_markdown__(send_to, f'```\n{ct}```')
 
     def __send_traceback__(self, send_to):
