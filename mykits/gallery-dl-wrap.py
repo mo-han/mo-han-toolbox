@@ -253,7 +253,7 @@ def per_site(site_args: T.List[str]):
                 num = int(pq_arg[2:])
                 sort_types = ['hot', 'top/?t=all', 'gilded', 'best']
                 if any(s in url for s in sort_types):
-                    args = [*gldl_args, *site_args, '--range', {num}, url]
+                    args = [*gldl_args, *site_args, '--range', f'-{num}', url]
                 else:
                     args = MultiList([
                         [
@@ -362,7 +362,7 @@ def args2url(args):
     elif first in ('kemono', 'kemonoparty', 'kemono.su'):
         url = f'https://kemono.su/{pop_tag_from_args(args)}'
     elif first in ('coomer', 'coomerparty', 'coomer.su'):
-        url = f'https://coomer.su/{pop_tag_from_args(args)}'
+        url = f'https://coomer.suhttps://www.reddit.com/r/celebnsfw/s/ceI553vLF5/{pop_tag_from_args(args)}'
     elif first in ('luscious', 'lus'):
         x = pop_tag_from_args(args)
         if re.match(r'\d+ \d+', x):
@@ -385,7 +385,9 @@ def args2url(args):
     if url.startswith('https://twitter.com/') and '/status/' not in url and not url.endswith('/media'):
         url += '/media'
     if 'reddit.com' in url and '/s/' in url:
-        url = requests.get(url).url
+        import browser_cookie3
+        url = requests.get(url, cookies=browser_cookie3.firefox()).url
+        print(url)
     url = url.replace('chan.sankakucomplex.com/cn/', 'chan.sankakucomplex.com/')
     return url
 
@@ -424,6 +426,7 @@ def main():
             cmd_l.append(new_gallery_dl_cmd() + site_args)
         for cmd in cmd_l:
             try:
+                print(cmd)
                 p = subprocess.Popen(cmd)
                 print(p.args)
                 if p.wait() and pause_on_error:
