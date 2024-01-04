@@ -259,7 +259,7 @@ def per_site(site_args: T.List[str]):
                         [
                             *gldl_args, *site_args,
                             '--range', f'-{num // 10 if sort == "hot" else num}',
-                            '--chapter-range', f'-{num // 10 if sort == "hot" else num}',
+                            # '--chapter-range', f'-{num // 10 if sort == "hot" else num}',
                             url.rstrip('/') + f'{sort}'
                         ] for sort in sort_types
                     ])
@@ -428,7 +428,7 @@ def main():
             try:
                 print(cmd)
                 p = subprocess.Popen(cmd)
-                print(p.args)
+                # print(p.args)
                 if p.wait() and pause_on_error:
                     console_pause()
             except KeyboardInterrupt:
