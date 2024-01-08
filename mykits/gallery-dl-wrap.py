@@ -245,7 +245,7 @@ def per_site(site_args: T.List[str]):
                     [*gldl_args, *site_args, '--range', num, url + ' order:quality'],
                 ])
     elif 'reddit.com' in url:
-        gldl_args = GLDLCLIArgs(o='parent-skip=true')
+        gldl_args = GLDLCLIArgs(o=['parent-skip=true', 'videos=ytdl'])
         args = [*gldl_args, *site_args, url]
         if site_args:
             pq_arg, *site_args = site_args
@@ -362,7 +362,7 @@ def args2url(args):
     elif first in ('kemono', 'kemonoparty', 'kemono.su'):
         url = f'https://kemono.su/{pop_tag_from_args(args)}'
     elif first in ('coomer', 'coomerparty', 'coomer.su'):
-        url = f'https://coomer.suhttps://www.reddit.com/r/celebnsfw/s/ceI553vLF5/{pop_tag_from_args(args)}'
+        url = f'https://coomer.su/{pop_tag_from_args(args)}'
     elif first in ('luscious', 'lus'):
         x = pop_tag_from_args(args)
         if re.match(r'\d+ \d+', x):
