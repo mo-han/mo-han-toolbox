@@ -72,7 +72,7 @@ class FilenameTagsABC(ABC):
 
 
 class EnclosedFilenameTags(FilenameTagsABC):
-    def __init__(self, path: str, *, preamble='.', begin='[', end=']', sep=' '):
+    def __init__(self, path: str, *, preamble=' #', begin='[', end=']', sep=' '):
         super().__init__()
         self.config = dict(preamble=repr(preamble), begin=repr(begin), end=repr(end), sep=repr(sep))
         self.begin = begin

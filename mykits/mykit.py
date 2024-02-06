@@ -228,7 +228,7 @@ def tag_filter_files_func():
     rm = defaultdict(set)
     kp = defaultdict(set)
     for f in fstk.files_from_iter(args.src or mylib.ext.ostk.clipboard.list_path(), recursive=False):
-        ft = EnclosedFilenameTags(f)
+        ft = EnclosedFilenameTags(f, preamble=' +')
         ext = ft.extension
         prefix = ft.before_tags
         if any(map(ft.has_tag, tag_kp)) or ext in ext_kp:

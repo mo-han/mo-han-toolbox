@@ -598,7 +598,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     start = cut_points[0] if cut_points else 0
     end = cut_points[1] if len(cut_points) >= 2 else 0
 
-    input_ft = EnclosedFilenameTags(filepath)
+    input_ft = EnclosedFilenameTags(filepath, preamble=' +')
     origin_ft = EnclosedFilenameTags(filepath).tag('origin')
     output_ft = EnclosedFilenameTags(filepath).untag('crf', 'origin')
     if output_ext:
@@ -665,7 +665,7 @@ def parse_kw_opt_str(kw: str):
 
 
 def guess_video_crf(src, codec, *, redo=False, work_dir=None, auto_clean=True):
-    tf = EnclosedFilenameTags(src)
+    tf = EnclosedFilenameTags(src, preamble=' +')
     if not redo and 'crf' in tf.keys:
         return float(tf.tags_dict['crf'])
     c = FFmpegSegmentsContainer(src, work_dir=work_dir, log_lvl='WARNING')
