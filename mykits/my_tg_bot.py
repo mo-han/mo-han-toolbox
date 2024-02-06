@@ -168,7 +168,7 @@ class MyAssistantBot(EasyBot):
                 #     sleep(ts)
                 return EasyBotTaskResult(ok=False)
             else:
-                echo = ''.join([s for s in [decode_fallback_locale(b) for b in out.readlines()] if '─┤' not in s])
+                echo = ''.join([s for s in [decode_fallback_locale(b) for b in out.readlines()[-100:]] if '─┤' not in s])
                 print(' [OK]')
                 self.__send_code_block__(chat_id, f'* {args_s}\n{echo}')
             return EasyBotTaskResult(ok=True)
