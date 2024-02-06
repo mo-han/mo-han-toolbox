@@ -599,8 +599,8 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     end = cut_points[1] if len(cut_points) >= 2 else 0
 
     input_ft = EnclosedFilenameTags(filepath, preamble=' +')
-    origin_ft = EnclosedFilenameTags(filepath).tag('origin')
-    output_ft = EnclosedFilenameTags(filepath).untag('crf', 'origin')
+    origin_ft = EnclosedFilenameTags(filepath, preamble=' +').tag('origin')
+    output_ft = EnclosedFilenameTags(filepath, preamble=' +').untag('crf', 'origin')
     if output_ext:
         output_ft.extension = output_ext
     if crf is not None:
