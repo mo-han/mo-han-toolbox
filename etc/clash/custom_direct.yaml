@@ -8,3 +8,6 @@ payload:
   - DOMAIN-SUFFIX,vip.ffzy-play5.com
   - DOMAIN-SUFFIX,microsoft.com
   - DOMAIN-SUFFIX,googleads.g.doubleclick.net
+  - DOMAIN-SUFFIX,lan
+  - DOMAIN-SUFFIX,local
+  
