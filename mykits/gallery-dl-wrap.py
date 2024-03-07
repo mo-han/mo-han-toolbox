@@ -253,16 +253,16 @@ def per_site(site_args: T.List[str]):
                 num = int(pq_arg[2:])
                 sort_types = ['/hot', '/top/?t=all', '/gilded', '/best']
                 if any(s in url for s in sort_types):
-                    args = [*gldl_args, *site_args, '--range', f'-{num}', url]
+                    args = [*gldl_args, *site_args, '--range', f'1-{num}', '--chapter-range', f'1-{num}', url]
                 else:
                     args = MultiList([
                         [
                             *gldl_args, *site_args,
-                            '--range', f'-{num // 10 if sort == "hot" else num}',
-                            # '--chapter-range', f'-{num // 10 if sort == "hot" else num}',
+                            '--range', f'1-{num}', '--chapter-range', f'1-{num}',
                             url.rstrip('/') + f'{sort}'
                         ] for sort in sort_types
                     ])
+                print(args)
     elif 'redgifs.com' in url:
         gldl_args = GLDLCLIArgs()
         args = [*gldl_args, *site_args, url]
@@ -271,8 +271,8 @@ def per_site(site_args: T.List[str]):
             if pq_arg.startswith('pq'):
                 num = int(pq_arg[2:])
                 args = MultiList([
-                    [*gldl_args, *site_args, f'--range', f'-{num}', url + '?order=trending'],
-                    [*gldl_args, *site_args, f'--range', f'-{num}', url + '?order=best'],
+                    [*gldl_args, *site_args, f'--range', f'1-{num}', url + '?order=trending'],
+                    [*gldl_args, *site_args, f'--range', f'1-{num}', url + '?order=best'],
                 ])
     elif 'luscious.net' in url:
         args = [
