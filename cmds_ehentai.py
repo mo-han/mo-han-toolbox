@@ -39,7 +39,7 @@ def ehviewer_downloads_to_images(ex=False, cookies=None, favcat=None):
             print(f'+ {p}')
             gid = lines[2]
             gtoken = lines[3]
-            ehvimg = os.join_path('..', 'image')
+            ehvimg = os.join_path('', 'image')
             os.makedirs(ehvimg, exist_ok=True)
             for f in set(os.listdir()) - ignored_files:
                 new = f'{gid}-{gtoken}-{f}'
