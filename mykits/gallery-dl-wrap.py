@@ -245,7 +245,7 @@ def per_site(site_args: T.List[str]):
                     [*gldl_args, *site_args, '--range', num, url + ' order:quality'],
                 ])
     elif 'reddit.com' in url:
-        gldl_args = GLDLCLIArgs(o=['parent-skip=true', 'videos=ytdl'])
+        gldl_args = GLDLCLIArgs()
         args = [*gldl_args, *site_args, url]
         if site_args:
             pq_arg, *site_args = site_args
@@ -402,6 +402,9 @@ def loop():
                 continue
             if line == 'q':
                 sys.exit(0)
+            if 'hitomi.la' in line:
+                line = line.strip('"')
+                line = f'"{line}"'
             console_new_run(f'{__file__} {line}')
         except KeyboardInterrupt:
             sys.exit(2)
