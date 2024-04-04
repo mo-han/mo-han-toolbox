@@ -253,12 +253,12 @@ def per_site(site_args: T.List[str]):
                 num = int(pq_arg[2:])
                 sort_types = ['/hot', '/top/?t=all', '/gilded', '/best']
                 if any(s in url for s in sort_types):
-                    args = [*gldl_args, *site_args, '--range', f'1-{num}', '--chapter-range', f'1-{num}', url]
+                    args = [*gldl_args, *site_args, '--range', f'-{num}', '--chapter-range', f'-{num}', url]
                 else:
                     args = MultiList([
                         [
                             *gldl_args, *site_args,
-                            '--range', f'1-{num}', '--chapter-range', f'1-{num}',
+                            '--range', f'-{num}', '--chapter-range', f'-{num}',
                             url.rstrip('/') + f'{sort}'
                         ] for sort in sort_types
                     ])
