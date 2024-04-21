@@ -279,7 +279,7 @@ class FFmpegRunnerAlpha:
         else:
             input_count += 1
             concat_list = '\n'.join(['file \'{}\''.format(e.replace("'", r"'\''")) for e in input_paths])  # ' -> '\''
-            self.add_args(f='concat', safe=0, protocol_whitelist='file,pipe', i='-')
+            self.add_args(f='concat', safe=0, protocol_whitelist='fd,file,pipe', i='-')
         if extra_inputs:
             input_count += len(extra_inputs)
             self.add_args(i=extra_inputs)
