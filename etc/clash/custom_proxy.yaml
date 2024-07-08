@@ -1,4 +1,6 @@
 payload:
+  - DOMAIN-SUFFIX,sleazyfork.org
+  - DOMAIN-SUFFIX,realbooru.com
   - DOMAIN-SUFFIX,googleapis.cn
   - DOMAIN,gotbjbqvnxfkunugorzh.hath.network
   - DOMAIN,zeymhthzcuckefofbybo.hath.network
