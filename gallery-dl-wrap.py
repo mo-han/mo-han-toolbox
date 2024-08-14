@@ -204,12 +204,12 @@ def per_site(site_args: T.List[str]):
             *site_args, url
         ]
         if site_args:
+            tags_s = url.split('/?tags=', maxsplit=1)[-1].strip()
             pq_arg, *site_args = site_args
             if pq_arg.startswith('pq'):
                 num = pq_arg[2:]
                 if '-' not in num:
                     num = f'1-{num}'
-                tags_s = url.split('/?tags=', maxsplit=1)[-1].strip()
                 gldl_args = GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
                                         o=[*options, f'directory=["{tags_s} {{category}} pq"]'])
                 args = MultiList([
