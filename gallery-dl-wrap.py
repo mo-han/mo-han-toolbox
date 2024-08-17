@@ -9,7 +9,6 @@ from mylib.ext.console_app import *
 #     raise NotImplementedError('launch new console window')
 
 env_var = os.environ
-conf_path = fstk.make_path(env_var['gallery_dl_conf']).strip('"')
 base_dir = fstk.make_path(env_var['gallery_dl_base_directory']).strip('"')
 pause_on_error = os.environ.get('PAUSEONERROR', 'yes').lower() in {'yes', 'true', '1'}
 
@@ -57,7 +56,7 @@ def make_options_list(options_dict: dict):
 
 
 def new_gallery_dl_cmd(*args, **kwargs):
-    cmd = GLDLCLIArgs('gallery-dl', R=20, c=conf_path,
+    cmd = GLDLCLIArgs('gallery-dl', R=20,
                       o=f'base-directory={base_dir}', )
     return cmd
 
@@ -199,8 +198,11 @@ def per_site(site_args: T.List[str]):
             '.{extension}"',
         ]
         args = [
-            *GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
-                         o=[*options, 'directory=["{search_tags!S} {category}"]']),
+            *GLDLCLIArgs(
+                cookies=get_cookies_path('sankaku'),
+                o=[*options, 'directory=["{search_tags!S} {category}"]'],
+                filter="md5 not in FilterSource.Set.md5"
+            ),
             *site_args, url
         ]
         if site_args:
