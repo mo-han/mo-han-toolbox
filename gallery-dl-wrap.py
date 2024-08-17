@@ -201,7 +201,6 @@ def per_site(site_args: T.List[str]):
             *GLDLCLIArgs(
                 cookies=get_cookies_path('sankaku'),
                 o=[*options, 'directory=["{search_tags!S} {category}"]'],
-                filter="md5 not in FilterSource.Set.md5"
             ),
             *site_args, url
         ]
