@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import string
 import webbrowser
 
 import requests
@@ -117,14 +118,14 @@ def per_site(site_args: T.List[str]):
         if site_args:
             pq_arg, *site_args = site_args
             if pq_arg.startswith('pq'):
-                num = pq_arg[2:]
-                if '-' not in num:
-                    num = f'1-{num}'
+                pq_value = pq_arg[2:]
+                if '-' not in pq_value:
+                    pq_value = f'-{pq_value}'
                 tags_s = url.split('&tags=', maxsplit=1)[-1].strip()
                 # gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} {pq_arg}"]'])
                 gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} pq"]'])
                 args = MultiList([
-                    [*gldl_args, *site_args, '--range', num, url + ' sort:score'],
+                    [*gldl_args, *site_args, '--range', pq_value, url + ' sort:score'],
                 ])
     elif 'aibooru.online' in url:
         options = [
@@ -143,17 +144,17 @@ def per_site(site_args: T.List[str]):
         if site_args:
             pq_arg, *site_args = site_args
             if pq_arg.startswith('pq'):
-                num = pq_arg[2:]
-                if '-' not in num:
-                    num = f'1-{num}'
+                pq_value = pq_arg[2:]
+                if '-' not in pq_value:
+                    pq_value = f'-{pq_value}'
                 tags_s = url.split('?tags=', maxsplit=1)[-1].strip()
                 print(url, tags_s)
                 gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} pq"]'])
                 args = MultiList([
-                    [*gldl_args, *site_args, '--range', num, url + ' order:rank'],
-                    [*gldl_args, *site_args, '--range', num, url + ' order:views'],
-                    [*gldl_args, *site_args, '--range', num, url + ' order:score'],
-                    [*gldl_args, *site_args, '--range', num, url + ' order:favcount'],
+                    [*gldl_args, *site_args, '--range', pq_value, url + ' order:rank'],
+                    [*gldl_args, *site_args, '--range', pq_value, url + ' order:views'],
+                    [*gldl_args, *site_args, '--range', pq_value, url + ' order:score'],
+                    [*gldl_args, *site_args, '--range', pq_value, url + ' order:favcount'],
                 ])
 
     elif 'realbooru.com' in url:
@@ -171,13 +172,13 @@ def per_site(site_args: T.List[str]):
         if site_args:
             pq_arg, *site_args = site_args
             if pq_arg.startswith('pq'):
-                num = pq_arg[2:]
-                if '-' not in num:
-                    num = f'1-{num}'
+                pq_value = pq_arg[2:]
+                if '-' not in pq_value:
+                    pq_value = f'-{pq_value}'
                 tags_s = url.split('&tags=', maxsplit=1)[-1].strip()
                 gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} pq"]'])
                 args = MultiList([
-                    [*gldl_args, *site_args, '--range', num, url + ' sort:score'],
+                    [*gldl_args, *site_args, '--range', pq_value, url + ' sort:score'],
                 ])
 
     elif 'rule34.xxx' in url:
@@ -189,6 +190,8 @@ def per_site(site_args: T.List[str]):
         ),
                 *site_args, url]
     elif 'chan.sankakucomplex.com' in url:
+        site_name = 'sankaku'
+        site_host = 'chan.sankakucomplex.com'
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
             'filename="{category} {date!S:.10} {id} {md5} '
@@ -199,7 +202,7 @@ def per_site(site_args: T.List[str]):
         ]
         args = [
             *GLDLCLIArgs(
-                cookies=get_cookies_path('sankaku'),
+                cookies=get_cookies_path(site_name),
                 o=[*options, 'directory=["{search_tags!S} {category}"]'],
             ),
             *site_args, url
@@ -208,16 +211,30 @@ def per_site(site_args: T.List[str]):
             tags_s = url.split('/?tags=', maxsplit=1)[-1].strip()
             pq_arg, *site_args = site_args
             if pq_arg.startswith('pq'):
-                num = pq_arg[2:]
-                if '-' not in num:
-                    num = f'1-{num}'
-                gldl_args = GLDLCLIArgs(cookies=get_cookies_path('sankaku'),
-                                        o=[*options, f'directory=["{tags_s} {{category}} pq"]'])
-                args = MultiList([
-                    [*gldl_args, *site_args, '--range', num, url + ' order:popular'],
-                    [*gldl_args, *site_args, '--range', num, url + ' order:quality'],
-                ])
+                pq_value = pq_arg[2:]
+                if set(pq_value) <= set(string.digits):
+                    pq_value = '-' + pq_value
+                if set(pq_value) <= set(string.digits + '-'):
+                    gldl_args = GLDLCLIArgs(
+                        cookies=get_cookies_path(site_name),
+                        o=[*options, f'directory=["{tags_s} {{category}} pq"]']
+                    )
+                    args = MultiList([
+                        [*gldl_args, *site_args, '--range', pq_value, url + ' order:popular'],
+                        [*gldl_args, *site_args, '--range', pq_value, url + ' order:quality'],
+                    ])
+                elif os.path.isdir(pq_value):
+                    override_base_dir, target_dir = os.path.split(pq_value.strip(r'\/"').strip(r'\/"'))
+                    post_id_l = [re.search(r'\d\d\d\d-\d\d-\d\d (\w+) ', i).group(1) for i in os.listdir(pq_value)]
+                    gldl_args = GLDLCLIArgs(
+                        o=[*options, f'base-directory={override_base_dir}', f'directory=["{target_dir}"]']
+                    )
+                    args = MultiList([
+                        [*gldl_args, *site_args, f'https://{site_host}/posts/{post_id}'] for post_id in post_id_l
+                    ])
     elif 'idol.sankakucomplex.com' in url:
+        site_name = 'idolcomplex'
+        site_host = 'idol.sankakucomplex.com'
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
             'filename="{category} {created_at!S:.10} {id} {md5} '
@@ -227,39 +244,52 @@ def per_site(site_args: T.List[str]):
             '.{extension}"',
         ]
         args = [
-            *GLDLCLIArgs(cookies=get_cookies_path('sankaku.idol'),
-                         o=[*options, 'directory=["{search_tags!S} {category}"]']),
+            *GLDLCLIArgs(
+                cookies=get_cookies_path(site_name),
+                o=[*options, 'directory=["{search_tags!S} {category}"]'],
+            ),
             *site_args, url
         ]
         if site_args:
+            tags_s = url.split('/?tags=', maxsplit=1)[-1].strip()
             pq_arg, *site_args = site_args
             if pq_arg.startswith('pq'):
-                num = pq_arg[2:]
-                if '-' not in num:
-                    num = f'1-{num}'
-                tags_s = url.split('/?tags=', maxsplit=1)[-1].strip()
-                gldl_args = GLDLCLIArgs(cookies=get_cookies_path('sankaku.idol'),
-                                        o=[*options, f'directory=["{tags_s} {{category}} pq"]'])
-                # o=[*options, f'directory=["{tags_s} {{category}} {pq_arg}"]'])
-                args = MultiList([
-                    [*gldl_args, *site_args, '--range', num, url + ' order:popular'],
-                    [*gldl_args, *site_args, '--range', num, url + ' order:quality'],
-                ])
+                pq_value = pq_arg[2:]
+                if set(pq_value) <= set(string.digits):
+                    pq_value = '-' + pq_value
+                if set(pq_value) <= set(string.digits + '-'):
+                    gldl_args = GLDLCLIArgs(
+                        cookies=get_cookies_path(site_name),
+                        o=[*options, f'directory=["{tags_s} {{category}} pq"]']
+                    )
+                    args = MultiList([
+                        [*gldl_args, *site_args, '--range', pq_value, url + ' order:popular'],
+                        [*gldl_args, *site_args, '--range', pq_value, url + ' order:quality'],
+                    ])
+                elif os.path.isdir(pq_value):
+                    override_base_dir, target_dir = os.path.split(pq_value.strip(r'\/"').strip(r'\/"'))
+                    post_id_l = [re.search(r'\d\d\d\d-\d\d-\d\d (\w+) ', i).group(1) for i in os.listdir(pq_value)]
+                    gldl_args = GLDLCLIArgs(
+                        o=[*options, f'base-directory={override_base_dir}', f'directory=["{target_dir}"]']
+                    )
+                    args = MultiList([
+                        [*gldl_args, *site_args, f'https://{site_host}/posts/{post_id}'] for post_id in post_id_l
+                    ])
     elif 'reddit.com' in url:
         gldl_args = GLDLCLIArgs()
         args = [*gldl_args, *site_args, url]
         if site_args:
             pq_arg, *site_args = site_args
             if pq_arg.startswith('pq'):
-                num = int(pq_arg[2:])
+                pq_value = int(pq_arg[2:])
                 sort_types = ['/hot', '/top/?t=all', '/gilded', '/best']
                 if any(s in url for s in sort_types) or '/search?q=' in url:
-                    args = [*gldl_args, *site_args, '--range', f'-{num}', '--chapter-range', f'-{num}', url]
+                    args = [*gldl_args, *site_args, '--range', f'-{pq_value}', '--chapter-range', f'-{pq_value}', url]
                 else:
                     args = MultiList([
                         [
                             *gldl_args, *site_args,
-                            '--range', f'-{num}', '--chapter-range', f'-{num}',
+                            '--range', f'-{pq_value}', '--chapter-range', f'-{pq_value}',
                             url.rstrip('/') + f'{sort}'
                         ] for sort in sort_types
                     ])
@@ -270,10 +300,10 @@ def per_site(site_args: T.List[str]):
         if site_args:
             pq_arg, *site_args = site_args
             if pq_arg.startswith('pq'):
-                num = int(pq_arg[2:])
+                pq_value = int(pq_arg[2:])
                 args = MultiList([
-                    [*gldl_args, *site_args, f'--range', f'1-{num}', url + '?order=trending'],
-                    [*gldl_args, *site_args, f'--range', f'1-{num}', url + '?order=best'],
+                    [*gldl_args, *site_args, f'--range', f'-{pq_value}', url + '?order=trending'],
+                    [*gldl_args, *site_args, f'--range', f'-{pq_value}', url + '?order=best'],
                 ])
     elif 'luscious.net' in url:
         args = [
@@ -349,13 +379,17 @@ def args2url(args):
     elif first in ('sankaku', 'chan'):
         x = pop_tag_from_args(args)
         if x.isdigit():
-            url = f'https://chan.sankakucomplex.com/post/show/{x}'
+            url = f'https://chan.sankakucomplex.com/posts/{x}'
+        elif not x:
+            url = 'https://chan.sankakucomplex.com'
         else:
             url = f'https://chan.sankakucomplex.com/?tags={x}'
     elif first in ('idol', 'idolcomplex'):
         x = pop_tag_from_args(args)
         if x.isdigit():
-            url = f'https://idol.sankakucomplex.com/post/show/{x}'
+            url = f'https://idol.sankakucomplex.com/posts/{x}'
+        elif not x:
+            url = 'https://idol.sankakucomplex.com'
         else:
             url = f'https://idol.sankakucomplex.com/?tags={x}'
     elif first in ('ng', 'newgrounds'):
