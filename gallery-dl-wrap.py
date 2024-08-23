@@ -13,6 +13,8 @@ env_var = os.environ
 base_dir = fstk.make_path(env_var['gallery_dl_base_directory']).strip('"')
 pause_on_error = os.environ.get('PAUSEONERROR', 'yes').lower() in {'yes', 'true', '1'}
 
+runtime_data = {}
+
 
 def _console_pause_nt():
     os.system('pause')
@@ -200,38 +202,7 @@ def per_site(site_args: T.List[str]):
             '@{tag_string_artist!S:L40/___/} '
             '.{extension}"',
         ]
-        args = [
-            *GLDLCLIArgs(
-                cookies=get_cookies_path(site_name),
-                o=[*options, 'directory=["{search_tags!S} {category}"]'],
-            ),
-            *site_args, url
-        ]
-        if site_args:
-            tags_s = url.split('/?tags=', maxsplit=1)[-1].strip()
-            pq_arg, *site_args = site_args
-            if pq_arg.startswith('pq'):
-                pq_value = pq_arg[2:]
-                if set(pq_value) <= set(string.digits):
-                    pq_value = '-' + pq_value
-                if set(pq_value) <= set(string.digits + '-'):
-                    gldl_args = GLDLCLIArgs(
-                        cookies=get_cookies_path(site_name),
-                        o=[*options, f'directory=["{tags_s} {{category}} pq"]']
-                    )
-                    args = MultiList([
-                        [*gldl_args, *site_args, '--range', pq_value, url + ' order:popular'],
-                        [*gldl_args, *site_args, '--range', pq_value, url + ' order:quality'],
-                    ])
-                elif os.path.isdir(pq_value):
-                    override_base_dir, target_dir = os.path.split(pq_value.strip(r'\/"').strip(r'\/"'))
-                    post_id_l = [re.search(r'\d\d\d\d-\d\d-\d\d (\w+) ', i).group(1) for i in os.listdir(pq_value)]
-                    gldl_args = GLDLCLIArgs(
-                        o=[*options, f'base-directory={override_base_dir}', f'directory=["{target_dir}"]']
-                    )
-                    args = MultiList([
-                        [*gldl_args, *site_args, f'https://{site_host}/posts/{post_id}'] for post_id in post_id_l
-                    ])
+        args = sankaku_site_args_func(options, site_args, site_host, site_name, url)
     elif 'idol.sankakucomplex.com' in url:
         site_name = 'idolcomplex'
         site_host = 'idol.sankakucomplex.com'
@@ -243,38 +214,7 @@ def per_site(site_args: T.List[str]):
             '@{tags_idol!S:L80/___/} '
             '.{extension}"',
         ]
-        args = [
-            *GLDLCLIArgs(
-                cookies=get_cookies_path(site_name),
-                o=[*options, 'directory=["{search_tags!S} {category}"]'],
-            ),
-            *site_args, url
-        ]
-        if site_args:
-            tags_s = url.split('/?tags=', maxsplit=1)[-1].strip()
-            pq_arg, *site_args = site_args
-            if pq_arg.startswith('pq'):
-                pq_value = pq_arg[2:]
-                if set(pq_value) <= set(string.digits):
-                    pq_value = '-' + pq_value
-                if set(pq_value) <= set(string.digits + '-'):
-                    gldl_args = GLDLCLIArgs(
-                        cookies=get_cookies_path(site_name),
-                        o=[*options, f'directory=["{tags_s} {{category}} pq"]']
-                    )
-                    args = MultiList([
-                        [*gldl_args, *site_args, '--range', pq_value, url + ' order:popular'],
-                        [*gldl_args, *site_args, '--range', pq_value, url + ' order:quality'],
-                    ])
-                elif os.path.isdir(pq_value):
-                    override_base_dir, target_dir = os.path.split(pq_value.strip(r'\/"').strip(r'\/"'))
-                    post_id_l = [re.search(r'\d\d\d\d-\d\d-\d\d (\w+) ', i).group(1) for i in os.listdir(pq_value)]
-                    gldl_args = GLDLCLIArgs(
-                        o=[*options, f'base-directory={override_base_dir}', f'directory=["{target_dir}"]']
-                    )
-                    args = MultiList([
-                        [*gldl_args, *site_args, f'https://{site_host}/posts/{post_id}'] for post_id in post_id_l
-                    ])
+        args = sankaku_site_args_func(options, site_args, site_host, site_name, url)
     elif 'reddit.com' in url:
         gldl_args = GLDLCLIArgs()
         args = [*gldl_args, *site_args, url]
@@ -346,6 +286,66 @@ def per_site(site_args: T.List[str]):
     else:
         args = [*GLDLCLIArgs(), *site_args, url]
 
+    return args
+
+
+def sankaku_site_args_func(options, site_args, site_host, site_name, url):
+    args = [
+        *GLDLCLIArgs(
+            cookies=get_cookies_path(site_name),
+            o=[*options, 'directory=["{search_tags!S} {category}"]'],
+        ),
+        *site_args, url
+    ]
+    if site_args:
+        tags_s = url.split('/?tags=', maxsplit=1)[-1].strip()
+        pq_arg, *site_args = site_args
+        if pq_arg.startswith('pq'):
+            pq_value = pq_arg[2:]
+            if set(pq_value) <= set(string.digits):
+                pq_value = '-' + pq_value
+            if set(pq_value) <= set(string.digits + '-'):
+                head_args = GLDLCLIArgs(
+                    cookies=get_cookies_path(site_name),
+                    o=[*options, f'directory=["{tags_s} {{category}} pq"]'],
+                )
+                head_args += [*site_args, '--range', pq_value, ]
+                args = MultiList([
+                    [*head_args, url + ' order:popular'],
+                    [*head_args, url + ' order:quality'],
+                ])
+            elif os.path.isdir(pq_value):
+                override_base_dir, target_dir = os.path.split(pq_value.strip(r'\/"').strip(r'\/"'))
+                post_id_l = []
+                for i in os.listdir(pq_value):
+                    m = re.search(r'\d\d\d\d-\d\d-\d\d (\w+) ', i)
+                    if m:
+                        post_id_l.append(m.group(1))
+                url_l = [f'https://{site_host}/posts/{post_id}' for post_id in post_id_l]
+                args = [
+                    *GLDLCLIArgs(
+                        cookies=get_cookies_path(site_name),
+                        o=[*options, f'base-directory={override_base_dir}', f'directory=["{target_dir}"]'],
+                    ),
+                    *site_args, *url_l,
+                ]
+            elif pq_value[0] == '+' and os.path.isdir(pq_value[1:]):
+                the_path = pq_value[1:].strip(r'\/"').strip(r'\/"')
+                override_base_dir, target_dir = os.path.split(the_path)
+                url = f'https://{site_host}/?tags={target_dir.split(site_name)[0].strip()}'
+                head_args = GLDLCLIArgs(
+                    *site_args,
+                    o=[*options, f'base-directory={override_base_dir}', f'directory=["{target_dir}"]']
+                )
+                if target_dir[-3:] == ' pq':
+                    pq_num = len(os.listdir(the_path)) // 2
+                    head_args += ['--range', f'-{pq_num}', ]
+                    args = MultiList([
+                        [*head_args, url + ' order:popular'],
+                        [*head_args, url + ' order:quality'],
+                    ])
+                else:
+                    args = head_args + [url, ]
     return args
 
 
