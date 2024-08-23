@@ -2,12 +2,22 @@
 import difflib
 
 from mylib.ext.console_app import *
+from oldezpykitext import appkit
 
 apr = ArgumentParserWrapper()
 differ = difflib.Differ()
 an = apr.an
 an.v = an.verbose = an.r = an.recurse = an.dry_run = an.D = ''
 an.text = an.s = an.src = an.find = an.replace = an.regex = an.e = an.encoding = an.c = ''
+
+@apr.sub()
+def filename_char_replace():
+    src = appkit.os.clpb.get()
+    has_mapped_char = bool(set(src) & set(fstk.POTENTIAL_INVALID_CHARS_MAP.values()))
+    r = fstk.sanitize_xu(src, reverse=has_mapped_char)
+    print(r)
+    appkit.os.clpb.set(r)
+    return r
 
 
 @apr.sub(aliases=['fr'])
