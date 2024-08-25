@@ -338,7 +338,7 @@ def sankaku_site_args_func(options, site_args, site_host, site_name, url):
                     o=[*options, f'base-directory={override_base_dir}', f'directory=["{target_dir}"]']
                 )
                 if target_dir[-3:] == ' pq':
-                    pq_num = len(os.listdir(the_path)) // 2
+                    pq_num = len([i for i in os.listdir(the_path) if i[-len('.not_want'):] != '.not_want']) // 2
                     head_args += ['--range', f'-{pq_num}', ]
                     args = MultiList([
                         [*head_args, url + ' order:popular'],
