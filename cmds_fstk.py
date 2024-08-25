@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 import fnmatch
 
-from mylib.ext import fstk
+import mylib.easy.logging
+import oldezpykit.stdlib
 from mylib.ext.console_app import *
-from mylib.easy import logging
+from oldezpykitext import appkit
 
-_logger = logging.ez_get_logger(__name__)
+_logger = mylib.easy.logging.ez_get_logger(__name__)
 
 FILE_DIR_CHOICES = {'f', 'd', 'fd'}
 ON_EXIST_CHOICES = {'error', 'overwrite', 'rename'}
@@ -30,6 +31,16 @@ class FilesystemError(OSError):
 @apr.sub(apr.rpl_dot, help='remove sub-dirs, put sub-files in flat structure', aliases=['flat.dir'])
 def flatten_dir():
     ...
+
+
+@apr.sub(aliases=['not_want'])
+def flag_file_not_want():
+    src = appkit.os.clpb.get_path()
+    for p in src:
+        if os.path.isfile(p):
+            not_want = f'{p}.not_want'
+            _logger.info(f'+ {not_want}')
+            oldezpykit.stdlib.os.touch(not_want)
 
 
 @apr.sub(help='move multiple src to/into dst')
