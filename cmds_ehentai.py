@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import zipfile
+
 from oldezpykitext.appkit import *
 from mylib.ext.console_app import ConsolePrinter, fstk, split_path_dir_base_ext, join_path_dir_base_ext, PathSourceType, \
     resolve_path_to_dirs_files, Timer
@@ -134,7 +136,11 @@ def hath_sort(src: PathSourceType, *, verbose=False, dry_run=False):
     dirs, files = resolve_path_to_dirs_files(src)
     src_dst_l = []
     [src_dst_l.append((src, _sorted_path_of_hentai_at_home_downloaded_gallery(src, 'd'))) for src in dirs]
-    [src_dst_l.append((src, _sorted_path_of_hentai_at_home_downloaded_gallery(src, 'f'))) for src in files]
+    for src in files:
+        try:
+            src_dst_l.append((src, _sorted_path_of_hentai_at_home_downloaded_gallery(src, 'f')))
+        except zipfile.BadZipfile:
+            print(f'! {src}')
     for src, dst in src_dst_l:
         if not dst and verbose:
             print(f'# {src}')

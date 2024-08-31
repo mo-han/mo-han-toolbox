@@ -6,13 +6,13 @@ from collections import defaultdict
 import requests
 
 import oldezpykit.stdlib.os.common
-from oldezpykit.metautil import VoidDuck
 from mylib.__deprecated__ import get_re_groups
 from mylib.easy import *
 from mylib.easy import logging
-from mylib.ext.tricks import is_hex
 from mylib.ext import fstk
+from mylib.ext.tricks import is_hex
 from mylib.web_client import cookies_dict_from_netscape_file, get_html_element_tree
+from oldezpykit.metautil import VoidDuck
 from websites.ehentai import EHentaiError
 
 VARIOUS = '(various)'
