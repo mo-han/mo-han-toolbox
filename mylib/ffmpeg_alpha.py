@@ -254,7 +254,7 @@ class FFmpegRunnerAlpha:
 
     @decorator_choose_map_preset
     def concat(self, input_paths: typing.Iterable[str], output_path: str,
-               output_args: typing.Iterable[str] = (), *,
+               output_args: typing.Iterable[str] = (), *, input_args=(),
                concat_demuxer: bool = False, extra_inputs: typing.Iterable = (),
                start: float or int or str = 0, end: float or int or str = 0,
                copy_all: bool = True, map_preset: str = None, metadata_file: str = None,
@@ -268,6 +268,7 @@ class FFmpegRunnerAlpha:
         if end < 0:
             end = max([get_real_duration(f) for f in input_paths]) + end
         self.reset_args()
+        self.add_args(*input_args)
         if start:
             self.add_args(ss=start)
         input_count = 0
