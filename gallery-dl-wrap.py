@@ -196,10 +196,10 @@ def per_site(site_args: T.List[str]):
         site_host = 'chan.sankakucomplex.com'
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
-            'filename="{category} {date!S:.10} {id} {md5} '
-            '{tag_string_character!S:L80/___/} '
-            '${tag_string_copyright!S:L40/___/} '
-            '@{tag_string_artist!S:L40/___/} '
+            'filename="{category} {date!S:.10} {id} {md5}'
+            ' {tag_string_character!S:L64/___/} '
+            ' $ {tag_string_copyright!S:L32/___/} '
+            ' @ {tag_string_artist!S:L32/___/} '
             '.{extension}"',
         ]
         args = sankaku_site_args_func(options, site_args, site_host, site_name, url)
@@ -208,11 +208,11 @@ def per_site(site_args: T.List[str]):
         site_host = 'idol.sankakucomplex.com'
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
-            'filename="{category} {created_at!S:.10} {id} {md5} '
-            '{tags_photo_set!S:L40/___/} '
-            '${tags_copyright!S:L40/___/} '
-            '@{tags_idol!S:L80/___/} '
-            '.{extension}"',
+            'filename="{category} {created_at!S:.10} {id} {md5}'
+            ' {tags_photo_set!S:L32/___/}'
+            ' $ {tags_copyright!S:L32/___/} {tags_studio!S:L32/___/}'
+            ' @ {tags_idol!S:L64/___/}'
+            ' .{extension}"',
         ]
         args = sankaku_site_args_func(options, site_args, site_host, site_name, url)
     elif 'reddit.com' in url:
