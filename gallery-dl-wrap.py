@@ -197,8 +197,8 @@ def per_site(site_args: T.List[str]):
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
             'filename="{category} {date!S:.10} {id} {md5}'
-            ' {tag_string_character!S:L64/___/} '
-            ' $ {tag_string_copyright!S:L32/___/} '
+            ' {tag_string_character!S:L64/___/}'
+            ' $ {tag_string_copyright!S:L64/___/}'
             ' @ {tag_string_artist!S:L32/___/} '
             '.{extension}"',
         ]
