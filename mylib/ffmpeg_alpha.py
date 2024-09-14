@@ -576,6 +576,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
         tags.append('nvenc')
         codec += 'nv'
         ffmpeg_args.add(c__V=codecs_d[codec], rc='constqp', qp=crf)
+        # ffmpeg_args.add(c__V=codecs_d[codec], rc='vbr', qmin=0, cq=crf)  # bad, dont use
         ffmpeg_args.add_kwarg('-rc-lookahead', 16)
         ffmpeg_args.add_kwarg('-spatial-aq', 1)
         ffmpeg_args.add_kwarg('-temporal-aq', 1)
