@@ -209,7 +209,7 @@ def per_site(site_args: T.List[str]):
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
             'filename="{category} {created_at!S:.10} {id} {md5}'
-            ' {tags_photo_set!S:L32/___/}'
+            ' {tags_photo_set!S:L64/___/}'
             ' $ {tags_copyright!S:L32/___/} {tags_studio!S:L32/___/}'
             ' @ {tags_idol!S:L64/___/}'
             ' .{extension}"',
@@ -340,7 +340,12 @@ def sankaku_site_args_func(options, site_args, site_host, site_name, url):
                 url = f'https://{site_host}/?tags={target_dir.split(site_name)[0].strip()}'
                 head_args = GLDLCLIArgs(
                     *site_args,
-                    o=[*options, f'base-directory={override_base_dir}', f'directory=["{target_dir}"]']
+                    o=[
+                        *options,
+                        f'base-directory={override_base_dir}',
+                        f'directory=["{target_dir}"]',
+                        '''image-filter="md5 not in FILTER_SET['not_want']['md5']"'''
+                    ]
                 )
                 if target_dir[-3:] == ' pq':
                     pq_num = len([i for i in os.listdir(the_path) if i[-len('.not_want'):] != '.not_want']) // 2
@@ -393,6 +398,8 @@ def args2url(args):
         x = pop_tag_from_args(args)
         if x.isdigit():
             url = f'https://idol.sankakucomplex.com/posts/{x}'
+        elif x[:3]=='id=':
+            url = f'https://idol.sankakucomplex.com/posts/{x[3:]}'
         elif not x:
             url = 'https://idol.sankakucomplex.com'
         else:
