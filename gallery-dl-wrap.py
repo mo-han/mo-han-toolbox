@@ -9,6 +9,8 @@ from mylib.ext.console_app import *
 # if os.name != 'nt':
 #     raise NotImplementedError('launch new console window')
 
+STRING_NOT_WANT = '.not_want'
+
 env_var = os.environ
 base_dir = fstk.make_path(env_var['gallery_dl_base_directory']).strip('"')
 pause_on_error = os.environ.get('PAUSEONERROR', 'yes').lower() in {'yes', 'true', '1'}
@@ -159,30 +161,6 @@ def per_site(site_args: T.List[str]):
                     [*gldl_args, *site_args, '--range', pq_value, url + ' order:favcount'],
                 ])
 
-    elif 'realbooru.com' in url:
-        options = [
-            'cookies-update=true', 'videos=true', 'tags=true',
-            'filename="{category} {date!S:.10} {id} {md5} '
-            '${tags_copyright!S:L40/___/} '
-            '@{tags_model!S:L80/___/} '
-            '.{extension}"',
-        ]
-        args = [
-            *GLDLCLIArgs(o=[*options, 'directory=["{search_tags!S} {category}"]']),
-            *site_args, url
-        ]
-        if site_args:
-            pq_arg, *site_args = site_args
-            if pq_arg.startswith('pq'):
-                pq_value = pq_arg[2:]
-                if '-' not in pq_value:
-                    pq_value = f'-{pq_value}'
-                tags_s = url.split('&tags=', maxsplit=1)[-1].strip()
-                gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} pq"]'])
-                args = MultiList([
-                    [*gldl_args, *site_args, '--range', pq_value, url + ' sort:score'],
-                ])
-
     elif 'rule34.xxx' in url:
         args = [*GLDLCLIArgs(
             o=['cookies-update=true', 'videos=true', 'tags=true',
@@ -191,6 +169,25 @@ def per_site(site_args: T.List[str]):
                '{tags_character!S:L80/___/} @{tags_artist!S:L80/___/} .{extension}"', ]
         ),
                 *site_args, url]
+
+    elif 'realbooru.com' in url:
+        site_name = 'realbooru'
+        site_host = 'realbooru.com'
+        options = [
+            'cookies-update=true', 'videos=true', 'tags=true',
+            'filename="{category} {date!S:.10} {id} {md5}'
+            ' $ {tags_copyright!S:L64/___/}'
+            ' @ {tags_model!S:L64/___/}'
+            ' .{extension}"',
+        ]
+        site_settings = {
+            'sort_tag_list': ['sort:score', ],
+            'tag_path_prefix': '/index.php?page=post&s=list&tags=',
+            'post_path_prefix': '/index.php?page=post&s=view&id=',
+        }
+
+        args = sankaku_site_args_func(options, site_args, site_host, site_name, url, site_settings)
+
     elif 'chan.sankakucomplex.com' in url:
         site_name = 'sankaku'
         site_host = 'chan.sankakucomplex.com'
@@ -202,7 +199,14 @@ def per_site(site_args: T.List[str]):
             ' @ {tag_string_artist!S:L32/___/} '
             '.{extension}"',
         ]
-        args = sankaku_site_args_func(options, site_args, site_host, site_name, url)
+        site_settings = {
+            'sort_tag_list': ['order:popular', 'order:quality'],
+            'tag_path_prefix': '/?tags=',
+            'post_path_prefix': '/posts/',
+        }
+
+        args = sankaku_site_args_func(options, site_args, site_host, site_name, url, site_settings)
+
     elif 'idol.sankakucomplex.com' in url:
         site_name = 'idolcomplex'
         site_host = 'idol.sankakucomplex.com'
@@ -214,7 +218,14 @@ def per_site(site_args: T.List[str]):
             ' @ {tags_idol!S:L64/___/}'
             ' .{extension}"',
         ]
-        args = sankaku_site_args_func(options, site_args, site_host, site_name, url)
+        site_settings = {
+            'sort_tag_list': ['order:popular', 'order:quality'],
+            'tag_path_prefix': '/?tags=',
+            'post_path_prefix': '/posts/',
+        }
+
+        args = sankaku_site_args_func(options, site_args, site_host, site_name, url, site_settings)
+
     elif 'reddit.com' in url:
         gldl_args = GLDLCLIArgs()
         args = [*gldl_args, *site_args, url]
@@ -289,16 +300,17 @@ def per_site(site_args: T.List[str]):
     return args
 
 
-def sankaku_site_args_func(options, site_args, site_host, site_name, url):
+def sankaku_site_args_func(options, site_args, site_host, site_name, url, site_settings):
+    post_path_prefix = site_settings['post_path_prefix']
+    tag_path_prefix = site_settings['tag_path_prefix']
     args = [
         *GLDLCLIArgs(
-            cookies=get_cookies_path(site_name),
             o=[*options, 'directory=["{search_tags!S} {category}"]'],
         ),
         *site_args, url
     ]
     if site_args:
-        tags_s = url.split('/?tags=', maxsplit=1)[-1].strip()
+        tags_s = url.split(tag_path_prefix, maxsplit=1)[-1].strip()
         pq_arg, *site_args = site_args
         if pq_arg.startswith('pq'):
             pq_value = pq_arg[2:]
@@ -306,14 +318,10 @@ def sankaku_site_args_func(options, site_args, site_host, site_name, url):
                 pq_value = '-' + pq_value
             if set(pq_value) <= set(string.digits + '-'):
                 head_args = GLDLCLIArgs(
-                    cookies=get_cookies_path(site_name),
                     o=[*options, f'directory=["{tags_s} {{category}} pq"]'],
                 )
                 head_args += [*site_args, '--range', pq_value, ]
-                args = MultiList([
-                    [*head_args, url + ' order:popular'],
-                    [*head_args, url + ' order:quality'],
-                ])
+                args = MultiList([[*head_args, url + f' {s}'] for s in site_settings['sort_tag_list']])
             elif os.path.isdir(pq_value):
                 override_base_dir, target_dir = os.path.split(pq_value.strip(r'\/"').strip(r'\/"'))
                 post_id_l = []
@@ -321,10 +329,9 @@ def sankaku_site_args_func(options, site_args, site_host, site_name, url):
                     m = re.search(r'\d\d\d\d-\d\d-\d\d (\w+) ', i)
                     if m:
                         post_id_l.append(m.group(1))
-                url_l = [f'https://{site_host}/posts/{post_id}' for post_id in post_id_l]
+                url_l = [f'https://{site_host}{post_path_prefix}{post_id}' for post_id in post_id_l]
                 args = [
                     *GLDLCLIArgs(
-                        cookies=get_cookies_path(site_name),
                         o=[
                             *options,
                             f'base-directory={override_base_dir}',
@@ -337,7 +344,7 @@ def sankaku_site_args_func(options, site_args, site_host, site_name, url):
             elif pq_value[0] == '+' and os.path.isdir(pq_value[1:]):
                 the_path = pq_value[1:].strip(r'\/"').strip(r'\/"')
                 override_base_dir, target_dir = os.path.split(the_path)
-                url = f'https://{site_host}/?tags={target_dir.split(site_name)[0].strip()}'
+                url = f'https://{site_host}{tag_path_prefix}{target_dir.split(site_name)[0].strip()}'
                 head_args = GLDLCLIArgs(
                     *site_args,
                     o=[
@@ -348,12 +355,9 @@ def sankaku_site_args_func(options, site_args, site_host, site_name, url):
                     ]
                 )
                 if target_dir[-3:] == ' pq':
-                    pq_num = len([i for i in os.listdir(the_path) if i[-len('.not_want'):] != '.not_want']) // 2
+                    pq_num = len([i for i in os.listdir(the_path) if i[-len(STRING_NOT_WANT):] != STRING_NOT_WANT]) // 2
                     head_args += ['--range', f'-{pq_num}', ]
-                    args = MultiList([
-                        [*head_args, url + ' order:popular'],
-                        [*head_args, url + ' order:quality'],
-                    ])
+                    args = MultiList([[*head_args, url + f' {s}'] for s in site_settings['sort_tag_list']])
                 else:
                     args = head_args + [url, ]
     return args
@@ -398,7 +402,7 @@ def args2url(args):
         x = pop_tag_from_args(args)
         if x.isdigit():
             url = f'https://idol.sankakucomplex.com/posts/{x}'
-        elif x[:3]=='id=':
+        elif x[:3] == 'id=':
             url = f'https://idol.sankakucomplex.com/posts/{x[3:]}'
         elif not x:
             url = 'https://idol.sankakucomplex.com'
