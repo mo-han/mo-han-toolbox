@@ -232,15 +232,17 @@ def per_site(site_args: T.List[str]):
         if site_args:
             pq_arg, *site_args = site_args
             if pq_arg.startswith('pq'):
-                pq_value = int(pq_arg[2:])
+                pq_value = pq_arg[2:]
+                if '-' not in pq_value:
+                    pq_value = f'-{pq_value}'
                 sort_types = ['/hot', '/top/?t=all', '/gilded', '/best']
                 if any(s in url for s in sort_types) or '/search?q=' in url:
-                    args = [*gldl_args, *site_args, '--range', f'-{pq_value}', '--chapter-range', f'-{pq_value}', url]
+                    args = [*gldl_args, *site_args, '--range', pq_value, '--chapter-range', f"-{pq_value.split('-')[-1]}", url]
                 else:
                     args = MultiList([
                         [
                             *gldl_args, *site_args,
-                            '--range', f'-{pq_value}', '--chapter-range', f'-{pq_value}',
+                            '--range', pq_value, '--chapter-range', f"-{pq_value.split('-')[-1]}",
                             url.rstrip('/') + f'{sort}'
                         ] for sort in sort_types
                     ])
@@ -478,15 +480,18 @@ def main():
                 cmd_l.append(new_gallery_dl_cmd() + i)
         else:
             cmd_l.append(new_gallery_dl_cmd() + site_args)
+        need_pause = False
         for cmd in cmd_l:
             try:
                 print(cmd)
                 p = subprocess.Popen(cmd)
                 # print(p.args)
                 if p.wait() and pause_on_error:
-                    console_pause()
+                    need_pause = True
             except KeyboardInterrupt:
                 sys.exit(2)
+        if need_pause:
+            console_pause()
 
 
 if __name__ == '__main__':
