@@ -672,7 +672,7 @@ def guess_video_crf(src, codec, *, redo=False, work_dir=None, auto_clean=True):
     c = FFmpegSegmentsContainer(src, work_dir=work_dir, log_lvl='WARNING')
     try:
         crf_guess = c.guess_crf(codec)
-        tf.tag(crf=crf_guess)
+        tf.tag(crf=round(crf_guess))
         shutil.move(src, tf.path)
         return crf_guess
     finally:
