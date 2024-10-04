@@ -37,7 +37,7 @@ def flatten_dir():
 def flag_file_not_want():
     src = appkit.os.clpb.get_path()
     for p in src:
-        if os.path.isfile(p):
+        if os.path.exists(p):
             not_want = f'{p}.not_want'
             _logger.info(f'+ {not_want}')
             oldezpykit.stdlib.os.touch(not_want)
