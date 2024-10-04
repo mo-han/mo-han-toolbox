@@ -353,7 +353,7 @@ def sankaku_site_args_func(options, site_args, site_host, site_name, url, site_s
                         *options,
                         f'base-directory={override_base_dir}',
                         f'directory=["{target_dir}"]',
-                        '''image-filter="md5 not in FILTER_SET['not_want']['md5']"'''
+                        # '''image-filter="md5 not in FILTER_SET['not_want']['md5']"'''
                     ]
                 )
                 if target_dir[-3:] == ' pq':
