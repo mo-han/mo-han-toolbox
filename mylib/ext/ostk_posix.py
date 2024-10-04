@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import os.path
+
 import pyperclip
 
 from mylib.easy.ostk import *
@@ -25,7 +27,7 @@ class Clipboard(metaclass=SingletonMetaClass):
 
     def list_path(self, exist_only=True):
         lines = [line.strip() for line in str(self.get()).splitlines()]
-        return [line for line in lines if os.path.exists(line)]
+        return [os.path.realpath(line) for line in lines if os.path.exists(line)]
 
 
 clipboard = Clipboard()

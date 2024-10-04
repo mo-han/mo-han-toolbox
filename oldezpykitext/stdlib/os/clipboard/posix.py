@@ -30,4 +30,4 @@ class Clipboard(ClipboardABC):
 
     def get_path(self, exist_only=True) -> list:
         lines = [line.strip() for line in str(self.get()).splitlines()]
-        return [line for line in lines if os.path.exists(line)]
+        return [os.path.realpath(line) for line in lines if os.path.exists(line)]

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import os.path
+
 import pywintypes
 import win32clipboard
 
@@ -115,12 +117,12 @@ class Clipboard(metaclass=SingletonMetaClass):
         paths = self.get(self._wcb.CF_HDROP)
         if paths:
             if exist_only:
-                return [p for p in paths if os.path.exists(p)]
+                return [os.path.realpath(p) for p in paths if os.path.exists(p)]
             else:
-                return list(paths)
+                return [os.path.realpath(p) for p in paths]
         else:
             lines = [line.strip() for line in str(self.get()).splitlines()]
-            return [line for line in lines if os.path.exists(line)]
+            return [os.path.realpath(line) for line in lines if os.path.exists(line)]
 
     @deco_ctx_with_self
     def get_all(self) -> dict:
