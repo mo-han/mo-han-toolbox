@@ -117,7 +117,6 @@ class Clipboard(ClipboardABC, HTMLClipboardMixin):
         else:
             lines = [line.strip() for line in str(self.get()).splitlines()]
             r = [line for line in lines if os.path.exists(line)]
-        print(r)
         return [os.path.realpath(p) if re.search(r'(?<=[\\^])[A-Z0-9_]{6}~[A-Z0-9_](?=[\\\.$])', p) else p for p in r]
 
     @deco_ctx_with_self
