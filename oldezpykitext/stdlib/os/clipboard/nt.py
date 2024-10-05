@@ -111,12 +111,14 @@ class Clipboard(ClipboardABC, HTMLClipboardMixin):
         paths = self.get(win32clipboard.CF_HDROP, return_none=True)
         if paths:
             if exist_only:
-                return [os.path.realpath(p) for p in paths if os.path.exists(p)]
+                r = [p for p in paths if os.path.exists(p)]
             else:
-                return [os.path.realpath(p) for p in paths]
+                r = [p for p in paths]
         else:
             lines = [line.strip() for line in str(self.get()).splitlines()]
-            return [os.path.realpath(line) for line in lines if os.path.exists(line)]
+            r = [line for line in lines if os.path.exists(line)]
+        print(r)
+        return [os.path.realpath(p) if re.search(r'(?<=[\\^])[A-Z0-9_]{6}~[A-Z0-9_](?=[\\\.$])', p) else p for p in r]
 
     @deco_ctx_with_self
     def get_all(self) -> dict:

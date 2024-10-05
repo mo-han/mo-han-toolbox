@@ -27,7 +27,7 @@ class Clipboard(metaclass=SingletonMetaClass):
 
     def list_path(self, exist_only=True):
         lines = [line.strip() for line in str(self.get()).splitlines()]
-        return [os.path.realpath(line) for line in lines if os.path.exists(line)]
+        return [line for line in lines if os.path.exists(line)]
 
 
 clipboard = Clipboard()
