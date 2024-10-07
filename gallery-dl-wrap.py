@@ -109,11 +109,11 @@ def per_site(site_args: T.List[str]):
     elif 'gelbooru.com' in url:
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
-            'filename="{category} {date!S:.10} {id} {md5} '
-            '{tags_character!S:L80/___/} '
-            '${tags_copyright!S:L40/___/} '
-            '@{tags_artist!S:L80/___/} '
-            '.{extension}"',
+            'filename="{category} {date!S:.10} {id} {md5}'
+            ' {tags_character!S:L80/___/}'
+            ' $ {tags_copyright!S:L40/___/}'
+            ' @ {tags_artist!S:L80/___/}'
+            ' .{extension}"',
         ]
         args = [
             *GLDLCLIArgs(o=[*options, 'directory=["{search_tags!S} {category}"]']),
