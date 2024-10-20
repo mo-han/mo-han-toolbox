@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import os.path
+import re
 import string
 import webbrowser
 
@@ -84,6 +86,8 @@ def per_site(site_args: T.List[str]):
                                 '@{user[name]} p{num}.{extension}"',
                                 'directory=["{user[name]} {category} {user[id]}"]']),
                 *site_args, url]
+        if url == 'pixiv.net':
+            args.pop()
     elif 'fanbox.cc' in url:
         args = [*GLDLCLIArgs(cookies=get_cookies_path('fanbox'),
                              o=['cookies-update=true', 'videos=true',
@@ -134,11 +138,11 @@ def per_site(site_args: T.List[str]):
     elif 'aibooru.online' in url:
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
-            'filename="{category} {date!S:.10} {id} {md5} '
-            '{tag_string_character!S:L80/___/} '
-            '${tag_string_copyright!S:L40/___/} '
-            '@{tag_string_artist!S:L40/___/} {tag_string_model!S}'
-            '.{extension}"',
+            'filename="{category} {date!S:.10} {id} {md5}'
+            ' {tag_string_character!S:L64/___/} '
+            ' $ {tag_string_copyright!S:L32/___/} '
+            ' @ {tag_string_artist!S:L32/___/} {tag_string_model!S}'
+            ' .{extension}"',
         ]
         args = [
             *GLDLCLIArgs(cookies=get_cookies_path('aibooru'),
@@ -286,6 +290,8 @@ def per_site(site_args: T.List[str]):
             ),
             *site_args, url
         ]
+        if url == 'kemono.':
+            args.pop()
     elif 'nhentai' in url:
         args = [*GLDLCLIArgs(o=make_options_list(dict(
             directory=['{category}', '{title} {category} {gallery_id}'],
@@ -357,7 +363,7 @@ def sankaku_site_args_func(options, site_args, site_host, site_name, url, site_s
                     ]
                 )
                 if target_dir[-3:] == ' pq':
-                    pq_num = len([i for i in os.listdir(the_path) if i[-len(STRING_NOT_WANT):] != STRING_NOT_WANT]) // 2
+                    pq_num = len([i for i in os.listdir(the_path) if i[-len(STRING_NOT_WANT):] != STRING_NOT_WANT]) // 3
                     head_args += ['--range', f'-{pq_num}', ]
                     args = MultiList([[*head_args, url + f' {s}'] for s in site_settings['sort_tag_list']])
                 else:
@@ -374,6 +380,9 @@ def args2url(args):
     first = args.pop(0)
     if first.startswith('/users/') or first.startswith('/artworks/'):
         url = 'https://www.pixiv.net' + first
+    elif os.path.isfile(first):
+        url = 'https://www.pixiv.net'
+        args[:0] = ['-i', first]
     elif first == 'fanbox':
         url = f'https://{args.pop(0)}.fanbox.cc'
     elif first == 'twitter':
@@ -413,7 +422,13 @@ def args2url(args):
     elif first in ('ng', 'newgrounds'):
         url = f'https://{pop_tag_from_args(args)}.newgrounds.com/art'
     elif first in ('kemono', 'kemonoparty', 'kemono.su'):
-        url = f'https://kemono.su/{pop_tag_from_args(args)}'
+        x = pop_tag_from_args(args)
+        if os.path.isfile(x):
+            url = 'kemono.'
+            args[:0] = ['-i', x]
+        else:
+            y = pop_tag_from_args(args)
+            url = f'https://kemono.su/{x}/user/{y}'
     elif first in ('coomer', 'coomerparty', 'coomer.su'):
         url = f'https://coomer.su/{pop_tag_from_args(args)}'
     elif first in ('luscious', 'lus'):

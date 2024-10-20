@@ -236,7 +236,7 @@ class FFmpegRunnerAlpha:
 
     def proc_run(self, dry_run: bool = False) -> bytes:
         cmd = self.cmd
-        self.logger.info(ostk.shlex_double_quotes_join(cmd))
+        self.logger.info(ostk.shlex_double_quotes_join(cmd))  # command list to string with quotes
         if dry_run:
             # print('dry run')
             return b''
@@ -471,10 +471,10 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
 
     if '10bit' in keywords:
         ffmpeg_args = FFmpegArgsList(pix_fmt='yuv420p10le')
-        bits_tag = '10bit'
+        bits_tag_l = ['10bit']
     else:
         ffmpeg_args = FFmpegArgsList(pix_fmt='yuv420p')
-        bits_tag = '8bit'
+        bits_tag_l = []
     keywords = set(keywords) or set()
     res_limit = None
     codec = 'a'
@@ -530,7 +530,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
             tags.append(kw)
         elif kw == 'opus':
             ffmpeg_args.add(c__a='libopus')
-            tags.append(kw)
+            # tags.append(kw)
 
     if res_limit:
         w, h = get_width_height(filepath)
@@ -593,7 +593,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
         tags.append('audio')
     else:
         tags.append(codec_tag)
-        tags.append(bits_tag)
+        tags.extend(bits_tag_l)
 
     cut_points = cut_points or []
     start = cut_points[0] if cut_points else 0
