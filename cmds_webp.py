@@ -150,15 +150,20 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
             the_most_encodings = find_most_frequent_in_iterable(possible_encodings)
             # print(possible_encodings)
             # print(the_most_encodings)
+            the_encoding = None
             if len(the_most_encodings) == 1:
-                encoding = the_most_encodings[0]
+                the_encoding = the_most_encodings[0]
+            elif 'SHIFT_JIS' in the_most_encodings:
+                the_encoding = 'SHIFT_JIS'
+            if the_encoding:
+                encoding = the_encoding
                 for i in zf.infolist():
                     if i.flag_bits & 0x800:  # UTF-8 filename flag
                         continue
                     filename_cp437 = i.filename.encode('cp437')
                     i.filename = filename_cp437.decode(encoding)
                     zf.NameToInfo[i.filename] = i
-            elif the_most_encodings:
+            else:
                 raise NotImplementedError(the_most_encodings)
 
             for i in zf.infolist():
