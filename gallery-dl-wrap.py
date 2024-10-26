@@ -241,7 +241,8 @@ def per_site(site_args: T.List[str]):
                     pq_value = f'-{pq_value}'
                 sort_types = ['/hot', '/top/?t=all', '/gilded', '/best']
                 if any(s in url for s in sort_types) or '/search?q=' in url:
-                    args = [*gldl_args, *site_args, '--range', pq_value, '--chapter-range', f"-{pq_value.split('-')[-1]}", url]
+                    args = [*gldl_args, *site_args, '--range', pq_value, '--chapter-range',
+                            f"-{pq_value.split('-')[-1]}", url]
                 else:
                     args = MultiList([
                         [
@@ -439,7 +440,21 @@ def args2url(args):
         else:
             url = f'https://www.luscious.net/albums/{x}'
     elif first in ('reddit',):
-        url = f'https://www.reddit.com/{pop_tag_from_args(args)}'
+        p = r'\w+'
+        v1 = pop_tag_from_args(args)
+        if re.fullmatch('u_' + p, v1):
+            v1 = f'user/{v1[2:]}'
+        elif re.fullmatch(p, v1):
+            v1 = f'r/{v1}'
+        v2 = pop_tag_from_args(args)
+        if re.fullmatch(r'pq[\d-]+', v2):
+            url = f'https://www.reddit.com/{v1}'
+            args.insert(0, v2)
+        elif re.fullmatch(r'[a-z0-9]{5,}', v2):
+            url = f'https://www.reddit.com/{v1}/comments/{v2}'
+        else:
+            url = f'https://www.reddit.com/{v1}'
+            args.insert(0, v2)
     elif first in ('redgifs',):
         url = f'https://www.redgifs.com/gifs/{pop_tag_from_args(args)}'
     elif first in ('ai', 'aibooru',):
