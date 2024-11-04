@@ -460,9 +460,10 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
         if not redo:
             logger.info(f'# skip with sidecar yaml file\n {filepath}')
             return
-    if not file_is_video(filepath) and not file_is_audio(filepath):
-        logger.info(f'# skip non-video-audio\n  {filepath}')
-        return
+    if filepath[-4:] not in ('.swf', ):
+        if not file_is_video(filepath) and not file_is_audio(filepath):
+            logger.info(f'# skip non-video-audio\n  {filepath}')
+            return
 
     ft = filetype.guess(filepath)
     if ft and ft.mime == 'image/vnd.adobe.photoshop':
