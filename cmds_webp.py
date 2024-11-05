@@ -9,6 +9,7 @@ import chardet
 import filetype
 from humanize import naturaldelta, naturalsize
 from send2trash import send2trash
+from you_get.common import force
 
 import oldezpykit.stdlib.os.common
 import oldezpykit.stdlib.shutil.__deprecated__
@@ -32,7 +33,7 @@ class Counter:
     n = 0
 
 
-def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=None):
+def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=None, convert_webp=False):
     if print_path_relative_to:
         image_fp_rel = fstk.make_path(image_fp, relative_to=print_path_relative_to)
         if image_fp_rel == '.':
@@ -44,7 +45,10 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
     if mime_type != 'image':
         print(f'# skip non-image {image_fp_rel}')
         return
-    if mime_sub in {'webp', 'gif'}:
+    if mime_sub == 'gif':
+        print(f'# skip {mime_sub} image {image_fp_rel}')
+        return
+    if mime_sub == 'webp' and not convert_webp:
         print(f'# skip {mime_sub} image {image_fp_rel}')
         return
     if counter:
@@ -110,10 +114,12 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
 @apr.opt(an.x, an.extension, default='.cbz', help='file extension')
 @apr.true(an.T, an.strict)
 @apr.true(an.v, an.verbose)
+@apr.true('f', 'force')
 @apr.opt('k', 'workers', type=int, metavar='N')
 @apr.map(an.src, workdir=an.workdir, workers='workers', ext_name=an.extension,
-         strict_mode=an.strict, verbose=an.verbose)
+         strict_mode=an.strict, verbose=an.verbose, force_convert_webp='force')
 def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=False, verbose=False,
+                   force_convert_webp=False,
                    fallback_filename_encoding=get_os_default_encoding()):
     """convert non-webp picture inside zip file"""
     flag_filename_of_webp_converted = '__ALREADY_WEBP_CONVERTED__'
@@ -139,6 +145,7 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
             possible_encodings = []
             for i in zf.infolist():
                 if i.flag_bits & 0x800:  # UTF-8 filename flag
+                    # possible_encodings.append('utf8')
                     continue
                 filename_cp437 = i.filename.encode('cp437')
                 guess_encoding = chardet.detect(filename_cp437)['encoding'] or fallback_filename_encoding
@@ -155,6 +162,8 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
                 the_encoding = the_most_encodings[0]
             elif 'SHIFT_JIS' in the_most_encodings:
                 the_encoding = 'SHIFT_JIS'
+            if not the_encoding:
+                the_encoding = 'utf8'
             if the_encoding:
                 encoding = the_encoding
                 for i in zf.infolist():
@@ -174,7 +183,7 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
                 if mime and 'image' in mime:
                     if mime == 'image/gif':
                         continue
-                    elif mime == 'image/webp':
+                    elif mime == 'image/webp' and not force_convert_webp:
                         need_to_convert = False
                         if strict_mode:
                             continue
@@ -199,7 +208,8 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
 
         try:
             old_size = path_size(fp)
-            auto_cvt(unzip_dir, recursive=True, clean=True, cbz=False, workers=workers, verbose=verbose)
+            auto_cvt(unzip_dir, recursive=True, clean=True, cbz=False, workers=workers, verbose=verbose,
+                     force_convert_webp=force_convert_webp)
             oldezpykit.stdlib.os.common.touch(path_join(unzip_dir, flag_filename_of_webp_converted))
             new_zip = shutil.make_archive(unzip_dir, 'zip', unzip_dir, verbose=verbose)
             if ext_name:
@@ -221,9 +231,11 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
 @apr.true('z', 'cbz')
 @apr.opt('k', 'workers', type=int, metavar='N')
 @apr.true(an.B, apr.dst2opt(an.trash_bin), help='delete to trash bin')
+@apr.true('f', 'force')
 @apr.arg('src', nargs='*')
-@apr.map('src', recursive='recursive', clean='clean', cbz='cbz', workers='workers', trash_bin=an.trash_bin)
-def auto_cvt(src, recursive, clean, cbz, workers=None, trash_bin=False, verbose=False):
+@apr.map('src', recursive='recursive', clean='clean', cbz='cbz', workers='workers', trash_bin=an.trash_bin,
+         force_convert_webp='force')
+def auto_cvt(src, recursive, clean, cbz, workers=None, trash_bin=False, verbose=False, force_convert_webp=False):
     """convert images to webp with auto-clean, auto-compress-to-cbz, adaptive-quality-scale"""
     workers = workers or os.cpu_count() - 1 or os.cpu_count()
     lgr = logging.ez_get_logger(auto_cvt.__name__, 'INFO' if verbose else 'ERROR', fmt=logging.LOG_FMT_MESSAGE_ONLY)
@@ -240,13 +252,19 @@ def auto_cvt(src, recursive, clean, cbz, workers=None, trash_bin=False, verbose=
             lgr.info(f'@ {s}')
             with ThreadPoolExecutor(max_workers=workers) as executor:
                 for fp in fstk.find_iter('f', s, recursive=recursive):
-                    executor.submit(convert_adaptive, fp, counter=cnt, print_path_relative_to=s)
+                    executor.submit(convert_adaptive, fp, counter=cnt, print_path_relative_to=s,
+                                    convert_webp=force_convert_webp)
             if clean:
                 lgr.info('# clean already converted original image files')
                 for fp in fstk.find_iter('f', s, recursive=recursive):
                     ext_lower = os.path.splitext(fp)[-1].lower()
                     fp_webp = fp + '.webp'
                     if ext_lower != '.webp' and os.path.isfile(fp_webp) and os.path.getsize(fp_webp):
+                        delete(fp)
+                        lgr.info(f'- {fp}')
+                        continue
+                    if (force_convert_webp and
+                            ext_lower == '.webp' and os.path.isfile(fp_webp) and os.path.getsize(fp_webp)):
                         delete(fp)
                         lgr.info(f'- {fp}')
                         continue
