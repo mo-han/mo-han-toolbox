@@ -9,7 +9,6 @@ import chardet
 import filetype
 from humanize import naturaldelta, naturalsize
 from send2trash import send2trash
-from you_get.common import force
 
 import oldezpykit.stdlib.os.common
 import oldezpykit.stdlib.shutil.__deprecated__
@@ -33,7 +32,7 @@ class Counter:
     n = 0
 
 
-def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=None, convert_webp=False):
+def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=None, force_convert_webp=False):
     if print_path_relative_to:
         image_fp_rel = fstk.make_path(image_fp, relative_to=print_path_relative_to)
         if image_fp_rel == '.':
@@ -48,7 +47,7 @@ def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=N
     if mime_sub == 'gif':
         print(f'# skip {mime_sub} image {image_fp_rel}')
         return
-    if mime_sub == 'webp' and not convert_webp:
+    if mime_sub == 'webp' and not force_convert_webp:
         print(f'# skip {mime_sub} image {image_fp_rel}')
         return
     if counter:
@@ -157,13 +156,11 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
             the_most_encodings = find_most_frequent_in_iterable(possible_encodings)
             # print(possible_encodings)
             # print(the_most_encodings)
-            the_encoding = None
+            the_encoding = 'utf8'
             if len(the_most_encodings) == 1:
                 the_encoding = the_most_encodings[0]
             elif 'SHIFT_JIS' in the_most_encodings:
                 the_encoding = 'SHIFT_JIS'
-            if not the_encoding:
-                the_encoding = 'utf8'
             if the_encoding:
                 encoding = the_encoding
                 for i in zf.infolist():
@@ -253,7 +250,7 @@ def auto_cvt(src, recursive, clean, cbz, workers=None, trash_bin=False, verbose=
             with ThreadPoolExecutor(max_workers=workers) as executor:
                 for fp in fstk.find_iter('f', s, recursive=recursive):
                     executor.submit(convert_adaptive, fp, counter=cnt, print_path_relative_to=s,
-                                    convert_webp=force_convert_webp)
+                                    force_convert_webp=force_convert_webp)
             if clean:
                 lgr.info('# clean already converted original image files')
                 for fp in fstk.find_iter('f', s, recursive=recursive):

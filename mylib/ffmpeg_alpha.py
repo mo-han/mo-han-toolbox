@@ -611,7 +611,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
         logger.info(f'# skip origin\n  {filepath}')
         return
     input_codec_tags = input_ft.tags & CODEC_TAGS_SET - {'origin'}
-    if input_codec_tags:
+    if input_codec_tags and not force:
         logger.info(f'# skip {input_codec_tags}\n  {filepath}')
         return
     if 'mp4' in keywords:
