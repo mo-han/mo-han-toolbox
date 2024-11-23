@@ -89,17 +89,20 @@ def per_site(args: T.List[str]):
                 'directory=["{user[name]} {category} {user[id]}"]'
             ],
         )
-        arg0 = args.pop(0)
-        if os.path.isfile(arg0):
-            gldl_args.extend(['-i', arg0, *args])
-        elif arg0 == 'bg':
-            more_args = ['-o', 'extractor.pixiv.include=["background","avatar"]']
-            if '/users/' in url:
-                gldl_args.extend([*args, *more_args, url])
+        if args:
+            arg0 = args.pop(0)
+            if os.path.isfile(arg0):
+                gldl_args.extend(['-i', arg0, *args])
+            elif arg0 == 'bg':
+                more_args = ['-o', 'extractor.pixiv.include=["background","avatar"]']
+                if '/users/' in url:
+                    gldl_args.extend([*args, *more_args, url])
+                else:
+                    gldl_args.extend([*args[1:], *more_args, f'https://www.pixiv.net/users/{args[0]}'])
             else:
-                gldl_args.extend([*args[1:], *more_args, f'https://www.pixiv.net/users/{args[0]}'])
+                gldl_args.extend([*args, url])
         else:
-            gldl_args.extend([*args, url])
+            gldl_args.append(url)
     elif 'fanbox.cc' in url:
         gldl_args = [*GLDLCLIArgs(cookies=get_cookies_path('fanbox'),
                                   o=['cookies-update=true', 'videos=true',
@@ -243,8 +246,7 @@ def per_site(args: T.List[str]):
         gldl_args = sankaku_site_args_func(options, args, site_host, site_name, url, site_settings)
 
     elif 'reddit.com' in url:
-        gldl_args = GLDLCLIArgs()
-        gldl_args = [*gldl_args, *args, url]
+        gldl_args = [*GLDLCLIArgs(), *args, url]
         if args:
             pq_arg, *args = args
             if pq_arg.startswith('pq'):
@@ -253,27 +255,26 @@ def per_site(args: T.List[str]):
                     pq_value = f'-{pq_value}'
                 sort_types = ['/hot', '/top/?t=all', '/gilded', '/best']
                 if any(s in url for s in sort_types) or '/search?q=' in url:
-                    gldl_args = [*gldl_args, *args, '--range', pq_value, '--chapter-range',
+                    gldl_args = [*GLDLCLIArgs(), *args, '--range', pq_value, '--chapter-range',
                                  f"-{pq_value.split('-')[-1]}", url]
                 else:
                     gldl_args = MultiList([
                         [
-                            *gldl_args, *args,
+                            *GLDLCLIArgs(), *args,
                             '--range', pq_value, '--chapter-range', f"-{pq_value.split('-')[-1]}",
                             url.rstrip('/') + f'{sort}'
                         ] for sort in sort_types
                     ])
                 print(gldl_args)
     elif 'redgifs.com' in url:
-        gldl_args = GLDLCLIArgs()
-        gldl_args = [*gldl_args, *args, url]
+        gldl_args = [*GLDLCLIArgs(), *args, url]
         if args:
             pq_arg, *args = args
             if pq_arg.startswith('pq'):
                 pq_value = int(pq_arg[2:])
                 gldl_args = MultiList([
-                    [*gldl_args, *args, f'--range', f'-{pq_value}', url + '?order=trending'],
-                    [*gldl_args, *args, f'--range', f'-{pq_value}', url + '?order=best'],
+                    [*GLDLCLIArgs(), *args, f'--range', f'-{pq_value}', url + '?order=trending'],
+                    [*GLDLCLIArgs(), *args, f'--range', f'-{pq_value}', url + '?order=best'],
                 ])
     elif 'luscious.net' in url:
         gldl_args = [
