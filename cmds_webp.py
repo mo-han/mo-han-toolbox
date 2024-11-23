@@ -195,7 +195,7 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
 
             if not need_to_convert:
                 continue
-            unzip_dir = path_join(workdir, split_path_dir_base_ext(fp)[1])
+            unzip_dir = path_join(workdir, split_path_dir_base_ext(fp)[1]).strip()
             try:
                 zf.extractall(unzip_dir)
             except zipfile.BadZipFile:
