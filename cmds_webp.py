@@ -19,7 +19,7 @@ from mylib.wrapper import cwebp
 PIXELS_BASELINE = 1280 * 1920
 MAX_Q = 80
 MIN_Q = 50
-MAX_COMPRESS = 0.667
+MAX_COMPRESS = 0.7
 
 apr = ArgumentParserWrapper()
 an = apr.an
@@ -213,9 +213,14 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
                 new_zip = fstk.rename_file_ext(new_zip, ext_name)
                 fp = fstk.rename_file_ext(fp, ext_name)
             new_size = path_size(new_zip)
-            fstk.move_as(new_zip, fp)
+            compress_ratio = new_size / old_size
             lgr.info(fp)
-            lgr.info(f'{new_size / old_size:.1%} ({naturalsize(new_size, True)} / {naturalsize(old_size, True)})')
+            lgr.info(f'{compress_ratio :.1%} ({naturalsize(new_size, True)} / {naturalsize(old_size, True)})')
+            if compress_ratio > MAX_COMPRESS:
+                lgr.info(f'# skip modest size zip file: {fp}')
+            else:
+                fstk.move_as(new_zip, fp)
+                lgr.info(f'* {fp} -> {new_zip}')
         except KeyboardInterrupt:
             sys.exit(2)
         finally:
