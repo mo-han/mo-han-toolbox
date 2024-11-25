@@ -220,7 +220,7 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
                 lgr.info(f'# skip modest size zip file: {fp}')
             else:
                 fstk.move_as(new_zip, fp)
-                lgr.info(f'* {fp} -> {new_zip}')
+                lgr.info(f'* {fp} <- {new_zip}')
         except KeyboardInterrupt:
             sys.exit(2)
         finally:

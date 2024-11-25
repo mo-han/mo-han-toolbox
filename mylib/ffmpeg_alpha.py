@@ -452,7 +452,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     if not force and '.hevc8b.' in filepath:
         logger.info(f'#skip hevc8b file\n {filepath}')
         return
-    if filepath[-8:] == '.gif.mp4':
+    if not force and filepath[-8:] == '.gif.mp4':
         logger.info(f'#skip gif mp4 file\n {filepath}')
         return
     yaml_sidecar_file = filepath + '.yaml'
