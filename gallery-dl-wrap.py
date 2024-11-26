@@ -78,7 +78,7 @@ class MultiList(list):
 
 def per_site(args: T.List[str]):
     url = args2url(args)
-
+    # todo: #mark pixiv
     if 'pixiv.net' in url:
         gldl_args = GLDLCLIArgs(
             ugoira_conv=True,
@@ -90,15 +90,19 @@ def per_site(args: T.List[str]):
             ],
         )
         if args:
-            arg0 = args.pop(0)
+            arg0 = args[0]
             if os.path.isfile(arg0):
-                gldl_args.extend(['-i', arg0, *args])
+                gldl_args.extend(['-i', *args])
             elif arg0 == 'bg':
                 more_args = ['-o', 'extractor.pixiv.include=["background","avatar"]']
                 if '/users/' in url:
-                    gldl_args.extend([*args, *more_args, url])
+                    gldl_args.extend([*args[1:], *more_args, url])
                 else:
-                    gldl_args.extend([*args[1:], *more_args, f'https://www.pixiv.net/users/{args[0]}'])
+                    gldl_args.extend([*args[2:], *more_args, f'https://www.pixiv.net/users/{args[1]}'])
+            elif arg0 in ('u', 'user'):
+                gldl_args.extend([*args[2:], f'https://www.pixiv.net/users/{args[1]}'])
+            elif arg0 in ('a', 'art', 'artwork'):
+                gldl_args.extend([*args[2:], f'https://www.pixiv.net/artworks/{args[1]}'])
             else:
                 gldl_args.extend([*args, url])
         else:
