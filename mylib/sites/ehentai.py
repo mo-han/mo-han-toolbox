@@ -331,6 +331,7 @@ def ehviewer_dl_folder_rename(folder_path: str, *, db: dict = None, update_db=Tr
 def parse_hentai_at_home_downloaded_gallery_info(gallery_path, gallery_type=''):
     info = 'galleryinfo.txt'
     desc = 'Downloaded from E-Hentai Galleries by the Hentai@Home Downloader <3'
+
     if 'd' in gallery_type or os.path.isdir(gallery_path):
         with oldezpykit.stdlib.os.common.ctx_pushd(gallery_path):
             try:
@@ -372,9 +373,6 @@ def parse_hentai_at_home_downloaded_gallery_info(gallery_path, gallery_type=''):
     root_dir, name, ext = split_path_dir_base_ext(gallery_path, dir_ext=False)
     try:
         gid_resize = re.search(r' ?\[\d+(-\d{3,4}x)?]$', name).group(0)
-    except AttributeError:
-        gid_resize = ''
-    if gid_resize:
         d['gid_resize'] = gid_resize.strip()
         tail_content = gid_resize.strip(' []')
         if '-' in tail_content:
@@ -383,6 +381,8 @@ def parse_hentai_at_home_downloaded_gallery_info(gallery_path, gallery_type=''):
             d['resize'] = resize
         else:
             d['gid'] = int(tail_content)
+    except AttributeError:
+        pass
     return d
 
 

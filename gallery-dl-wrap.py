@@ -147,7 +147,7 @@ def per_site(args: T.List[str]):
             if pq_arg.startswith('pq'):
                 pq_value = pq_arg[2:]
                 if '-' not in pq_value:
-                    pq_value = f'-{pq_value}'
+                    pq_value = f'1-{pq_value}'
                 tags_s = url.split('&tags=', maxsplit=1)[-1].strip()
                 # gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} {pq_arg}"]'])
                 gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} pq"]'])
@@ -173,7 +173,7 @@ def per_site(args: T.List[str]):
             if pq_arg.startswith('pq'):
                 pq_value = pq_arg[2:]
                 if '-' not in pq_value:
-                    pq_value = f'-{pq_value}'
+                    pq_value = f'1-{pq_value}'
                 tags_s = url.split('?tags=', maxsplit=1)[-1].strip()
                 print(url, tags_s)
                 gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} pq"]'])
@@ -256,7 +256,7 @@ def per_site(args: T.List[str]):
             if pq_arg.startswith('pq'):
                 pq_value = pq_arg[2:]
                 if '-' not in pq_value:
-                    pq_value = f'-{pq_value}'
+                    pq_value = f'1-{pq_value}'
                 sort_types = ['/hot', '/top/?t=all', '/gilded', '/best']
                 if any(s in url for s in sort_types) or '/search?q=' in url:
                     gldl_args = [*GLDLCLIArgs(), *args, '--range', pq_value, '--chapter-range',
@@ -277,8 +277,8 @@ def per_site(args: T.List[str]):
             if pq_arg.startswith('pq'):
                 pq_value = int(pq_arg[2:])
                 gldl_args = MultiList([
-                    [*GLDLCLIArgs(), *args, f'--range', f'-{pq_value}', url + '?order=trending'],
-                    [*GLDLCLIArgs(), *args, f'--range', f'-{pq_value}', url + '?order=best'],
+                    [*GLDLCLIArgs(), *args, f'--range', f'1-{pq_value}', url + '?order=trending'],
+                    [*GLDLCLIArgs(), *args, f'--range', f'1-{pq_value}', url + '?order=best'],
                 ])
     elif 'luscious.net' in url:
         gldl_args = [
@@ -341,7 +341,7 @@ def sankaku_site_args_func(options, site_args, site_host, site_name, url, site_s
         if pq_arg.startswith('pq'):
             pq_value = pq_arg[2:]
             if set(pq_value) <= set(string.digits):
-                pq_value = '-' + pq_value
+                pq_value = f'1-{pq_value}'
             if set(pq_value) <= set(string.digits + '-'):
                 head_args = GLDLCLIArgs(
                     o=[*options, f'directory=["{tags_s} {{category}} pq"]'],
@@ -382,7 +382,7 @@ def sankaku_site_args_func(options, site_args, site_host, site_name, url, site_s
                 )
                 if target_dir[-3:] == ' pq':
                     pq_num = len([i for i in os.listdir(the_path) if i[-len(STRING_NOT_WANT):] != STRING_NOT_WANT]) // 3
-                    head_args += ['--range', f'-{pq_num}', ]
+                    head_args += ['--range', f'1-{pq_num}', ]
                     args = MultiList([[*head_args, url + f' {s}'] for s in site_settings['sort_tag_list']])
                 else:
                     args = head_args + [url, ]

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import errno
 import zipfile
 
 from oldezpykitext.appkit import *
@@ -41,7 +42,7 @@ def ehviewer_downloads_to_images(ex=False, cookies=None, favcat=None):
             print(f'+ {p}')
             gid = lines[2]
             gtoken = lines[3]
-            ehvimg = os.join_path('', 'image')
+            ehvimg = os.join_path('..', 'image')
             os.makedirs(ehvimg, exist_ok=True)
             for f in set(os.listdir()) - ignored_files:
                 new = f'{gid}-{gtoken}-{f}'
@@ -94,7 +95,7 @@ def migrate_favorites(cookies, from_favorite, to_favorite, proxy, verbose):
             input('press enter to exit')
 
 
-def _sorted_path_of_hentai_at_home_downloaded_gallery(gallery_path, gallery_type=''):
+def _sorted_path_of_hentai_at_home_downloaded_gallery(gallery_path, gallery_type='', filename_length=240):
     _unknown_ = '(unknown)'
     _various_ = '(various)'
 
@@ -105,7 +106,7 @@ def _sorted_path_of_hentai_at_home_downloaded_gallery(gallery_path, gallery_type
     if not info:
         return None
     title = info['title']
-    sanitized_title = fstk.sanitize_xu240(title)
+    sanitized_title = fstk.sanitize_xu_left(title, filename_length, )
     artist = info['tags']['artist']
     group = info['tags']['group']
     root_dir, name, ext = split_path_dir_base_ext(gallery_path, dir_ext=False)
@@ -120,25 +121,27 @@ def _sorted_path_of_hentai_at_home_downloaded_gallery(gallery_path, gallery_type
     try:
         dst: str = join_path_dir_base_ext(new_root, f'{sanitized_title} {info["gid_resize"]}', ext)
     except KeyError:
-        print(gallery_path)
-        print(info)
-        raise
+        dst: str = join_path_dir_base_ext(new_root, f'{sanitized_title}', ext)
     return dst
 
 
 @apr.sub(apr.rpl_dot)
 @apr.arg(an.src, nargs='*')
+@apr.opt('l', 'filename_length', nargs='?', type=int, default=200)
 @apr.true(an.v, an.verbose)
 @apr.true(an.D, apr.dst2opt(an.dry_run))
-@apr.map(an.src, verbose=an.verbose, dry_run=an.dry_run)
-def hath_sort(src: PathSourceType, *, verbose=False, dry_run=False):
+@apr.map(an.src, verbose=an.verbose, dry_run=an.dry_run, filename_length='filename_length')
+def hath_sort(src: PathSourceType, *, verbose=False, dry_run=False, filename_length=200):
     """rename and sort galleries downloaded via H@H (Hentai at Home)"""
     dirs, files = resolve_path_to_dirs_files(src)
     src_dst_l = []
-    [src_dst_l.append((src, _sorted_path_of_hentai_at_home_downloaded_gallery(src, 'd'))) for src in dirs]
+    for src in dirs:
+        src = os.path.relpath(src)
+        src_dst_l.append((src, _sorted_path_of_hentai_at_home_downloaded_gallery(src, 'd', filename_length)))
     for src in files:
+        src = os.path.realpath(src)
         try:
-            src_dst_l.append((src, _sorted_path_of_hentai_at_home_downloaded_gallery(src, 'f')))
+            src_dst_l.append((src, _sorted_path_of_hentai_at_home_downloaded_gallery(src, 'f', filename_length)))
         except zipfile.BadZipfile:
             print(f'! {src}')
     for src, dst in src_dst_l:
