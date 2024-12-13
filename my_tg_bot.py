@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.6
 from pprint import pformat
 
 from telegram.ext import MessageHandler
