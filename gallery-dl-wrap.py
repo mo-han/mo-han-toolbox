@@ -258,14 +258,19 @@ def per_site(args: T.List[str]):
                 if '-' not in pq_value:
                     pq_value = f'1-{pq_value}'
                 sort_types = ['/hot', '/top/?t=all', '/gilded', '/best']
-                if any(s in url for s in sort_types) or '/search?q=' in url:
+                if any(s in url for s in sort_types) or '/search?q=' in url or '/search/?q=' in url:
                     gldl_args = [*GLDLCLIArgs(), *args, '--range', pq_value, '--chapter-range',
-                                 f"-{pq_value.split('-')[-1]}", url]
+                                 f"1-{pq_value.split('-')[-1]}", url]
+                if '/search?q=' in url and 'sort=relevance' in url:
+                    gldl_args = MultiList([
+                        [*GLDLCLIArgs(), *args, '--range', pq_value, '--chapter-range',
+                         f"1-{pq_value.split('-')[-1]}", u] for u in (url, url.replace('sort=relevance', 'sort=top'))
+                    ])
                 else:
                     gldl_args = MultiList([
                         [
                             *GLDLCLIArgs(), *args,
-                            '--range', pq_value, '--chapter-range', f"-{pq_value.split('-')[-1]}",
+                            '--range', pq_value, '--chapter-range', f"1-{pq_value.split('-')[-1]}",
                             url.rstrip('/') + f'{sort}'
                         ] for sort in sort_types
                     ])
