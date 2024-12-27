@@ -78,7 +78,7 @@ class MultiList(list):
 
 def per_site(args: T.List[str]):
     url = args2url(args)
-    # todo: #mark pixiv
+    #todo#mark pixiv
     if 'pixiv.net' in url:
         gldl_args = GLDLCLIArgs(
             ugoira_conv=True,
@@ -301,6 +301,7 @@ def per_site(args: T.List[str]):
                                      '{title} @{artist!S:L80/___/} .{extension}"', ]),
                      *args, url]
     elif 'kemono.' in url or 'coomer.' in url:
+        #todo#mark kemono
         gldl_args = [
             *GLDLCLIArgs(
                 o=[
@@ -313,7 +314,7 @@ def per_site(args: T.List[str]):
             ),
             *args, url
         ]
-        if url == 'kemono.':
+        if url in ('kemono.', 'commer.'):
             gldl_args.pop()
     elif 'nhentai' in url:
         gldl_args = [*GLDLCLIArgs(o=make_options_list(dict(
@@ -441,16 +442,27 @@ def args2url(args):
             url = f'https://idol.sankakucomplex.com/?tags={x}'
     elif first in ('ng', 'newgrounds'):
         url = f'https://{pop_tag_from_args(args)}.newgrounds.com/art'
+    #todo#mark kemono
     elif first in ('kemono', 'kemonoparty', 'kemono.su'):
         x = pop_tag_from_args(args)
         if os.path.isfile(x):
             url = 'kemono.'
             args[:0] = ['-i', x]
-        else:
+        elif x in ('patreon', 'fanbox', 'fantia'):
             y = pop_tag_from_args(args)
             url = f'https://kemono.su/{x}/user/{y}'
+        else:
+            url = f'https://kemono.su/{pop_tag_from_args(args)}'
     elif first in ('coomer', 'coomerparty', 'coomer.su'):
-        url = f'https://coomer.su/{pop_tag_from_args(args)}'
+        x = pop_tag_from_args(args)
+        if os.path.isfile(x):
+            url = 'coomer.'
+            args[:0] = ['-i', x]
+        elif x in ('onlyfans', 'fansly'):
+            y = pop_tag_from_args(args)
+            url = f'https://coomer.su/{x}/user/{y}'
+        else:
+            url = f'https://coomer.su/{pop_tag_from_args(args)}'
     elif first in ('luscious', 'lus'):
         x = pop_tag_from_args(args)
         if re.match(r'\d+ \d+', x):
@@ -458,6 +470,8 @@ def args2url(args):
             url = f'https://www.luscious.net/pictures/album/{a}/id/{b}'
         else:
             url = f'https://www.luscious.net/albums/{x}'
+            import browser_cookie3
+            url = requests.get(url, cookies=browser_cookie3.firefox()).url
     elif first in ('reddit',):
         p = r'\w+'
         v1 = pop_tag_from_args(args)
