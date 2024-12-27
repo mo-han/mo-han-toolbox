@@ -121,15 +121,17 @@ def per_site(args: T.List[str]):
                                      'directory=["{author[nick]} {category} @{author[name]}"]']),
                      *args, url]
     elif 'danbooru.donmai.us' in url:
-        gldl_args = [*GLDLCLIArgs(cookies=get_cookies_path('danbooru'),
+        gldl_args = [*GLDLCLIArgs(cookies=get_cookies_path('danbooru'), user_agent='auto',
                                   o=['cookies-update=true', 'videos=true', 'tags=true',
                                      'directory=["{search_tags!S} {category}"]',
-                                     'filename="{category} {created_at:.10} {id} {md5} '
-                                     '{tag_string_character!S:L80/___/} '
-                                     '@{tag_string_artist!S:L80/___/} '
-                                     '.{extension}"', ]),
+                                     'filename="{category} {created_at:.10} {id} {md5}'
+                                     ' {tag_string_character!S:L80/___/}'
+                                     ' $ {tag_string_copyright!S:L40/___/}'
+                                     ' @ {tag_string_artist!S:L80/___/}'
+                                     ' .{extension}"', ]),
                      *args, url]
     elif 'gelbooru.com' in url:
+        #todo#mark gelbooru
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
             'filename="{category} {date!S:.10} {id} {md5}'
@@ -158,9 +160,9 @@ def per_site(args: T.List[str]):
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
             'filename="{category} {date!S:.10} {id} {md5}'
-            ' {tag_string_character!S:L64/___/} '
-            ' $ {tag_string_copyright!S:L32/___/} '
-            ' @ {tag_string_artist!S:L32/___/} {tag_string_model!S}'
+            ' {tag_string_character!S:L80/___/} '
+            ' $ {tag_string_copyright!S:L40/___/} '
+            ' @ {tag_string_artist!S:L80/___/} {tag_string_model!S}'
             ' .{extension}"',
         ]
         gldl_args = [
@@ -212,14 +214,15 @@ def per_site(args: T.List[str]):
         gldl_args = sankaku_site_args_func(options, args, site_host, site_name, url, site_settings)
 
     elif 'chan.sankakucomplex.com' in url:
+        #todo#mark sankaku
         site_name = 'sankaku'
         site_host = 'chan.sankakucomplex.com'
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
             'filename="{category} {date!S:.10} {id} {md5}'
-            ' {tag_string_character!S:L64/___/}'
-            ' $ {tag_string_copyright!S:L64/___/}'
-            ' @ {tag_string_artist!S:L32/___/} '
+            ' {tag_string_character!S:L80/___/}'
+            ' $ {tag_string_copyright!S:L40/___/}'
+            ' @ {tag_string_artist!S:L80/___/} '
             '.{extension}"',
         ]
         site_settings = {
@@ -236,9 +239,9 @@ def per_site(args: T.List[str]):
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
             'filename="{category} {created_at!S:.10} {id} {md5}'
-            ' {tags_photo_set!S:L64/___/}'
-            ' $ {tags_copyright!S:L32/___/} {tags_studio!S:L32/___/}'
-            ' @ {tags_idol!S:L64/___/}'
+            ' {tags_photo_set!S:L80/___/}'
+            ' $ {tags_copyright!S:L40/___/} {tags_studio!S:L40/___/}'
+            ' @ {tags_idol!S:L80/___/}'
             ' .{extension}"',
         ]
         site_settings = {
@@ -411,6 +414,7 @@ def args2url(args):
     elif first == 'danbooru':
         url = f'https://danbooru.donmai.us/posts?tags={pop_tag_from_args(args)}'
     elif first in ('gelbooru', 'gel'):
+        # todo#mark gelbooru
         x = pop_tag_from_args(args)
         if x.isdigit():
             url = f'https://gelbooru.com/index.php?page=post&s=view&id={x}'
