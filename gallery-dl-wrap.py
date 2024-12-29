@@ -483,15 +483,18 @@ def args2url(args):
             v1 = f'user/{v1[2:]}'
         elif re.fullmatch(p, v1):
             v1 = f'r/{v1}'
-        v2 = pop_tag_from_args(args)
-        if re.fullmatch(r'pq[\d-]+', v2):
-            url = f'https://www.reddit.com/{v1}'
-            args.insert(0, v2)
-        elif re.fullmatch(r'[a-z0-9]{5,}', v2):
-            url = f'https://www.reddit.com/{v1}/comments/{v2}'
+        if args:
+            v2 = pop_tag_from_args(args)
+            if re.fullmatch(r'pq[\d-]+', v2):
+                url = f'https://www.reddit.com/{v1}'
+                args.insert(0, v2)
+            elif re.fullmatch(r'[a-z0-9]{5,}', v2):
+                url = f'https://www.reddit.com/{v1}/comments/{v2}'
+            else:
+                url = f'https://www.reddit.com/{v1}'
+                args.insert(0, v2)
         else:
             url = f'https://www.reddit.com/{v1}'
-            args.insert(0, v2)
     elif first in ('redgifs',):
         url = f'https://www.redgifs.com/gifs/{pop_tag_from_args(args)}'
     elif first in ('ai', 'aibooru',):
