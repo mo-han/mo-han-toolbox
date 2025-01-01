@@ -716,12 +716,15 @@ def run_from_lines_func():
             line = line.strip()
             if not line:
                 continue
-            command = cmd_fmt.format(line=line.strip())
+            command = cmd_fmt.replace('{line}', line.strip())
             print('#', command, file=sys.stderr)
             if not dry_run:
                 os.system(command)
     except KeyboardInterrupt:
         sys.exit(2)
+    except KeyError:
+        print(f'! {cmd_fmt}')
+        raise
 
 
 run_from_lines = add_sub_parser(
