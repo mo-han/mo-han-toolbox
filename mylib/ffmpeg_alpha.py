@@ -534,7 +534,11 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
             # tags.append(kw)
 
     if res_limit:
-        w, h = get_width_height(filepath)
+        try:
+            w, h = get_width_height(filepath)
+        except IndexError:
+            ff.logger.info(f'# no video stream: {filepath}')
+            return
         new_vf = get_vf_res_scale_down(w, h, res_limit, vf=vf_str)
         ffmpeg_args.add(filter__V__0=new_vf)
         if new_vf != vf_str:

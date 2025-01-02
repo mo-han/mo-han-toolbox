@@ -526,10 +526,17 @@ def ffmpeg_func():
     if verbose:
         print(args)
     for filepath in mylib.__deprecated__.list_files(source, recursive=False):
-        kw_video_convert(
-            filepath, keywords=keywords, vf=video_filters, cut_points=cut_points, dest=output_path,
-            overwrite=overwrite, redo=redo_origin, verbose=verbose, dry_run=dry_run, force=force,
-            ffmpeg_opts=opts)
+        if verbose:
+            print(filepath)
+        try:
+            kw_video_convert(
+                filepath, keywords=keywords, vf=video_filters, cut_points=cut_points, dest=output_path,
+                overwrite=overwrite, redo=redo_origin, verbose=verbose, dry_run=dry_run, force=force,
+                ffmpeg_opts=opts)
+        except Exception:
+            print(filepath)
+            raise
+
 
 
 ffmpeg = add_sub_parser('wrap.ffmpeg', ['ffmpeg', 'ff'], 'convert video file using ffmpeg')
