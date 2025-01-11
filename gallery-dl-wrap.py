@@ -78,7 +78,7 @@ class MultiList(list):
 
 def per_site(args: T.List[str]):
     url = args2url(args)
-    #todo#mark pixiv
+    # todo#mark pixiv
     if 'pixiv.net' in url:
         gldl_args = GLDLCLIArgs(
             ugoira_conv=True,
@@ -108,11 +108,11 @@ def per_site(args: T.List[str]):
         else:
             gldl_args.append(url)
     elif 'fanbox.cc' in url:
-        gldl_args = [*GLDLCLIArgs(cookies=get_cookies_path('fanbox'),
-                                  o=['cookies-update=true', 'videos=true',
-                                     'filename="{category} {date!S:.10} {id} {title} {page_count}p '
-                                     '@{creatorId} p{num}.{extension}"',
-                                     'directory=["{user[name]} {category} {user[userId]} {creatorId}"]']),
+        gldl_args = [*GLDLCLIArgs(
+            o=['cookies-update=true', 'videos=true',
+               'filename="{category} {date!S:.10} {id} {title} {page_count}p '
+               '@{creatorId} p{num}.{extension}"',
+               'directory=["{user[name]} {category} {user[userId]} {creatorId}"]']),
                      *args, url]
     elif 'twitter.com' in url or 'https://x.com/' in url:
         gldl_args = [*GLDLCLIArgs(o=['videos=true', 'retweets=false', 'content=true',
@@ -121,7 +121,7 @@ def per_site(args: T.List[str]):
                                      'directory=["{author[nick]} {category} @{author[name]}"]']),
                      *args, url]
     elif 'danbooru.donmai.us' in url:
-        gldl_args = [*GLDLCLIArgs(cookies=get_cookies_path('danbooru'), user_agent='auto',
+        gldl_args = [*GLDLCLIArgs(user_agent='auto',
                                   o=['cookies-update=true', 'videos=true', 'tags=true',
                                      'directory=["{search_tags!S} {category}"]',
                                      'filename="{category} {created_at:.10} {id} {md5}'
@@ -131,7 +131,7 @@ def per_site(args: T.List[str]):
                                      ' .{extension}"', ]),
                      *args, url]
     elif 'gelbooru.com' in url:
-        #todo#mark gelbooru
+        # todo#mark gelbooru
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
             'filename="{category} {date!S:.10} {id} {md5}'
@@ -166,8 +166,7 @@ def per_site(args: T.List[str]):
             ' .{extension}"',
         ]
         gldl_args = [
-            *GLDLCLIArgs(cookies=get_cookies_path('aibooru'),
-                         o=[*options, 'directory=["{search_tags!S} {category}"]']),
+            *GLDLCLIArgs(o=[*options, 'directory=["{search_tags!S} {category}"]']),
             *args, url
         ]
         if args:
@@ -214,7 +213,7 @@ def per_site(args: T.List[str]):
         gldl_args = sankaku_site_args_func(options, args, site_host, site_name, url, site_settings)
 
     elif 'chan.sankakucomplex.com' in url:
-        #todo#mark sankaku
+        # todo#mark sankaku
         site_name = 'sankaku'
         site_host = 'chan.sankakucomplex.com'
         options = [
@@ -304,7 +303,7 @@ def per_site(args: T.List[str]):
                                      '{title} @{artist!S:L80/___/} .{extension}"', ]),
                      *args, url]
     elif 'kemono.' in url or 'coomer.' in url:
-        #todo#mark kemono
+        # todo#mark kemono
         gldl_args = [
             *GLDLCLIArgs(
                 o=[
@@ -361,10 +360,12 @@ def sankaku_site_args_func(options, site_args, site_host, site_name, url, site_s
                 override_base_dir, target_dir = os.path.split(pq_value.strip(r'\/"').strip(r'\/"'))
                 post_id_l = []
                 for i in os.listdir(pq_value):
-                    m = re.search(r'\d\d\d\d-\d\d-\d\d (\w+) ', i)
+                    # m = re.search(r'\d\d\d\d-\d\d-\d\d (\w+) ', i)
+                    m = re.search(r' ([0-9a-f]{32}) ', i)
                     if m:
                         post_id_l.append(m.group(1))
-                url_l = [f'https://{site_host}{post_path_prefix}{post_id}' for post_id in post_id_l]
+                # url_l = [f'https://{site_host}{post_path_prefix}{post_id}' for post_id in post_id_l]
+                url_l = [f'https://{site_host}/posts?tags=md5:{post_id}' for post_id in post_id_l]
                 args = [
                     *GLDLCLIArgs(
                         o=[
@@ -446,7 +447,7 @@ def args2url(args):
             url = f'https://idol.sankakucomplex.com/?tags={x}'
     elif first in ('ng', 'newgrounds'):
         url = f'https://{pop_tag_from_args(args)}.newgrounds.com/art'
-    #todo#mark kemono
+    # todo#mark kemono
     elif first in ('kemono', 'kemonoparty', 'kemono.su'):
         x = pop_tag_from_args(args)
         if os.path.isfile(x):
