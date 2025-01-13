@@ -364,8 +364,8 @@ def sankaku_site_args_func(options, site_args, site_host, site_name, url, site_s
                     m = re.search(r' ([0-9a-f]{32}) ', i)
                     if m:
                         post_id_l.append(m.group(1))
-                # url_l = [f'https://{site_host}{post_path_prefix}{post_id}' for post_id in post_id_l]
-                url_l = [f'https://{site_host}/posts?tags=md5:{post_id}' for post_id in post_id_l]
+                url_l = [f'https://{site_host}{post_path_prefix}{post_id}' for post_id in post_id_l]
+                # url_l = [f'https://{site_host}/posts?tags=md5:{post_id}' for post_id in post_id_l]
                 args = [
                     *GLDLCLIArgs(
                         o=[
