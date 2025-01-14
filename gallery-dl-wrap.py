@@ -380,7 +380,8 @@ def sankaku_site_args_func(options, site_args, site_host, site_name, url, site_s
             elif pq_value[0] == '+' and os.path.isdir(pq_value[1:]):
                 the_path = pq_value[1:].strip(r'\/"').strip(r'\/"')
                 override_base_dir, target_dir = os.path.split(the_path)
-                url = f'https://{site_host}{tag_path_prefix}{target_dir.split(site_name)[0].strip()}'
+                search_tag_string = fstk.sanitize_xu(target_dir.split(site_name)[0].strip(), reverse=True)
+                url = f'https://{site_host}{tag_path_prefix}{search_tag_string}'
                 head_args = GLDLCLIArgs(
                     *site_args,
                     o=[
