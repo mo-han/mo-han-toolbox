@@ -392,7 +392,7 @@ def sankaku_site_args_func(options, site_args, site_host, site_name, url, site_s
                     ]
                 )
                 if target_dir[-3:] == ' pq':
-                    pq_num = len([i for i in os.listdir(the_path) if i[-len(STRING_NOT_WANT):] != STRING_NOT_WANT]) // 3
+                    pq_num = len([i for i in os.listdir(the_path) if i[-len(STRING_NOT_WANT):] != STRING_NOT_WANT]) // 4
                     head_args += ['--range', f'1-{pq_num}', ]
                     args = MultiList([[*head_args, url + f' {s}'] for s in site_settings['sort_tag_list']])
                 else:
