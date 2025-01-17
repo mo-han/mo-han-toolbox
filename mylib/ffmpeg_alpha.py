@@ -379,12 +379,12 @@ def get_width_height(filepath) -> (int, int):
     return d['width'], d['height']
 
 
-@mylib.easy.deco_factory_param_value_choices({'res_limit': (None, 'FHD', 'HD', 'qHD', 'QHD', '4K', '360p')})
+@mylib.easy.deco_factory_param_value_choices({'res_limit': (None, 'FHD', 'HD', 'qHD', 'QHD', '4K', '360p', '320x', '256x', '160x')})
 def get_vf_res_scale_down(width: int, height: int, res_limit='FHD', vf: str = '') -> str:
     """generate 'scale=<w>:<h>' value for ffmpeg `vf` option, to scale down the given resolution
     return empty str if the given resolution is enough low thus scaling is not needed"""
     d = {'FHD': (1920, 1080), 'HD': (1280, 720), 'qHD': (960, 540), 'QHD': (2560, 1440), '4K': (3840, 2160),
-         '360p': (640, 360)}
+         '360p': (640, 360), '320x': (320, 320), '256x': (256, 256), '160x': (160, 160)}
     auto_calc = -2
     if not res_limit:
         return vf
@@ -517,6 +517,8 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
             res_limit = 'qHD'
         elif kw.lower() == '360p':
             res_limit = '360p'
+        elif kw.lower() in ('320x', '256x', '160x'):
+            res_limit = kw.lower()
         elif re.match(r'\dch$', kw):
             ffmpeg_args.add(ac=kw[:1])
             tags.append(kw)
@@ -604,6 +606,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     start = cut_points[0] if cut_points else 0
     end = cut_points[1] if len(cut_points) >= 2 else 0
 
+    new_ext = ''
     input_ft = EnclosedFilenameTags(filepath, preamble=' +')
     origin_ft = EnclosedFilenameTags(filepath, preamble=' +').tag('origin')
     output_ft = EnclosedFilenameTags(filepath, preamble=' +').untag('crf', 'origin')
@@ -618,23 +621,34 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     if input_codec_tags and not force:
         logger.info(f'# skip {input_codec_tags}\n  {filepath}')
         return
+    if 'gif' in keywords:
+        new_ext = '.gif'
+        tags.remove('h264')
     if 'mp4' in keywords:
-        output_ft.extension = '.mp4'
+        new_ext = '.mp4'
         ffmpeg_args.add(movflags='faststart')
     if 'mkv' in keywords:
-        output_ft.extension = '.mkv'
+        new_ext = '.mkv'
         # ffmpeg_args.add(c__a='libopus')
         # if choose opus as audio codec, then stream bitrate in mkv will lose
         # need "statistic tags" to specify these bitrate info inside metadata
         # but ffmpeg not support that :(
     if 'm4a' in keywords:
-        output_ft.extension = '.m4a'
+        new_ext = '.m4a'
         ffmpeg_args.add(map=STREAM_MAP_PRESET_TABLE[S_NO_VIDEO])
     if 'aac' in keywords:
-        output_ft.extension = '.aac'
+        new_ext = '.aac'
     if 'webm' in keywords:
-        output_ft.extension = '.webm'
+        new_ext = '.webm'
+    if new_ext:
+        if 'append_ext' in keywords:
+            output_ft.extension += new_ext
+        else:
+            output_ft.extension = new_ext
     output_ft = output_ft.tag(*tags)
+    if 'no_tag' in keywords:
+        origin_ft.clear()
+        output_ft.clear()
 
     origin_path = origin_ft.path
     output_path = output_ft.path
