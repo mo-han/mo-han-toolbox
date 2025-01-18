@@ -228,7 +228,7 @@ def list_files(src: str or T.Iterable or Clipboard, recursive=False, progress_qu
             # print(src)
             return list(fstk.find_iter('f', src, recursive=True))
         else:
-            return [fp for fp in glob(src, recursive=recursive) if os.path.isfile(fp)]
+            return [fp for fp in (glob if callable(glob) else glob.glob)(src, recursive=recursive) if os.path.isfile(fp)]
     elif isinstance(src, T.Iterable):
         r = []
         for s in src:
