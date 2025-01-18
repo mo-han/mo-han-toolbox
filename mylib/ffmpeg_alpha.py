@@ -623,6 +623,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
         return
     if 'gif' in keywords:
         new_ext = '.gif'
+        # ffmpeg_args.add(pix_fmt='rgb24') # not supported
         tags.remove('h264')
     if 'mp4' in keywords:
         new_ext = '.mp4'
