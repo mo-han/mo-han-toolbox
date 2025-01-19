@@ -355,13 +355,20 @@ def sankaku_site_args_func(options, site_args, site_host, site_name, url, site_s
                     o=[*options, f'directory=["{tags_s} {{category}} pq"]'],
                 )
                 head_args += [*site_args, '--range', pq_value, ]
-                args = MultiList([[*head_args, url + f' {s}'] for s in site_settings['sort_tag_list']])
+                if 'realbooru' in site_host:
+                    args = MultiList([[*head_args, url + f' {s}'] for s in site_settings['sort_tag_list']])
+                    args += MultiList([[*head_args, url + ' -video -gif -animated -webm -mp4' + f' {s}'] for s in
+                                       site_settings['sort_tag_list']])
+                else:
+                    args = MultiList([[*head_args, url + f' {s}'] for s in site_settings['sort_tag_list']])
             elif os.path.isdir(pq_value):
                 override_base_dir, target_dir = os.path.split(pq_value.strip(r'\/"').strip(r'\/"'))
                 post_id_l = []
                 for i in os.listdir(pq_value):
-                    # m = re.search(r'\d\d\d\d-\d\d-\d\d (\w+) ', i)
-                    m = re.search(r' ([0-9a-f]{32}) ', i)
+                    if 'sankaku' in site_host:
+                        m = re.search(r' ([0-9a-f]{32}) ', i)
+                    else:
+                        m = re.search(r'\d\d\d\d-\d\d-\d\d (\w+) ', i)
                     if m:
                         post_id_l.append(m.group(1))
                 url_l = [f'https://{site_host}{post_path_prefix}{post_id}' for post_id in post_id_l]
@@ -430,15 +437,17 @@ def args2url(args):
             url = f'https://realbooru.com/index.php?page=post&s=list&tags={x}'
     elif first in ('sankaku', 'chan'):
         x = pop_tag_from_args(args)
-        if x.isdigit():
+        if x.isdigit() or re.fullmatch(r'[0-9a-z]{32}', x):
             url = f'https://chan.sankakucomplex.com/posts/{x}'
+        elif x[:3] == 'id=':
+            url = f'https://chan.sankakucomplex.com/posts/{x[3:]}'
         elif not x:
             url = 'https://chan.sankakucomplex.com'
         else:
             url = f'https://chan.sankakucomplex.com/?tags={x}'
     elif first in ('idol', 'idolcomplex'):
         x = pop_tag_from_args(args)
-        if x.isdigit():
+        if x.isdigit() or re.fullmatch(r'[0-9a-z]{32}', x):
             url = f'https://idol.sankakucomplex.com/posts/{x}'
         elif x[:3] == 'id=':
             url = f'https://idol.sankakucomplex.com/posts/{x[3:]}'
