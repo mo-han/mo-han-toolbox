@@ -379,12 +379,13 @@ def get_width_height(filepath) -> (int, int):
     return d['width'], d['height']
 
 
-@mylib.easy.deco_factory_param_value_choices({'res_limit': (None, 'FHD', 'HD', 'qHD', 'QHD', '4K', '360p', '320x', '256x', '160x')})
+@mylib.easy.deco_factory_param_value_choices(
+    {'res_limit': (None, 'FHD', 'HD', 'qHD', 'QHD', '4K', '360p', '512x', '320x', '256x', '160x')})
 def get_vf_res_scale_down(width: int, height: int, res_limit='FHD', vf: str = '') -> str:
     """generate 'scale=<w>:<h>' value for ffmpeg `vf` option, to scale down the given resolution
     return empty str if the given resolution is enough low thus scaling is not needed"""
     d = {'FHD': (1920, 1080), 'HD': (1280, 720), 'qHD': (960, 540), 'QHD': (2560, 1440), '4K': (3840, 2160),
-         '360p': (640, 360), '320x': (320, 320), '256x': (256, 256), '160x': (160, 160)}
+         '360p': (640, 360), '512x': (512, 512), '320x': (320, 320), '256x': (256, 256), '160x': (160, 160)}
     auto_calc = -2
     if not res_limit:
         return vf
@@ -434,6 +435,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     ff.logger.setLevel(lvl)
     vf_list = get_filter_list(vf)
     vf_str = get_filter_str(vf_list)
+    ffmpeg_input_args = FFmpegArgsList()
     logger = ez_get_logger(f'{__name__}.smartconv', fmt=LOG_FMT_MESSAGE_ONLY)
     codecs_d = {
         'h': 'hevc', 'a': None,
@@ -460,7 +462,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
         if not redo:
             logger.info(f'# skip with sidecar yaml file\n {filepath}')
             return
-    if filepath[-4:] not in ('.swf', ):
+    if filepath[-4:] not in ('.swf',):
         if not file_is_video(filepath) and not file_is_audio(filepath):
             logger.info(f'# skip non-video-audio\n  {filepath}')
             return
@@ -471,10 +473,10 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
         return
 
     if '10bit' in keywords:
-        ffmpeg_args = FFmpegArgsList(pix_fmt='yuv420p10le')
+        ffmpeg_output_args = FFmpegArgsList(pix_fmt='yuv420p10le')
         bits_tag_l = ['10bit']
     else:
-        ffmpeg_args = FFmpegArgsList(pix_fmt='yuv420p')
+        ffmpeg_output_args = FFmpegArgsList(pix_fmt='yuv420p')
         bits_tag_l = []
     keywords = set(keywords) or set()
     res_limit = None
@@ -484,46 +486,48 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     if 'smartblur' in keywords:
         vf_list.append('smartblur')
 
+    word = 'nvdec'
+    if word in keywords:
+        ffmpeg_input_args.add(hwaccel=word)
+
     output_ext = None
     for kw in keywords:
         if kw[0] + kw[-1] in ('vk', 'vM') and kw[1:-1].isdecimal():
-            ffmpeg_args.add(b__v=kw[1:])
+            ffmpeg_output_args.add(b__v=kw[1:])
         elif kw == 'novid':
-            ffmpeg_args.add(vn=True)
+            ffmpeg_output_args.add(vn=True)
         elif kw[0] == '.' and '.' not in kw[1:]:
             output_ext = kw
         elif kw[:3] == 'crf':
             crf = kw[3:]
         elif kw[0] + kw[-1] == 'ak' and kw[1:-1].isdecimal():
-            ffmpeg_args.add(b__a=kw[1:])
+            ffmpeg_output_args.add(b__a=kw[1:])
         elif kw[:3] == 'fps':
-            ffmpeg_args.add(r=kw[3:])
+            ffmpeg_output_args.add(r=kw[3:])
             tags.append(kw)
         elif kw == 'vcopy':
-            ffmpeg_args.add(c__V='copy')
+            ffmpeg_output_args.add(c__V='copy')
         elif kw == 'acopy':
-            ffmpeg_args.add(c__a='copy')
+            ffmpeg_output_args.add(c__a='copy')
         elif kw == 'scopy':
-            ffmpeg_args.add(c__s='copy')
+            ffmpeg_output_args.add(c__s='copy')
         elif kw == 'all':
-            ffmpeg_args.add(map=0)
+            ffmpeg_output_args.add(map=0)
         elif kw == 'copy':
-            ffmpeg_args.add(c='copy')
+            ffmpeg_output_args.add(c='copy')
         elif kw in ('FHD', 'fhd'):
             res_limit = 'FHD'
         elif kw in ('HD', 'hd'):
             res_limit = 'HD'
         elif kw in ('qHD', 'qhd'):
             res_limit = 'qHD'
-        elif kw.lower() == '360p':
-            res_limit = '360p'
-        elif kw.lower() in ('320x', '256x', '160x'):
+        elif kw.lower() in ('360p', '512x', '320x', '256x', '160x'):
             res_limit = kw.lower()
         elif re.match(r'\dch$', kw):
-            ffmpeg_args.add(ac=kw[:1])
+            ffmpeg_output_args.add(ac=kw[:1])
             tags.append(kw)
         elif re.match(r'copy\w\d+$', kw):
-            ffmpeg_args.add_kwarg(f'-c:{kw[4:5]}:{kw[5:]}', 'copy')
+            ffmpeg_output_args.add_kwarg(f'-c:{kw[4:5]}:{kw[5:]}', 'copy')
         elif kw == 'hevc':
             codec = 'h'
         elif kw in ('vp9', 'vpx', 'vp90', 'webm'):
@@ -532,7 +536,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
             vf_list.append('scale=in_range=limited:out_range=full')
             tags.append(kw)
         elif kw == 'opus':
-            ffmpeg_args.add(c__a='libopus')
+            ffmpeg_output_args.add(c__a='libopus')
             # tags.append(kw)
 
     if res_limit:
@@ -542,11 +546,11 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
             ff.logger.info(f'# no video stream: {filepath}')
             return
         new_vf = get_vf_res_scale_down(w, h, res_limit, vf=vf_str)
-        ffmpeg_args.add(filter__V__0=new_vf)
+        ffmpeg_output_args.add(filter__V__0=new_vf)
         if new_vf != vf_str:
             tags.append(res_limit)
     else:
-        ffmpeg_args.add(filter__V__0=vf_str)
+        ffmpeg_output_args.add(filter__V__0=vf_str)
 
     if 'best' in keywords:
         codec = 'h'
@@ -578,21 +582,21 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
         tags.append('qsv')
         codec += 'q'
         crf = None
-        ffmpeg_args.add(vcodec=codecs_d[codec])
+        ffmpeg_output_args.add(vcodec=codecs_d[codec])
     elif 'nvenc' in keywords and codec in ('a', 'h'):
         tags.append('nvenc')
         codec += 'nv'
-        ffmpeg_args.add(c__V=codecs_d[codec], rc='constqp', qp=crf)
-        # ffmpeg_args.add(c__V=codecs_d[codec], rc='vbr', qmin=0, cq=crf)  # bad, dont use
-        ffmpeg_args.add_kwarg('-rc-lookahead', 16)
-        ffmpeg_args.add_kwarg('-spatial-aq', 1)
-        ffmpeg_args.add_kwarg('-temporal-aq', 1)
+        ffmpeg_output_args.add(c__V=codecs_d[codec], rc='constqp', qp=crf)
+        # ffmpeg_output_args.add(c__V=codecs_d[codec], rc='vbr', qmin=0, cq=crf)  # bad, dont use
+        ffmpeg_output_args.add_kwarg('-rc-lookahead', 16)
+        ffmpeg_output_args.add_kwarg('-spatial-aq', 1)
+        ffmpeg_output_args.add_kwarg('-temporal-aq', 1)
         if crf is not None:
-            ffmpeg_args.add(b__v=0)
+            ffmpeg_output_args.add(b__v=0)
 
     else:
-        ffmpeg_args.add(vcodec=codecs_d[codec], crf=crf)
-    ffmpeg_args.add(ffmpeg_opts)
+        ffmpeg_output_args.add(vcodec=codecs_d[codec], crf=crf)
+    ffmpeg_output_args.add(ffmpeg_opts)
 
     if keywords & {'copy', 'vcopy'}:
         tags.append('copy')
@@ -623,20 +627,20 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
         return
     if 'gif' in keywords:
         new_ext = '.gif'
-        # ffmpeg_args.add(pix_fmt='rgb24') # not supported
+        # ffmpeg_output_args.add(pix_fmt='rgb24') # not supported
         tags.remove('h264')
     if 'mp4' in keywords:
         new_ext = '.mp4'
-        ffmpeg_args.add(movflags='faststart')
+        ffmpeg_output_args.add(movflags='faststart')
     if 'mkv' in keywords:
         new_ext = '.mkv'
-        # ffmpeg_args.add(c__a='libopus')
+        # ffmpeg_output_args.add(c__a='libopus')
         # if choose opus as audio codec, then stream bitrate in mkv will lose
         # need "statistic tags" to specify these bitrate info inside metadata
         # but ffmpeg not support that :(
     if 'm4a' in keywords:
         new_ext = '.m4a'
-        ffmpeg_args.add(map=STREAM_MAP_PRESET_TABLE[S_NO_VIDEO])
+        ffmpeg_output_args.add(map=STREAM_MAP_PRESET_TABLE[S_NO_VIDEO])
     if 'aac' in keywords:
         new_ext = '.aac'
     if 'webm' in keywords:
@@ -660,7 +664,8 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     lp.l()
 
     try:
-        ff.convert([filepath], output_path, ffmpeg_args, start=start, end=end, dry_run=dry_run, **kwargs)
+        ff.convert([filepath], output_path, ffmpeg_output_args, input_args=ffmpeg_input_args, start=start, end=end,
+                   dry_run=dry_run, **kwargs)
         logger.info(f'+ {output_path}')
         shutil.move(filepath, origin_path)
     except ff.FFmpegError as e:
