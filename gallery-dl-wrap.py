@@ -355,12 +355,13 @@ def sankaku_site_args_func(options, site_args, site_host, site_name, url, site_s
                     o=[*options, f'directory=["{tags_s} {{category}} pq"]'],
                 )
                 head_args += [*site_args, '--range', pq_value, ]
-                if 'realbooru' in site_host:
-                    args = MultiList([[*head_args, url + f' {s}'] for s in site_settings['sort_tag_list']])
-                    args += MultiList([[*head_args, url + ' -video -gif -animated -webm -mp4' + f' {s}'] for s in
-                                       site_settings['sort_tag_list']])
-                else:
-                    args = MultiList([[*head_args, url + f' {s}'] for s in site_settings['sort_tag_list']])
+                args = MultiList([[*head_args, url + f' {s}'] for s in site_settings['sort_tag_list']])
+                # if 'realbooru' in site_host:
+                #     args = MultiList([[*head_args, url + f' {s}'] for s in site_settings['sort_tag_list']])
+                #     args += MultiList([[*head_args, url + ' -video -gif -animated -webm -mp4' + f' {s}'] for s in
+                #                        site_settings['sort_tag_list']])
+                # else:
+                #     args = MultiList([[*head_args, url + f' {s}'] for s in site_settings['sort_tag_list']])
             elif os.path.isdir(pq_value):
                 override_base_dir, target_dir = os.path.split(pq_value.strip(r'\/"').strip(r'\/"'))
                 post_id_l = []
