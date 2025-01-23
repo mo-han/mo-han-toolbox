@@ -279,13 +279,13 @@ def auto_cvt(src, recursive, clean, cbz, workers=None, trash_bin=False, verbose=
                     lgr.info('# zip folder into cbz file')
                     dirs_with_image = []
                     for dp, sub_dirs, files in os.walk(s):
-                        _bad = False
+                        _has_non_image_file = False
                         for f in files:
-                            if f.lower().split('.')[-1] in ('mkv', 'mp4', 'gif', 'webm', 'm4v'):
-                                _bad = True
+                            if f.lower().split('.')[-1] in ('mkv', 'mp4', 'gif', 'webm', 'm4v', 'mov', 'zip', 'cbz', 'rar', '7z'):
+                                _has_non_image_file = True
                                 break
-                        if _bad:
-                            break
+                        if _has_non_image_file:
+                            continue
                         for f in files:
                             if re.match(r'.+\.(webp|jpg|jpeg|png)', f):
                                 dirs_with_image.append(dp)
