@@ -281,7 +281,9 @@ def auto_cvt(src, recursive, clean, cbz, workers=None, trash_bin=False, verbose=
                     for dp, sub_dirs, files in os.walk(s):
                         _has_non_image_file = False
                         for f in files:
-                            if f.lower().split('.')[-1] in ('mkv', 'mp4', 'gif', 'webm', 'm4v', 'mov', 'zip', 'cbz', 'rar', '7z'):
+                            if f.lower().split('.')[-1] in (
+                            'mkv', 'mp4', 'gif', 'webm', 'm4v', 'mov', 'zip', 'cbz', 'rar', '7z', 'not_image',
+                            'non_image'):
                                 _has_non_image_file = True
                                 break
                         if _has_non_image_file:
