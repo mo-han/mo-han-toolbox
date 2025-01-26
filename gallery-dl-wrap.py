@@ -81,7 +81,6 @@ def per_site(args: T.List[str]):
     # todo#mark pixiv
     if 'pixiv.net' in url:
         gldl_args = GLDLCLIArgs(
-            ugoira_conv=True,
             o=[
                 'cookies-update=true',
                 'filename="{category} {date:%Y-%m-%d} {id} {title} {page_count}p '
