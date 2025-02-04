@@ -204,7 +204,7 @@ def per_site(args: T.List[str]):
             ' .{extension}"',
         ]
         site_settings = {
-            'sort_tag_list': ['sort:score', ],
+            'sort_tag_list': ['sort:score', ''],
             'tag_path_prefix': '/index.php?page=post&s=list&tags=',
             'post_path_prefix': '/index.php?page=post&s=view&id=',
         }
@@ -219,7 +219,7 @@ def per_site(args: T.List[str]):
             'cookies-update=true', 'videos=true', 'tags=true',
             'filename="{category} {date!S:.10} {id} {md5}'
             ' {tag_string_character!S:L80/___/}'
-            ' $ {tag_string_copyright!S:L40/___/}'
+            ' $ {tag_string_copyright!S:L40/___/} {tags_studio!S:L40/___/}'
             ' @ {tag_string_artist!S:L80/___/} '
             '.{extension}"',
         ]
@@ -338,7 +338,10 @@ def sankaku_site_args_func(options, site_args, site_host, site_name, url, site_s
     tag_path_prefix = site_settings['tag_path_prefix']
     args = [
         *GLDLCLIArgs(
-            o=[*options, 'directory=["{search_tags!S} {category}"]'],
+            o=[
+                *options,
+                'directory=["{search_tags!S} {category}"]'
+            ],
         ),
         *site_args, url
     ]
