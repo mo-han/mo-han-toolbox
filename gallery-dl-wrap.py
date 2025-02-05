@@ -432,13 +432,13 @@ def args2url(args):
             url = f'https://gelbooru.com/index.php?page=post&s=view&id={x}'
         else:
             url = f'https://gelbooru.com/index.php?page=post&s=list&tags={x}'
-    elif first in ('realbooru', 'real'):
+    elif first in ('realbooru', 'real', 'rl'):
         x = pop_tag_from_args(args)
         if x.isdigit():
             url = f'https://realbooru.com/index.php?page=post&s=view&id={x}'
         else:
             url = f'https://realbooru.com/index.php?page=post&s=list&tags={x}'
-    elif first in ('sankaku', 'chan'):
+    elif first in ('sankaku', 'chan', 'ch', 'c'):
         x = pop_tag_from_args(args)
         if x.isdigit() or re.fullmatch(r'[0-9a-z]{32}', x):
             url = f'https://chan.sankakucomplex.com/posts/{x}'
@@ -490,7 +490,7 @@ def args2url(args):
             url = f'https://www.luscious.net/albums/{x}'
             import browser_cookie3
             url = requests.get(url, cookies=browser_cookie3.firefox()).url
-    elif first in ('reddit',):
+    elif first in ('reddit', 'rdt'):
         p = r'\w+'
         v1 = pop_tag_from_args(args)
         if re.fullmatch('u_' + p, v1):
@@ -509,7 +509,7 @@ def args2url(args):
                 args.insert(0, v2)
         else:
             url = f'https://www.reddit.com/{v1}'
-    elif first in ('redgifs',):
+    elif first in ('redgifs', 'rdg'):
         url = f'https://www.redgifs.com/gifs/{pop_tag_from_args(args)}'
     elif first in ('ai', 'aibooru',):
         x = pop_tag_from_args(args)
