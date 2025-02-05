@@ -415,6 +415,13 @@ def pop_tag_from_args(args):
                             unescape_html=False, decode_url=False, unify_white_space=False)
 
 
+def arg_list_split_then_merge_left_in_quote(arg_l: list):
+    i = arg_l.index('---')
+    left = ' '.join(arg_l[:i])
+    arg_l[:i + 1] = [left]
+    # print(arg_l)
+
+
 def args2url(args):
     first = args.pop(0)
     if first in ('pixiv', 'p'):
@@ -439,6 +446,7 @@ def args2url(args):
         else:
             url = f'https://realbooru.com/index.php?page=post&s=list&tags={x}'
     elif first in ('sankaku', 'chan', 'ch', 'c'):
+        arg_list_split_then_merge_left_in_quote(args)
         x = pop_tag_from_args(args)
         if x.isdigit() or re.fullmatch(r'[0-9a-z]{32}', x):
             url = f'https://chan.sankakucomplex.com/posts/{x}'
