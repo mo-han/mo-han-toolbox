@@ -416,7 +416,10 @@ def pop_tag_from_args(args):
 
 
 def arg_list_split_then_merge_left_in_quote(arg_l: list):
-    i = arg_l.index('---')
+    token = '---'
+    if token not in arg_l:
+        return
+    i = arg_l.index(token)
     left = ' '.join(arg_l[:i])
     arg_l[:i + 1] = [left]
     # print(arg_l)
@@ -434,12 +437,14 @@ def args2url(args):
         url = f'https://danbooru.donmai.us/posts?tags={pop_tag_from_args(args)}'
     elif first in ('gelbooru', 'gel'):
         # todo#mark gelbooru
+        arg_list_split_then_merge_left_in_quote(args)
         x = pop_tag_from_args(args)
         if x.isdigit():
             url = f'https://gelbooru.com/index.php?page=post&s=view&id={x}'
         else:
             url = f'https://gelbooru.com/index.php?page=post&s=list&tags={x}'
     elif first in ('realbooru', 'real', 'rl'):
+        arg_list_split_then_merge_left_in_quote(args)
         x = pop_tag_from_args(args)
         if x.isdigit():
             url = f'https://realbooru.com/index.php?page=post&s=view&id={x}'
@@ -457,6 +462,7 @@ def args2url(args):
         else:
             url = f'https://chan.sankakucomplex.com/?tags={x}'
     elif first in ('idol', 'idolcomplex'):
+        arg_list_split_then_merge_left_in_quote(args)
         x = pop_tag_from_args(args)
         if x.isdigit() or re.fullmatch(r'[0-9a-z]{32}', x):
             url = f'https://idol.sankakucomplex.com/posts/{x}'
