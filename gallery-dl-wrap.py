@@ -416,12 +416,13 @@ def pop_tag_from_args(args):
 
 
 def arg_list_split_then_merge_left_in_quote(arg_l: list):
-    token = '---'
+    token = '.'
     if token not in arg_l:
         return
     i = arg_l.index(token)
-    left = ' '.join(arg_l[:i])
-    arg_l[:i + 1] = [left]
+    slice_before_token = arg_l[:i]
+    slice_before_token = ' '.join(slice_before_token)
+    arg_l[:i + 1] = [slice_before_token]
     # print(arg_l)
 
 
