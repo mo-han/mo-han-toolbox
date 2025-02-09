@@ -220,7 +220,7 @@ def per_site(args: T.List[str]):
             'filename="{category} {date!S:.10} {id} {md5}'
             ' {tag_string_character!S:L80/___/}'
             ' $ {tag_string_copyright!S:L40/___/} {tags_studio!S:L40/___/}'
-            ' @ {tag_string_artist!S:L80/___/} '
+            ' @ {tag_string_artist!S:L40/___/} '
             '.{extension}"',
         ]
         site_settings = {
