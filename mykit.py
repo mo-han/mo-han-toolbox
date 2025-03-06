@@ -225,20 +225,24 @@ def tag_filter_files_func():
     tag_rm = set(args.T or [])
     tag_kp = set(args.t or [])
     dry = args.dry_run
-    rm = defaultdict(set)
-    kp = defaultdict(set)
+    remove_d = defaultdict(set)
+    keep_d = defaultdict(set)
+    neither_d = defaultdict(set)
     for f in fstk.files_from_iter(args.src or mylib.ext.ostk.clipboard.list_path(), recursive=False):
         ft = EnclosedFilenameTags(f, preamble=' +')
         ext = ft.extension
         prefix = ft.before_tags
         if any(map(ft.has_tag, tag_kp)) or ext in ext_kp:
-            kp[prefix].add(f)
+            keep_d[prefix].add(f)
         elif any(map(ft.has_tag, tag_rm)) or ext in ext_rm:
-            rm[prefix].add(f)
+            remove_d[prefix].add(f)
+            if dry:
+                print(f'to remove + {f}')
         else:
-            kp[prefix].add(f)
-    for prefix, rm_set in rm.items():
-        kp_set = kp.get(prefix, set())
+            neither_d[prefix].add(f)
+    for prefix, rm_set in remove_d.items():
+        kp_set = keep_d[prefix]
+        nth_set = neither_d[prefix]
         if kp_set:
             print(f'@ {prefix}')
             for f in kp_set:
@@ -250,6 +254,7 @@ def tag_filter_files_func():
                         send2trash(f)
                     except OSError:
                         oldezpykit.stdlib.shutil.__deprecated__.remove(f)
+
 
 
 tag_filter_files = add_sub_parser('tag.filter.files', [], 'filter files by tags and ext')

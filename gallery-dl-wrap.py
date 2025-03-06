@@ -17,8 +17,6 @@ env_var = os.environ
 base_dir = fstk.make_path(env_var['gallery_dl_base_directory']).strip('"')
 pause_on_error = os.environ.get('PAUSEONERROR', 'yes').lower() in {'yes', 'true', '1'}
 
-runtime_data = {}
-
 
 def _console_pause_nt():
     os.system('pause')
@@ -76,6 +74,10 @@ class MultiList(list):
     pass
 
 
+class RuntimeData:
+    ...
+
+
 def per_site(args: T.List[str]):
     url = args2url(args)
     # todo#mark pixiv
@@ -97,11 +99,14 @@ def per_site(args: T.List[str]):
                 if '/users/' in url:
                     gldl_args.extend([*args[1:], *more_args, url])
                 else:
-                    gldl_args.extend([*args[2:], *more_args, f'https://www.pixiv.net/users/{args[1]}'])
+                    url = f'https://www.pixiv.net/users/{args[1]}'
+                    gldl_args.extend([*args[2:], *more_args, url])
             elif arg0 in ('u', 'user'):
-                gldl_args.extend([*args[2:], f'https://www.pixiv.net/users/{args[1]}'])
+                url = f'https://www.pixiv.net/users/{args[1]}'
+                gldl_args.extend([*args[2:], url])
             elif arg0 in ('a', 'art', 'artwork'):
-                gldl_args.extend([*args[2:], f'https://www.pixiv.net/artworks/{args[1]}'])
+                url = f'https://www.pixiv.net/artworks/{args[1]}'
+                gldl_args.extend([*args[2:], url])
             else:
                 gldl_args.extend([*args, url])
         else:
@@ -120,23 +125,34 @@ def per_site(args: T.List[str]):
                                      'directory=["{author[nick]} {category} @{author[name]}"]']),
                      *args, url]
     elif 'danbooru.donmai.us' in url:
-        gldl_args = [*GLDLCLIArgs(user_agent='auto',
-                                  o=['cookies-update=true', 'videos=true', 'tags=true',
-                                     'directory=["{search_tags!S} {category}"]',
-                                     'filename="{category} {created_at:.10} {id} {md5}'
-                                     ' {tag_string_character!S:L80/___/}'
-                                     ' $ {tag_string_copyright!S:L40/___/}'
-                                     ' @ {tag_string_artist!S:L80/___/}'
-                                     ' .{extension}"', ]),
-                     *args, url]
+        # todo#mark danbooru
+        site_name = 'danbooru'
+        site_host = 'danbooru.donmai.us'
+        options = [
+            'filename="{category} {created_at:.10} {id} {md5}'
+            ' {tag_string_character!S:X64/.../}'
+            ' $ {tag_string_copyright!S:X32/.../}'
+            ' @ {tag_string_artist!S:X32/.../}'
+            ' .{extension}"',
+        ]
+        site_settings = {
+            'sort_tag_list': [' order:rank', ' order:curated', ' order:score', ' order:favcount'],
+            'tag_path_prefix': '/posts?tags=',
+            'post_path_prefix': '/posts/',
+        }
+
+        gldl_args = pq_site_arg_func(options, args, site_host, site_name, url, site_settings)
+
     elif 'gelbooru.com' in url:
         # todo#mark gelbooru
+        # sort 目前能进行质量排序的 只有 score
+        # 会从 danbooru 抓取 但后续的tag编辑 不会更新抓取
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
             'filename="{category} {date!S:.10} {id} {md5}'
-            ' {tags_character!S:L80/___/}'
-            ' $ {tags_copyright!S:L40/___/}'
-            ' @ {tags_artist!S:L80/___/}'
+            ' {tags_character!S:X64/.../}'
+            ' $ {tags_copyright!S:X32/.../}'
+            ' @ {tags_artist!S:X32/.../}'
             ' .{extension}"',
         ]
         gldl_args = [
@@ -155,41 +171,33 @@ def per_site(args: T.List[str]):
                 gldl_args = MultiList([
                     [*gldl_args, *args, '--range', pq_value, url + ' sort:score'],
                 ])
+
     elif 'aibooru.online' in url:
+        # todo#aibooru
+        site_name = 'aibooru'
+        site_host = 'aibooru.online'
         options = [
-            'cookies-update=true', 'videos=true', 'tags=true',
+            'videos=true', 'tags=true',
             'filename="{category} {date!S:.10} {id} {md5}'
-            ' {tag_string_character!S:L80/___/} '
-            ' $ {tag_string_copyright!S:L40/___/} '
-            ' @ {tag_string_artist!S:L80/___/} {tag_string_model!S}'
+            ' {tag_string_character!S:X64/.../}'
+            ' $ {tag_string_copyright!S:X32/.../}'
+            ' @ {tag_string_artist!S:X32/.../} {tag_string_model!S:X32/.../}'
             ' .{extension}"',
         ]
-        gldl_args = [
-            *GLDLCLIArgs(o=[*options, 'directory=["{search_tags!S} {category}"]']),
-            *args, url
-        ]
-        if args:
-            pq_arg, *args = args
-            if pq_arg.startswith('pq'):
-                pq_value = pq_arg[2:]
-                if '-' not in pq_value:
-                    pq_value = f'1-{pq_value}'
-                tags_s = url.split('?tags=', maxsplit=1)[-1].strip()
-                print(url, tags_s)
-                gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} pq"]'])
-                gldl_args = MultiList([
-                    [*gldl_args, *args, '--range', pq_value, url + ' order:rank'],
-                    [*gldl_args, *args, '--range', pq_value, url + ' order:views'],
-                    [*gldl_args, *args, '--range', pq_value, url + ' order:score'],
-                    [*gldl_args, *args, '--range', pq_value, url + ' order:favcount'],
-                ])
+        site_settings = {
+            'sort_tag_list': [' order:rank', ' order:rank2', ' order:views', ' order:score', ' order:favcount'],
+            'tag_path_prefix': '/posts?tags=',
+            'post_path_prefix': '/posts/',
+        }
+
+        gldl_args = pq_site_arg_func(options, args, site_host, site_name, url, site_settings)
 
     elif 'rule34.xxx' in url:
         gldl_args = [*GLDLCLIArgs(
             o=['cookies-update=true', 'videos=true', 'tags=true',
                'directory=["{search_tags!S} {category}"]',
                'filename="{category} {date!S:.10} {id} {md5} '
-               '{tags_character!S:L80/___/} @{tags_artist!S:L80/___/} .{extension}"', ]
+               '{tags_character!S:X80/.../} @{tags_artist!S:X80/.../} .{extension}"', ]
         ),
                      *args, url]
 
@@ -199,17 +207,17 @@ def per_site(args: T.List[str]):
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
             'filename="{category} {date!S:.10} {id} {md5}'
-            ' $ {tags_copyright!S:L64/___/}'
-            ' @ {tags_model!S:L64/___/}'
+            ' $ {tags_copyright!S:X64/.../}'
+            ' @ {tags_model!S:X64/.../}'
             ' .{extension}"',
         ]
         site_settings = {
-            'sort_tag_list': ['sort:score', ''],
+            'sort_tag_list': [' sort:score', ''],
             'tag_path_prefix': '/index.php?page=post&s=list&tags=',
             'post_path_prefix': '/index.php?page=post&s=view&id=',
         }
 
-        gldl_args = sankaku_site_args_func(options, args, site_host, site_name, url, site_settings)
+        gldl_args = pq_site_arg_func(options, args, site_host, site_name, url, site_settings)
 
     elif 'chan.sankakucomplex.com' in url:
         # todo#mark sankaku
@@ -218,18 +226,18 @@ def per_site(args: T.List[str]):
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
             'filename="{category} {date!S:.10} {id} {md5}'
-            ' {tag_string_character!S:L80/___/}'
-            ' $ {tag_string_copyright!S:L40/___/} {tags_studio!S:L40/___/}'
-            ' @ {tag_string_artist!S:L40/___/} '
-            '.{extension}"',
+            ' {tag_string_character!S:X40/.../}'
+            ' $ {tag_string_copyright!S:X32/.../} {tags_studio!S:X32/.../}'
+            ' @ {tag_string_artist!S:X32/.../}'
+            ' .{extension}"',
         ]
         site_settings = {
-            'sort_tag_list': ['order:popular', 'order:quality'],
+            'sort_tag_list': [' order:popular', ' order:quality'],
             'tag_path_prefix': '/?tags=',
             'post_path_prefix': '/posts/',
         }
 
-        gldl_args = sankaku_site_args_func(options, args, site_host, site_name, url, site_settings)
+        gldl_args = pq_site_arg_func(options, args, site_host, site_name, url, site_settings)
 
     elif 'idol.sankakucomplex.com' in url:
         site_name = 'idolcomplex'
@@ -237,18 +245,18 @@ def per_site(args: T.List[str]):
         options = [
             'cookies-update=true', 'videos=true', 'tags=true',
             'filename="{category} {created_at!S:.10} {id} {md5}'
-            ' {tags_photo_set!S:L80/___/}'
-            ' $ {tags_copyright!S:L40/___/} {tags_studio!S:L40/___/}'
-            ' @ {tags_idol!S:L80/___/}'
+            ' {tags_photo_set!S:X32/.../}'
+            ' $ {tags_copyright!S:X32/.../} {tags_studio!S:X32/.../}'
+            ' @ {tags_idol!S:X40/.../}'
             ' .{extension}"',
         ]
         site_settings = {
-            'sort_tag_list': ['order:popular', 'order:quality'],
+            'sort_tag_list': [' order:popular', ' order:quality'],
             'tag_path_prefix': '/?tags=',
             'post_path_prefix': '/posts/',
         }
 
-        gldl_args = sankaku_site_args_func(options, args, site_host, site_name, url, site_settings)
+        gldl_args = pq_site_arg_func(options, args, site_host, site_name, url, site_settings)
 
     elif 'reddit.com' in url:
         gldl_args = [*GLDLCLIArgs(), *args, url]
@@ -299,7 +307,7 @@ def per_site(args: T.List[str]):
         gldl_args = [*GLDLCLIArgs(o=['cookies-update=true', 'videos=true', 'tags=true',
                                      'directory=["{user} {category}"]',
                                      'filename="{category} {date!S:.10} {index} '
-                                     '{title} @{artist!S:L80/___/} .{extension}"', ]),
+                                     '{title} @{artist!S:X80/.../} .{extension}"', ]),
                      *args, url]
     elif 'kemono.' in url or 'coomer.' in url:
         # todo#mark kemono
@@ -330,13 +338,13 @@ def per_site(args: T.List[str]):
     else:
         gldl_args = [*GLDLCLIArgs(), *args, url]
 
-    return gldl_args
+    return url, gldl_args
 
 
-def sankaku_site_args_func(options, site_args, site_host, site_name, url, site_settings):
+def pq_site_arg_func(options, site_args, site_host, site_name, url, site_settings):
     post_path_prefix = site_settings['post_path_prefix']
     tag_path_prefix = site_settings['tag_path_prefix']
-    args = [
+    gldl_args = [
         *GLDLCLIArgs(
             o=[
                 *options,
@@ -357,13 +365,7 @@ def sankaku_site_args_func(options, site_args, site_host, site_name, url, site_s
                     o=[*options, f'directory=["{tags_s} {{category}} pq"]'],
                 )
                 head_args += [*site_args, '--range', pq_value, ]
-                args = MultiList([[*head_args, url + f' {s}'] for s in site_settings['sort_tag_list']])
-                # if 'realbooru' in site_host:
-                #     args = MultiList([[*head_args, url + f' {s}'] for s in site_settings['sort_tag_list']])
-                #     args += MultiList([[*head_args, url + ' -video -gif -animated -webm -mp4' + f' {s}'] for s in
-                #                        site_settings['sort_tag_list']])
-                # else:
-                #     args = MultiList([[*head_args, url + f' {s}'] for s in site_settings['sort_tag_list']])
+                gldl_args = MultiList([[*head_args, url + s] for s in site_settings['sort_tag_list']])
             elif os.path.isdir(pq_value):
                 override_base_dir, target_dir = os.path.split(pq_value.strip(r'\/"').strip(r'\/"'))
                 post_id_l = []
@@ -376,7 +378,7 @@ def sankaku_site_args_func(options, site_args, site_host, site_name, url, site_s
                         post_id_l.append(m.group(1))
                 url_l = [f'https://{site_host}{post_path_prefix}{post_id}' for post_id in post_id_l]
                 # url_l = [f'https://{site_host}/posts?tags=md5:{post_id}' for post_id in post_id_l]
-                args = [
+                gldl_args = [
                     *GLDLCLIArgs(
                         o=[
                             *options,
@@ -404,10 +406,20 @@ def sankaku_site_args_func(options, site_args, site_host, site_name, url, site_s
                 if target_dir[-3:] == ' pq':
                     pq_num = len([i for i in os.listdir(the_path) if i[-len(STRING_NOT_WANT):] != STRING_NOT_WANT]) // 4
                     head_args += ['--range', f'1-{pq_num}', ]
-                    args = MultiList([[*head_args, url + f' {s}'] for s in site_settings['sort_tag_list']])
+                    gldl_args = MultiList([[*head_args, url + s] for s in site_settings['sort_tag_list']])
                 else:
-                    args = head_args + [url, ]
-    return args
+                    gldl_args = head_args + [url, ]
+                args_txt_filepath = os.path.join(the_path, 'args.txt')
+                if os.path.isfile(args_txt_filepath):
+                    with open(args_txt_filepath, 'r') as f:
+                        args_list = f.read().strip().split('\n')
+                    args_list = [i.strip() for i in args_list]
+                    if isinstance(gldl_args, MultiList):
+                        for _l in gldl_args:
+                            _l.extend(args_list)
+                    else:
+                        gldl_args.extend(args_list)
+    return gldl_args
 
 
 def pop_tag_from_args(args):
@@ -430,12 +442,19 @@ def args2url(args):
     first = args.pop(0)
     if first in ('pixiv', 'p'):
         url = 'https://www.pixiv.net'
+        RuntimeData.flag_need_more_specific_url = True
     elif first == 'fanbox':
         url = f'https://{args.pop(0)}.fanbox.cc'
     elif first == 'twitter':
         url = f'https://twitter.com/{args.pop(0).lstrip("@")}/media'
-    elif first == 'danbooru':
-        url = f'https://danbooru.donmai.us/posts?tags={pop_tag_from_args(args)}'
+    elif first in ('danbooru', 'dan', ):
+        # todo#mark danbooru
+        arg_list_split_then_merge_left_in_quote(args)
+        x = pop_tag_from_args(args)
+        if x.isdigit():
+            url = f'https://danbooru.donmai.us/posts/{x}'
+        else:
+            url = f'https://danbooru.donmai.us/posts?tags={x}'
     elif first in ('gelbooru', 'gel'):
         # todo#mark gelbooru
         arg_list_split_then_merge_left_in_quote(args)
@@ -445,13 +464,14 @@ def args2url(args):
         else:
             url = f'https://gelbooru.com/index.php?page=post&s=list&tags={x}'
     elif first in ('realbooru', 'real', 'rl'):
+        # todo#mark realbooru
         arg_list_split_then_merge_left_in_quote(args)
         x = pop_tag_from_args(args)
         if x.isdigit():
             url = f'https://realbooru.com/index.php?page=post&s=view&id={x}'
         else:
             url = f'https://realbooru.com/index.php?page=post&s=list&tags={x}'
-    elif first in ('sankaku', 'chan', 'ch', 'c'):
+    elif first in ('sankaku', 'chan', 'skk', 'c'):
         arg_list_split_then_merge_left_in_quote(args)
         x = pop_tag_from_args(args)
         if x.isdigit() or re.fullmatch(r'[0-9a-z]{32}', x):
@@ -462,7 +482,7 @@ def args2url(args):
             url = 'https://chan.sankakucomplex.com'
         else:
             url = f'https://chan.sankakucomplex.com/?tags={x}'
-    elif first in ('idol', 'idolcomplex'):
+    elif first in ('idol', 'idolcomplex', 'idl', 'i'):
         arg_list_split_then_merge_left_in_quote(args)
         x = pop_tag_from_args(args)
         if x.isdigit() or re.fullmatch(r'[0-9a-z]{32}', x):
@@ -527,6 +547,8 @@ def args2url(args):
     elif first in ('redgifs', 'rdg'):
         url = f'https://www.redgifs.com/gifs/{pop_tag_from_args(args)}'
     elif first in ('ai', 'aibooru',):
+        # todo#aibooru
+        arg_list_split_then_merge_left_in_quote(args)
         x = pop_tag_from_args(args)
         if x.isdigit():
             url = f'https://aibooru.online/posts/{x}'
@@ -570,9 +592,9 @@ def main():
     else:
         if args[0] == 'o':
             args.pop(0)
-            url = args2url(args)
+            url, _ = per_site(args)
             return webbrowser.open_new_tab(url)
-        site_args = per_site(args)
+        url, site_args = per_site(args)
         cmd_l = []
         if isinstance(site_args, MultiList):
             for i in site_args:
