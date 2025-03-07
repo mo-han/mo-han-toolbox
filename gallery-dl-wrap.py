@@ -173,7 +173,7 @@ def per_site(args: T.List[str]):
                 ])
 
     elif 'aibooru.online' in url:
-        # todo#aibooru
+        # todo#mark aibooru
         site_name = 'aibooru'
         site_host = 'aibooru.online'
         options = [
@@ -547,7 +547,7 @@ def args2url(args):
     elif first in ('redgifs', 'rdg'):
         url = f'https://www.redgifs.com/gifs/{pop_tag_from_args(args)}'
     elif first in ('ai', 'aibooru',):
-        # todo#aibooru
+        # todo#mark aibooru
         arg_list_split_then_merge_left_in_quote(args)
         x = pop_tag_from_args(args)
         if x.isdigit():
