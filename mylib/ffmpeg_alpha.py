@@ -593,9 +593,10 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
         ffmpeg_output_args.add_kwarg('-temporal-aq', 1)
         if crf is not None:
             ffmpeg_output_args.add(b__v=0)
-
     else:
         ffmpeg_output_args.add(vcodec=codecs_d[codec], crf=crf)
+    if codec == 'h':
+        ffmpeg_output_args.add_kwarg('-x265-params', 'aq-mode=3')
     ffmpeg_output_args.add(ffmpeg_opts)
 
     if keywords & {'copy', 'vcopy'}:
