@@ -498,7 +498,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
             ffmpeg_output_args.add(vn=True)
         elif kw[0] == '.' and '.' not in kw[1:]:
             output_ext = kw
-        elif kw[:3] == 'crf':
+        elif kw[:3] == 'crf' and kw[:4] != 'crf+':
             crf = kw[3:]
         elif kw[0] + kw[-1] == 'ak' and kw[1:-1].isdecimal():
             ffmpeg_output_args.add(b__a=kw[1:])
@@ -576,6 +576,10 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     elif 'worstest' in keywords:
         codec = 'h'
         crf = crf or 37
+
+    for kw in keywords:
+        if kw[:4] == 'crf+':
+            crf += type(crf)(kw[4:])
 
     codec_tag = CODEC_TAGS_DICT[f'{codec}']
     if 'qsv' in keywords and codec in ('a', 'h'):
