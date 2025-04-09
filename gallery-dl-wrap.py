@@ -311,6 +311,15 @@ def per_site(args: T.List[str]):
                      *args, url]
     elif 'kemono.' in url or 'coomer.' in url:
         # todo#mark kemono
+        _arg_in_list = []
+        _filter_sequence_in_list = []
+        for a in args:
+            word = 'filter+'
+            if a.startswith(word):
+                _filter_sequence_in_list.append(a.removeprefix(word))
+                continue
+            _arg_in_list.append(a)
+        args = _arg_in_list
         gldl_args = [
             *GLDLCLIArgs(
                 o=[
@@ -319,7 +328,7 @@ def per_site(args: T.List[str]):
                     'filename="{category} {service} {date!S:.10} {id} {title:.60} {count}p '
                     '@{username} p{num} {filename:.40}.{extension}"',
                 ],
-                filter="extension not in ('psd', 'clip')",
+                filter=' and '.join(["extension not in ('psd', 'clip')", *_filter_sequence_in_list]),
             ),
             *args, url
         ]
