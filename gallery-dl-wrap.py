@@ -483,9 +483,9 @@ def args2url(args):
     elif first in ('sankaku', 'chan', 'skk', 'c'):
         arg_list_split_then_merge_left_in_quote(args)
         x = pop_tag_from_args(args)
-        if x.isdigit() or re.fullmatch(r'[0-9a-z]{32}', x):
-            url = f'https://chan.sankakucomplex.com/posts/{x}'
-        elif x[:3] == 'id=':
+        # if x.isdigit() or re.fullmatch(r'[0-9a-z]{32}', x):
+        #     url = f'https://chan.sankakucomplex.com/posts/{x}'
+        if x[:3] == 'id=':
             url = f'https://chan.sankakucomplex.com/posts/{x[3:]}'
         elif not x:
             url = 'https://chan.sankakucomplex.com'
