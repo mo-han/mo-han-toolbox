@@ -475,8 +475,10 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     if '10bit' in keywords:
         ffmpeg_output_args = FFmpegArgsList(pix_fmt='yuv420p10le')
         bits_tag_l = ['10bit']
+        # 如果有`-hwaccel_output_format cuda`的参数存在的话，可能需要指定其他的、能够被GPU内部cuda所支持的像素格式，`p010le`也许符合要求
     else:
-        ffmpeg_output_args = FFmpegArgsList(pix_fmt='yuv420p')
+        # ffmpeg_output_args = FFmpegArgsList(pix_fmt='yuv420p')
+        ffmpeg_output_args = FFmpegArgsList()
         bits_tag_l = []
     keywords = set(keywords) or set()
     res_limit = None
@@ -489,6 +491,9 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     word = 'nvdec'
     if word in keywords:
         ffmpeg_input_args.add(hwaccel=word)
+    word = 'cuda'
+    if word in keywords:
+        ffmpeg_input_args.add(hwaccel_output_format=word)
 
     output_ext = None
     for kw in keywords:
@@ -546,6 +551,8 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
             ff.logger.info(f'# no video stream: {filepath}')
             return
         new_vf = get_vf_res_scale_down(w, h, res_limit, vf=vf_str)
+        if 'cuda' in keywords:
+            new_vf = new_vf.replace('scale=', 'scale_cuda=')
         ffmpeg_output_args.add(filter__V__0=new_vf)
         if new_vf != vf_str:
             tags.append(res_limit)
@@ -650,6 +657,10 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
         new_ext = '.aac'
     if 'webm' in keywords:
         new_ext = '.webm'
+    if 'mka' in keywords:
+        new_ext = '.mka'
+        if 'h264' in tags:
+            tags.remove('h264')
     if new_ext:
         if 'append_ext' in keywords:
             output_ft.extension += new_ext
