@@ -136,48 +136,37 @@ def per_site(args: T.List[str]):
             ' .{extension}"',
         ]
         site_settings = {
-            'sort_tag_list': [' order:rank', ' order:curated', ' order:score', ' order:favcount'],
+            'sort_tag_list': [' order:rank', ' order:curated', ' order:score', ' order:favcount', ' order:upvotes'],
             'tag_path_prefix': '/posts?tags=',
             'post_path_prefix': '/posts/',
         }
-
         gldl_args = pq_site_arg_func(options, args, site_host, site_name, url, site_settings)
 
     elif 'gelbooru.com' in url:
         # todo#mark gelbooru
         # sort 目前能进行质量排序的 只有 score
         # 会从 danbooru 抓取 但后续的tag编辑 不会更新抓取
+        site_name = 'gelbooru'
+        site_host = 'gelbooru.com'
         options = [
-            'cookies-update=true', 'videos=true', 'tags=true',
             'filename="{category} {date!S:.10} {id} {md5}'
             ' {tags_character!S:X64/.../}'
             ' $ {tags_copyright!S:X32/.../}'
             ' @ {tags_artist!S:X32/.../}'
             ' .{extension}"',
         ]
-        gldl_args = [
-            *GLDLCLIArgs(o=[*options, 'directory=["{search_tags!S} {category}"]']),
-            *args, url
-        ]
-        if args:
-            pq_arg, *args = args
-            if pq_arg.startswith('pq'):
-                pq_value = pq_arg[2:]
-                if '-' not in pq_value:
-                    pq_value = f'1-{pq_value}'
-                tags_s = url.split('&tags=', maxsplit=1)[-1].strip()
-                # gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} {pq_arg}"]'])
-                gldl_args = GLDLCLIArgs(o=[*options, f'directory=["{tags_s} {{category}} pq"]'])
-                gldl_args = MultiList([
-                    [*gldl_args, *args, '--range', pq_value, url + ' sort:score'],
-                ])
+        site_settings = {
+            'sort_tag_list': [' sort:score', ''],
+            'tag_path_prefix': '/index.php?page=post&s=list&tags=',
+            'post_path_prefix': '/index.php?page=post&s=view&id=',
+        }
+        gldl_args = pq_site_arg_func(options, args, site_host, site_name, url, site_settings)
 
     elif 'aibooru.online' in url:
         # todo#mark aibooru
         site_name = 'aibooru'
         site_host = 'aibooru.online'
         options = [
-            'videos=true', 'tags=true',
             'filename="{category} {date!S:.10} {id} {md5}'
             ' {tag_string_character!S:X64/.../}'
             ' $ {tag_string_copyright!S:X32/.../}'
@@ -205,7 +194,6 @@ def per_site(args: T.List[str]):
         site_name = 'realbooru'
         site_host = 'realbooru.com'
         options = [
-            'cookies-update=true', 'videos=true', 'tags=true',
             'filename="{category} {date!S:.10} {id} {md5}'
             ' $ {tags_copyright!S:X64/.../}'
             ' @ {tags_model!S:X64/.../}'
@@ -224,7 +212,6 @@ def per_site(args: T.List[str]):
         site_name = 'sankaku'
         site_host = 'chan.sankakucomplex.com'
         options = [
-            'cookies-update=true', 'videos=true', 'tags=true',
             'filename="{category} {date!S:.10} {id} {md5}'
             ' {tag_string_character!S:X40/.../}'
             ' $ {tag_string_copyright!S:X32/.../} {tags_studio!S:X32/.../}'
@@ -243,7 +230,6 @@ def per_site(args: T.List[str]):
         site_name = 'idolcomplex'
         site_host = 'idol.sankakucomplex.com'
         options = [
-            'cookies-update=true', 'videos=true', 'tags=true',
             'filename="{category} {created_at!S:.10} {id} {md5}'
             ' {tags_photo_set!S:X32/.../}'
             ' $ {tags_copyright!S:X32/.../} {tags_studio!S:X32/.../}'
@@ -328,7 +314,10 @@ def per_site(args: T.List[str]):
                     'filename="{category} {service} {date!S:.10} {id} {title:.60} {count}p '
                     '@{username} p{num} {filename:.40}.{extension}"',
                 ],
-                filter=' and '.join(["extension not in ('psd', 'clip')", *_filter_sequence_in_list]),
+                filter=' and '.join([
+                    "extension not in ('psd', 'clip')",
+                    *_filter_sequence_in_list
+                ]),
             ),
             *args, url
         ]
@@ -375,10 +364,11 @@ def pq_site_arg_func(options, site_args, site_host, site_name, url, site_setting
                 )
                 head_args += [*site_args, '--range', pq_value, ]
                 gldl_args = MultiList([[*head_args, url + s] for s in site_settings['sort_tag_list']])
-            elif os.path.isdir(pq_value):
-                override_base_dir, target_dir = os.path.split(pq_value.strip(r'\/"').strip(r'\/"'))
+            elif pq_value[0] == '=' and os.path.isdir(pq_value[1:]):
+                the_path = pq_value[1:].strip(r'\/"').strip(r'\/"')
+                override_base_dir, target_dir = os.path.split(the_path)
                 post_id_l = []
-                for i in os.listdir(pq_value):
+                for i in os.listdir(the_path):
                     if 'sankaku' in site_host:
                         m = re.search(r' ([0-9a-f]{32}) ', i)
                     else:
@@ -456,7 +446,7 @@ def args2url(args):
         url = f'https://{args.pop(0)}.fanbox.cc'
     elif first == 'twitter':
         url = f'https://twitter.com/{args.pop(0).lstrip("@")}/media'
-    elif first in ('danbooru', 'dan', ):
+    elif first in ('danbooru', 'dan',):
         # todo#mark danbooru
         arg_list_split_then_merge_left_in_quote(args)
         x = pop_tag_from_args(args)
@@ -510,7 +500,7 @@ def args2url(args):
         if os.path.isfile(x):
             url = 'kemono.'
             args[:0] = ['-i', x]
-        elif x in ('patreon', 'fanbox', 'fantia'):
+        elif x in ('patreon', 'fanbox', 'fantia', 'gumroad'):
             y = pop_tag_from_args(args)
             url = f'https://kemono.su/{x}/user/{y}'
         else:
