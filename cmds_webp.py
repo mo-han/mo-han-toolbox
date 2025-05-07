@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import subprocess
 import traceback
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
@@ -33,78 +34,89 @@ class Counter:
 
 
 def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=None, force_convert_webp=False):
-    if print_path_relative_to:
-        image_fp_rel = fstk.make_path(image_fp, relative_to=print_path_relative_to)
-        if image_fp_rel == '.':
-            image_fp_rel = image_fp
-    else:
-        image_fp_rel = image_fp
-    webp_fp = image_fp + '.webp'
-    mime_type, mime_sub = (filetype.guess_mime(image_fp) or '/').split('/')
-    if mime_type != 'image':
-        print(f'# skip non-image {image_fp_rel}')
-        return
-    if mime_sub == 'gif':
-        print(f'# skip {mime_sub} image {image_fp_rel}')
-        return
-    if mime_sub == 'webp' and not force_convert_webp:
-        print(f'# skip {mime_sub} image {image_fp_rel}')
-        return
-    if counter:
-        counter.n += 1
-    img: PIL.Image.Image = PIL.Image.open(image_fp)
-    w, h = img.size
-    pixels = w * h
-    if pixels > PIXELS_BASELINE * 4:
-        max_size = 1024 * 1024
-        min_scale = 0.7
-    elif pixels > PIXELS_BASELINE * 3:
-        max_size = 1024 * 768
-        min_scale = 0.8
-    elif pixels > PIXELS_BASELINE * 2:
-        max_size = 1024 * 512
-        min_scale = 0.9
-    elif pixels > PIXELS_BASELINE:
-        max_size = 1024 * 384
-        min_scale = 1
-    else:
-        max_size = 1024 * 256
-        min_scale = 1
-    print(f'+ ({w}x{h}, q={MAX_Q}..{MIN_Q}, min_scale={min_scale}, '
-          f'max_size={max_size}, max_compress={MAX_COMPRESS}) {image_fp_rel}')
-    try:
-        with open(image_fp, 'rb') as fd:
-            image_file_bytes = fd.read()
-        cvt_gen = cwebp.cwebp_adaptive_gen___alpha(image_file_bytes, max_size=max_size, max_compress=MAX_COMPRESS,
-                                                   max_q=MAX_Q, min_q=MIN_Q, min_scale=min_scale)
-        for result in cvt_gen:
-            d_dst = result['dst']
-            print(f"* ({d_dst['width']}x{d_dst['height']}, q={d_dst.get('q', '?')}, scale={d_dst.get('scale', 1)}, "
-                  f"psnr={d_dst['psnr']['all']}, size={d_dst['size']}, compress={d_dst['compress']}) <- {image_fp_rel}")
-        with open(webp_fp, 'wb') as f:
-            f.write(result['out'])
-    except cwebp.SkipOverException as e:
-        print(f'# ({e.msg}) {image_fp_rel}')
-    except KeyError as e:
-        print(traceback.format_exc())
-        print(f'! {image_fp_rel}')
-        if e.args[0] == 'dst':
-            pprint(result)
-        os_exit_force(1)
-    except cwebp.CWebpEncodeError as e:
-        if e.reason == e.E.BAD_DIMENSION:
-            print(f'! ({e.reason}) <- {image_fp_rel}')
+    def _convert_adaptive():
+        if print_path_relative_to:
+            image_fp_rel = fstk.make_path(image_fp, relative_to=print_path_relative_to)
+            if image_fp_rel == '.':
+                image_fp_rel = image_fp
         else:
+            image_fp_rel = image_fp
+        webp_fp = image_fp + '.webp'
+        mime_type, mime_sub = (filetype.guess_mime(image_fp) or '/').split('/')
+        if mime_type != 'image':
+            print(f'# skip non-image {image_fp_rel}')
+            return
+        if mime_sub == 'gif':
+            print(f'# skip {mime_sub} image {image_fp_rel}')
+            return
+        if mime_sub == 'webp' and not force_convert_webp:
+            print(f'# skip {mime_sub} image {image_fp_rel}')
+            return
+        if counter:
+            counter.n += 1
+        img: PIL.Image.Image = PIL.Image.open(image_fp)
+        w, h = img.size
+        pixels = w * h
+        if pixels > PIXELS_BASELINE * 4:
+            max_size = 1024 * 1024
+            min_scale = 0.7
+        elif pixels > PIXELS_BASELINE * 3:
+            max_size = 1024 * 768
+            min_scale = 0.8
+        elif pixels > PIXELS_BASELINE * 2:
+            max_size = 1024 * 512
+            min_scale = 0.9
+        elif pixels > PIXELS_BASELINE:
+            max_size = 1024 * 384
+            min_scale = 1
+        else:
+            max_size = 1024 * 256
+            min_scale = 1
+        print(f'+ ({w}x{h}, q={MAX_Q}..{MIN_Q}, min_scale={min_scale}, '
+              f'max_size={max_size}, max_compress={MAX_COMPRESS}) {image_fp_rel}')
+        try:
+            with open(image_fp, 'rb') as fd:
+                image_file_bytes = fd.read()
+            cvt_gen = cwebp.cwebp_adaptive_gen___alpha(image_file_bytes, max_size=max_size, max_compress=MAX_COMPRESS,
+                                                       max_q=MAX_Q, min_q=MIN_Q, min_scale=min_scale)
+            for result in cvt_gen:
+                d_dst = result['dst']
+                print(f"* ({d_dst['width']}x{d_dst['height']}, q={d_dst.get('q', '?')}, scale={d_dst.get('scale', 1)}, "
+                      f"psnr={d_dst['psnr']['all']}, size={d_dst['size']}, compress={d_dst['compress']}) <- {image_fp_rel}")
+            with open(webp_fp, 'wb') as f:
+                f.write(result['out'])
+        except cwebp.SkipOverException as e:
+            print(f'# ({e.msg}) {image_fp_rel}')
+        except KeyError as e:
             print(traceback.format_exc())
             print(f'! {image_fp_rel}')
+            if e.args[0] == 'dst':
+                pprint(result)
             os_exit_force(1)
-    except cwebp.CWebpInputReadError as e:
-        print(traceback.format_exc())
-        print(f'! {image_fp_rel}')
-    except Exception:
-        print(traceback.format_exc())
-        print(f'! {image_fp_rel}')
-        os_exit_force(1)
+        except cwebp.CWebpEncodeError as e:
+            if e.reason == e.E.BAD_DIMENSION:
+                print(f'! ({e.reason}) <- {image_fp_rel}')
+            else:
+                print(traceback.format_exc())
+                print(f'! {image_fp_rel}')
+                os_exit_force(1)
+        except cwebp.CWebpInputReadError as e:
+            print(traceback.format_exc())
+            print(f'! {image_fp_rel}')
+        # except Exception:
+        #     print(traceback.format_exc())
+        #     print(f'! {image_fp_rel}')
+        #     os_exit_force(1)
+
+    try:
+        return _convert_adaptive()
+    except cwebp.CWebpGenericError as e:
+        if 'BAD_DIMENSION: Bad picture dimension. Maximum width and height allowed is' in str(e):
+            print(f'* magick mogrify {image_fp}')
+            subprocess.check_call(['magick', 'mogrify', '-resize', '16383x16383>', image_fp])
+            return _convert_adaptive()
+        else:
+            raise e
 
 
 @apr.sub(apr.rpl_dot, aliases=['cvt.in.zip', 'cvt.zip'])
@@ -141,36 +153,36 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
                 lgr.info(f'# skip {fp}')
                 continue
 
-            possible_encodings = []
-            for i in zf.infolist():
-                if i.flag_bits & 0x800:  # UTF-8 filename flag
-                    # possible_encodings.append('utf8')
-                    continue
-                filename_cp437 = i.filename.encode('cp437')
-                guess_encoding = chardet.detect(filename_cp437)['encoding'] or fallback_filename_encoding
-                if guess_encoding.startswith('ISO-8859') or guess_encoding in ('IBM866',):
-                    guess_encoding = fallback_filename_encoding
-                if guess_encoding == 'ascii':
-                    continue
-                possible_encodings.append(guess_encoding)
-            the_most_encodings = find_most_frequent_in_iterable(possible_encodings)
-            # print(possible_encodings)
-            # print(the_most_encodings)
-            the_encoding = 'utf8'
-            if len(the_most_encodings) == 1:
-                the_encoding = the_most_encodings[0]
-            elif 'SHIFT_JIS' in the_most_encodings:
-                the_encoding = 'SHIFT_JIS'
-            if the_encoding:
-                encoding = the_encoding
-                for i in zf.infolist():
-                    if i.flag_bits & 0x800:  # UTF-8 filename flag
-                        continue
-                    filename_cp437 = i.filename.encode('cp437')
-                    i.filename = filename_cp437.decode(encoding)
-                    zf.NameToInfo[i.filename] = i
-            else:
-                raise NotImplementedError(the_most_encodings)
+            # possible_encodings = []
+            # for i in zf.infolist():
+            #     if i.flag_bits & 0x800:  # UTF-8 filename flag
+            #         # possible_encodings.append('utf8')
+            #         continue
+            #     filename_cp437 = i.filename.encode('cp437')
+            #     guess_encoding = chardet.detect(filename_cp437)['encoding'] or fallback_filename_encoding
+            #     if guess_encoding.startswith('ISO-8859') or guess_encoding in ('IBM866',):
+            #         guess_encoding = fallback_filename_encoding
+            #     if guess_encoding == 'ascii':
+            #         continue
+            #     possible_encodings.append(guess_encoding)
+            # the_most_encodings = find_most_frequent_in_iterable(possible_encodings)
+            # # print(possible_encodings)
+            # # print(the_most_encodings)
+            # the_encoding = 'utf8'
+            # if len(the_most_encodings) == 1:
+            #     the_encoding = the_most_encodings[0]
+            # elif 'SHIFT_JIS' in the_most_encodings:
+            #     the_encoding = 'SHIFT_JIS'
+            # if the_encoding:
+            #     encoding = the_encoding
+            #     for i in zf.infolist():
+            #         if i.flag_bits & 0x800:  # UTF-8 filename flag
+            #             continue
+            #         filename_cp437 = i.filename.encode('cp437')
+            #         i.filename = filename_cp437.decode(encoding)
+            #         zf.NameToInfo[i.filename] = i
+            # else:
+            #     raise NotImplementedError(the_most_encodings)
 
             for i in zf.infolist():
                 if i.is_dir():
@@ -282,8 +294,8 @@ def auto_cvt(src, recursive, clean, cbz, workers=None, trash_bin=False, verbose=
                         _has_non_image_file = False
                         for f in files:
                             if f.lower().split('.')[-1] in (
-                            'mkv', 'mp4', 'gif', 'webm', 'm4v', 'mov', 'zip', 'cbz', 'rar', '7z', 'not_image',
-                            'non_image'):
+                                    'mkv', 'mp4', 'gif', 'webm', 'm4v', 'mov', 'zip', 'cbz', 'rar', '7z', 'not_image',
+                                    'non_image'):
                                 _has_non_image_file = True
                                 break
                         if _has_non_image_file:
