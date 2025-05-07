@@ -9,4 +9,4 @@ payload:
   - DOMAIN-SUFFIX,googleads.g.doubleclick.net
   - DOMAIN-SUFFIX,lan
   - DOMAIN-SUFFIX,local
-  
+  - DOMAIN-SUFFIX,domi.teracloud.jp
