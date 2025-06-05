@@ -34,10 +34,21 @@ def concat_frame_in_folder(frame_size_and_rate):
     w, h, r = re.search(r'(\d+)x(\d+)@(\d+)', frame_size_and_rate).groups()
     a = FFmpegArgsList(
         vf=f'scale={w}:{h}:force_original_aspect_ratio=1,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2',
-        c__v='hevc', crf=22, pix_fmt='yuv420p',
+        # c__v='hevc', crf=16,
         # x265_params='log-level=error:aq-mode=3',
-        x265_params='aq-mode=3',
-        x264opts='aq-mode=3',
+        # x265_params='aq-mode=3',
+        c__v='libx264', crf=16,
+        x264opts='aq-mode=2',
+# x264 有多种 aq-mode：
+#
+#     0: 禁用 AQ。
+#     1: 方差自适应量化 (Variance AQ)。这是默认模式。它基于块的方差来分配码率，给低方差（更平坦）的块分配更多的码率，以减少条带效应 (banding)。
+#     2: 自动方差自适应量化 (Auto-variance AQ)。在 aq-mode=1 的基础上，试图进一步防止在非常高细节的区域出现明显的质量下降。
+#     3: 带偏置的自动方差自适应量化 (Auto-variance AQ with bias)。
+#         这是 aq-mode=2 的一个增强版本。
+#         它仍然会优先处理平坦区域以减少条带效应。
+#         关键的“偏置”作用是： 它会略微增加对非常复杂、高纹理或高噪声区域的量化（即稍微降低这些区域的质量），因为人眼对这些区域的细节丢失不那么敏感。
+#         这种模式旨在更好地处理那些本身就比较“脏”或“嘈杂”的视频源（例如电影胶片颗粒感很强），通过牺牲这些不易察觉的复杂区域的少量质量，来为更重要的平坦区域节省码率，从而实现更高效的整体压缩。
     )
     for dp in os.clpb.get_path():
         if not os.path_isdir(dp):
