@@ -599,7 +599,7 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
         codec += 'nv'
         ffmpeg_output_args.add(c__V=codecs_d[codec], rc='constqp', qp=crf)
         # ffmpeg_output_args.add(c__V=codecs_d[codec], rc='vbr', qmin=0, cq=crf)  # bad, dont use
-        ffmpeg_output_args.add_kwarg('-rc-lookahead', 16)
+        ffmpeg_output_args.add_kwarg('-rc-lookahead', 30)
         ffmpeg_output_args.add_kwarg('-spatial-aq', 1)
         ffmpeg_output_args.add_kwarg('-temporal-aq', 1)
         if crf is not None:
