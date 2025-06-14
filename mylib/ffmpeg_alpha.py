@@ -380,11 +380,12 @@ def get_width_height(filepath) -> (int, int):
 
 
 @mylib.easy.deco_factory_param_value_choices(
-    {'res_limit': (None, 'FHD', 'HD', 'qHD', 'QHD', '4K', '360p', '512x', '320x', '256x', '160x')})
+    {'res_limit': (None, 'FHD', 'HD', 'qHD', 'QHD', '4K', '2K', '360p', '512x', '320x', '256x', '160x')})
 def get_vf_res_scale_down(width: int, height: int, res_limit='FHD', vf: str = '') -> str:
     """generate 'scale=<w>:<h>' value for ffmpeg `vf` option, to scale down the given resolution
     return empty str if the given resolution is enough low thus scaling is not needed"""
-    d = {'FHD': (1920, 1080), 'HD': (1280, 720), 'qHD': (960, 540), 'QHD': (2560, 1440), '4K': (3840, 2160),
+    d = {'FHD': (1920, 1080), 'HD': (1280, 720), 'qHD': (960, 540), 'QHD': (2560, 1440),
+         '4K': (3840, 2160), '2K': (2560, 1440),
          '360p': (640, 360), '512x': (512, 512), '320x': (320, 320), '256x': (256, 256), '160x': (160, 160)}
     auto_calc = -2
     if not res_limit:
@@ -528,6 +529,8 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
             res_limit = 'qHD'
         elif kw.lower() in ('360p', '512x', '320x', '256x', '160x'):
             res_limit = kw.lower()
+        elif kw.lower() in ('2k', '4k'):
+            res_limit = kw.upper()
         elif re.match(r'\dch$', kw):
             ffmpeg_output_args.add(ac=kw[:1])
             tags.append(kw)
