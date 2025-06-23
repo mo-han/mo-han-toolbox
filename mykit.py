@@ -228,12 +228,16 @@ def tag_filter_files_func():
     remove_d = defaultdict(set)
     keep_d = defaultdict(set)
     neither_d = defaultdict(set)
+    print('t', tag_kp)
+    print('T', tag_rm)
     for f in fstk.files_from_iter(args.src or mylib.ext.ostk.clipboard.list_path(), recursive=False):
         ft = EnclosedFilenameTags(f, preamble=' +')
         ext = ft.extension
         prefix = ft.before_tags
         if any(map(ft.has_tag, tag_kp)) or ext in ext_kp:
             keep_d[prefix].add(f)
+            if dry:
+                print(f'to keep + {f}')
         elif any(map(ft.has_tag, tag_rm)) or ext in ext_rm:
             remove_d[prefix].add(f)
             if dry:
