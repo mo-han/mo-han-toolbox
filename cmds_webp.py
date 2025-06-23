@@ -144,6 +144,7 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
 
     for fp in files:
         need_to_convert = False
+        skip = False
 
         if not fstk.does_file_mime_has(fp, 'zip'):
             continue
@@ -187,8 +188,13 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
             for i in zf.infolist():
                 if i.is_dir():
                     continue
-                with zf.open(i) as i_file_io:
-                    mime = filetype.guess_mime(i_file_io.read(512))
+                try:
+                    with zf.open(i) as i_file_io:
+                        mime = filetype.guess_mime(i_file_io.read(512))
+                except zipfile.BadZipfile as e:
+                    input(f'{e.__class__.__name__}: {e}\n按回车键跳过')
+                    skip = True
+                    break
                 if mime and 'image' in mime:
                     if mime == 'image/gif':
                         continue
@@ -204,6 +210,9 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
                             break
                         else:
                             continue
+
+            if skip:
+                continue
 
             if not need_to_convert:
                 continue
