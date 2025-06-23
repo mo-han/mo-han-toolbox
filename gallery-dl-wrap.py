@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import os.path
-import re
 import string
 import webbrowser
 
@@ -438,6 +437,10 @@ def arg_list_split_then_merge_left_in_quote(arg_l: list):
 
 
 def args2url(args):
+    special = '{o:ab}'
+    if special in args:
+        i = args.index(special)
+        args[i:i + 1] = ['-o', 'include=["background","avatar"]']
     first = args.pop(0)
     if first in ('pixiv', 'p'):
         url = 'https://www.pixiv.net'
