@@ -74,7 +74,7 @@ class MultiList(list):
 
 
 class RuntimeData:
-    ...
+    flag_need_more_specific_url: bool
 
 
 def per_site(args: T.List[str]):
@@ -612,9 +612,11 @@ def main():
                 if p.wait() and pause_on_error:
                     need_pause = True
             except KeyboardInterrupt:
+                ostk.set_console_title('')
                 sys.exit(2)
         if need_pause:
             console_pause()
+    ostk.set_console_title('')
 
 
 if __name__ == '__main__':
