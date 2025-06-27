@@ -155,7 +155,7 @@ def per_site(args: T.List[str]):
             ' .{extension}"',
         ]
         site_settings = {
-            'sort_tag_list': [' sort:score', ''],
+            'sort_tag_list': [' sort:score', ('', 0.2)],
             'tag_path_prefix': '/index.php?page=post&s=list&tags=',
             'post_path_prefix': '/index.php?page=post&s=view&id=',
         }
@@ -177,17 +177,24 @@ def per_site(args: T.List[str]):
             'tag_path_prefix': '/posts?tags=',
             'post_path_prefix': '/posts/',
         }
-
         gldl_args = pq_site_arg_func(options, args, site_host, site_name, url, site_settings)
 
     elif 'rule34.xxx' in url:
-        gldl_args = [*GLDLCLIArgs(
-            o=['cookies-update=true', 'videos=true', 'tags=true',
-               'directory=["{search_tags!S} {category}"]',
-               'filename="{category} {date!S:.10} {id} {md5} '
-               '{tags_character!S:X80/.../} @{tags_artist!S:X80/.../} .{extension}"', ]
-        ),
-                     *args, url]
+        site_name = 'rule34'
+        site_host = 'rule34.xxx'
+        options = [
+            'filename="{category} {date!S:.10} {id} {md5}'
+            ' {tags_character!S:X64/.../}'
+            ' $ {tags_copyright!S:X32/.../}'
+            ' @ {tags_artist!S:X32/.../}'
+            ' .{extension}"',
+        ]
+        site_settings = {
+            'sort_tag_list': [' sort:score', ('', 0.2)],
+            'tag_path_prefix': '/index.php?page=post&s=list&tags=',
+            'post_path_prefix': '/index.php?page=post&s=view&id=',
+        }
+        gldl_args = pq_site_arg_func(options, args, site_host, site_name, url, site_settings)
 
     elif 'realbooru.com' in url:
         site_name = 'realbooru'
@@ -199,11 +206,10 @@ def per_site(args: T.List[str]):
             ' .{extension}"',
         ]
         site_settings = {
-            'sort_tag_list': [' sort:score', ''],
+            'sort_tag_list': [' sort:score', ('', 0.2)],
             'tag_path_prefix': '/index.php?page=post&s=list&tags=',
             'post_path_prefix': '/index.php?page=post&s=view&id=',
         }
-
         gldl_args = pq_site_arg_func(options, args, site_host, site_name, url, site_settings)
 
     elif 'chan.sankakucomplex.com' in url:
@@ -222,7 +228,6 @@ def per_site(args: T.List[str]):
             'tag_path_prefix': '/?tags=',
             'post_path_prefix': '/posts/',
         }
-
         gldl_args = pq_site_arg_func(options, args, site_host, site_name, url, site_settings)
 
     elif 'idol.sankakucomplex.com' in url:
@@ -240,7 +245,6 @@ def per_site(args: T.List[str]):
             'tag_path_prefix': '/?tags=',
             'post_path_prefix': '/posts/',
         }
-
         gldl_args = pq_site_arg_func(options, args, site_host, site_name, url, site_settings)
 
     elif 'reddit.com' in url:
@@ -338,6 +342,30 @@ def per_site(args: T.List[str]):
     return url, gldl_args
 
 
+def pq_value_to_range_value(pq_value: str | int, k_factor):
+    if isinstance(pq_value, str):
+        if '-' in pq_value:
+            return pq_value
+        pq_value = int(pq_value)
+    if isinstance(pq_value, int):
+        return f'1-{int(pq_value * k_factor)}'
+    raise TypeError(pq_value)
+
+
+def add_sort_range_args(common_args, pq_value, url, site_settings):
+    r = MultiList()
+    for sort_and_k in site_settings['sort_tag_list']:
+        if isinstance(sort_and_k, str):
+            sort_tag = sort_and_k
+            k_factor = 1
+        elif isinstance(sort_and_k, tuple):
+            sort_tag, k_factor = sort_and_k
+        else:
+            raise TypeError(sort_and_k)
+        r.append([*common_args, '--range', pq_value_to_range_value(pq_value, k_factor), url + sort_tag])
+    return r
+
+
 def pq_site_arg_func(options, site_args, site_host, site_name, url, site_settings):
     post_path_prefix = site_settings['post_path_prefix']
     tag_path_prefix = site_settings['tag_path_prefix']
@@ -355,14 +383,12 @@ def pq_site_arg_func(options, site_args, site_host, site_name, url, site_setting
         pq_arg, *site_args = site_args
         if pq_arg.startswith('pq'):
             pq_value = pq_arg[2:]
-            if set(pq_value) <= set(string.digits):
-                pq_value = f'1-{pq_value}'
             if set(pq_value) <= set(string.digits + '-'):
                 head_args = GLDLCLIArgs(
                     o=[*options, f'directory=["{tags_s} {{category}} pq"]'],
                 )
-                head_args += [*site_args, '--range', pq_value, ]
-                gldl_args = MultiList([[*head_args, url + s] for s in site_settings['sort_tag_list']])
+                gldl_args = add_sort_range_args([*head_args, *site_args], pq_value, url, site_settings)
+
             elif pq_value[0] == '=' and os.path.isdir(pq_value[1:]):
                 the_path = pq_value[1:].strip(r'\/"').strip(r'\/"')
                 override_base_dir, target_dir = os.path.split(the_path)
@@ -387,6 +413,7 @@ def pq_site_arg_func(options, site_args, site_host, site_name, url, site_setting
                     ),
                     *site_args, *url_l,
                 ]
+
             elif pq_value[0] == '+' and os.path.isdir(pq_value[1:]):
                 the_path = pq_value[1:].strip(r'\/"').strip(r'\/"')
                 override_base_dir, target_dir = os.path.split(the_path)
@@ -401,12 +428,13 @@ def pq_site_arg_func(options, site_args, site_host, site_name, url, site_setting
                         # '''image-filter="md5 not in FILTER_SET['not_want']['md5']"'''
                     ]
                 )
+
                 if target_dir[-3:] == ' pq':
-                    pq_num = len([i for i in os.listdir(the_path) if i[-len(STRING_NOT_WANT):] != STRING_NOT_WANT]) // 4
-                    head_args += ['--range', f'1-{pq_num}', ]
-                    gldl_args = MultiList([[*head_args, url + s] for s in site_settings['sort_tag_list']])
+                    pq_value = len([i for i in os.listdir(the_path) if not i.endswith(STRING_NOT_WANT)]) // 5
+                    gldl_args = add_sort_range_args(head_args, pq_value, url, site_settings)
                 else:
                     gldl_args = head_args + [url, ]
+
                 args_txt_filepath = os.path.join(the_path, 'args.txt')
                 if os.path.isfile(args_txt_filepath):
                     with open(args_txt_filepath, 'r') as f:
@@ -465,6 +493,14 @@ def args2url(args):
             url = f'https://gelbooru.com/index.php?page=post&s=view&id={x}'
         else:
             url = f'https://gelbooru.com/index.php?page=post&s=list&tags={x}'
+    elif first in ('rule34', 'r34'):
+        # todo#mark gelbooru
+        arg_list_split_then_merge_left_in_quote(args)
+        x = pop_tag_from_args(args)
+        if x.isdigit():
+            url = f'https://rule34.xxx/index.php?page=post&s=view&id={x}'
+        else:
+            url = f'https://rule34.xxx/index.php?page=post&s=list&tags={x}'
     elif first in ('realbooru', 'real', 'rl'):
         # todo#mark realbooru
         arg_list_split_then_merge_left_in_quote(args)
