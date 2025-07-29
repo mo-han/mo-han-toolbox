@@ -381,7 +381,7 @@ def get_width_height(filepath) -> (int, int):
 
 @mylib.easy.deco_factory_param_value_choices(
     {'res_limit': (None, 'FHD', 'HD', 'qHD', 'QHD', '4K', '2K', '360p', '512x', '320x', '256x', '160x')})
-def get_vf_res_scale_down(width: int, height: int, res_limit='FHD', vf: str = '') -> str:
+def get_vf_res_scale_down(width: int, height: int, res_limit='FHD', vf: str = '', flags=None) -> str:
     """generate 'scale=<w>:<h>' value for ffmpeg `vf` option, to scale down the given resolution
     return empty str if the given resolution is enough low thus scaling is not needed"""
     d = {'FHD': (1920, 1080), 'HD': (1280, 720), 'qHD': (960, 540), 'QHD': (2560, 1440),
@@ -404,7 +404,9 @@ def get_vf_res_scale_down(width: int, height: int, res_limit='FHD', vf: str = ''
         f'{baseline}:{auto_calc}' if thin ^ portrait
         else f'{auto_calc}:{baseline}'
     )
-    return f'{res_scale},{vf}' if vf else res_scale
+    if flags:
+        res_scale += f':flags={flags}'
+    return f'{vf},{res_scale}' if vf else res_scale
 
 
 def get_filter_list(filters):
@@ -489,17 +491,16 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     if 'smartblur' in keywords:
         vf_list.append('smartblur')
 
-    word = 'nvdec'
-    if word in keywords:
-        ffmpeg_input_args.add(hwaccel=word)
-    word = 'cuda'
-    if word in keywords:
-        ffmpeg_input_args.add(hwaccel_output_format=word)
-
     output_ext = None
+    scale_flags = None
+    allow_cuda = True
     for kw in keywords:
         if kw[0] + kw[-1] in ('vk', 'vM') and kw[1:-1].isdecimal():
             ffmpeg_output_args.add(b__v=kw[1:])
+        elif kw in ('lanczos', 'spline', 'area'):
+            allow_cuda = False
+            scale_flags = kw
+            # tags.append(kw)
         elif kw == 'novid':
             ffmpeg_output_args.add(vn=True)
         elif kw[0] == '.' and '.' not in kw[1:]:
@@ -547,14 +548,21 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
             ffmpeg_output_args.add(c__a='libopus')
             # tags.append(kw)
 
+    word = 'nvdec'
+    if word in keywords:
+        ffmpeg_input_args.add(hwaccel=word)
+    word = 'cuda'
+    if word in keywords and allow_cuda:
+        ffmpeg_input_args.add(hwaccel_output_format=word)
+
     if res_limit:
         try:
             w, h = get_width_height(filepath)
         except IndexError:
             ff.logger.info(f'# no video stream: {filepath}')
             return
-        new_vf = get_vf_res_scale_down(w, h, res_limit, vf=vf_str)
-        if 'cuda' in keywords:
+        new_vf = get_vf_res_scale_down(w, h, res_limit, vf=vf_str, flags=scale_flags)
+        if 'cuda' in keywords and allow_cuda:
             new_vf = new_vf.replace('scale=', 'scale_cuda=')
         ffmpeg_output_args.add(filter__V__0=new_vf)
         if new_vf != vf_str:
@@ -1306,9 +1314,9 @@ class FFmpegSegmentsContainer:
                             os.remove(o_seg + self.suffix_delete)
                 segments = self.list_lock_segments() + self.list_done_segments()
 
-    def vf_res_scale_down(self, res_limit='FHD', vf=None):
+    def vf_res_scale_down(self, res_limit='FHD', vf=None, flags=None):
         width, height = self.width_height
-        return get_vf_res_scale_down(width, height, res_limit=res_limit, vf=None)
+        return get_vf_res_scale_down(width, height, res_limit=res_limit, vf=None, flags=flags)
 
     @property
     def width_height(self):

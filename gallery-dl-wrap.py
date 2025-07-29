@@ -14,7 +14,8 @@ STRING_NOT_WANT = '.not_want'
 
 env_var = os.environ
 base_dir = fstk.make_path(env_var['gallery_dl_base_directory']).strip('"')
-pause_on_error = os.environ.get('PAUSEONERROR', 'yes').lower() in {'yes', 'true', '1'}
+pause_on_error = os.environ.get('PAUSEONERROR', 'yes').lower() in {
+    'yes', 'true', '1'}
 
 
 def _console_pause_nt():
@@ -94,7 +95,8 @@ def per_site(args: T.List[str]):
             if os.path.isfile(arg0):
                 gldl_args.extend(['-i', *args])
             elif arg0 == 'bg':
-                more_args = ['-o', 'extractor.pixiv.include=["background","avatar"]']
+                more_args = [
+                    '-o', 'extractor.pixiv.include=["background","avatar"]']
                 if '/users/' in url:
                     gldl_args.extend([*args[1:], *more_args, url])
                 else:
@@ -116,7 +118,7 @@ def per_site(args: T.List[str]):
                'filename="{category} {date!S:.10} {id} {title} {page_count}p '
                '@{creatorId} p{num}.{extension}"',
                'directory=["{user[name]} {category} {user[userId]} {creatorId}"]']),
-                     *args, url]
+            *args, url]
     elif 'twitter.com' in url or 'https://x.com/' in url:
         gldl_args = [*GLDLCLIArgs(o=['videos=true', 'retweets=false', 'content=true',
                                      'filename="{category} {date!S:.10} {tweet_id} {content!S:.48} {count}p '
@@ -139,7 +141,8 @@ def per_site(args: T.List[str]):
             'tag_path_prefix': '/posts?tags=',
             'post_path_prefix': '/posts/',
         }
-        gldl_args = pq_site_arg_func(options, args, site_host, site_name, url, site_settings)
+        gldl_args = pq_site_arg_func(
+            options, args, site_host, site_name, url, site_settings)
 
     elif 'gelbooru.com' in url:
         # todo#mark gelbooru
@@ -159,7 +162,8 @@ def per_site(args: T.List[str]):
             'tag_path_prefix': '/index.php?page=post&s=list&tags=',
             'post_path_prefix': '/index.php?page=post&s=view&id=',
         }
-        gldl_args = pq_site_arg_func(options, args, site_host, site_name, url, site_settings)
+        gldl_args = pq_site_arg_func(
+            options, args, site_host, site_name, url, site_settings)
 
     elif 'aibooru.online' in url:
         # todo#mark aibooru
@@ -177,7 +181,8 @@ def per_site(args: T.List[str]):
             'tag_path_prefix': '/posts?tags=',
             'post_path_prefix': '/posts/',
         }
-        gldl_args = pq_site_arg_func(options, args, site_host, site_name, url, site_settings)
+        gldl_args = pq_site_arg_func(
+            options, args, site_host, site_name, url, site_settings)
 
     elif 'rule34.xxx' in url:
         site_name = 'rule34'
@@ -194,7 +199,8 @@ def per_site(args: T.List[str]):
             'tag_path_prefix': '/index.php?page=post&s=list&tags=',
             'post_path_prefix': '/index.php?page=post&s=view&id=',
         }
-        gldl_args = pq_site_arg_func(options, args, site_host, site_name, url, site_settings)
+        gldl_args = pq_site_arg_func(
+            options, args, site_host, site_name, url, site_settings)
 
     elif 'realbooru.com' in url:
         site_name = 'realbooru'
@@ -210,7 +216,8 @@ def per_site(args: T.List[str]):
             'tag_path_prefix': '/index.php?page=post&s=list&tags=',
             'post_path_prefix': '/index.php?page=post&s=view&id=',
         }
-        gldl_args = pq_site_arg_func(options, args, site_host, site_name, url, site_settings)
+        gldl_args = pq_site_arg_func(
+            options, args, site_host, site_name, url, site_settings)
 
     elif 'chan.sankakucomplex.com' in url:
         # todo#mark sankaku
@@ -228,7 +235,8 @@ def per_site(args: T.List[str]):
             'tag_path_prefix': '/?tags=',
             'post_path_prefix': '/posts/',
         }
-        gldl_args = pq_site_arg_func(options, args, site_host, site_name, url, site_settings)
+        gldl_args = pq_site_arg_func(
+            options, args, site_host, site_name, url, site_settings)
 
     elif 'idol.sankakucomplex.com' in url:
         site_name = 'idolcomplex'
@@ -245,7 +253,8 @@ def per_site(args: T.List[str]):
             'tag_path_prefix': '/?tags=',
             'post_path_prefix': '/posts/',
         }
-        gldl_args = pq_site_arg_func(options, args, site_host, site_name, url, site_settings)
+        gldl_args = pq_site_arg_func(
+            options, args, site_host, site_name, url, site_settings)
 
     elif 'reddit.com' in url:
         gldl_args = [*GLDLCLIArgs(), *args, url]
@@ -280,8 +289,10 @@ def per_site(args: T.List[str]):
             if pq_arg.startswith('pq'):
                 pq_value = int(pq_arg[2:])
                 gldl_args = MultiList([
-                    [*GLDLCLIArgs(), *args, f'--range', f'1-{pq_value}', url + '?order=trending'],
-                    [*GLDLCLIArgs(), *args, f'--range', f'1-{pq_value}', url + '?order=best'],
+                    [*GLDLCLIArgs(), *args, f'--range',
+                     f'1-{pq_value}', url + '?order=trending'],
+                    [*GLDLCLIArgs(), *args, f'--range',
+                     f'1-{pq_value}', url + '?order=best'],
                 ])
     elif 'luscious.net' in url:
         gldl_args = [
@@ -362,7 +373,8 @@ def add_sort_range_args(common_args, pq_value, url, site_settings):
             sort_tag, k_factor = sort_and_k
         else:
             raise TypeError(sort_and_k)
-        r.append([*common_args, '--range', pq_value_to_range_value(pq_value, k_factor), url + sort_tag])
+        r.append([*common_args, '--range',
+                 pq_value_to_range_value(pq_value, k_factor), url + sort_tag])
     return r
 
 
@@ -373,13 +385,13 @@ def pq_site_arg_func(options, site_args, site_host, site_name, url, site_setting
         *GLDLCLIArgs(
             o=[
                 *options,
-                'directory=["{search_tags!S} {category}"]'
+                'directory=["{search_tags!S:R  / /} {category}"]'
             ],
         ),
         *site_args, url
     ]
     if site_args:
-        tags_s = url.split(tag_path_prefix, maxsplit=1)[-1].strip()
+        tags_s = url.split(tag_path_prefix, maxsplit=1)[-1].strip().replace('  ', ' ')
         pq_arg, *site_args = site_args
         if pq_arg.startswith('pq'):
             pq_value = pq_arg[2:]
@@ -387,7 +399,8 @@ def pq_site_arg_func(options, site_args, site_host, site_name, url, site_setting
                 head_args = GLDLCLIArgs(
                     o=[*options, f'directory=["{tags_s} {{category}} pq"]'],
                 )
-                gldl_args = add_sort_range_args([*head_args, *site_args], pq_value, url, site_settings)
+                gldl_args = add_sort_range_args(
+                    [*head_args, *site_args], pq_value, url, site_settings)
 
             elif pq_value[0] == '=' and os.path.isdir(pq_value[1:]):
                 the_path = pq_value[1:].strip(r'\/"').strip(r'\/"')
@@ -400,7 +413,8 @@ def pq_site_arg_func(options, site_args, site_host, site_name, url, site_setting
                         m = re.search(r'\d\d\d\d-\d\d-\d\d (\w+) ', i)
                     if m:
                         post_id_l.append(m.group(1))
-                url_l = [f'https://{site_host}{post_path_prefix}{post_id}' for post_id in post_id_l]
+                url_l = [
+                    f'https://{site_host}{post_path_prefix}{post_id}' for post_id in post_id_l]
                 # url_l = [f'https://{site_host}/posts?tags=md5:{post_id}' for post_id in post_id_l]
                 gldl_args = [
                     *GLDLCLIArgs(
@@ -417,7 +431,8 @@ def pq_site_arg_func(options, site_args, site_host, site_name, url, site_setting
             elif pq_value[0] == '+' and os.path.isdir(pq_value[1:]):
                 the_path = pq_value[1:].strip(r'\/"').strip(r'\/"')
                 override_base_dir, target_dir = os.path.split(the_path)
-                search_tag_string = fstk.sanitize_xu(target_dir.split(site_name)[0].strip(), reverse=True)
+                search_tag_string = fstk.sanitize_xu(
+                    target_dir.split(site_name)[0].strip(), reverse=True)
                 url = f'https://{site_host}{tag_path_prefix}{search_tag_string}'
                 head_args = GLDLCLIArgs(
                     *site_args,
@@ -430,8 +445,10 @@ def pq_site_arg_func(options, site_args, site_host, site_name, url, site_setting
                 )
 
                 if target_dir[-3:] == ' pq':
-                    pq_value = len([i for i in os.listdir(the_path) if not i.endswith(STRING_NOT_WANT)]) // 5
-                    gldl_args = add_sort_range_args(head_args, pq_value, url, site_settings)
+                    pq_value = len([i for i in os.listdir(
+                        the_path) if not i.endswith(STRING_NOT_WANT)]) // 5
+                    gldl_args = add_sort_range_args(
+                        head_args, pq_value, url, site_settings)
                 else:
                     gldl_args = head_args + [url, ]
 
@@ -453,14 +470,27 @@ def pop_tag_from_args(args):
                             unescape_html=False, decode_url=False, unify_white_space=False)
 
 
-def arg_list_split_then_merge_left_in_quote(arg_l: list):
+def process_arg_list(arg_l: list):
+    for k, v in {
+        '!idl': ['~video', '~animated_gif'],
+        '!idl-v': ['-video', '-animated_gif'],
+        '!rl-v': '-video -animated -gif -webm -mp4',
+    }.items():
+        if k in arg_l:
+            i = arg_l.index(k)
+            if isinstance(v, str):
+                v = v.split()
+            if not isinstance(v, list):
+                v = list(v)
+            arg_l[i:i+1] = v
+
     token = '.'
-    if token not in arg_l:
-        return
-    i = arg_l.index(token)
-    slice_before_token = arg_l[:i]
-    slice_before_token = ' '.join(slice_before_token)
-    arg_l[:i + 1] = [slice_before_token]
+    if token in arg_l:
+        i = arg_l.index(token)
+        slice_before_token = arg_l[:i]
+        slice_before_token = ' '.join(slice_before_token)
+        arg_l[:i + 1] = [slice_before_token]
+
     # print(arg_l)
 
 
@@ -479,7 +509,7 @@ def args2url(args):
         url = f'https://twitter.com/{args.pop(0).lstrip("@")}/media'
     elif first in ('danbooru', 'dan',):
         # todo#mark danbooru
-        arg_list_split_then_merge_left_in_quote(args)
+        process_arg_list(args)
         x = pop_tag_from_args(args)
         if x.isdigit():
             url = f'https://danbooru.donmai.us/posts/{x}'
@@ -487,7 +517,7 @@ def args2url(args):
             url = f'https://danbooru.donmai.us/posts?tags={x}'
     elif first in ('gelbooru', 'gel'):
         # todo#mark gelbooru
-        arg_list_split_then_merge_left_in_quote(args)
+        process_arg_list(args)
         x = pop_tag_from_args(args)
         if x.isdigit():
             url = f'https://gelbooru.com/index.php?page=post&s=view&id={x}'
@@ -495,7 +525,7 @@ def args2url(args):
             url = f'https://gelbooru.com/index.php?page=post&s=list&tags={x}'
     elif first in ('rule34', 'r34'):
         # todo#mark gelbooru
-        arg_list_split_then_merge_left_in_quote(args)
+        process_arg_list(args)
         x = pop_tag_from_args(args)
         if x.isdigit():
             url = f'https://rule34.xxx/index.php?page=post&s=view&id={x}'
@@ -503,14 +533,14 @@ def args2url(args):
             url = f'https://rule34.xxx/index.php?page=post&s=list&tags={x}'
     elif first in ('realbooru', 'real', 'rl'):
         # todo#mark realbooru
-        arg_list_split_then_merge_left_in_quote(args)
+        process_arg_list(args)
         x = pop_tag_from_args(args)
         if x.isdigit():
             url = f'https://realbooru.com/index.php?page=post&s=view&id={x}'
         else:
             url = f'https://realbooru.com/index.php?page=post&s=list&tags={x}'
     elif first in ('sankaku', 'chan', 'skk', 'c'):
-        arg_list_split_then_merge_left_in_quote(args)
+        process_arg_list(args)
         x = pop_tag_from_args(args)
         # if x.isdigit() or re.fullmatch(r'[0-9a-z]{32}', x):
         #     url = f'https://chan.sankakucomplex.com/posts/{x}'
@@ -521,7 +551,7 @@ def args2url(args):
         else:
             url = f'https://chan.sankakucomplex.com/?tags={x}'
     elif first in ('idol', 'idolcomplex', 'idl', 'i'):
-        arg_list_split_then_merge_left_in_quote(args)
+        process_arg_list(args)
         x = pop_tag_from_args(args)
         if x.isdigit() or re.fullmatch(r'[0-9a-z]{32}', x):
             url = f'https://idol.sankakucomplex.com/posts/{x}'
@@ -586,7 +616,7 @@ def args2url(args):
         url = f'https://www.redgifs.com/gifs/{pop_tag_from_args(args)}'
     elif first in ('ai', 'aibooru',):
         # todo#mark aibooru
-        arg_list_split_then_merge_left_in_quote(args)
+        process_arg_list(args)
         x = pop_tag_from_args(args)
         if x.isdigit():
             url = f'https://aibooru.online/posts/{x}'
@@ -600,7 +630,8 @@ def args2url(args):
         import browser_cookie3
         url = requests.get(url, cookies=browser_cookie3.firefox()).url
         print(url)
-    url = url.replace('chan.sankakucomplex.com/cn/', 'chan.sankakucomplex.com/')
+    url = url.replace('chan.sankakucomplex.com/cn/',
+                      'chan.sankakucomplex.com/')
     return url
 
 

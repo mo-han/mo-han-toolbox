@@ -828,7 +828,8 @@ def url_from_clipboard():
                     urls.append(link)
         else:
             urls = regex_find(pattern, t, dedup=True)
-    urls = '\r\n'.join(urls)
+    # urls = '\r\n'.join(urls)
+    urls = '\n'.join([i.strip() for i in urls])
     os.clpb.clear()
     os.clpb.set(urls)
     print(urls)
