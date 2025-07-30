@@ -12,3 +12,4 @@ payload:
   - DOMAIN-SUFFIX,domi.teracloud.jp
   - DOMAIN-SUFFIX,windowsupdate.com
   - DOMAIN-SUFFIX,download-cdn.jetbrains.com.cn
+  - DOMAIN-SUFFIX,iot.wskjwlk.com
