@@ -80,7 +80,7 @@ class RuntimeData:
 
 def per_site(args: T.List[str]):
     url = args2url(args)
-    # todo#mark pixiv
+    # TODO: mark pixiv
     if 'pixiv.net' in url:
         gldl_args = GLDLCLIArgs(
             o=[
@@ -126,7 +126,7 @@ def per_site(args: T.List[str]):
                                      'directory=["{author[nick]} {category} @{author[name]}"]']),
                      *args, url]
     elif 'danbooru.donmai.us' in url:
-        # todo#mark danbooru
+        # TODO: mark danbooru
         site_name = 'danbooru'
         site_host = 'danbooru.donmai.us'
         options = [
@@ -145,7 +145,7 @@ def per_site(args: T.List[str]):
             options, args, site_host, site_name, url, site_settings)
 
     elif 'gelbooru.com' in url:
-        # todo#mark gelbooru
+        # TODO: mark gelbooru
         # sort 目前能进行质量排序的 只有 score
         # 会从 danbooru 抓取 但后续的tag编辑 不会更新抓取
         site_name = 'gelbooru'
@@ -166,7 +166,7 @@ def per_site(args: T.List[str]):
             options, args, site_host, site_name, url, site_settings)
 
     elif 'aibooru.online' in url:
-        # todo#mark aibooru
+        # TODO: mark aibooru
         site_name = 'aibooru'
         site_host = 'aibooru.online'
         options = [
@@ -220,7 +220,7 @@ def per_site(args: T.List[str]):
             options, args, site_host, site_name, url, site_settings)
 
     elif 'chan.sankakucomplex.com' in url:
-        # todo#mark sankaku
+        # TODO: mark sankaku
         site_name = 'sankaku'
         site_host = 'chan.sankakucomplex.com'
         options = [
@@ -310,7 +310,7 @@ def per_site(args: T.List[str]):
                                      '{title} @{artist!S:X80/.../} .{extension}"', ]),
                      *args, url]
     elif 'kemono.' in url or 'coomer.' in url:
-        # todo#mark kemono
+        # TODO: mark kemono
         _arg_in_list = []
         _filter_sequence_in_list = []
         for a in args:
@@ -391,7 +391,8 @@ def pq_site_arg_func(options, site_args, site_host, site_name, url, site_setting
         *site_args, url
     ]
     if site_args:
-        tags_s = url.split(tag_path_prefix, maxsplit=1)[-1].strip().replace('  ', ' ')
+        tags_s = url.split(
+            tag_path_prefix, maxsplit=1)[-1].strip().replace('  ', ' ')
         pq_arg, *site_args = site_args
         if pq_arg.startswith('pq'):
             pq_value = pq_arg[2:]
@@ -508,7 +509,7 @@ def args2url(args):
     elif first == 'twitter':
         url = f'https://twitter.com/{args.pop(0).lstrip("@")}/media'
     elif first in ('danbooru', 'dan',):
-        # todo#mark danbooru
+        # TODO: mark danbooru
         process_arg_list(args)
         x = pop_tag_from_args(args)
         if x.isdigit():
@@ -516,7 +517,7 @@ def args2url(args):
         else:
             url = f'https://danbooru.donmai.us/posts?tags={x}'
     elif first in ('gelbooru', 'gel'):
-        # todo#mark gelbooru
+        # TODO: mark gelbooru
         process_arg_list(args)
         x = pop_tag_from_args(args)
         if x.isdigit():
@@ -524,7 +525,7 @@ def args2url(args):
         else:
             url = f'https://gelbooru.com/index.php?page=post&s=list&tags={x}'
     elif first in ('rule34', 'r34'):
-        # todo#mark gelbooru
+        # TODO: mark gelbooru
         process_arg_list(args)
         x = pop_tag_from_args(args)
         if x.isdigit():
@@ -532,7 +533,7 @@ def args2url(args):
         else:
             url = f'https://rule34.xxx/index.php?page=post&s=list&tags={x}'
     elif first in ('realbooru', 'real', 'rl'):
-        # todo#mark realbooru
+        # TODO: mark realbooru
         process_arg_list(args)
         x = pop_tag_from_args(args)
         if x.isdigit():
@@ -563,7 +564,7 @@ def args2url(args):
             url = f'https://idol.sankakucomplex.com/?tags={x}'
     elif first in ('ng', 'newgrounds'):
         url = f'https://{pop_tag_from_args(args)}.newgrounds.com/art'
-    # todo#mark kemono
+    # TODO: mark kemono
     elif first in ('kemono', 'kemonoparty', 'kemono.su'):
         x = pop_tag_from_args(args)
         if os.path.isfile(x):
@@ -615,7 +616,7 @@ def args2url(args):
     elif first in ('redgifs', 'rdg'):
         url = f'https://www.redgifs.com/gifs/{pop_tag_from_args(args)}'
     elif first in ('ai', 'aibooru',):
-        # todo#mark aibooru
+        # TODO: mark aibooru
         process_arg_list(args)
         x = pop_tag_from_args(args)
         if x.isdigit():
@@ -655,6 +656,10 @@ def loop():
 
 def main():
     args = sys.argv[1:]
+    if args:
+        arg0 = args[0]
+        if not arg0.startswith('https://') and ' ' in arg0:
+            args[0:1] = arg0.split()
     ostk.set_console_title(f'{path_basename(__file__)} - {args}')
     if not args:
         loop()
