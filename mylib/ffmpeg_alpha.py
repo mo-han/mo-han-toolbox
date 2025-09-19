@@ -608,13 +608,18 @@ def kw_video_convert(filepath, keywords=(), vf=None, cut_points=(),
     elif 'nvenc' in keywords and codec in ('a', 'h'):
         tags.append('nvenc')
         codec += 'nv'
-        ffmpeg_output_args.add(c__V=codecs_d[codec], rc='constqp', qp=crf)
-        # ffmpeg_output_args.add(c__V=codecs_d[codec], rc='vbr', qmin=0, cq=crf)  # bad, dont use
-        ffmpeg_output_args.add_kwarg('-rc-lookahead', 30)
-        ffmpeg_output_args.add_kwarg('-spatial-aq', 1)
-        ffmpeg_output_args.add_kwarg('-temporal-aq', 1)
+        # ffmpeg_output_args.add(c__V=codecs_d[codec], rc='constqp', qp=crf)
+        ffmpeg_output_args.add(c__V=codecs_d[codec], cq=int(crf)+6)
+        ffmpeg_output_args.add(preset='p5')
+        # ffmpeg_output_args.add_kwarg('-rc-lookahead', 30)
+        # ffmpeg_output_args.add_kwarg('-spatial-aq', 1)
+        # ffmpeg_output_args.add_kwarg('-temporal-aq', 1)
         if crf is not None:
             ffmpeg_output_args.add(b__v=0)
+        for kw in keywords:
+            if kw[0]=='p' and kw[1:].isdecimal():
+                ffmpeg_output_args.add(preset=kw)
+
     else:
         ffmpeg_output_args.add(vcodec=codecs_d[codec], crf=crf)
     if codec == 'h':

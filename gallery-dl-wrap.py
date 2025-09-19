@@ -242,10 +242,10 @@ def per_site(args: T.List[str]):
         site_name = 'idolcomplex'
         site_host = 'idol.sankakucomplex.com'
         options = [
-            'filename="{category} {created_at!S:.10} {id} {md5}'
-            ' {tags_photo_set!S:X32/.../}'
+            'filename="{category} {date!S:.10} {id} {md5}'
+            ' {tags_genre!S:X32/.../}'
             ' $ {tags_copyright!S:X32/.../} {tags_studio!S:X32/.../}'
-            ' @ {tags_idol!S:X40/.../}'
+            ' @ {tags_artist!S:X40/.../}'
             ' .{extension}"',
         ]
         site_settings = {
@@ -504,6 +504,11 @@ def args2url(args):
     if first in ('pixiv', 'p'):
         url = 'https://www.pixiv.net'
         RuntimeData.flag_need_more_specific_url = True
+    elif first in ('civitai', 'cvai'):
+        process_arg_list(args)
+        x = pop_tag_from_args(args)
+        if x.isdigit():
+            url = f'https://civitai.com/images/{x}'
     elif first == 'fanbox':
         url = f'https://{args.pop(0)}.fanbox.cc'
     elif first == 'twitter':
