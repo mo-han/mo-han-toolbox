@@ -693,6 +693,7 @@ def main():
                 sys.exit(2)
         if need_pause:
             console_pause()
+            sys.exit(1)
     ostk.set_console_title('')
 
 

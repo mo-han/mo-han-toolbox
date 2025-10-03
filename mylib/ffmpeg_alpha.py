@@ -748,8 +748,8 @@ def kw_video_convert(
         # ffmpeg_output_args.add_kwarg('-rc-lookahead', 30)
         # ffmpeg_output_args.add_kwarg('-spatial-aq', 1)
         # ffmpeg_output_args.add_kwarg('-temporal-aq', 1)
-        if crf is not None:
-            ffmpeg_output_args.add(b__v=0)
+        # if crf is not None:
+        #     ffmpeg_output_args.add(b__v=0)
         for kw in keywords:
             if kw[0] == "p" and kw[1:].isdecimal():
                 ffmpeg_output_args.add(preset=kw)
