@@ -1,17 +1,50 @@
-# Merge Template for clash verge
-# The `Merge` format used to enhance profile
+# v1.7.1 扩展配置删除了 prepend/append 能力
+# https://github.com/clash-verge-rev/clash-verge-rev/releases/tag/v1.7.1
+# prepend-rules: []
 
-prepend-rules:
+# prepend-proxies: []
 
-prepend-proxies:
+# prepend-proxy-groups: []
 
-prepend-proxy-groups:
+# append-rules: []
 
-append-rules:
+# append-proxies: []
 
-append-proxies:
+# append-proxy-groups: []
 
-append-proxy-groups:
+rules:
+  - PROCESS-NAME,steam.exe,DIRECT
+  - DOMAIN-SUFFIX,updates.lmstudio.ai,DIRECT
+  - DOMAIN-SUFFIX,no-mad-world.club,PROXY
+
+  - RULE-SET,custom_proxy,PROXY
+  - RULE-SET,custom_direct,DIRECT
+
+  - DOMAIN-SUFFIX,clash.razord.top,DIRECT
+  - DOMAIN-SUFFIX,yacd.haishan.me,DIRECT
+  
+  - RULE-SET,reject,REJECT
+  
+  - RULE-SET,private,DIRECT
+  - RULE-SET,lancidr,DIRECT
+  - RULE-SET,cncidr,DIRECT
+  - GEOIP,LAN,DIRECT
+  - GEOIP,CN,DIRECT
+
+  - RULE-SET,apps,DIRECT
+  - RULE-SET,icloud,DIRECT
+  - RULE-SET,apple_china,DIRECT
+
+  - RULE-SET,proxy,PROXY
+  - RULE-SET,direct,DIRECT
+
+  - RULE-SET,gfwlist,PROXY
+  - RULE-SET,greatfire,PROXY
+  - RULE-SET,telegramcidr,PROXY
+  - RULE-SET,tld-not-cn,PROXY
+
+  - DOMAIN-REGEX,^[^.]+$,DIRECT
+  - MATCH,PROXY
 
 rule-providers:
   direct:
@@ -126,28 +159,3 @@ rule-providers:
     url: https://github.com/mo-han/mo-han-toolbox/raw/master/etc/clash/custom_proxy.yaml
     path: ./ruleset/custom_proxy.yaml
     interval: 3600
-
-rules:
-  - RULE-SET,custom_proxy,PROXY
-  - RULE-SET,custom_direct,DIRECT
-
-  - RULE-SET,apps,DIRECT
-  - RULE-SET,proxy,PROXY
-  - RULE-SET,direct,DIRECT
-  - RULE-SET,reject,REJECT
-
-  - RULE-SET,telegramcidr,PROXY
-  - RULE-SET,tld-not-cn,PROXY
-  - RULE-SET,gfwlist,PROXY
-  - RULE-SET,greatfire,PROXY
-  - GEOIP,LAN,DIRECT
-  - GEOIP,CN,DIRECT
-  - DOMAIN,clash.razord.top,DIRECT
-  - DOMAIN,yacd.haishan.me,DIRECT
-  - RULE-SET,lancidr,DIRECT
-  - RULE-SET,private,DIRECT
-  - RULE-SET,cncidr,DIRECT
-  - RULE-SET,icloud,DIRECT
-  - RULE-SET,apple_china,DIRECT
-
-  - MATCH,PROXY
