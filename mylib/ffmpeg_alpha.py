@@ -728,6 +728,13 @@ def kw_video_convert(
     elif "worstest" in keywords:
         codec = "h"
         crf = crf or 37
+    elif "bester" in keywords:
+        codec = "h"
+        crf = crf or 13
+    elif "bestest" in keywords:
+        codec = "h"
+        crf = crf or 10
+
 
     for kw in keywords:
         if kw[:4] == "crf+":
