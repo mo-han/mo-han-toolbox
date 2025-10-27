@@ -18,9 +18,9 @@ from mylib.ext.console_app import *
 from mylib.wrapper import cwebp
 
 PIXELS_BASELINE = 1280 * 1920
-MAX_Q = 80
+MAX_Q = 90
 MIN_Q = 50
-MAX_COMPRESS = 0.7
+MAX_COMPRESS = 0.6
 
 apr = ArgumentParserWrapper()
 an = apr.an
@@ -33,7 +33,7 @@ class Counter:
     n = 0
 
 
-def convert_adaptive(image_fp, counter: Counter = None, print_path_relative_to=None, force_convert_webp=False):
+def convert_adaptive(image_fp, counter: Counter|None = None, print_path_relative_to=None, force_convert_webp=False):
     def _convert_adaptive():
         if print_path_relative_to:
             image_fp_rel = fstk.make_path(image_fp, relative_to=print_path_relative_to)
