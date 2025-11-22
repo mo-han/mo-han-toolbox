@@ -42,6 +42,12 @@ else:
     console_pause = _console_pause
 
 
+def is_md5(s):
+    s=s.strip()
+    if len(s) == 32 and all(c in string.hexdigits for c in s):
+        return True
+
+
 class GLDLCLIArgs(CLIArgumentsList):
     merge_option_nargs = False
 
@@ -243,9 +249,9 @@ def per_site(args: T.List[str]):
         site_host = 'idol.sankakucomplex.com'
         options = [
             'filename="{category} {date!S:.10} {id} {md5}'
-            ' {tags_genre!S:X32/.../}'
-            ' $ {tags_copyright!S:X32/.../} {tags_studio!S:X32/.../}'
-            ' @ {tags_artist!S:X40/.../}'
+            ' {tags_genre!S:R, / /X32/.../}'
+            ' $ {tags_copyright!S:R, / /X32/.../} {tags_studio!S:R, / /X32/.../}'
+            ' @ {tags_artist!S:R, / /X40/.../}'
             ' .{extension}"',
         ]
         site_settings = {
@@ -552,6 +558,8 @@ def args2url(args):
         #     url = f'https://chan.sankakucomplex.com/posts/{x}'
         if x[:3] == 'id=':
             url = f'https://chan.sankakucomplex.com/posts/{x[3:]}'
+        if is_md5(x):
+            url = f'https://chan.sankakucomplex.com/posts/{x}'
         elif not x:
             url = 'https://chan.sankakucomplex.com'
         else:
@@ -563,6 +571,8 @@ def args2url(args):
             url = f'https://idol.sankakucomplex.com/posts/{x}'
         elif x[:3] == 'id=':
             url = f'https://idol.sankakucomplex.com/posts/{x[3:]}'
+        if is_md5(x):
+            url = f'https://idol.sankakucomplex.com/posts/{x}'
         elif not x:
             url = 'https://idol.sankakucomplex.com'
         else:
@@ -683,7 +693,7 @@ def main():
         need_pause = False
         for cmd in cmd_l:
             try:
-                print(cmd)
+                print(cmd, file=sys.stderr)
                 p = subprocess.Popen(cmd)
                 # print(p.args)
                 if p.wait() and pause_on_error:
