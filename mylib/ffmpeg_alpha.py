@@ -681,7 +681,7 @@ def kw_video_convert(
         elif kw == "opus":
             ffmpeg_output_args.add(c__a="libopus")
             # tags.append(kw)
-        elif kw=='uhq':
+        elif kw == "uhq":
             ffmpeg_output_args.add(tune=kw)
             tags.append(kw)
 
@@ -738,7 +738,6 @@ def kw_video_convert(
         codec = "h"
         crf = crf or 10
 
-
     for kw in keywords:
         if kw[:4] == "crf+":
             crf += type(crf)(kw[4:])
@@ -752,9 +751,11 @@ def kw_video_convert(
     elif "nvenc" in keywords and codec in ("a", "h"):
         tags.append("nvenc")
         codec += "nv"
-        # ffmpeg_output_args.add(c__V=codecs_d[codec], rc='constqp', qp=crf)
-        cq_v = int(crf) + 6
-        ffmpeg_output_args.add(c__V=codecs_d[codec], cq=cq_v)
+        ffmpeg_output_args.add(
+            c__V=codecs_d[codec],
+            cq=int(crf) + 6,
+            # rc='constqp', qp=crf,
+        )
         ffmpeg_output_args.add(preset="p5")
         # ffmpeg_output_args.add_kwarg('-rc-lookahead', 30)
         # ffmpeg_output_args.add_kwarg('-spatial-aq', 1)

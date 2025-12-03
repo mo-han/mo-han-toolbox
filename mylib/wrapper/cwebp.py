@@ -19,7 +19,9 @@ class CWebpCLIArgs(CLIArgumentsList):
 
 
 def new_cwebp_cmd():
-    return CWebpCLIArgs('cwebp')
+    r = CWebpCLIArgs('cwebp')
+    r.add(metadata='all')
+    return r
 
 
 def cwebp_call(src: T.Union[str, bytes], dst: T.Union[str, bool, T.NoneType, T.EllipsisType] = ..., **kwargs):
