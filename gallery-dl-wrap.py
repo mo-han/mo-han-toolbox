@@ -246,8 +246,8 @@ def per_site(args: T.List[str]):
         site_host = "realbooru.com"
         options = [
             'filename="{category} {date!S:.10} {id} {md5}'
-            " $ {tags_copyright!S:X64/.../}"
-            " @ {tags_model!S:X64/.../}"
+            " $ {tags_copyright!S:R, / /X64/.../}"
+            " @ {tags_model!S:R, / /X64/.../}"
             ' .{extension}"',
         ]
         site_settings = {
@@ -279,9 +279,10 @@ def per_site(args: T.List[str]):
             options, args, site_host, site_name, url, site_settings
         )
 
-    elif "idol.sankakucomplex.com" in url:
+    elif "www.idolcomplex.com" in url or 'idol.sankakucomplex.com' in url:
         site_name = "idolcomplex"
-        site_host = "idol.sankakucomplex.com"
+        # site_host = "idol.sankakucomplex.com"
+        site_host = "www.idolcomplex.com"
         options = [
             'filename="{category} {date!S:.10} {id} {md5}'
             " {tags_genre!S:R, / /X32/.../}"
@@ -486,14 +487,13 @@ def add_sort_range_args(common_args, pq_value, url, site_settings):
 
 
 def search_tags_in_filter(search_tags: str):
-    DEFAULT_TAGS_IN_FILTER = ["uncensored", "cover", "loli"]
-    DEFAULT_TAGS_IN_FILTER.extend([f"-{i}" for i in DEFAULT_TAGS_IN_FILTER])
+    TAGS_IN_FILTER = ["uncensored", "cover", "loli"]
+    TAGS_IN_FILTER.extend([f"-{i}" for i in TAGS_IN_FILTER])
 
     if "TAGS_IN_FILTER" in os.environ:
-        TAGS_IN_FILTER = os.environ["TAGS_IN_FILTER"].strip().split()
-    else:
-        TAGS_IN_FILTER = []
-    TAGS_IN_FILTER.extend(DEFAULT_TAGS_IN_FILTER)
+        custom = os.environ["TAGS_IN_FILTER"].strip().split()
+        TAGS_IN_FILTER.extend(custom)
+        TAGS_IN_FILTER.extend([f"-{i}" for i in custom])
 
     tags_s = search_tags
     filter = None
@@ -505,8 +505,9 @@ def search_tags_in_filter(search_tags: str):
     filter_tags_l = []
     for tag in tags_l:
         if tag in TAGS_IN_FILTER:
-            tags_l.remove(tag)
             filter_tags_l.append(tag)
+    for tag in filter_tags_l:
+        tags_l.remove(tag)
     tags_s = " ".join(tags_l)
     filter = " and ".join(
         [
@@ -722,29 +723,26 @@ def args2url(args):
     elif first in ("sankaku", "chan", "skk", "c"):
         process_arg_list(args)
         x = pop_tag_from_args(args)
-        # if x.isdigit() or re.fullmatch(r'[0-9a-z]{32}', x):
-        #     url = f'https://chan.sankakucomplex.com/posts/{x}'
         if x[:3] == "id=":
             url = f"https://chan.sankakucomplex.com/posts/{x[3:]}"
-        if is_md5(x):
+        elif is_md5(x):
             url = f"https://chan.sankakucomplex.com/posts/{x}"
         elif not x:
             url = "https://chan.sankakucomplex.com"
         else:
             url = f"https://chan.sankakucomplex.com/?tags={x}"
     elif first in ("idol", "idolcomplex", "idl", "i"):
+        site_url = "https://www.idolcomplex.com"
         process_arg_list(args)
         x = pop_tag_from_args(args)
-        if x.isdigit() or re.fullmatch(r"[0-9a-z]{32}", x):
-            url = f"https://idol.sankakucomplex.com/posts/{x}"
-        elif x[:3] == "id=":
-            url = f"https://idol.sankakucomplex.com/posts/{x[3:]}"
-        if is_md5(x):
+        if x[:3] == "id=":
+            url = f"{site_url}/posts/{x[3:]}"
+        elif is_md5(x):
             url = f"https://idol.sankakucomplex.com/posts/{x}"
         elif not x:
-            url = "https://idol.sankakucomplex.com"
+            url = f"{site_url}"
         else:
-            url = f"https://idol.sankakucomplex.com/?tags={x}"
+            url = f"{site_url}/?tags={x}"
     elif first in ("ng", "newgrounds"):
         url = f"https://{pop_tag_from_args(args)}.newgrounds.com/art"
     # TODO: mark kemono

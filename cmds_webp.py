@@ -17,10 +17,10 @@ from mylib.easy import logging
 from mylib.ext.console_app import *
 from mylib.wrapper import cwebp
 
-PIXELS_BASELINE = 1280 * 1920
-MAX_Q = 90
-MIN_Q = 50
-MAX_COMPRESS = 0.6
+PIXELS_BASELINE = 1024 * 1024
+MAX_Q = 95
+MIN_Q = 75
+MAX_COMPRESS = 0.7
 
 apr = ArgumentParserWrapper()
 an = apr.an
@@ -59,7 +59,7 @@ def convert_adaptive(image_fp, counter: Counter|None = None, print_path_relative
         pixels = w * h
         if pixels > PIXELS_BASELINE * 4:
             max_size = 1024 * 1024
-            min_scale = 0.7
+            min_scale = 0.75
         elif pixels > PIXELS_BASELINE * 3:
             max_size = 1024 * 768
             min_scale = 0.8
