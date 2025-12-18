@@ -423,9 +423,9 @@ def per_site(args: T.List[str]):
                     "videos=true",
                     "tags=true",
                     "metadata=true",
-                    'directory=["{username} {category} {service} {user}"]',
-                    'filename="{category} {service} {date!S:.10} {id} {title:.60} {count}p '
-                    '@{username} p{num} {filename:.40}.{extension}"',
+                    'directory=["{username|author[\'global_name\']} {category} {service|subcategory} {user|server}{channel:? //}"]',
+                    'filename="{category} {service|subcategory} {date!S:.10} {id} {title|content!H:.60} {count}p '
+                    '@{username|author[\'username\']} p{num} {filename:.40}.{extension}"',
                 ],
                 filter=" and ".join(
                     ["extension not in ('psd', 'clip')", *_filter_sequence_in_list]
