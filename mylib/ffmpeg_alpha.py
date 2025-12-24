@@ -690,6 +690,7 @@ def kw_video_convert(
         ffmpeg_input_args.add(hwaccel=word)
     word = "cuda"
     if word in keywords and allow_cuda:
+        ffmpeg_input_args.add(hwaccel=word)
         ffmpeg_input_args.add(hwaccel_output_format=word)
 
     if res_limit:
