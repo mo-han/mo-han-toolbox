@@ -11,10 +11,16 @@ from mylib.ext.console_app import *
 #     raise NotImplementedError('launch new console window')
 
 STRING_NOT_WANT = ".not_want"
+STRING_DELETED = ".deleted"
 
 env_var = os.environ
 base_dir = fstk.make_path(env_var["gallery_dl_base_directory"]).strip('"')
 pause_on_error = os.environ.get("PAUSEONERROR", "").lower() in {"yes", "true", "1"}
+
+
+class RuntimeData:
+    flag_need_more_specific_url: bool
+    multi_id_range = False
 
 
 def _console_pause_nt():
@@ -82,10 +88,6 @@ class MultiList(list):
     pass
 
 
-class RuntimeData:
-    flag_need_more_specific_url: bool
-
-
 def per_site(args: T.List[str]):
     url = args2url(args)
     # TODO: mark pixiv
@@ -102,7 +104,7 @@ def per_site(args: T.List[str]):
             arg0 = args[0]
             if os.path.isfile(arg0):
                 gldl_args.extend(["-i", *args])
-            elif arg0 == "bg":
+            elif arg0 == "ab":
                 more_args = ["-o", 'extractor.pixiv.include=["background","avatar"]']
                 if "/users/" in url:
                     gldl_args.extend([*args[1:], *more_args, url])
@@ -178,6 +180,7 @@ def per_site(args: T.List[str]):
         # TODO: mark gelbooru
         # sort 目前能进行质量排序的 只有 score
         # 会从 danbooru 抓取 但后续的tag编辑 不会更新抓取
+        RuntimeData.multi_id_range = True
         site_name = "gelbooru"
         site_host = "gelbooru.com"
         options = [
@@ -188,7 +191,10 @@ def per_site(args: T.List[str]):
             ' .{extension}"',
         ]
         site_settings = {
-            "sort_tag_list": [" sort:score", ("", 0.2)],
+            "sort_tag_list": [
+                " sort:score",
+                # ("", 0.2)
+            ],
             "tag_path_prefix": "/index.php?page=post&s=list&tags=",
             "post_path_prefix": "/index.php?page=post&s=view&id=",
         }
@@ -223,6 +229,7 @@ def per_site(args: T.List[str]):
         )
 
     elif "rule34.xxx" in url:
+        RuntimeData.multi_id_range = True
         site_name = "rule34"
         site_host = "rule34.xxx"
         options = [
@@ -233,7 +240,10 @@ def per_site(args: T.List[str]):
             ' .{extension}"',
         ]
         site_settings = {
-            "sort_tag_list": [" sort:score", ("", 0.2)],
+            "sort_tag_list": [
+                " sort:score",
+                # ("", 0.2)
+            ],
             "tag_path_prefix": "/index.php?page=post&s=list&tags=",
             "post_path_prefix": "/index.php?page=post&s=view&id=",
         }
@@ -242,6 +252,7 @@ def per_site(args: T.List[str]):
         )
 
     elif "realbooru.com" in url:
+        RuntimeData.multi_id_range = True
         site_name = "realbooru"
         site_host = "realbooru.com"
         options = [
@@ -251,7 +262,10 @@ def per_site(args: T.List[str]):
             ' .{extension}"',
         ]
         site_settings = {
-            "sort_tag_list": [" sort:score", ("", 0.2)],
+            "sort_tag_list": [
+                " sort:score",
+                # ("", 0.2)
+            ],
             "tag_path_prefix": "/index.php?page=post&s=list&tags=",
             "post_path_prefix": "/index.php?page=post&s=view&id=",
         }
@@ -271,7 +285,7 @@ def per_site(args: T.List[str]):
             ' .{extension}"',
         ]
         site_settings = {
-            "sort_tag_list": [" order:popular", " order:quality"],
+            "sort_tag_list": [(" order:popular", 0.5), " order:quality"],
             "tag_path_prefix": "/?tags=",
             "post_path_prefix": "/posts/",
         }
@@ -279,7 +293,7 @@ def per_site(args: T.List[str]):
             options, args, site_host, site_name, url, site_settings
         )
 
-    elif "www.idolcomplex.com" in url or 'idol.sankakucomplex.com' in url:
+    elif "www.idolcomplex.com" in url or "idol.sankakucomplex.com" in url:
         site_name = "idolcomplex"
         # site_host = "idol.sankakucomplex.com"
         site_host = "www.idolcomplex.com"
@@ -291,7 +305,7 @@ def per_site(args: T.List[str]):
             ' .{extension}"',
         ]
         site_settings = {
-            "sort_tag_list": [" order:popular", " order:quality"],
+            "sort_tag_list": [(" order:popular", 0.5), " order:quality"],
             "tag_path_prefix": "/?tags=",
             "post_path_prefix": "/posts/",
         }
@@ -423,9 +437,9 @@ def per_site(args: T.List[str]):
                     "videos=true",
                     "tags=true",
                     "metadata=true",
-                    'directory=["{username|author[\'global_name\']} {category} {service|subcategory} {user|server}{channel:? //}"]',
+                    "directory=[\"{username|author['global_name']} {category} {service|subcategory} {user|server}{channel:? //}\"]",
                     'filename="{category} {service|subcategory} {date!S:.10} {id} {title|content!H:.60} {count}p '
-                    '@{username|author[\'username\']} p{num} {filename:.40}.{extension}"',
+                    "@{username|author['username']} p{num} {filename:.40}.{extension}\"",
                 ],
                 filter=" and ".join(
                     ["extension not in ('psd', 'clip')", *_filter_sequence_in_list]
@@ -518,6 +532,50 @@ def search_tags_in_filter(search_tags: str):
     return tags_s, filter
 
 
+class BooruSite:
+    site_name: str
+    site_host: str
+    post_path_prefix: str
+    tag_path_prefix: str
+    options: list
+
+    def get_latest_post_id(self):
+        import subprocess
+        import re
+
+        url = f"https://{self.site_host}{self.tag_path_prefix}"
+        gldl_args = [*GLDLCLIArgs(o=self.options), url]
+        cmd = [*new_gallery_dl_cmd(), *gldl_args, "-K"]
+        r = subprocess.run(cmd, capture_output=True, text=True)
+        # if r.returncode != 0:
+        #     print(r.stderr, file=sys.stderr)
+        #     sys.exit(r.returncode)
+        o = r.stdout
+        # print(o)
+        return int(re.search(r"\sid\s*(\d+)", o).group(1))  # type: ignore
+
+    def multi_id_range_pq(self, pq_value):
+        """
+        return [(min_id:int, pq_n:int), ...]"""
+        steps = {
+            100: 1,
+            10000: 2,
+            1000000: 4,
+            100000000: 8,
+        }
+        pq_n = int(pq_value)
+        pq_min = pq_n // 10 or 1
+        latest_id = self.get_latest_post_id()
+        r = []
+        for minus_id, k in steps.items():
+            if latest_id <= minus_id:
+                break
+            the_id = latest_id - minus_id
+            the_n = pq_min * k
+            r.append((the_id, the_n))
+        return r
+
+
 def pq_site_arg_func(options, site_args, site_host, site_name, url, site_settings):
     post_path_prefix = site_settings["post_path_prefix"]
     tag_path_prefix = site_settings["tag_path_prefix"]
@@ -532,7 +590,9 @@ def pq_site_arg_func(options, site_args, site_host, site_name, url, site_setting
 
     if site_args:
         tags_s = url.split(tag_path_prefix, maxsplit=1)[-1].strip()
+        tags_s = re.sub(r"id:[>=<]+\d+", "", tags_s)
         tags_s = re.sub(r"\s+", " ", tags_s)
+        tags_s = tags_s.strip()
         pq_arg, *site_args = site_args
 
         if pq_arg.startswith("pq"):
@@ -549,6 +609,15 @@ def pq_site_arg_func(options, site_args, site_host, site_name, url, site_setting
                 gldl_args = add_sort_range_args(
                     [*head_args, *site_args], pq_value, url, site_settings
                 )
+                if RuntimeData.multi_id_range:
+                    booru_site = BooruSite()
+                    booru_site.site_name = site_name
+                    booru_site.site_host = site_host
+                    booru_site.post_path_prefix = post_path_prefix
+                    booru_site.tag_path_prefix = tag_path_prefix
+                    booru_site.options = options
+                    for the_id, the_n in booru_site.multi_id_range_pq(pq_value):
+                        gldl_args.extend(add_sort_range_args([*head_args, *site_args], the_n, url + f" id:>{the_id}", site_settings))
 
             elif pq_value[0] == "=" and os.path.isdir(pq_value[1:]):
                 the_path = pq_value[1:].strip(r'\/"').strip(r'\/"')
@@ -607,7 +676,10 @@ def pq_site_arg_func(options, site_args, site_host, site_name, url, site_setting
                             [
                                 i
                                 for i in os.listdir(the_path)
-                                if not i.endswith(STRING_NOT_WANT)
+                                if not (
+                                    i.endswith(STRING_NOT_WANT)
+                                    or i.endswith(STRING_DELETED)
+                                )
                             ]
                         )
                         // 5
@@ -615,6 +687,15 @@ def pq_site_arg_func(options, site_args, site_host, site_name, url, site_setting
                     gldl_args = add_sort_range_args(
                         head_args, pq_value, url, site_settings
                     )
+                    if RuntimeData.multi_id_range:
+                        booru_site = BooruSite()
+                        booru_site.site_name = site_name
+                        booru_site.site_host = site_host
+                        booru_site.post_path_prefix = post_path_prefix
+                        booru_site.tag_path_prefix = tag_path_prefix
+                        booru_site.options = options
+                        for the_id, the_n in booru_site.multi_id_range_pq(pq_value):
+                            gldl_args.extend(add_sort_range_args(head_args, the_n, url + f" id:>{the_id}", site_settings))
                 else:
                     gldl_args = head_args + [
                         url,
@@ -630,6 +711,8 @@ def pq_site_arg_func(options, site_args, site_host, site_name, url, site_setting
                             _l.extend(args_list)
                     else:
                         gldl_args.extend(args_list)
+            # print(gldl_args)
+
     return gldl_args
 
 
@@ -815,6 +898,7 @@ def args2url(args):
         and "/status/" not in url
         and not url.endswith("/media")
     ):
+        url = str(url)
         url += "/media"
     if "reddit.com" in url and "/s/" in url:
         import browser_cookie3

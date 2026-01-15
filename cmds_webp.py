@@ -260,7 +260,7 @@ def convert_in_zip(src, workdir='.', workers=None, ext_name=None, strict_mode=Fa
          force_convert_webp='force')
 def auto_cvt(src, recursive, clean, cbz, workers=None, trash_bin=False, verbose=False, force_convert_webp=False):
     """convert images to webp with auto-clean, auto-compress-to-cbz, adaptive-quality-scale"""
-    workers = workers or os.cpu_count() - 1 or os.cpu_count()
+    workers = workers or (os.cpu_count() // 3) or os.cpu_count()
     lgr = logging.ez_get_logger(auto_cvt.__name__, 'INFO' if verbose else 'ERROR', fmt=logging.LOG_FMT_MESSAGE_ONLY)
     delete = send2trash if trash_bin else oldezpykit.stdlib.shutil.__deprecated__.remove
 
