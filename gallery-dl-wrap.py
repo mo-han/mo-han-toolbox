@@ -438,8 +438,8 @@ def per_site(args: T.List[str]):
                     "tags=true",
                     "metadata=true",
                     "directory=[\"{username|author['global_name']} {category} {service|subcategory} {user|server}{channel:? //}\"]",
-                    'filename="{category} {service|subcategory} {date!S:.10} {id} {title|content!H:.60} {count}p '
-                    "@{username|author['username']} p{num} {filename:.40}.{extension}\"",
+                    'filename="{category} {service|subcategory} {date!S:.10} {id} {title|content|substring!H:Xb72/.../} {count}p '
+                    "@{username|author['username']} p{num} {filename:.36}.{extension}\"",
                 ],
                 filter=" and ".join(
                     ["extension not in ('psd', 'clip')", *_filter_sequence_in_list]
@@ -851,26 +851,26 @@ def args2url(args):
     elif first in ("ng", "newgrounds"):
         url = f"https://{pop_tag_from_args(args)}.newgrounds.com/art"
     # TODO: mark kemono
-    elif first in ("kemono", "kemonoparty", "kemono.su"):
+    elif first in ("kemono",):
         x = pop_tag_from_args(args)
         if os.path.isfile(x):
             url = "kemono."
             args[:0] = ["-i", x]
         elif x in ("patreon", "fanbox", "fantia", "gumroad"):
             y = pop_tag_from_args(args)
-            url = f"https://kemono.su/{x}/user/{y}"
+            url = f"https://kemono.cr/{x}/user/{y}"
         else:
-            url = f"https://kemono.su/{pop_tag_from_args(args)}"
-    elif first in ("coomer", "coomerparty", "coomer.su"):
+            url = f"https://kemono.cr/{pop_tag_from_args(args)}"
+    elif first in ("coomer",):
         x = pop_tag_from_args(args)
         if os.path.isfile(x):
             url = "coomer."
             args[:0] = ["-i", x]
         elif x in ("onlyfans", "fansly"):
             y = pop_tag_from_args(args)
-            url = f"https://coomer.su/{x}/user/{y}"
+            url = f"https://coomer.st/{x}/user/{y}"
         else:
-            url = f"https://coomer.su/{pop_tag_from_args(args)}"
+            url = f"https://coomer.st/{pop_tag_from_args(args)}"
     elif first in ("luscious", "lus"):
         x = pop_tag_from_args(args)
         if re.match(r"\d+ \d+", x):
@@ -931,7 +931,7 @@ def args2url(args):
         url = requests.get(url, cookies=browser_cookie3.firefox()).url
         print(url)
     url = url.replace("chan.sankakucomplex.com/cn/", "chan.sankakucomplex.com/")
-    print(url, args)
+    # print(url, args)
     return url
 
 
