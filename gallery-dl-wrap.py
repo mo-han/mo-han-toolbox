@@ -913,6 +913,10 @@ def args2url(args):
             url = f"https://aibooru.online/posts/{x}"
         else:
             url = f"https://aibooru.online/posts?tags={x}"
+    elif 'pornpics.com' in first:
+        url = first
+        if args and args[0].startswith('pq'):
+            args[0:1] = ['--chapter-range', f'1-{args[0][2:]}']
     elif os.path.isfile(first):
         url = '--'
         args[:0] = ['-i', first]
