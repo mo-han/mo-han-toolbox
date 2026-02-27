@@ -107,7 +107,7 @@ class MyAssistantBot(EasyBot):
         chat_to = call_data.chat_to
         args = [re.sub(r'(^ph[\da-f]{13})', r'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in args]
         if 'iwara' in args[0]:
-            args.extend(['-f', 'Source'])
+            args.extend(['--impersonate', 'Firefox', '--parse-metadata','%(uploader)s @%(uploader_id)s:%(uploader)s'])
         args_s = ' '.join([shlex.quote(a) for a in args])
         retry_frozen = yt_dlp_retry_frozen
         # retry_frozen = ytdl_retry_frozen
