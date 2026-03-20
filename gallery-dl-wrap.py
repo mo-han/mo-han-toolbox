@@ -104,13 +104,13 @@ def per_site(args: T.List[str]):
             arg0 = args[0]
             if os.path.isfile(arg0):
                 gldl_args.extend(["-i", *args])
-            elif arg0 == "ab":
-                more_args = ["-o", 'extractor.pixiv.include=["background","avatar"]']
-                if "/users/" in url:
-                    gldl_args.extend([*args[1:], *more_args, url])
-                else:
-                    url = f"https://www.pixiv.net/users/{args[1]}"
-                    gldl_args.extend([*args[2:], *more_args, url])
+            # elif arg0 == "ab":
+            #     more_args = ["-o", 'extractor.pixiv.include=background,avatar']
+            #     if "/users/" in url:
+            #         gldl_args.extend([*args[1:], *more_args, url])
+            #     else:
+            #         url = f"https://www.pixiv.net/users/{args[1]}"
+            #         gldl_args.extend([*args[2:], *more_args, url])
             elif arg0 in ("u", "user"):
                 url = f"https://www.pixiv.net/users/{args[1]}"
                 gldl_args.extend([*args[2:], url])
@@ -639,12 +639,14 @@ def pq_site_arg_func(options, site_args, site_host, site_name, url, site_setting
                 override_base_dir, target_dir = os.path.split(the_path)
                 post_id_l = []
                 for i in os.listdir(the_path):
-                    if "sankaku" in site_host or 'idolcomplex' in site_host:
+                    if "sankaku" in site_host:
                         m = re.search(r" ([0-9a-f]{32}) ", i)
                     else:
                         m = re.search(r"\d\d\d\d-\d\d-\d\d (\w+) ", i)
                     if m:
                         post_id_l.append(m.group(1))
+                # if 'idolcomplex' in site_host:
+                #     site_host = "iapi.sankakucomplex.com"  # unsupported hostname
                 url_l = [
                     f"https://{site_host}{post_path_prefix}{post_id}"
                     for post_id in post_id_l
@@ -781,8 +783,12 @@ def args2url(args):
             url = f"https://civitai.com/images/{x}"
     elif first == "fanbox":
         url = f"https://{args.pop(0)}.fanbox.cc"
-    elif first == "twitter":
-        url = f'https://twitter.com/{args.pop(0).lstrip("@")}/media'
+    elif first in ("twitter", 'twt'):
+        x = pop_tag_from_args(args)
+        if x.isdigit():
+            url = f'https://x.com/i/web/status/{x}'
+        else:
+            url = f'https://x.com/{x.lstrip("@")}'
     elif first in (
         "danbooru",
         "dan",
@@ -843,7 +849,7 @@ def args2url(args):
         elif is_md5(x):
             # 旧域名支持 md5作为 id 但是旧域名作为网页端不能打开
             # 新域名也支持 md5 id 但是网页端显示服务器端内部错误
-            url = f"https://idol.sankakucomplex.com/posts/{x}"
+            url = f"https://iapi.sankakucomplex.com/posts/{x}"
         elif not x:
             url = f"{site_url}"
         else:
@@ -970,6 +976,7 @@ def main():
         if args[0] == "o":
             args.pop(0)
             url, _ = per_site(args)
+            url = url.replace('https://www.idolcomplex.com', 'https://iapi.sankakucomplex.com')
             return webbrowser.open_new_tab(url)
         url, site_args = per_site(args)
         cmd_l = []
