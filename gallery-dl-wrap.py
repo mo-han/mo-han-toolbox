@@ -104,13 +104,13 @@ def per_site(args: T.List[str]):
             arg0 = args[0]
             if os.path.isfile(arg0):
                 gldl_args.extend(["-i", *args])
-            # elif arg0 == "ab":
-            #     more_args = ["-o", 'extractor.pixiv.include=background,avatar']
-            #     if "/users/" in url:
-            #         gldl_args.extend([*args[1:], *more_args, url])
-            #     else:
-            #         url = f"https://www.pixiv.net/users/{args[1]}"
-            #         gldl_args.extend([*args[2:], *more_args, url])
+            elif arg0 == "ab":
+                more_args = ["-o", 'extractor.pixiv.include=background,avatar']
+                if "/users/" in url:
+                    gldl_args.extend([*args[1:], *more_args, url])
+                else:
+                    url = f"https://www.pixiv.net/users/{args[1]}"
+                    gldl_args.extend([*args[2:], *more_args, url])
             elif arg0 in ("u", "user"):
                 url = f"https://www.pixiv.net/users/{args[1]}"
                 gldl_args.extend([*args[2:], url])
@@ -771,7 +771,7 @@ def args2url(args):
     special = "{o:ab}"
     if special in args:
         i = args.index(special)
-        args[i : i + 1] = ["-o", 'include=["background","avatar"]']
+        args[i : i + 1] = ["-o", 'include=avatar,background']
     first = args.pop(0)
     if first in ("pixiv", "p"):
         url = "https://www.pixiv.net"
@@ -888,7 +888,7 @@ def args2url(args):
 
             url = requests.get(url, cookies=browser_cookie3.firefox()).url
     elif first in ("reddit", "rdt"):
-        p = r"\w+"
+        p = r"[-\w]+"
         v1 = pop_tag_from_args(args)
         if re.fullmatch("u_" + p, v1):
             v1 = f"user/{v1[2:]}"

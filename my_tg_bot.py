@@ -108,6 +108,8 @@ class MyAssistantBot(EasyBot):
         args = [re.sub(r'(^ph[\da-f]{13})', r'https://www.pornhub.com/view_video.php?viewkey=\1', a) for a in args]
         if 'iwara' in args[0]:
             args.extend(['--impersonate', 'Firefox', '--parse-metadata','%(uploader)s @%(uploader_id)s:%(uploader)s'])
+        if 'youtube' in args[0] or 'youtu.be' in args[0]:
+            args.extend(['--a-ytb'])
         args_s = ' '.join([shlex.quote(a) for a in args])
         retry_frozen = yt_dlp_retry_frozen
         # retry_frozen = ytdl_retry_frozen
